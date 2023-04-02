@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-
 #include <stdlib.h>
 
 #include <iostream>
@@ -42,18 +41,22 @@ class Address
 {
   public:
     // Global ID of the compute cell where the address resides
-    int cc_id;
+    u_int32_t cc_id;
     // The offset to the memory of the compute cell
-    int addr;
+    u_int32_t addr;
 
-    Address(int id, int address_in)
+    // Is true when this address is not pointing to any valid object
+    bool is_valid;
+
+    Address(int id, int address_in, bool valid)
     {
         this->cc_id = id;
         this->addr = address_in;
+        this->is_valid = valid;
     }
     friend ostream& operator<<(ostream& os, const Address& ad)
     {
-        os << "cc_id: " << ad.cc_id << "addr: " << ad.addr;
+        os << "(" << ad.cc_id << ", " << ad.addr << ")";
         return os;
     }
 };
@@ -87,10 +90,9 @@ int
 sssp_predicate(int nargs, const std::shared_ptr<int[]>& args)
 {
     std::cout << "in sssp_predicate" << std::endl;
-    // int x = static_cast<int>(static_cast<int *>(args)[0]);
     int x = args[0];
-    // int y = static_cast<int>(static_cast<int *>(args)[1]);
     int y = args[1];
+
     int result = x + y;
     return result;
 }
@@ -130,15 +132,6 @@ sub(int nargs, void* args)
     int result = x - y;
 
     return result;
-}
-// int mult(int x, int y) { return (x * y); }
-int
-div1(int x, int y)
-{
-    if (y != 0)
-        return (x / y);
-    else
-        return 0;
 }
 
 enum class actionType : int
@@ -249,15 +242,22 @@ class ComputeCell
     // In bytes
     u_int32_t get_memory_curr_ptr_offset() { return get_memory_used(); }
 
+    // Get memory left in bytes
+    u_int32_t memory_available_in_bytes() { return this->memory_size - get_memory_used(); }
+
     // Returns the offset in memory for this newly created object
     template<typename T>
-    u_int32_t create_object_in_memory(T obj)
+    std::optional<Address> create_object_in_memory(T obj)
     {
+        if (this->memory_available_in_bytes() < sizeof(T)) {
+            return std::nullopt;
+        }
+
         u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
-        this->memory_curr_ptr = memcpy(this->memory_curr_ptr, &obj, sizeof(T));
+        memcpy(this->memory_curr_ptr, &obj, sizeof(T));
         this->memory_curr_ptr = this->memory_curr_ptr + sizeof(T);
 
-        return obj_memory_addr_offset;
+        return Address(this->id, obj_memory_addr_offset, true);
     }
 
     void insert_action(const std::shared_ptr<Action>& action) { this->action_queue.push(action); }
@@ -267,9 +267,15 @@ class ComputeCell
         if (!this->action_queue.empty()) {
             std::shared_ptr<Action> action = this->action_queue.back();
             this->action_queue.pop();
+
+            // if predicate
             std::cout << event_handlers[get_underlying_enum_index(action->predicate)](action->nargs,
                                                                                       action->args)
                       << std::endl;
+
+            // if work
+
+            // if diffuse
             return;
         }
         std::cout << "Cannot execute action as the action_queue is empty!\n";
@@ -280,7 +286,7 @@ class ComputeCell
     std::vector<u_int32_t> neighbor_compute_cells;
 
     // Memory of the Compute Cell
-    static constexpr u_int32_t memory_size = 2 * 1024 * 1024; // 2 MB
+    static constexpr u_int32_t memory_size = 200;// * 1024 * 1024; // 2 MB
     std::unique_ptr<char[]> memory;
     char* memory_raw_ptr;
     char* memory_curr_ptr;
@@ -309,35 +315,9 @@ class ComputeCell
 int
 main()
 {
-    /*
-
-    // std::cout << valInt << std::endl;
-    // int *args = static_cast<int *>(malloc(2 * sizeof(int)));
-    std::shared_ptr<int[]> args = std::make_shared<int[]>(2);
-    args[0] = 1;
-    args[1] = 2;
-
-    SSSPAction sssp_action = SSSPAction(actionType::application_action, true, 2,
-    args, eventId::sssp_predicate, eventId::sssp_work, eventId::sssp_diffuse);
-    int valInt = get_underlying_enum_index(sssp_action.predicate);
-
-    // eventId sum_id = ;
-    std::cout << event_handlers[valInt](sssp_action.nargs, sssp_action.args) <<
-    std::endl;
-
-    */
-
     // Create an Action queue and a *memory location
     // Populate the memory somehow
     // Insert actions in the queue that operate on objects in memory
-
-    std::queue<std::shared_ptr<Action>> actionQueue;
-
-    constexpr u_int32_t memory_size = 2 * 1024 * 1024; // 2 MB
-    std::unique_ptr<char[]> memory = std::make_unique<char[]>(memory_size);
-
-    char* memory_raw_ptr = memory.get();
-    char* memory_curr_ptr = memory_raw_ptr;
 
     // put a vertex in memory
     SimpleVertex vertex_root;
@@ -349,24 +329,17 @@ main()
     vertex_root.edges[4] = 11111;
     vertex_root.edges[5] = 111111;
 
-    u_int32_t root_vertex_addr = memory_curr_ptr - memory_raw_ptr;
-
-    memcpy(memory_curr_ptr, &vertex_root, sizeof(vertex_root));
-    memory_curr_ptr = memory_curr_ptr + sizeof(vertex_root);
-
-    std::cout << "in main(): (root_vertex_addr= " << root_vertex_addr << "), memory_raw_ptr = ("
-              << (int*)(memory_raw_ptr) << "), memory_curr_ptr = (" << (int*)(memory_curr_ptr)
-              << "\n";
+    ComputeCell cc;
 
     // char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
 
-    print_SimpleVertex(root_vertex_addr, memory);
+    // print_SimpleVertex(root_vertex_addr, memory);
 
     std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
     args_x[0] = 1;
     args_x[1] = 7;
 
-    actionQueue.push(std::make_shared<SSSPAction>(actionType::application_action,
+    cc.insert_action(std::make_shared<SSSPAction>(actionType::application_action,
                                                   true,
                                                   2,
                                                   args_x,
@@ -374,12 +347,18 @@ main()
                                                   eventId::sssp_work,
                                                   eventId::sssp_diffuse));
 
-    std::shared_ptr<Action> x = actionQueue.back();
-    actionQueue.pop();
-    std::cout << event_handlers[get_underlying_enum_index(x->predicate)](x->nargs, x->args)
-              << std::endl;
+    cc.execute_action();
 
-    x = nullptr;
+    for (int i = 0; i < 8; i++) {
+        std::optional<Address> vertex_root_addr = cc.create_object_in_memory<SimpleVertex>(vertex_root);
+
+        if(!vertex_root_addr){
+            std::cout << "Memory not declared!\n";
+            continue;
+        }
+        std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
+    }
+
     args_x = nullptr;
     std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
               << args_x << ")\n";
