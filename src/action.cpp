@@ -232,7 +232,7 @@ struct SimpleVertex
 void
 print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
 {
-    SimpleVertex *vertex = (SimpleVertex *) (memory.get() + obj_addr);
+    SimpleVertex* vertex = (SimpleVertex*)(memory.get() + obj_addr);
     std::cout << vertex->id << "\n";
 
     for (int i = 0; i < 6; i++) {
@@ -240,6 +240,37 @@ print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
     }
     std::cout << std::endl;
 }
+
+// Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
+class ComputeCell
+{
+  public:
+    // Return the memory used in bytes
+    u_int32_t get_memory_used() { return this->memory_curr_ptr - this->memory_raw_ptr; }
+
+    // In bytes
+    u_int32_t get_memory_curr_ptr_offset() { return get_memory_used(); }
+
+    // Returns the offset in memory for this newly created object
+    template<typename T>
+    u_int32_t create_object_in_memory(T obj)
+    {
+        u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
+        this->memory_curr_ptr memcpy(this->memory_curr_ptr, &obj, sizeof(T));
+        this->memory_curr_ptr = this->memory_curr_ptr + sizeof(T);
+
+        return obj_memory_addr_offset;
+    }
+
+    u_int32_t id;
+    std::vector<u_int32_t> neighbor_compute_cells;
+
+    static constexpr u_int32_t memory_size = 2 * 1024 * 1024; // 2 MB
+
+    std::unique_ptr<char[]> memory = std::make_unique<char[]>(memory_size);
+    char* memory_raw_ptr;
+    char* memory_curr_ptr;
+};
 
 int
 main()
@@ -268,11 +299,11 @@ main()
 
     std::queue<std::shared_ptr<Action>> actionQueue;
 
-    constexpr u_int32_t memory_size = 16 * 1024 * 1024; // 16 MB
+    constexpr u_int32_t memory_size = 2 * 1024 * 1024; // 2 MB
     std::unique_ptr<char[]> memory = std::make_unique<char[]>(memory_size);
 
-    void* memory_raw_ptr = memory.get();
-    void* memory_curr_ptr = memory_raw_ptr;
+    char* memory_raw_ptr = memory.get();
+    char* memory_curr_ptr = memory_raw_ptr;
 
     // put a vertex in memory
     SimpleVertex vertex_root;
@@ -284,17 +315,16 @@ main()
     vertex_root.edges[4] = 11111;
     vertex_root.edges[5] = 111111;
 
-     u_int32_t root_vertex_addr = static_cast<char*>(memory_curr_ptr) - static_cast<char*>(memory_raw_ptr);
+    u_int32_t root_vertex_addr = memory_curr_ptr - memory_raw_ptr;
 
     memcpy(memory_curr_ptr, &vertex_root, sizeof(vertex_root));
-    memory_curr_ptr = static_cast<char*>(memory_curr_ptr) + sizeof(vertex_root);
-   
+    memory_curr_ptr = memory_curr_ptr + sizeof(vertex_root);
 
     std::cout << "in main(): (root_vertex_addr= " << root_vertex_addr << "), memory_raw_ptr = ("
               << (int*)(memory_raw_ptr) << "), memory_curr_ptr = (" << (int*)(memory_curr_ptr)
               << "\n";
 
-    //char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
+    // char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
 
     print_SimpleVertex(root_vertex_addr, memory);
 
