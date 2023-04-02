@@ -37,6 +37,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace std;
 
+// TODO: find a good way to do this, perhaps but this in a separate file
+// Compile with: -DDEBUG_CODE=true
+// Or maybe remove this altogether.
+inline constexpr bool debug_code = DEBUG_CODE;
+
 class Address
 {
   public:
@@ -293,9 +298,10 @@ class ComputeCell
             std::shared_ptr<Action> action = this->action_queue.back();
             this->action_queue.pop();
 
-            // The `*` before action dereferences the `shared_ptr action->vertex_addr`
-            this->print_SimpleVertex(*action->vertex_addr);
-
+            if constexpr (debug_code == true) {
+                // The `*` before action dereferences the `shared_ptr action->vertex_addr`
+                this->print_SimpleVertex(*action->vertex_addr);
+            }
             // if predicate
             std::cout << event_handlers[get_underlying_enum_index(action->predicate)](action->nargs,
                                                                                       action->args)
