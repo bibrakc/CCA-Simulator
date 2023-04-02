@@ -150,10 +150,7 @@ enum class actionType : int
     actionType_max
 };
 
-// TODO: Maybe make this an abstract class with virtual functions
-//       and then use something like:
-//       `std::queue<std::make_shared/unique<Action>> ActionsQueue`
-//       Need to investigate this further.
+// TODO: Should this be virtual?
 class Action
 {
   public:
@@ -172,8 +169,7 @@ class Action
     std::shared_ptr<int[]> args;
 
     // Memory location of the object for which this action is destined
-    // TODO: maybe use the class `Address for` this?
-    std::unique_ptr<Address> vertex_addr;
+    std::shared_ptr<Address> vertex_addr;
 
     // Predicate
     eventId predicate;
@@ -203,7 +199,7 @@ class SSSPAction : public Action
     {
         std::cout << "sssp action constructor\n";
 
-        this->vertex_addr = std::make_unique<Address>(vertex_addr);
+        this->vertex_addr = std::make_shared<Address>(vertex_addr);
 
         this->action_type = type;
         this->is_ready = ready;
@@ -215,8 +211,6 @@ class SSSPAction : public Action
         this->work = work_in;
         this->diffuse = diffuse_in;
     }
-
-
 };
 
 void
@@ -249,12 +243,10 @@ print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
 class ComputeCell
 {
   public:
-
-
     // TODO: remove this later
     void print_SimpleVertex(const Address& vertex_addr)
     {
-        if (vertex_addr.cc_id != this->id){
+        if (vertex_addr.cc_id != this->id) {
             std::cout << "Invalid addr the vertex does not exist on this CC\n";
             return;
         }
@@ -267,8 +259,6 @@ class ComputeCell
         }
         std::cout << std::endl;
     }
-
-
 
     // Return the memory used in bytes
     u_int32_t get_memory_used() { return this->memory_curr_ptr - this->memory_raw_ptr; }
@@ -298,13 +288,13 @@ class ComputeCell
 
     void execute_action()
     {
+
         if (!this->action_queue.empty()) {
             std::shared_ptr<Action> action = this->action_queue.back();
             this->action_queue.pop();
 
-            // The `*` before action dereferences the `unique_ptr action->vertex_addr`
+            // The `*` before action dereferences the `shared_ptr action->vertex_addr`
             this->print_SimpleVertex(*action->vertex_addr);
-
 
             // if predicate
             std::cout << event_handlers[get_underlying_enum_index(action->predicate)](action->nargs,
@@ -402,9 +392,9 @@ main()
         cc.execute_action();
     }
 
-  /*   args_x = nullptr;
-    std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
-              << args_x << ")\n"; */
+    /*   args_x = nullptr;
+      std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
+                << args_x << ")\n"; */
 
     return 0;
 }
