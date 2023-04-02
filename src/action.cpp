@@ -30,8 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// CPP program to illustrate
-// working of Virtual Functions
 
 #include <stdlib.h>
 
@@ -256,20 +254,56 @@ class ComputeCell
     u_int32_t create_object_in_memory(T obj)
     {
         u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
-        this->memory_curr_ptr memcpy(this->memory_curr_ptr, &obj, sizeof(T));
+        this->memory_curr_ptr = memcpy(this->memory_curr_ptr, &obj, sizeof(T));
         this->memory_curr_ptr = this->memory_curr_ptr + sizeof(T);
 
         return obj_memory_addr_offset;
     }
 
+    void insert_action(const std::shared_ptr<Action>& action) { this->action_queue.push(action); }
+
+    void execute_action()
+    {
+        if (!this->action_queue.empty()) {
+            std::shared_ptr<Action> action = this->action_queue.back();
+            this->action_queue.pop();
+            std::cout << event_handlers[get_underlying_enum_index(action->predicate)](action->nargs,
+                                                                                      action->args)
+                      << std::endl;
+            return;
+        }
+        std::cout << "Cannot execute action as the action_queue is empty!\n";
+    }
+
+    // Communication of the Compute Cell
     u_int32_t id;
     std::vector<u_int32_t> neighbor_compute_cells;
 
+    // Memory of the Compute Cell
     static constexpr u_int32_t memory_size = 2 * 1024 * 1024; // 2 MB
-
-    std::unique_ptr<char[]> memory = std::make_unique<char[]>(memory_size);
+    std::unique_ptr<char[]> memory;
     char* memory_raw_ptr;
     char* memory_curr_ptr;
+
+    // Actions queue of the Compute Cell
+    std::queue<std::shared_ptr<Action>> action_queue;
+
+    // Tasks for the Compute Cell. These tasks exist only for this simulator and are not part of the
+    // actual internals of any Compute Cell.
+    // TODO:
+    // std::queue<std::shared_ptr<Task>> task_queue;
+
+    // Constructor
+    ComputeCell()
+    {
+        cout << "Inside constructor of ComputeCell\n";
+        this->memory = std::make_unique<char[]>(this->memory_size);
+
+        this->memory_raw_ptr = memory.get();
+        this->memory_curr_ptr = memory_raw_ptr;
+    }
+
+    ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; }
 };
 
 int
