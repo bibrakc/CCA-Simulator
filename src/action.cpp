@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 
 #include <iostream>
+#include <map>
 #include <queue>
 
 #include <chrono>
@@ -86,19 +87,19 @@ get_underlying_enum_index(E e)
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-enum class eventId : int
+enum class eventId : u_int32_t
 {
     sssp_predicate = 0,
     sssp_work,
     sssp_diffuse,
-    eventId_max
+    eventId_count
 };
 
-enum class actionType : int
+enum class actionType : u_int32_t
 {
     internal_action = 0,
     application_action,
-    actionType_max
+    actionType_count
 };
 
 // TODO: Should this be virtual?
@@ -166,6 +167,8 @@ class SSSPAction : public Action
     }
 };
 
+typedef std::pair<u_int32_t, Action> Operon;
+
 // TODO: remove this later or put in a util to be used for debuging
 void
 fun(std::shared_ptr<int> sp)
@@ -205,6 +208,20 @@ typedef std::function<void(std::string)> Task;
     std::queue<Task> task_queue;
 };
  */
+
+enum class computeCellShape : u_int32_t
+{
+    triangular = 0,
+    sqaure,
+    hexagon,
+    block_1D,
+    computeCellShape_count
+};
+
+std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
+    { computeCellShape::triangular, 3 },
+    { computeCellShape::sqaure, 4 }
+};
 
 // Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
 class ComputeCell
@@ -256,7 +273,7 @@ class ComputeCell
     void execute_action();
 
     // Execute a single cycle for this Compute Cell
-    // Return whether is compute cell is still active, meaning run_a_cycle needs to be called again
+    // Return whether this compute cell is still active, meaning run_a_cycle needs to be called again
     bool run_a_cycle();
 
     // Checks if the compute cell is active or not
@@ -266,20 +283,36 @@ class ComputeCell
         return (!this->action_queue.empty() || !this->task_queue.empty());
     }
 
+    void add_neighbor(u_int32_t neighbor_compute_cell_id)
+    {
+        this->neighbor_compute_cells.push_back(neighbor_compute_cell_id);
+    }
+
     // Identity of the Compute Cell
     u_int32_t id;
 
     // Communication of the Compute Cell
+
+    // number_of_neighbors is the maximum number of connections a single Compute Cell can
+    // architecturally have. A triangular CC has 3 neighbors, a square has 4, and hexagon has 6 etc.
+    // TODO: Later read the shape from a config file and initialize it in the constructor
+    inline static u_int32_t number_of_neighbors =
+        computeCellShape_num_channels[computeCellShape::triangular];
+
+    // IDs of the neighbors
     std::vector<u_int32_t> neighbor_compute_cells;
-    // std::vector<Operon> channel_buffer_per_neighbor;
+    // Per neighbor operon recieve queue.
+    std::vector<std::queue<Operon>> channel_buffer_per_neighbor;
 
     // This is needed to satisty simulation. Because a sending CC can not just enqueue an operon
     // into the current working buffer of a neighbor CC. If it does then the neighbor may start
     // computation (or work) on that operon in the current simulation cycle. The receiving neighbor
     // must process it in the next cycle. Therefore, this send/recv buffer serves that purpose. At
     // the end of each simulation cycle each CC will move an operon from this buffer to its working
-    // set of operons and will then execute those operons in the next cycle.
-    // std::vector<Operon> send_recv_channel_buffer_per_neighbor;
+    // set of operons and will then execute those operons in the next cycle. This move is not part
+    // of the computation but is only there for simulation so as not to break the
+    // semantics/pragmatics of CCA.
+    std::vector<Operon> send_recv_channel_buffer_per_neighbor;
 
     // Memory of the Compute Cell in bytes
     static constexpr u_int32_t memory_size_in_bytes = 2 * 1024 * 1024; // 2 MB
@@ -291,7 +324,7 @@ class ComputeCell
     std::queue<std::shared_ptr<Action>> action_queue;
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
-    // or depending on the policy. So it can be both FIFO and LIFO
+    // or depending on the policy. So it can be both FIFO and LIFO, maybe even better
     // std::shared_ptr<Action> get_an_action();
 
     // Tasks for the Compute Cell. These tasks exist only for this simulator and are not part of the
@@ -313,9 +346,7 @@ class ComputeCell
         this->memory_curr_ptr = memory_raw_ptr;
     }
 
-    ~ComputeCell()
-    { /* cout << "Inside destructor of ComputeCell\n"; */
-    }
+    /* ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; } */
 };
 
 int
@@ -427,9 +458,9 @@ main()
     // Insert actions in the queue that operate on objects in memory
 
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
-    constexpr u_int32_t total_compute_cells = 20000;
+    constexpr u_int32_t total_compute_cells = 10;
 
-       // Cannot simply openmp parallelize this. It is very atomic.
+    // Cannot simply openmp parallelize this. It is very atomic.
     for (int i = 0; i < total_compute_cells; i++) {
         CCA_chip.push_back(std::make_shared<ComputeCell>(i));
     }
@@ -439,7 +470,7 @@ main()
 
         // for (auto& cc : CCA_chip) {
         //  std::cout << "Populating CC : " << cc->id << "\n\n";
-        for (int i = 0; i < 850; i++) {
+        for (int i = 0; i < 2; i++) {
 
             // put a vertex in memory
             SimpleVertex vertex_root;
