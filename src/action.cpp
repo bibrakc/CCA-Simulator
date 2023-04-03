@@ -342,7 +342,7 @@ ComputeCell::execute_action()
 {
 
     if (!this->action_queue.empty()) {
-        std::shared_ptr<Action> action = this->action_queue.back();
+        std::shared_ptr<Action> action = this->action_queue.front();
         this->action_queue.pop();
 
         if constexpr (debug_code == true) {
@@ -367,7 +367,7 @@ ComputeCell::execute_action()
 bool
 ComputeCell::run_a_cycle()
 {
-    std::cout << "run_a_cycle CC : " << this->id << "\n";
+    
 
     // A single compute cell can perform work and communication in parallel in a single cycle
     // This function does both. First it performs work if there is any. Then it performs
@@ -376,6 +376,7 @@ ComputeCell::run_a_cycle()
     // Perform execution of work
     // Exectute a task if the task_queue is not empty
     if (!this->task_queue.empty()) {
+        std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
         // Get a task from the task_queue
         Task current_task = this->task_queue.front();
         this->task_queue.pop();
@@ -384,6 +385,7 @@ ComputeCell::run_a_cycle()
         current_task("The MeSSaGe fRoM 2oo8");
     } else if (!this->action_queue
                     .empty()) { // Else execute an action if the action_queue is not empty
+        std::cout << "run_a_cycle | action | CC : " << this->id << "\n";            
         this->execute_action();
     }
 
@@ -438,6 +440,16 @@ main()
             }
 
             std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
+
+
+ //SimpleVertex* vertex = (SimpleVertex*)(memory.get() + vertex_addr.addr);
+        std::cout << "Vertex ID: " << vertex_root.id << "\n";
+
+        for (int i = 0; i < 6; i++) {
+            std::cout << vertex_root.edges[i] << "\n";
+        }
+        std::cout << std::endl;
+         
 
             std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
             args_x[0] = 1;
