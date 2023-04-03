@@ -35,6 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <queue>
 
+#include <chrono>
+
+#include <omp.h>
+
 using namespace std;
 
 // TODO: find a good way to do this, perhaps but this in a separate file
@@ -256,7 +260,7 @@ class ComputeCell
     bool run_a_cycle();
 
     // Checks if the compute cell is active or not
-    // TODO: when communication is added then update the checks for the communication buffer too
+    // TODO: when communication is added then update checks for the communication buffer too
     bool is_compute_cell_active()
     {
         return (!this->action_queue.empty() || !this->task_queue.empty());
@@ -267,9 +271,18 @@ class ComputeCell
 
     // Communication of the Compute Cell
     std::vector<u_int32_t> neighbor_compute_cells;
+    // std::vector<Operon> channel_buffer_per_neighbor;
+
+    // This is needed to satisty simulation. Because a sending CC can not just enqueue an operon
+    // into the current working buffer of a neighbor CC. If it does then the neighbor may start
+    // computation (or work) on that operon in the current simulation cycle. The receiving neighbor
+    // must process it in the next cycle. Therefore, this send/recv buffer serves that purpose. At
+    // the end of each simulation cycle each CC will move an operon from this buffer to its working
+    // set of operons and will then execute those operons in the next cycle.
+    // std::vector<Operon> send_recv_channel_buffer_per_neighbor;
 
     // Memory of the Compute Cell in bytes
-    static constexpr u_int32_t memory_size_in_bytes = 600; // 2 * 1024 * 1024; // 2 MB
+    static constexpr u_int32_t memory_size_in_bytes = 2 * 1024 * 1024; // 2 MB
     std::unique_ptr<char[]> memory;
     char* memory_raw_ptr;
     char* memory_curr_ptr;
@@ -308,13 +321,13 @@ class ComputeCell
 int
 sssp_predicate(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
 {
-    std::cout << "in sssp_predicate" << std::endl;
+    // std::cout << "in sssp_predicate" << std::endl;
     return 0;
 }
 int
 sssp_work(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
 {
-    std::cout << "in sssp_work" << std::endl;
+    // std::cout << "in sssp_work" << std::endl;
     int x = args[0];
     int y = args[1];
 
@@ -324,13 +337,15 @@ sssp_work(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
 int
 sssp_diffuse(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
 {
-    std::cout << "in sssp_diffuse" << std::endl;
+    // std::cout << "in sssp_diffuse" << std::endl;
 
     cc.task_queue.push(
-        [](std::string message) { cout << "Executed first task! message: " << message << "\n"; });
+        [](std::string
+               message) { /* cout << "Executed first task! message: " << message << "\n"; */ });
 
     cc.task_queue.push(
-        [](std::string message) { cout << "Executed second task! message: " << message << "\n"; });
+        [](std::string
+               message) { /* cout << "Executed second task! message: " << message << "\n"; */ });
     return 0;
 }
 
@@ -379,8 +394,8 @@ ComputeCell::run_a_cycle()
     // Perform execution of work
     // Exectute a task if the task_queue is not empty
     if (!this->task_queue.empty()) {
-        std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
-        // Get a task from the task_queue
+        // std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
+        //  Get a task from the task_queue
         Task current_task = this->task_queue.front();
         this->task_queue.pop();
 
@@ -388,7 +403,9 @@ ComputeCell::run_a_cycle()
         current_task("The MeSSaGe fRoM 2oo8");
     } else if (!this->action_queue
                     .empty()) { // Else execute an action if the action_queue is not empty
-        std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
+
+        // std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
+
         this->execute_action();
     }
 
@@ -409,23 +426,25 @@ main()
     // Populate the memory somehow
     // Insert actions in the queue that operate on objects in memory
 
-    std::vector<std::unique_ptr<ComputeCell>> CCA_chip;
+    std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
+    constexpr u_int32_t total_compute_cells = 20000;
+omp_set_num_threads(6);
+    std::cout << "omp_get_num_threads = " << omp_get_num_threads() << "\n";
 
-    CCA_chip.push_back(std::make_unique<ComputeCell>(0));
-    CCA_chip.push_back(std::make_unique<ComputeCell>(1));
-    CCA_chip.push_back(std::make_unique<ComputeCell>(2));
-    CCA_chip.push_back(std::make_unique<ComputeCell>(3));
-    //    char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
+    // Cannot simply openmp parallelize this. It is very atomic.
+    for (int i = 0; i < total_compute_cells; i++) {
+        CCA_chip.push_back(std::make_shared<ComputeCell>(i));
+    }
 
-    // print_SimpleVertex(root_vertex_addr, memory);
-    for (auto& cc : CCA_chip) {
-        for (int i = 0; i < 2; i++) {
-
-            std::cout << "Populating CC : " << cc->id << "\n\n";
+#pragma omp parallel for
+    for (int cc_id = 0; cc_id < CCA_chip.size(); cc_id++) {
+        // for (auto& cc : CCA_chip) {
+        //  std::cout << "Populating CC : " << cc->id << "\n\n";
+        for (int i = 0; i < 850; i++) {
 
             // put a vertex in memory
             SimpleVertex vertex_root;
-            vertex_root.id = (cc->id * 2) + i;
+            vertex_root.id = (CCA_chip[cc_id]->id * 2) + i;
 
             vertex_root.edges[0] = vertex_root.id;
             vertex_root.edges[1] = vertex_root.id * 10 + vertex_root.edges[0];
@@ -435,43 +454,64 @@ main()
             vertex_root.edges[5] = vertex_root.id * 100000 + vertex_root.edges[4];
 
             std::optional<Address> vertex_root_addr =
-                cc->create_object_in_memory<SimpleVertex>(vertex_root);
+                CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_root);
 
             if (!vertex_root_addr) {
                 std::cout << "Memory not declared!\n";
                 continue;
             }
 
-            std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
+            // std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
 
             std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
             args_x[0] = 1;
             args_x[1] = 7;
 
-            cc->insert_action(std::make_shared<SSSPAction>(vertex_root_addr.value(),
-                                                           actionType::application_action,
-                                                           true,
-                                                           2,
-                                                           args_x,
-                                                           eventId::sssp_predicate,
-                                                           eventId::sssp_work,
-                                                           eventId::sssp_diffuse));
+            CCA_chip[cc_id]->insert_action(
+                std::make_shared<SSSPAction>(vertex_root_addr.value(),
+                                             actionType::application_action,
+                                             true,
+                                             2,
+                                             args_x,
+                                             eventId::sssp_predicate,
+                                             eventId::sssp_work,
+                                             eventId::sssp_diffuse));
 
             // cc->execute_action();
         }
     }
 
     bool global_active_cc = true;
+    u_long total_cycles = 0;
+    std::cout << "Starting Execution on the CCA Chip: \n";
+    auto start = chrono::steady_clock::now();
 
     while (global_active_cc) {
         global_active_cc = false;
-        for (auto& cc : CCA_chip) {
-            std::cout << "Running CC : " << cc->id << "\n\n";
-            if (cc->is_compute_cell_active()) {
-                global_active_cc |= cc->run_a_cycle();
+        // for (auto& cc : CCA_chip) {
+#pragma omp parallel for reduction(| : global_active_cc)
+        for (int i = 0; i < CCA_chip.size(); i++) {
+            // std::cout << "Running CC : " << cc->id << "\n\n";
+            if (CCA_chip[i]->is_compute_cell_active()) {
+                global_active_cc |= CCA_chip[i]->run_a_cycle();
             }
         }
+        total_cycles++;
     }
+    auto end = chrono::steady_clock::now();
+
+    std::cout << "Total Cycles: " << total_cycles << "\n";
+    cout << "Elapsed time in nanoseconds: "
+         << chrono::duration_cast<chrono::nanoseconds>(end - start).count() << " ns" << endl;
+
+    cout << "Elapsed time in microseconds: "
+         << chrono::duration_cast<chrono::microseconds>(end - start).count() << " µs" << endl;
+
+    cout << "Elapsed time in milliseconds: "
+         << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
+
+    cout << "Elapsed time in seconds: "
+         << chrono::duration_cast<chrono::seconds>(end - start).count() << " sec\n";
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */
