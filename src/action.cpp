@@ -277,6 +277,10 @@ class ComputeCell
     // Actions queue of the Compute Cell
     std::queue<std::shared_ptr<Action>> action_queue;
 
+    // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
+    // or depending on the policy. So it can be both FIFO and LIFO
+    // std::shared_ptr<Action> get_an_action();
+
     // Tasks for the Compute Cell. These tasks exist only for this simulator and are not part of the
     // actual internals of any Compute Cell.
     // TODO:
@@ -367,7 +371,6 @@ ComputeCell::execute_action()
 bool
 ComputeCell::run_a_cycle()
 {
-    
 
     // A single compute cell can perform work and communication in parallel in a single cycle
     // This function does both. First it performs work if there is any. Then it performs
@@ -385,7 +388,7 @@ ComputeCell::run_a_cycle()
         current_task("The MeSSaGe fRoM 2oo8");
     } else if (!this->action_queue
                     .empty()) { // Else execute an action if the action_queue is not empty
-        std::cout << "run_a_cycle | action | CC : " << this->id << "\n";            
+        std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
         this->execute_action();
     }
 
@@ -409,14 +412,14 @@ main()
     std::vector<std::unique_ptr<ComputeCell>> CCA_chip;
 
     CCA_chip.push_back(std::make_unique<ComputeCell>(0));
-    // CCA_chip.push_back(std::make_unique<ComputeCell>(1));
-    //  CCA_chip.push_back(std::make_unique<ComputeCell>(2));
-    //   CCA_chip.push_back(std::make_unique<ComputeCell>(3));
+    CCA_chip.push_back(std::make_unique<ComputeCell>(1));
+    CCA_chip.push_back(std::make_unique<ComputeCell>(2));
+    CCA_chip.push_back(std::make_unique<ComputeCell>(3));
     //    char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
 
     // print_SimpleVertex(root_vertex_addr, memory);
     for (auto& cc : CCA_chip) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
 
             std::cout << "Populating CC : " << cc->id << "\n\n";
 
@@ -441,16 +444,6 @@ main()
 
             std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
 
-
- //SimpleVertex* vertex = (SimpleVertex*)(memory.get() + vertex_addr.addr);
-        std::cout << "Vertex ID: " << vertex_root.id << "\n";
-
-        for (int i = 0; i < 6; i++) {
-            std::cout << vertex_root.edges[i] << "\n";
-        }
-        std::cout << std::endl;
-         
-
             std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
             args_x[0] = 1;
             args_x[1] = 7;
@@ -468,13 +461,17 @@ main()
         }
     }
 
-    for (auto& cc : CCA_chip) {
-        std::cout << "Running CC : " << cc->id << "\n\n";
-        while (cc->is_compute_cell_active()) {
-            cc->run_a_cycle();
+    bool global_active_cc = true;
+
+    while (global_active_cc) {
+        global_active_cc = false;
+        for (auto& cc : CCA_chip) {
+            std::cout << "Running CC : " << cc->id << "\n\n";
+            if (cc->is_compute_cell_active()) {
+                global_active_cc |= cc->run_a_cycle();
+            }
         }
     }
-
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */
