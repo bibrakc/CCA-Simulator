@@ -82,11 +82,6 @@ get_underlying_enum_index(E e)
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-// TODO: Maybe later convert these too `std::function`
-//       With perhaps a std::map of the functions
-//       that way we can add new functions
-typedef int (*handler_func)(int nargs, const std::shared_ptr<int[]>& args);
-
 enum class eventId : int
 {
     sssp_predicate = 0,
@@ -94,59 +89,6 @@ enum class eventId : int
     sssp_diffuse,
     eventId_max
 };
-
-int
-sum(int nargs, void* args);
-int
-sub(int nargs, void* args);
-
-int
-sssp_predicate(int nargs, const std::shared_ptr<int[]>& args)
-{
-    std::cout << "in sssp_predicate" << std::endl;
-    int x = args[0];
-    int y = args[1];
-
-    int result = x + y;
-    return result;
-}
-int
-sssp_work(int nargs, const std::shared_ptr<int[]>& args)
-{
-    std::cout << "in sssp_work" << std::endl;
-    return 0;
-}
-int
-sssp_diffuse(int nargs, const std::shared_ptr<int[]>& args)
-{
-    std::cout << "in sssp_diffuse" << std::endl;
-    return 0;
-}
-// int mult(int num1, int num2);
-// int div1(int num1, int num2);
-
-handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
-
-int
-sum(int nargs, void* args)
-{
-    int x = static_cast<int>(static_cast<int*>(args)[0]);
-    int y = static_cast<int>(static_cast<int*>(args)[1]);
-    free(args);
-    int result = x + y;
-
-    return result;
-}
-int
-sub(int nargs, void* args)
-{
-    int x = static_cast<int>(static_cast<int*>(args)[0]);
-    int y = static_cast<int>(static_cast<int*>(args)[1]);
-    free(args);
-    int result = x - y;
-
-    return result;
-}
 
 enum class actionType : int
 {
@@ -231,9 +173,7 @@ inline constexpr u_int32_t edges_max = 6;
 struct SimpleVertex
 {
     u_int32_t id;
-
     u_int32_t edges[edges_max];
-
     u_int32_t sssp_distance;
 };
 
@@ -250,9 +190,7 @@ print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
 }
 
 // Task and TaskQueue related
-
-typedef std::function<void()> Task;
-// typedef std::deque<Task> TaskQueue;
+typedef std::function<void(std::string)> Task;
 
 /* class TaskQueue
 {
@@ -263,6 +201,7 @@ typedef std::function<void()> Task;
     std::queue<Task> task_queue;
 };
  */
+
 // Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
 class ComputeCell
 {
@@ -310,54 +249,11 @@ class ComputeCell
 
     void insert_action(const std::shared_ptr<Action>& action) { this->action_queue.push(action); }
 
-    void execute_action()
-    {
-
-        if (!this->action_queue.empty()) {
-            std::shared_ptr<Action> action = this->action_queue.back();
-            this->action_queue.pop();
-
-            if constexpr (debug_code == true) {
-                // The `*` before action dereferences the shared_ptr `action->vertex_addr`
-                this->print_SimpleVertex(*action->vertex_addr);
-            }
-            // if predicate
-            std::cout << event_handlers[get_underlying_enum_index(action->predicate)](action->nargs,
-                                                                                      action->args)
-                      << std::endl;
-
-            // if work
-
-            // if diffuse
-            return;
-        }
-        std::cout << "Cannot execute action as the action_queue is empty!\n";
-    }
+    void execute_action();
 
     // Execute a single cycle for this Compute Cell
-    void run_a_cycle()
-    {
-
-        // Exectute a task if the task_queue is not empty
-        if (!this->task_queue.empty()) {
-            // Get a task from the task_queue
-            Task current_task = this->task_queue.front();
-            this->task_queue.pop();
-
-            // Execute the task
-            current_task();
-        } else if (!this->action_queue
-                        .empty()) { // Else execute an action if the action_queue is not empty
-            this->execute_action();
-        }
-
-        // House Keeping: Copy communication operator from neighbor to the current communication
-        // buffer of this CC
-
-        // House Keeping: Update the active status of this CC and the global CCs
-        // (on this process or MPI processes later)
-        this->
-    }
+    // Return whether is compute cell is still active, meaning run_a_cycle needs to be called again
+    bool run_a_cycle();
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update the checks for the communication buffer too
@@ -406,6 +302,102 @@ class ComputeCell
 };
 
 int
+sssp_predicate(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_predicate" << std::endl;
+    return 0;
+}
+int
+sssp_work(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_work" << std::endl;
+    int x = args[0];
+    int y = args[1];
+
+    int result = x + y;
+    return 0;
+}
+int
+sssp_diffuse(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_diffuse" << std::endl;
+
+    cc.task_queue.push(
+        [](std::string message) { cout << "Executed first task! message: " << message << "\n"; });
+
+    cc.task_queue.push(
+        [](std::string message) { cout << "Executed second task! message: " << message << "\n"; });
+    return 0;
+}
+
+// TODO: Maybe later convert these too `std::function`
+//       With perhaps a std::map of the functions
+//       that way we can add new functions
+typedef int (*handler_func)(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args);
+
+handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
+
+void
+ComputeCell::execute_action()
+{
+
+    if (!this->action_queue.empty()) {
+        std::shared_ptr<Action> action = this->action_queue.back();
+        this->action_queue.pop();
+
+        if constexpr (debug_code == true) {
+            // The `*` before action dereferences the shared_ptr `action->vertex_addr`
+            this->print_SimpleVertex(*action->vertex_addr);
+        }
+        // if predicate
+        event_handlers[get_underlying_enum_index(action->predicate)](
+            *this, action->nargs, action->args);
+
+        // if work
+        event_handlers[get_underlying_enum_index(action->work)](*this, action->nargs, action->args);
+
+        // if diffuse
+        event_handlers[get_underlying_enum_index(action->diffuse)](
+            *this, action->nargs, action->args);
+        return;
+    }
+    std::cout << "Cannot execute action as the action_queue is empty!\n";
+}
+
+bool
+ComputeCell::run_a_cycle()
+{
+    std::cout << "run_a_cycle CC : " << this->id << "\n";
+
+    // A single compute cell can perform work and communication in parallel in a single cycle
+    // This function does both. First it performs work if there is any. Then it performs
+    // communication
+
+    // Perform execution of work
+    // Exectute a task if the task_queue is not empty
+    if (!this->task_queue.empty()) {
+        // Get a task from the task_queue
+        Task current_task = this->task_queue.front();
+        this->task_queue.pop();
+
+        // Execute the task
+        current_task("The MeSSaGe fRoM 2oo8");
+    } else if (!this->action_queue
+                    .empty()) { // Else execute an action if the action_queue is not empty
+        this->execute_action();
+    }
+
+    // Perform communication
+
+    // House Keeping: Copy communication operator from neighbor to the current communication
+    // buffer of this CC
+
+    // Return the active status of this CC and later it can be used to update the global active
+    // compute cells count
+    return this->is_compute_cell_active();
+}
+
+int
 main()
 {
     // Create an Action queue and a *memory location
@@ -415,16 +407,16 @@ main()
     std::vector<std::unique_ptr<ComputeCell>> CCA_chip;
 
     CCA_chip.push_back(std::make_unique<ComputeCell>(0));
-    CCA_chip.push_back(std::make_unique<ComputeCell>(1));
-    CCA_chip.push_back(std::make_unique<ComputeCell>(2));
-    // CCA_chip.push_back(std::make_unique<ComputeCell>(3));
-    //  char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
+    // CCA_chip.push_back(std::make_unique<ComputeCell>(1));
+    //  CCA_chip.push_back(std::make_unique<ComputeCell>(2));
+    //   CCA_chip.push_back(std::make_unique<ComputeCell>(3));
+    //    char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
 
     // print_SimpleVertex(root_vertex_addr, memory);
     for (auto& cc : CCA_chip) {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
 
-            std::cout << "Testing CC : " << cc->id << "\n\n";
+            std::cout << "Populating CC : " << cc->id << "\n\n";
 
             // put a vertex in memory
             SimpleVertex vertex_root;
@@ -460,9 +452,17 @@ main()
                                                            eventId::sssp_work,
                                                            eventId::sssp_diffuse));
 
-            cc->execute_action();
+            // cc->execute_action();
         }
     }
+
+    for (auto& cc : CCA_chip) {
+        std::cout << "Running CC : " << cc->id << "\n\n";
+        while (cc->is_compute_cell_active()) {
+            cc->run_a_cycle();
+        }
+    }
+
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */
