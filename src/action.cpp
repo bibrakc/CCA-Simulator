@@ -56,7 +56,7 @@ class Address
     // Copy constructor
     Address(const Address& addr_in)
     {
-        std::cout << "in Copy constructor Address" << std::endl;
+        // std::cout << "in Copy constructor Address" << std::endl;
         this->cc_id = addr_in.cc_id;
         this->addr = addr_in.addr;
         this->is_valid = addr_in.is_valid;
@@ -187,7 +187,9 @@ class Action
     eventId diffuse;
 
     // We can't just delete the args here since we don't know
-    ~Action() { std::cout << "In Action destructor" << std::endl; }
+    ~Action()
+    { /* std::cout << "In Action destructor" << std::endl; */
+    }
 };
 
 class SSSPAction : public Action
@@ -202,7 +204,7 @@ class SSSPAction : public Action
                eventId work_in,
                eventId diffuse_in)
     {
-        std::cout << "sssp action constructor\n";
+        // std::cout << "sssp action constructor\n";
 
         this->vertex_addr = std::make_shared<Address>(vertex_addr);
 
@@ -218,16 +220,19 @@ class SSSPAction : public Action
     }
 };
 
+// TODO: remove this later or put in a util to be used for debuging
 void
 fun(std::shared_ptr<int> sp)
 {
     std::cout << "in fun(): sp.use_count() == " << sp.use_count() << " (object @ " << sp << ")\n";
 }
 
+inline constexpr u_int32_t edges_max = 6;
 struct SimpleVertex
 {
     u_int32_t id;
-    u_int32_t edges[6];
+
+    u_int32_t edges[edges_max];
 
     u_int32_t sssp_distance;
 };
@@ -244,6 +249,20 @@ print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
     std::cout << std::endl;
 }
 
+// Task and TaskQueue related
+
+typedef std::function<void()> Task;
+// typedef std::deque<Task> TaskQueue;
+
+/* class TaskQueue
+{
+  public:
+    void insert_task(Task task) { this->task_queue.push(task); }
+
+    bool is_not_empty() { return !this->task_queue.empty(); }
+    std::queue<Task> task_queue;
+};
+ */
 // Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
 class ComputeCell
 {
@@ -252,12 +271,12 @@ class ComputeCell
     void print_SimpleVertex(const Address& vertex_addr)
     {
         if (vertex_addr.cc_id != this->id) {
-            std::cout << "Invalid addr the vertex does not exist on this CC\n";
+            std::cout << "Invalid addr! The vertex does not exist on this CC\n";
             return;
         }
 
         SimpleVertex* vertex = (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
-        std::cout << vertex->id << "\n";
+        std::cout << "Vertex ID: " << vertex->id << "\n";
 
         for (int i = 0; i < 6; i++) {
             std::cout << vertex->edges[i] << "\n";
@@ -272,7 +291,7 @@ class ComputeCell
     u_int32_t get_memory_curr_ptr_offset() { return get_memory_used(); }
 
     // Get memory left in bytes
-    u_int32_t memory_available_in_bytes() { return this->memory_size - get_memory_used(); }
+    u_int32_t memory_available_in_bytes() { return this->memory_size_in_bytes - get_memory_used(); }
 
     // Returns the offset in memory for this newly created object
     template<typename T>
@@ -299,7 +318,7 @@ class ComputeCell
             this->action_queue.pop();
 
             if constexpr (debug_code == true) {
-                // The `*` before action dereferences the `shared_ptr action->vertex_addr`
+                // The `*` before action dereferences the shared_ptr `action->vertex_addr`
                 this->print_SimpleVertex(*action->vertex_addr);
             }
             // if predicate
@@ -315,12 +334,46 @@ class ComputeCell
         std::cout << "Cannot execute action as the action_queue is empty!\n";
     }
 
-    // Communication of the Compute Cell
+    // Execute a single cycle for this Compute Cell
+    void run_a_cycle()
+    {
+
+        // Exectute a task if the task_queue is not empty
+        if (!this->task_queue.empty()) {
+            // Get a task from the task_queue
+            Task current_task = this->task_queue.front();
+            this->task_queue.pop();
+
+            // Execute the task
+            current_task();
+        } else if (!this->action_queue
+                        .empty()) { // Else execute an action if the action_queue is not empty
+            this->execute_action();
+        }
+
+        // House Keeping: Copy communication operator from neighbor to the current communication
+        // buffer of this CC
+
+        // House Keeping: Update the active status of this CC and the global CCs
+        // (on this process or MPI processes later)
+        this->
+    }
+
+    // Checks if the compute cell is active or not
+    // TODO: when communication is added then update the checks for the communication buffer too
+    bool is_compute_cell_active()
+    {
+        return (!this->action_queue.empty() || !this->task_queue.empty());
+    }
+
+    // Identity of the Compute Cell
     u_int32_t id;
+
+    // Communication of the Compute Cell
     std::vector<u_int32_t> neighbor_compute_cells;
 
-    // Memory of the Compute Cell
-    static constexpr u_int32_t memory_size = 200; // * 1024 * 1024; // 2 MB
+    // Memory of the Compute Cell in bytes
+    static constexpr u_int32_t memory_size_in_bytes = 600; // 2 * 1024 * 1024; // 2 MB
     std::unique_ptr<char[]> memory;
     char* memory_raw_ptr;
     char* memory_curr_ptr;
@@ -332,18 +385,24 @@ class ComputeCell
     // actual internals of any Compute Cell.
     // TODO:
     // std::queue<std::shared_ptr<Task>> task_queue;
+    // TaskQueue task_queue;
+    std::queue<Task> task_queue;
 
     // Constructor
-    ComputeCell()
+    ComputeCell(u_int32_t id_in)
     {
-        cout << "Inside constructor of ComputeCell\n";
-        this->memory = std::make_unique<char[]>(this->memory_size);
+        /* cout << "Inside constructor of ComputeCell\n"; */
 
+        this->id = id_in;
+
+        this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
     }
 
-    ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; }
+    ~ComputeCell()
+    { /* cout << "Inside destructor of ComputeCell\n"; */
+    }
 };
 
 int
@@ -353,51 +412,57 @@ main()
     // Populate the memory somehow
     // Insert actions in the queue that operate on objects in memory
 
-    ComputeCell cc;
+    std::vector<std::unique_ptr<ComputeCell>> CCA_chip;
 
-    // char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
+    CCA_chip.push_back(std::make_unique<ComputeCell>(0));
+    CCA_chip.push_back(std::make_unique<ComputeCell>(1));
+    CCA_chip.push_back(std::make_unique<ComputeCell>(2));
+    // CCA_chip.push_back(std::make_unique<ComputeCell>(3));
+    //  char *v =  root_vertex_addr + static_cast<char*>(memory_raw_ptr);
 
     // print_SimpleVertex(root_vertex_addr, memory);
+    for (auto& cc : CCA_chip) {
+        for (int i = 0; i < 3; i++) {
 
-    for (int i = 0; i < 2; i++) {
+            std::cout << "Testing CC : " << cc->id << "\n\n";
 
-        // put a vertex in memory
-        SimpleVertex vertex_root;
-        vertex_root.id = 5;
-        vertex_root.edges[0] = i;
-        vertex_root.edges[1] = i * 10 + vertex_root.edges[0];
-        vertex_root.edges[2] = i * 100 + vertex_root.edges[1];
-        vertex_root.edges[3] = i * 1000 + vertex_root.edges[2];
-        vertex_root.edges[4] = i * 10000 + vertex_root.edges[3];
-        vertex_root.edges[5] = i * 100000 + vertex_root.edges[4];
-        ;
+            // put a vertex in memory
+            SimpleVertex vertex_root;
+            vertex_root.id = (cc->id * 2) + i;
 
-        std::optional<Address> vertex_root_addr =
-            cc.create_object_in_memory<SimpleVertex>(vertex_root);
+            vertex_root.edges[0] = vertex_root.id;
+            vertex_root.edges[1] = vertex_root.id * 10 + vertex_root.edges[0];
+            vertex_root.edges[2] = vertex_root.id * 100 + vertex_root.edges[1];
+            vertex_root.edges[3] = vertex_root.id * 1000 + vertex_root.edges[2];
+            vertex_root.edges[4] = vertex_root.id * 10000 + vertex_root.edges[3];
+            vertex_root.edges[5] = vertex_root.id * 100000 + vertex_root.edges[4];
 
-        if (!vertex_root_addr) {
-            std::cout << "Memory not declared!\n";
-            continue;
+            std::optional<Address> vertex_root_addr =
+                cc->create_object_in_memory<SimpleVertex>(vertex_root);
+
+            if (!vertex_root_addr) {
+                std::cout << "Memory not declared!\n";
+                continue;
+            }
+
+            std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
+
+            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+            args_x[0] = 1;
+            args_x[1] = 7;
+
+            cc->insert_action(std::make_shared<SSSPAction>(vertex_root_addr.value(),
+                                                           actionType::application_action,
+                                                           true,
+                                                           2,
+                                                           args_x,
+                                                           eventId::sssp_predicate,
+                                                           eventId::sssp_work,
+                                                           eventId::sssp_diffuse));
+
+            cc->execute_action();
         }
-
-        std::cout << "vertex_root_addr = " << vertex_root_addr.value() << "\n";
-
-        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        args_x[0] = 1;
-        args_x[1] = 7;
-
-        cc.insert_action(std::make_shared<SSSPAction>(vertex_root_addr.value(),
-                                                      actionType::application_action,
-                                                      true,
-                                                      2,
-                                                      args_x,
-                                                      eventId::sssp_predicate,
-                                                      eventId::sssp_work,
-                                                      eventId::sssp_diffuse));
-
-        cc.execute_action();
     }
-
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */
