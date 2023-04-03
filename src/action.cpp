@@ -428,16 +428,15 @@ main()
 
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
     constexpr u_int32_t total_compute_cells = 20000;
-omp_set_num_threads(6);
-    std::cout << "omp_get_num_threads = " << omp_get_num_threads() << "\n";
 
-    // Cannot simply openmp parallelize this. It is very atomic.
+       // Cannot simply openmp parallelize this. It is very atomic.
     for (int i = 0; i < total_compute_cells; i++) {
         CCA_chip.push_back(std::make_shared<ComputeCell>(i));
     }
 
 #pragma omp parallel for
     for (int cc_id = 0; cc_id < CCA_chip.size(); cc_id++) {
+
         // for (auto& cc : CCA_chip) {
         //  std::cout << "Populating CC : " << cc->id << "\n\n";
         for (int i = 0; i < 850; i++) {
