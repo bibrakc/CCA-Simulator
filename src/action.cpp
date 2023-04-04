@@ -507,7 +507,7 @@ main()
 
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
     constexpr u_int32_t total_compute_cells = 3;
-    
+
     std::cout << "Populating the CCA Chip: \n";
     // Cannot simply openmp parallelize this. It is very atomic.
     for (int i = 0; i < total_compute_cells; i++) {
@@ -521,63 +521,57 @@ main()
     }
 
     // constexpr u_int32_t total_vertices = 10;
-    constexpr u_int32_t vertices_per_cc = 2;
-    constexpr u_int32_t total_vertices = total_compute_cells * vertices_per_cc;
+    // constexpr u_int32_t vertices_per_cc = 2;
+    constexpr u_int32_t total_vertices = 13; // total_compute_cells * vertices_per_cc;
 
-    std::cout << "Populating vertices on the CCA Chip: \n";
-#pragma omp parallel for
-    for (int cc_id = 0; cc_id < CCA_chip.size(); cc_id++) {
+    std::cout << "Populating vertices cyclically on the CCA Chip: \n";
 
-        //  std::cout << "Populating CC : " << cc->id << "\n\n";
-        for (int i = 0; i < vertices_per_cc; i++) {
+    for (int i = 0; i < total_vertices; i++) {
 
-            // put a vertex in memory
-            SimpleVertex vertex_;
-            vertex_.id = (CCA_chip[cc_id]->id * 2) + i;
+        // put a vertex in memory
+        SimpleVertex vertex_;
+        vertex_.id = i; //(CCA_chip[cc_id]->id * 2) + i;
 
-            /* vertex_.edges[0] = vertex_.id;
-            vertex_.edges[1] = vertex_.id * 10 + vertex_.edges[0];
-            vertex_.edges[2] = vertex_.id * 100 + vertex_.edges[1];
-            vertex_.edges[3] = vertex_.id * 1000 + vertex_.edges[2];
-            vertex_.edges[4] = vertex_.id * 10000 + vertex_.edges[3];
-            vertex_.edges[5] = vertex_.id * 100000 + vertex_.edges[4]; */
-
-            // randomly populate the edges
-            for (int k = 0; k < edges_max; k++) {
-                vertex_.edges[k] = 4;
-            }
-
-            std::optional<Address> vertex_addr =
-                CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_);
-
-            if (!vertex_addr) {
-                std::cout << "Memory not allocated! Vertex ID: " << vertex_.id << "\n";
-                continue;
-            }
-
-            std::cout << "vertex_.id = " << vertex_.id
-                      << ", CCA_chip[cc_id]->id = " << CCA_chip[cc_id]->id
-                      << ", vertex_addr = " << vertex_addr.value() << ", get_vertex_address = "
-                      << get_vertex_address(
-                             vertex_.id, total_vertices, sizeof(SimpleVertex), total_compute_cells)
-                      << "\n";
-
-            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-            args_x[0] = 1;
-            args_x[1] = 7;
-
-            CCA_chip[cc_id]->insert_action(
-                std::make_shared<SSSPAction>(vertex_addr.value(),
-                                             actionType::application_action,
-                                             true,
-                                             2,
-                                             args_x,
-                                             eventId::sssp_predicate,
-                                             eventId::sssp_work,
-                                             eventId::sssp_diffuse));
-
-            // cc->execute_action();
+        // randomly populate the edges
+        for (int k = 0; k < edges_max; k++) {
+            vertex_.edges[k] = 4;
         }
+
+        Address vertex_addr_cyclic = get_vertex_address_cyclic(
+            vertex_.id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+
+        u_int32_t cc_id = vertex_addr_cyclic.cc_id;
+
+        std::optional<Address> vertex_addr =
+            CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_);
+
+        if (!vertex_addr) {
+            std::cout << "Memory not allocated! Vertex ID: " << vertex_.id << "\n";
+            continue;
+        }
+
+        /*
+        std::cout << "vertex_.id = " << vertex_.id
+                  << ", CCA_chip[cc_id]->id = " << CCA_chip[cc_id]->id
+                  << ", vertex_addr = " << vertex_addr.value() << ", get_vertex_address = " <<
+        vertex_addr_cyclic
+                  << "\n";
+        */
+
+        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+        args_x[0] = 1;
+        args_x[1] = 7;
+
+        CCA_chip[cc_id]->insert_action(std::make_shared<SSSPAction>(vertex_addr.value(),
+                                                                    actionType::application_action,
+                                                                    true,
+                                                                    2,
+                                                                    args_x,
+                                                                    eventId::sssp_predicate,
+                                                                    eventId::sssp_work,
+                                                                    eventId::sssp_diffuse));
+
+        // cc->execute_action();
     }
 
     bool global_active_cc = true;
