@@ -211,16 +211,18 @@ typedef std::function<void(std::string)> Task;
 
 enum class computeCellShape : u_int32_t
 {
-    triangular = 0,
+    block_1D = 0,
+    triangular,
     sqaure,
     hexagon,
-    block_1D,
     computeCellShape_count
 };
 
 std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
+    { computeCellShape::block_1D, 2 },
     { computeCellShape::triangular, 3 },
-    { computeCellShape::sqaure, 4 }
+    { computeCellShape::sqaure, 4 },
+    { computeCellShape::hexagon, 6 }
 };
 
 // Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
@@ -273,7 +275,8 @@ class ComputeCell
     void execute_action();
 
     // Execute a single cycle for this Compute Cell
-    // Return whether this compute cell is still active, meaning run_a_cycle needs to be called again
+    // Return whether this compute cell is still active, meaning run_a_cycle needs to be called
+    // again
     bool run_a_cycle();
 
     // Checks if the compute cell is active or not
@@ -296,8 +299,7 @@ class ComputeCell
     // number_of_neighbors is the maximum number of connections a single Compute Cell can
     // architecturally have. A triangular CC has 3 neighbors, a square has 4, and hexagon has 6 etc.
     // TODO: Later read the shape from a config file and initialize it in the constructor
-    inline static u_int32_t number_of_neighbors =
-        computeCellShape_num_channels[computeCellShape::triangular];
+    u_int32_t number_of_neighbors;
 
     // IDs of the neighbors
     std::vector<u_int32_t> neighbor_compute_cells;
@@ -335,11 +337,13 @@ class ComputeCell
     std::queue<Task> task_queue;
 
     // Constructor
-    ComputeCell(u_int32_t id_in)
+    ComputeCell(u_int32_t id_in, computeCellShape shape)
     {
         /* cout << "Inside constructor of ComputeCell\n"; */
 
         this->id = id_in;
+        this->number_of_neighbors = computeCellShape_num_channels[shape];
+        std::cout << "this->number_of_neighbors = " << this->number_of_neighbors << "\n";
 
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
@@ -382,7 +386,7 @@ sssp_diffuse(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args)
 
 // TODO: Maybe later convert these too `std::function`
 //       With perhaps a std::map of the functions
-//       that way we can add new functions
+//       that way we can add new functions at runtime (if needed)
 typedef int (*handler_func)(ComputeCell& cc, int nargs, const std::shared_ptr<int[]>& args);
 
 handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
@@ -458,17 +462,22 @@ main()
     // Insert actions in the queue that operate on objects in memory
 
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
-    constexpr u_int32_t total_compute_cells = 10;
+    constexpr u_int32_t total_compute_cells = 3;
 
     // Cannot simply openmp parallelize this. It is very atomic.
     for (int i = 0; i < total_compute_cells; i++) {
-        CCA_chip.push_back(std::make_shared<ComputeCell>(i));
+
+        CCA_chip.push_back(std::make_shared<ComputeCell>(i, computeCellShape::block_1D));
+
+        u_int32_t right_neighbor = (i == total_compute_cells - 1) ? 0 : i + 1;
+        CCA_chip.back()->add_neighbor(right_neighbor);
+        u_int32_t left_neighbor = (i == 0) ? total_compute_cells - 1 : i - 1;
+        CCA_chip.back()->add_neighbor(left_neighbor);
     }
 
 #pragma omp parallel for
     for (int cc_id = 0; cc_id < CCA_chip.size(); cc_id++) {
 
-        // for (auto& cc : CCA_chip) {
         //  std::cout << "Populating CC : " << cc->id << "\n\n";
         for (int i = 0; i < 2; i++) {
 
