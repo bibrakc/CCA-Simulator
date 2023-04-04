@@ -47,7 +47,8 @@ using namespace std;
 // Or maybe remove this altogether.
 inline constexpr bool debug_code = DEBUG_CODE;
 
-class Address
+// TODO: Maybe make this a std::pair<u_int32_t, u_int32_t>
+struct Address
 {
   public:
     // Global ID of the compute cell where the address resides
@@ -58,6 +59,12 @@ class Address
     // Is true when this address is not pointing to any valid object
     // TODO: later can be used to garbage collection
     // bool is_valid;
+
+    Address()
+    {
+        this->cc_id = -1;
+        this->addr = -1;
+    }
 
     // Copy constructor
     Address(const Address& addr_in)
@@ -123,7 +130,8 @@ class Action
     std::shared_ptr<int[]> args;
 
     // Memory location of the object for which this action is destined
-    std::shared_ptr<Address> vertex_addr;
+    // std::shared_ptr<Address> vertex_addr;
+    Address vertex_addr;
 
     // Predicate
     eventId predicate;
@@ -144,7 +152,7 @@ class Action
 class SSSPAction : public Action
 {
   public:
-    SSSPAction(const Address vertex_addr,
+    SSSPAction(const Address vertex_addr_in,
                actionType type,
                const bool ready,
                const int nargs_in,
@@ -155,7 +163,8 @@ class SSSPAction : public Action
     {
         // std::cout << "sssp action constructor\n";
 
-        this->vertex_addr = std::make_shared<Address>(vertex_addr);
+        // this->vertex_addr = std::make_shared<Address>(vertex_addr);
+        this->vertex_addr = vertex_addr_in;
 
         this->action_type = type;
         this->is_ready = ready;
@@ -182,7 +191,7 @@ inline constexpr u_int32_t edges_max = 2;
 struct SimpleVertex
 {
     u_int32_t id;
-    u_int32_t edges[edges_max];
+    Address edges[edges_max];
     u_int32_t number_of_edges;
     u_int32_t sssp_distance;
 };
@@ -392,9 +401,9 @@ sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_
     for (int i = 0; i < v->number_of_edges; i++) {
         std::string message = "Send from ";
         message += std::to_string(v->id);
-        message += " --> ";
-        message += std::to_string(v->edges[i]);
-        message += "\n";
+        message += " --> (";
+        message +=
+            std::to_string(v->edges[i].cc_id) + ", " + std::to_string(v->edges[i].addr) + ")\n";
         cc.task_queue.push(send_operon(message));
     }
     // cc.task_queue.push([](std::string message) { send_operon(message); });
@@ -420,23 +429,22 @@ ComputeCell::execute_action()
         this->action_queue.pop();
 
         if constexpr (debug_code == true) {
-            // The `*` before action dereferences the `shared_ptr vertex_addr`
-            this->print_SimpleVertex(*action->vertex_addr);
+            this->print_SimpleVertex(action->vertex_addr);
         }
 
         // TODO: actually put the ifs
 
         // if predicate
         event_handlers[get_underlying_enum_index(action->predicate)](
-            *this, *action->vertex_addr, action->nargs, action->args);
+            *this, action->vertex_addr, action->nargs, action->args);
 
         // if work
         event_handlers[get_underlying_enum_index(action->work)](
-            *this, *action->vertex_addr, action->nargs, action->args);
+            *this, action->vertex_addr, action->nargs, action->args);
 
         // if diffuse
         event_handlers[get_underlying_enum_index(action->diffuse)](
-            *this, *action->vertex_addr, action->nargs, action->args);
+            *this, action->vertex_addr, action->nargs, action->args);
         return;
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";
@@ -501,7 +509,7 @@ constexpr u_int32_t total_vertices = 4;
 inline bool
 insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                        Address src_vertex_addr,
-                       u_int32_t dst_vertex_id)
+                       Address dst_vertex_addr)
 {
     SimpleVertex* vertex =
         static_cast<SimpleVertex*>(CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
@@ -510,7 +518,8 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
     // TODO: Later implement the hierarical parallel vertex object
     if (vertex->number_of_edges >= edges_max)
         return false;
-    vertex->edges[vertex->number_of_edges] = dst_vertex_id;
+
+    vertex->edges[vertex->number_of_edges] = dst_vertex_addr;
     vertex->number_of_edges++;
 
     return true;
@@ -526,7 +535,10 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
     Address src_vertex_addr = get_vertex_address_cyclic(
         src_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
 
-    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_id);
+    Address dst_vertex_addr = get_vertex_address_cyclic(
+        dst_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+
+    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
 }
 
 int
