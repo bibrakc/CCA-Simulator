@@ -56,12 +56,12 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
-# Add the executable for the action.cpp source file
-add_executable(${executable_name} action.cpp)
+# Add the executable for the main.cpp source file
+add_executable(${executable_name} main.cpp)
 
 set(includeDirs "/opt/homebrew/opt/libomp/include")
 target_include_directories(${executable_name} PRIVATE ${includeDirs})
 
-set_source_files_properties(action.cpp PROPERTIES LANGUAGE CXX)
+set_source_files_properties(main.cpp PROPERTIES LANGUAGE CXX)
 
 target_link_libraries(${executable_name} PRIVATE OpenMP::OpenMP_CXX)
