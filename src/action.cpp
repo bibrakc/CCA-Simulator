@@ -178,11 +178,12 @@ fun(std::shared_ptr<int> sp)
     std::cout << "in fun(): sp.use_count() == " << sp.use_count() << " (object @ " << sp << ")\n";
 }
 
-inline constexpr u_int32_t edges_max = 10;
+inline constexpr u_int32_t edges_max = 2;
 struct SimpleVertex
 {
     u_int32_t id;
     u_int32_t edges[edges_max];
+    u_int32_t number_of_edges;
     u_int32_t sssp_distance;
 };
 
@@ -192,21 +193,11 @@ print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
     SimpleVertex* vertex = (SimpleVertex*)(memory.get() + obj_addr);
     std::cout << vertex->id << "\n";
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < vertex->number_of_edges; i++) {
         std::cout << vertex->edges[i] << "\n";
     }
     std::cout << std::endl;
 }
-
-/* class TaskQueue
-{
-  public:
-    void insert_task(Task task) { this->task_queue.push(task); }
-
-    bool is_not_empty() { return !this->task_queue.empty(); }
-    std::queue<Task> task_queue;
-};
- */
 
 enum class computeCellShape : u_int32_t
 {
@@ -231,7 +222,7 @@ typedef std::function<void(std::string)> Task;
 class ComputeCell
 {
   public:
-    void* get_object(const Address& addr_in) { return (this->memory.get() + addr_in.addr); }
+    void* get_object(Address addr_in) { return (this->memory.get() + addr_in.addr); }
 
     // TODO: remove this later
     void print_SimpleVertex(const Address& vertex_addr)
@@ -246,7 +237,7 @@ class ComputeCell
         std::cout << "Vertex ID: " << vertex->id << "\n";
 
         for (int i = 0; i < edges_max; i++) {
-            std::cout << vertex->edges[i] << "\n";
+            std::cout << vertex->edges[i] << ", ";
         }
         std::cout << std::endl;
     }
@@ -379,7 +370,7 @@ Task
 send_operon(std::string message)
 {
     return Task([message](std::string xx) {
-        //  cout << "Executed second task! message: " << message << "\n";
+        cout << "Executed second task! message: " << message << "\n";
     });
 }
 
@@ -397,9 +388,8 @@ sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_
     // std::cout << addr  << std::endl;
 
     // cc.print_SimpleVertex(addr);
-    SimpleVertex* v = (SimpleVertex*)cc.get_object(addr);
-    for (int i = 0; i < edges_max; i++) {
-        // cc.task_queue.push(send_operon(std::string("6666666666")));
+    SimpleVertex* v = static_cast<SimpleVertex*>(cc.get_object(addr));
+    for (int i = 0; i < v->number_of_edges; i++) {
         std::string message = "Send from ";
         message += std::to_string(v->id);
         message += " --> ";
@@ -433,6 +423,9 @@ ComputeCell::execute_action()
             // The `*` before action dereferences the `shared_ptr vertex_addr`
             this->print_SimpleVertex(*action->vertex_addr);
         }
+
+        // TODO: actually put the ifs
+
         // if predicate
         event_handlers[get_underlying_enum_index(action->predicate)](
             *this, *action->vertex_addr, action->nargs, action->args);
@@ -498,6 +491,44 @@ get_vertex_address_cyclic(u_int32_t vertex_id,
     return Address(CC_id, offset);
 }
 
+constexpr u_int32_t total_compute_cells = 3;
+constexpr u_int32_t total_vertices = 4;
+
+// Note: We could have put this function as part of the ComputeCell class but then it would have
+// introduced application specific functionality into the compute cell. Perhaps, if we really want
+// to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
+// no difference on the simulation. This is just a software engineering decision.
+inline bool
+insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
+                       Address src_vertex_addr,
+                       u_int32_t dst_vertex_id)
+{
+    SimpleVertex* vertex =
+        static_cast<SimpleVertex*>(CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
+
+    // Check if edges are not full
+    // TODO: Later implement the hierarical parallel vertex object
+    if (vertex->number_of_edges >= edges_max)
+        return false;
+    vertex->edges[vertex->number_of_edges] = dst_vertex_id;
+    vertex->number_of_edges++;
+
+    return true;
+}
+
+inline bool
+insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
+                         u_int32_t src_vertex_id,
+                         u_int32_t dst_vertex_id)
+{
+
+    std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n";
+    Address src_vertex_addr = get_vertex_address_cyclic(
+        src_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+
+    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_id);
+}
+
 int
 main()
 {
@@ -506,7 +537,6 @@ main()
     // Insert actions in the queue that operate on objects in memory
 
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
-    constexpr u_int32_t total_compute_cells = 3;
 
     std::cout << "Populating the CCA Chip: \n";
     // Cannot simply openmp parallelize this. It is very atomic.
@@ -520,23 +550,21 @@ main()
         CCA_chip.back()->add_neighbor(left_neighbor);
     }
 
-    // constexpr u_int32_t total_vertices = 10;
-    // constexpr u_int32_t vertices_per_cc = 2;
-    constexpr u_int32_t total_vertices = 13; // total_compute_cells * vertices_per_cc;
-
-    std::cout << "Populating vertices cyclically on the CCA Chip: \n";
+    std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
     for (int i = 0; i < total_vertices; i++) {
 
         // put a vertex in memory
         SimpleVertex vertex_;
-        vertex_.id = i; //(CCA_chip[cc_id]->id * 2) + i;
+        vertex_.id = i;
+        vertex_.number_of_edges = 0;
 
         // randomly populate the edges
-        for (int k = 0; k < edges_max; k++) {
-            vertex_.edges[k] = 4;
-        }
-
+        /*    for (int k = 0; k < edges_max; k++) {
+               vertex_.edges[k] = 4;
+               vertex_.number_of_edges++;
+           }
+    */
         Address vertex_addr_cyclic = get_vertex_address_cyclic(
             vertex_.id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
 
@@ -550,13 +578,11 @@ main()
             continue;
         }
 
-        /*
-        std::cout << "vertex_.id = " << vertex_.id
+        /* std::cout << "vertex_.id = " << vertex_.id
                   << ", CCA_chip[cc_id]->id = " << CCA_chip[cc_id]->id
                   << ", vertex_addr = " << vertex_addr.value() << ", get_vertex_address = " <<
         vertex_addr_cyclic
-                  << "\n";
-        */
+                  << "\n"; */
 
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         args_x[0] = 1;
@@ -570,8 +596,14 @@ main()
                                                                     eventId::sssp_predicate,
                                                                     eventId::sssp_work,
                                                                     eventId::sssp_diffuse));
+    }
 
-        // cc->execute_action();
+    std::cout << "Populating vertices by inserting edges: \n";
+    for (int i = 0; i < total_vertices; i++) {
+
+        if (!insert_edge_by_vertex_id(CCA_chip, i, i + 1)) {
+            std::cout << "Error! Edge not inserted successfully.\n";
+        }
     }
 
     bool global_active_cc = true;
