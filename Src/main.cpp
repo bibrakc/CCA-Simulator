@@ -30,9 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdlib.h>
+#include "Action.hpp"
+#include "Address.hpp"
+#include "Operon.hpp"
+#include "Task.hpp"
 
 #include <iostream>
+#include <stdlib.h>
+
 #include <map>
 #include <queue>
 
@@ -40,114 +45,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
 
-using namespace std;
-
 // TODO: find a good way to do this, perhaps but this in a separate file
 // Compile with: -DDEBUG_CODE=true
 // Or maybe remove this altogether.
 inline constexpr bool debug_code = DEBUG_CODE;
-
-// TODO: Maybe make this a std::pair<u_int32_t, u_int32_t>
-struct Address
-{
-  public:
-    // Global ID of the compute cell where the address resides
-    u_int32_t cc_id;
-    // The offset to the memory of the compute cell
-    u_int32_t addr;
-
-    // Is true when this address is not pointing to any valid object
-    // TODO: later can be used to garbage collection
-    // bool is_valid;
-
-    Address()
-    {
-        this->cc_id = -1;
-        this->addr = -1;
-    }
-
-    // Copy constructor
-    Address(const Address& addr_in)
-    {
-        // std::cout << "in Copy constructor Address" << std::endl;
-        this->cc_id = addr_in.cc_id;
-        this->addr = addr_in.addr;
-        // this->is_valid = addr_in.is_valid;
-    }
-
-    Address(int id, int address_in) //, bool valid)
-    {
-        this->cc_id = id;
-        this->addr = address_in;
-        // this->is_valid = valid;
-    }
-    friend ostream& operator<<(ostream& os, const Address& ad)
-    {
-        os << "(" << ad.cc_id << ", " << ad.addr << ")";
-        return os;
-    }
-};
-
-template<typename E>
-constexpr typename std::underlying_type<E>::type
-get_underlying_enum_index(E e)
-{
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
-enum class eventId : u_int32_t
-{
-    sssp_predicate = 0,
-    sssp_work,
-    sssp_diffuse,
-    eventId_count
-};
-
-enum class actionType : u_int32_t
-{
-    internal_action = 0,
-    application_action,
-    actionType_count
-};
-
-// TODO: Should this be virtual?
-class Action
-{
-  public:
-    // Type of the action: application type, internal runtime work action,
-    // or any other
-    actionType action_type;
-
-    // Sets to `true` when all dependencies for this action are satisfied
-    // and this action is ready to be executed
-    // TODO: Think about how to use it in complex settings
-    bool is_ready;
-
-    // Number of arguments to the action function
-    int nargs;
-
-    // Payload that contains the data like the arguments to the action function
-    std::shared_ptr<int[]> args;
-
-    // Memory location of the object for which this action is destined
-    // std::shared_ptr<Address> vertex_addr;
-    Address vertex_addr;
-
-    // Predicate
-    eventId predicate;
-
-    // Work function that does some computation and may change the state
-    // of the object for which this action is destined
-    eventId work;
-
-    // Generate actions along the edges for the diffusion
-    eventId diffuse;
-
-    // We can't just delete the args here since we don't know
-    ~Action()
-    { /* std::cout << "In Action destructor" << std::endl; */
-    }
-};
 
 class SSSPAction : public Action
 {
@@ -177,15 +78,6 @@ class SSSPAction : public Action
         this->diffuse = diffuse_in;
     }
 };
-
-typedef std::pair<u_int32_t, Action> Operon;
-
-// TODO: remove this later or put in a util to be used for debuging
-void
-fun(std::shared_ptr<int> sp)
-{
-    std::cout << "in fun(): sp.use_count() == " << sp.use_count() << " (object @ " << sp << ")\n";
-}
 
 inline constexpr u_int32_t edges_max = 2;
 struct SimpleVertex
@@ -224,9 +116,6 @@ std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
     { computeCellShape::hexagon, 6 }
 };
 
-// Task and TaskQueue related
-typedef std::function<void(std::string)> Task;
-
 // Note this class is not thread-safe, which is ok as we don't intend to use multithreading.
 class ComputeCell
 {
@@ -245,7 +134,7 @@ class ComputeCell
             vertex_addr); // (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
         std::cout << "Vertex ID: " << vertex->id << "\n";
 
-        for (int i = 0; i < edges_max; i++) {
+        for (int i = 0; i < vertex->number_of_edges; i++) {
             std::cout << vertex->edges[i] << ", ";
         }
         std::cout << std::endl;
@@ -375,20 +264,6 @@ sssp_work(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr
     return 0;
 }
 
-Task
-send_operon(std::string message)
-{
-    return Task([message](std::string xx) {
-        cout << "Executed second task! message: " << message << "\n";
-    });
-}
-
-/* Task
-X()
-{
-    return Task([](std::string message) { cout << "Task X\n"; });
-}
- */
 int
 sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
@@ -621,7 +496,7 @@ main()
     bool global_active_cc = true;
     u_long total_cycles = 0;
     std::cout << "Starting Execution on the CCA Chip: \n";
-    auto start = chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
     while (global_active_cc) {
         global_active_cc = false;
@@ -635,20 +510,23 @@ main()
         }
         total_cycles++;
     }
-    auto end = chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << total_cycles << "\n";
-    cout << "Elapsed time in nanoseconds: "
-         << chrono::duration_cast<chrono::nanoseconds>(end - start).count() << " ns" << endl;
+    std::cout << "Elapsed time in nanoseconds: "
+              << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns"
+              << std::endl;
 
-    cout << "Elapsed time in microseconds: "
-         << chrono::duration_cast<chrono::microseconds>(end - start).count() << " µs" << endl;
+    std::cout << "Elapsed time in microseconds: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " µs"
+              << std::endl;
 
-    cout << "Elapsed time in milliseconds: "
-         << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << endl;
+    std::cout << "Elapsed time in milliseconds: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
+              << std::endl;
 
-    cout << "Elapsed time in seconds: "
-         << chrono::duration_cast<chrono::seconds>(end - start).count() << " sec\n";
+    std::cout << "Elapsed time in seconds: "
+              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */

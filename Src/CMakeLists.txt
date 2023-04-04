@@ -62,6 +62,10 @@ add_executable(${executable_name} main.cpp)
 set(includeDirs "/opt/homebrew/opt/libomp/include")
 target_include_directories(${executable_name} PRIVATE ${includeDirs})
 
+# Add the header file directory
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+
 set_source_files_properties(main.cpp PROPERTIES LANGUAGE CXX)
 
 target_link_libraries(${executable_name} PRIVATE OpenMP::OpenMP_CXX)
