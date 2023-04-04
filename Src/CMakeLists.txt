@@ -36,4 +36,3 @@ target_include_directories(${executable_name} PRIVATE ${includeDirs})
 set_source_files_properties(action.cpp PROPERTIES LANGUAGE CXX)
 
 target_link_libraries(${executable_name} PRIVATE OpenMP::OpenMP_CXX)
-
