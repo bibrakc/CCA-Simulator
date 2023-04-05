@@ -61,8 +61,7 @@ class SSSPAction : public Action
     {
         // std::cout << "sssp action constructor\n";
 
-        // this->vertex_addr = std::make_shared<Address>(vertex_addr);
-        this->vertex_addr = vertex_addr_in;
+        this->obj_addr = vertex_addr_in;
 
         this->action_type = type;
         this->is_ready = ready;

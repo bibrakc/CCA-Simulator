@@ -89,7 +89,24 @@ typedef int (*handler_func)(ComputeCell& cc,
 // TODO: This really needs to be a map or something so as to no make it constant and be able to extend it
 inline static handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
 
+// TODO: move this to application
+void
+print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
+{
+    if (vertex_addr.cc_id != cc.id) {
+        std::cout << "Invalid addr! The vertex does not exist on this CC\n";
+        return;
+    }
 
+    SimpleVertex* vertex = (SimpleVertex*)cc.get_object(
+        vertex_addr); // (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
+    std::cout << "Vertex ID: " << vertex->id << "\n";
+
+    for (int i = 0; i < vertex->number_of_edges; i++) {
+        std::cout << vertex->edges[i] << ", ";
+    }
+    std::cout << std::endl;
+}
 void
 ComputeCell::execute_action()
 {
@@ -99,22 +116,22 @@ ComputeCell::execute_action()
         this->action_queue.pop();
 
         if constexpr (debug_code == true) {
-            this->print_SimpleVertex(action->vertex_addr);
+            print_SimpleVertex(*this, action->obj_addr);
         }
 
         // TODO: actually put the ifs
 
         // if predicate
         event_handlers[get_underlying_enum_index(action->predicate)](
-            *this, action->vertex_addr, action->nargs, action->args);
+            *this, action->obj_addr, action->nargs, action->args);
 
         // if work
         event_handlers[get_underlying_enum_index(action->work)](
-            *this, action->vertex_addr, action->nargs, action->args);
+            *this, action->obj_addr, action->nargs, action->args);
 
         // if diffuse
         event_handlers[get_underlying_enum_index(action->diffuse)](
-            *this, action->vertex_addr, action->nargs, action->args);
+            *this, action->obj_addr, action->nargs, action->args);
         return;
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";

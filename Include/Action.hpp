@@ -62,8 +62,7 @@ class Action
     std::shared_ptr<int[]> args;
 
     // Memory location of the object for which this action is destined
-    // std::shared_ptr<Address> vertex_addr;
-    Address vertex_addr;
+    Address obj_addr;
 
     // Predicate
     eventId predicate;

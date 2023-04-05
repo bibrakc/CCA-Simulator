@@ -35,17 +35,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 #include "Address.hpp"
+#include "Constants.hpp"
 #include "Memory_Management.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
-#include "Constants.hpp"
 
 #include <map>
 #include <queue>
 #include <stdlib.h>
-
-
-
 
 inline constexpr u_int32_t edges_max = 2;
 struct SimpleVertex
@@ -76,25 +73,7 @@ static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
 class ComputeCell
 {
   public:
-    void* get_object(Address addr_in) { return (this->memory.get() + addr_in.addr); }
-
-    // TODO: remove this later
-    void print_SimpleVertex(const Address& vertex_addr)
-    {
-        if (vertex_addr.cc_id != this->id) {
-            std::cout << "Invalid addr! The vertex does not exist on this CC\n";
-            return;
-        }
-
-        SimpleVertex* vertex = (SimpleVertex*)this->get_object(
-            vertex_addr); // (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
-        std::cout << "Vertex ID: " << vertex->id << "\n";
-
-        for (int i = 0; i < vertex->number_of_edges; i++) {
-            std::cout << vertex->edges[i] << ", ";
-        }
-        std::cout << std::endl;
-    }
+    void* get_object(Address addr_in) const { return (this->memory.get() + addr_in.addr); }
 
     // Return the memory used in bytes
     u_int32_t get_memory_used() { return this->memory_curr_ptr - this->memory_raw_ptr; }
@@ -203,17 +182,7 @@ class ComputeCell
     /* ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; } */
 };
 
-/* void
-print_SimpleVertex(u_int32_t obj_addr, const std::unique_ptr<char[]>& memory)
-{
-    SimpleVertex* vertex = (SimpleVertex*)(memory.get() + obj_addr);
-    std::cout << vertex->id << "\n";
 
-    for (int i = 0; i < vertex->number_of_edges; i++) {
-        std::cout << vertex->edges[i] << "\n";
-    }
-    std::cout << std::endl;
-} */
 
 inline constexpr u_int32_t total_compute_cells = 3;
 inline constexpr u_int32_t total_vertices = 4;
