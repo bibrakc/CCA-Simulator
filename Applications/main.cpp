@@ -78,8 +78,6 @@ class SSSPAction : public Action
     }
 };
 
-// Configuration related to the CCA Chip
-u_int32_t total_compute_cells;
 // Configuration related to the input data graph
 u_int32_t total_vertices;
 
@@ -115,10 +113,10 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
 
     std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n";
     Address src_vertex_addr = get_vertex_address_cyclic(
-        src_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+        src_vertex_id, total_vertices, sizeof(SimpleVertex), CCA_chip.size());
 
     Address dst_vertex_addr = get_vertex_address_cyclic(
-        dst_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+        dst_vertex_id, total_vertices, sizeof(SimpleVertex), CCA_chip.size());
 
     return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
 }
@@ -139,7 +137,7 @@ main(int argc, char** argv)
     parser.run_and_exit_if_error();
 
     // Configuration related to the CCA Chip
-    total_compute_cells = parser.get<u_int32_t>("cc");
+    u_int32_t total_compute_cells = parser.get<u_int32_t>("cc");
 
     // Configuration related to the input data graph
     total_vertices = parser.get<u_int32_t>("v");
