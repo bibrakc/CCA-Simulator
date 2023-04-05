@@ -32,21 +32,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 #include "Address.hpp"
-#include "Operon.hpp"
-#include "Enums.hpp"
-#include "Constants.hpp"
 #include "ComputeCell.hpp"
+#include "Constants.hpp"
+#include "Enums.hpp"
+#include "Operon.hpp"
 
+#include "cmdparser.hpp"
 #include "memory_management.hpp"
 
+#include <chrono>
 #include <iostream>
-#include <stdlib.h>
 #include <map>
 #include <queue>
-#include <chrono>
+#include <stdlib.h>
 
 #include <omp.h>
 
+// TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
+// this inheritence makes sense later when the project matures.
 class SSSPAction : public Action
 {
   public:
@@ -75,20 +78,80 @@ class SSSPAction : public Action
     }
 };
 
+// Configuration related to the CCA Chip
+u_int32_t total_compute_cells;
+// Configuration related to the input data graph
+u_int32_t total_vertices;
+
+// Note: We could have put this function as part of the ComputeCell class but then it would have
+// introduced application specific functionality into the compute cell. Perhaps, if we really want
+// to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
+// no difference on the simulation. This is just a software engineering decision.
+inline bool
+insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
+                       Address src_vertex_addr,
+                       Address dst_vertex_addr)
+{
+    SimpleVertex* vertex =
+        static_cast<SimpleVertex*>(CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
+
+    // Check if edges are not full
+    // TODO: Later implement the hierarical parallel vertex object
+    if (vertex->number_of_edges >= edges_max)
+        return false;
+
+    vertex->edges[vertex->number_of_edges] = dst_vertex_addr;
+    vertex->number_of_edges++;
+
+    return true;
+}
+// TODO: Later write a class of CCA_Chip that contains it's info about total_compute_cells, shape
+// etc. So that we have less global variables and states
+inline bool
+insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
+                         u_int32_t src_vertex_id,
+                         u_int32_t dst_vertex_id)
+{
+
+    std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n";
+    Address src_vertex_addr = get_vertex_address_cyclic(
+        src_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+
+    Address dst_vertex_addr = get_vertex_address_cyclic(
+        dst_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+
+    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
+}
+
+void
+configure_parser(cli::Parser& parser)
+{
+    parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
+    parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
+}
 
 int
-main()
+main(int argc, char** argv)
 {
-    // Create an Action queue and a *memory location
-    // Populate the memory somehow
-    // Insert actions in the queue that operate on objects in memory
+    // Parse the commandline input
+    cli::Parser parser(argc, argv);
+    configure_parser(parser);
+    parser.run_and_exit_if_error();
 
+    // Configuration related to the CCA Chip
+    total_compute_cells = parser.get<u_int32_t>("cc");
+
+    // Configuration related to the input data graph
+    total_vertices = parser.get<u_int32_t>("v");
+
+    // Declare the CCA Chip that is composed of ComputeCell(s)
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
 
     std::cout << "Populating the CCA Chip: \n";
     // Cannot simply openmp parallelize this. It is very atomic.
     for (int i = 0; i < total_compute_cells; i++) {
 
+        // Create individual compute cells of shape computeCellShape::block_1D
         CCA_chip.push_back(std::make_shared<ComputeCell>(i, computeCellShape::block_1D));
 
         u_int32_t right_neighbor = (i == total_compute_cells - 1) ? 0 : i + 1;

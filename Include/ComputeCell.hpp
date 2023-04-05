@@ -183,48 +183,4 @@ class ComputeCell
     /* ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; } */
 };
 
-
-
-inline constexpr u_int32_t total_compute_cells = 3;
-inline constexpr u_int32_t total_vertices = 4;
-
-// Note: We could have put this function as part of the ComputeCell class but then it would have
-// introduced application specific functionality into the compute cell. Perhaps, if we really want
-// to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
-// no difference on the simulation. This is just a software engineering decision.
-inline bool
-insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
-                       Address src_vertex_addr,
-                       Address dst_vertex_addr)
-{
-    SimpleVertex* vertex =
-        static_cast<SimpleVertex*>(CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
-
-    // Check if edges are not full
-    // TODO: Later implement the hierarical parallel vertex object
-    if (vertex->number_of_edges >= edges_max)
-        return false;
-
-    vertex->edges[vertex->number_of_edges] = dst_vertex_addr;
-    vertex->number_of_edges++;
-
-    return true;
-}
-
-inline bool
-insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
-                         u_int32_t src_vertex_id,
-                         u_int32_t dst_vertex_id)
-{
-
-    std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n";
-    Address src_vertex_addr = get_vertex_address_cyclic(
-        src_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
-
-    Address dst_vertex_addr = get_vertex_address_cyclic(
-        dst_vertex_id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
-
-    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
-}
-
 #endif // COMPUTE_CELL_HPP
