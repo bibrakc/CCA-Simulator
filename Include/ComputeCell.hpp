@@ -36,9 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Action.hpp"
 #include "Address.hpp"
 #include "Constants.hpp"
-#include "Memory_Management.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
+
+#include "memory_management.hpp"
 
 #include <map>
 #include <queue>

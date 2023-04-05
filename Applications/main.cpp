@@ -33,11 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Action.hpp"
 #include "Address.hpp"
 #include "Operon.hpp"
-//#include "Task.hpp"
 #include "Enums.hpp"
-#include "Memory_Management.hpp"
 #include "Constants.hpp"
 #include "ComputeCell.hpp"
+
+#include "memory_management.hpp"
 
 #include <iostream>
 #include <stdlib.h>

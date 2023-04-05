@@ -58,8 +58,8 @@ find_package(OpenMP REQUIRED)
 
 # Add the executable for the main.cpp source file
 add_executable(${executable_name} main.cpp 
-               Memory_Management.cpp
-               ComputeCell.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/../Src/memory_management.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/../Src/ComputeCell.cpp
                #Task.cpp
                )
 

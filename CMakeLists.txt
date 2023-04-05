@@ -34,4 +34,4 @@ project(CCA-Simulator LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 # Add the source directory
-add_subdirectory(Src)
+add_subdirectory(Applications)
