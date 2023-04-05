@@ -103,8 +103,7 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
 
     return true;
 }
-// TODO: Later write a class of CCA_Chip that contains it's info about total_compute_cells, shape
-// etc. So that we have less global variables and states
+
 inline bool
 insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t src_vertex_id,
