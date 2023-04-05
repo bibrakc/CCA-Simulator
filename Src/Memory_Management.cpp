@@ -30,54 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// TODO: Try and see if `#pragma once` can be used here
-#ifndef ADDRESS_HPP
-#define ADDRESS_HPP
+#include "Address.hpp"
 
-
-#include <iostream>
-#include <stdlib.h>
-
-
-// TODO: Maybe make this a std::pair<u_int32_t, u_int32_t>
-struct Address
+Address
+get_vertex_address_cyclic(u_int32_t vertex_id,
+                          u_int32_t total_vertices,
+                          size_t size_of_vertex,
+                          u_int32_t total_compute_cells)
 {
-  public:
-    // Global ID of the compute cell where the address resides
-    u_int32_t cc_id;
-    // The offset to the memory of the compute cell
-    u_int32_t addr;
 
-    // Is true when this address is not pointing to any valid object
-    // TODO: later can be used for garbage collection
-    // bool is_valid;
+    u_int32_t CC_id = vertex_id % total_compute_cells;
+    u_int32_t offset = (vertex_id / total_compute_cells) * size_of_vertex;
 
-    Address()
-    {
-        this->cc_id = -1;
-        this->addr = -1;
-    }
-
-    // Copy constructor
-    Address(const Address& addr_in)
-    {
-        
-        this->cc_id = addr_in.cc_id;
-        this->addr = addr_in.addr;
-        
-    }
-
-    Address(int id, int address_in)
-    {
-        this->cc_id = id;
-        this->addr = address_in;
-        
-    }
-    friend std::ostream& operator<<(std::ostream& os, const Address& ad)
-    {
-        os << "(" << ad.cc_id << ", " << ad.addr << ")";
-        return os;
-    }
-};
-
-#endif // ADDRESS_HPP
+    return Address(CC_id, offset);
+}

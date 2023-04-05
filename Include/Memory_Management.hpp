@@ -30,19 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// TODO: Try and see if `#pragma once` can be used here
-#ifndef TASK_HPP
-#define TASK_HPP
+#ifndef MEMORY_MANAGEMENT_HPP
+#define MEMORY_MANAGEMENT_HPP
 
-// Task and TaskQueue related
-typedef std::function<void(std::string)> Task;
+#include "Address.hpp"
 
-Task
-send_operon(std::string message)
-{
-    return Task([message](std::string xx) {
-        std::cout << "Executed second task! message: " << message << "\n";
-    });
-}
+Address
+get_vertex_address_cyclic(u_int32_t vertex_id,
+                          u_int32_t total_vertices,
+                          size_t size_of_vertex,
+                          u_int32_t total_compute_cells);
 
-#endif // TASK_HPP
+#endif // MEMORY_MANAGEMENT_HPP

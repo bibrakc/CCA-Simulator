@@ -31,9 +31,51 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // TODO: Try and see if `#pragma once` can be used here
-#ifndef OPERON_HPP
-#define OPERON_HPP
+#ifndef ADDRESS_HPP
+#define ADDRESS_HPP
 
-typedef std::pair<u_int32_t, Action> Operon;
 
-#endif // OPERON_HPP
+#include <iostream>
+#include <stdlib.h>
+
+struct Address
+{
+  public:
+    // Global ID of the compute cell where the address resides
+    u_int32_t cc_id;
+    // The offset to the memory of the compute cell
+    u_int32_t addr;
+
+    // Is true when this address is not pointing to any valid object
+    // TODO: later can be used for garbage collection
+    // bool is_valid;
+
+    Address()
+    {
+        this->cc_id = -1;
+        this->addr = -1;
+    }
+
+    // Copy constructor
+    Address(const Address& addr_in)
+    {
+        
+        this->cc_id = addr_in.cc_id;
+        this->addr = addr_in.addr;
+        
+    }
+
+    Address(int id, int address_in)
+    {
+        this->cc_id = id;
+        this->addr = address_in;
+        
+    }
+    friend std::ostream& operator<<(std::ostream& os, const Address& ad)
+    {
+        os << "(" << ad.cc_id << ", " << ad.addr << ")";
+        return os;
+    }
+};
+
+#endif // ADDRESS_HPP
