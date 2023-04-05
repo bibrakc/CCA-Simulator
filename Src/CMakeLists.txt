@@ -59,6 +59,8 @@ find_package(OpenMP REQUIRED)
 # Add the executable for the main.cpp source file
 add_executable(${executable_name} main.cpp 
                Memory_Management.cpp
+               ComputeCell.cpp
+               #Task.cpp
                )
 
 set(includeDirs "/opt/homebrew/opt/libomp/include")

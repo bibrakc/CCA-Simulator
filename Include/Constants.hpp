@@ -30,16 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Task.hpp"
-#include <stdlib.h>
+#ifndef CONSTANTS_HPP
+#define CONSTANTS_HPP
 
+// Compile with: -DDEBUG_CODE=true/false
+inline constexpr bool debug_code = DEBUG_CODE;
 
-
-/* Task
-send_operon(std::string message)
-{
-    return Task([message](std::string xx) {
-        std::cout << "Executed second task! message: " << message << "\n";
-    });
-}
- */
+#endif // CONSTANTS_HPP

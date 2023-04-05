@@ -39,10 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef std::function<void(std::string)> Task;
 
 Task
-send_operon(std::string message){
-    return Task([message](std::string xx) {
-        std::cout << "Executed second task! message: " << message << "\n";
-    });
-}
+send_operon(std::string message);
 
 #endif // TASK_HPP
