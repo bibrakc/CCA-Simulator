@@ -34,6 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
+#include "Enums.hpp"
+
+#include "Memory_Management.hpp"
 
 #include <iostream>
 #include <stdlib.h>
@@ -359,19 +362,6 @@ ComputeCell::run_a_cycle()
     // Return the active status of this CC and later it can be used to update the global active
     // compute cells count
     return this->is_compute_cell_active();
-}
-
-Address
-get_vertex_address_cyclic(u_int32_t vertex_id,
-                          u_int32_t total_vertices,
-                          size_t size_of_vertex,
-                          u_int32_t total_compute_cells)
-{
-
-    u_int32_t CC_id = vertex_id % total_compute_cells;
-    u_int32_t offset = (vertex_id / total_compute_cells) * size_of_vertex;
-
-    return Address(CC_id, offset);
 }
 
 constexpr u_int32_t total_compute_cells = 3;

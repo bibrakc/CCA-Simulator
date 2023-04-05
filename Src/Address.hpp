@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 
 
-
 // TODO: Maybe make this a std::pair<u_int32_t, u_int32_t>
 struct Address
 {
@@ -50,7 +49,7 @@ struct Address
     u_int32_t addr;
 
     // Is true when this address is not pointing to any valid object
-    // TODO: later can be used to garbage collection
+    // TODO: later can be used for garbage collection
     // bool is_valid;
 
     Address()
@@ -62,17 +61,17 @@ struct Address
     // Copy constructor
     Address(const Address& addr_in)
     {
-        // std::cout << "in Copy constructor Address" << std::endl;
+        
         this->cc_id = addr_in.cc_id;
         this->addr = addr_in.addr;
-        // this->is_valid = addr_in.is_valid;
+        
     }
 
-    Address(int id, int address_in) //, bool valid)
+    Address(int id, int address_in)
     {
         this->cc_id = id;
         this->addr = address_in;
-        // this->is_valid = valid;
+        
     }
     friend std::ostream& operator<<(std::ostream& os, const Address& ad)
     {

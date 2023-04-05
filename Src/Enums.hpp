@@ -30,54 +30,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef ACTION_HPP
-#define ACTION_HPP
+// TODO: Try and see if `#pragma once` can be used here
+#ifndef ENUMS_HPP
+#define ENUMS_HPP
 
-#include "Address.hpp"
-#include "Enums.hpp"
+#include <stdlib.h>
 
-enum class actionType : u_int32_t
+template<typename E>
+constexpr typename std::underlying_type<E>::type
+get_underlying_enum_index(E e)
 {
-    internal_action = 0,
-    application_action,
-    actionType_count
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
+
+// TODO: later perhaps convert this to a std::map or something so that the user can easily put
+// his/her actions at runtime, especially if this is going to be a pre-compiled library.
+enum class eventId : u_int32_t
+{
+    sssp_predicate = 0,
+    sssp_work,
+    sssp_diffuse,
+    eventId_count
 };
 
-class Action
-{
-  public:
-    // Type of the action: application type, internal runtime work action,
-    // or any other
-    actionType action_type;
-
-    // Sets to `true` when all dependencies for this action are satisfied
-    // and this action is ready to be executed
-    // TODO: Think about how to use it in complex settings
-    bool is_ready;
-
-    // Number of arguments to the action function
-    int nargs;
-
-    // Payload that contains the data like the arguments to the action function
-    std::shared_ptr<int[]> args;
-
-    // Memory location of the object for which this action is destined
-    // std::shared_ptr<Address> vertex_addr;
-    Address vertex_addr;
-
-    // Predicate
-    eventId predicate;
-
-    // Work function that does some computation and may change the state
-    // of the object for which this action is destined
-    eventId work;
-
-    // Generate actions along the edges for the diffusion
-    eventId diffuse;
-
-    // We can't just delete the args here since we don't know
-    ~Action()
-    { /* std::cout << "In Action destructor" << std::endl; */
-    }
-};
-#endif // ACTION_HPP
+#endif // ENUMS_HPP
