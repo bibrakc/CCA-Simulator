@@ -58,9 +58,9 @@ enum class computeCellShape : u_int32_t
 {
     block_1D = 0,
     triangular,
-    sqaure,
+    sqaure, // block 2D
     hexagon,
-    computeCellShape_count
+    computeCellShape_invalid
 };
 
 static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
@@ -121,8 +121,17 @@ class ComputeCell
         this->neighbor_compute_cells.push_back(neighbor_compute_cell_id);
     }
 
+    static std::string get_compute_cell_shape_name(computeCellShape shape);
+
+    static computeCellShape get_compute_cell_shape_enum(std::string shape);
+
+    u_int32_t get_number_of_neighbors();
+
     // Identity of the Compute Cell
     u_int32_t id;
+
+    // Shape of the Compute Cell
+    computeCellShape shape;
 
     // Communication of the Compute Cell
 

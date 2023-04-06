@@ -124,7 +124,12 @@ void
 configure_parser(cli::Parser& parser)
 {
     parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
-    parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
+    parser.set_required<u_int32_t>(
+        "d",
+        "dimension",
+        "Dimnesion of the shape. For example: A square is x^2. Only provide d (not d x d)");
+    parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
+    // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
 }
 
 int
@@ -135,11 +140,27 @@ main(int argc, char** argv)
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
-    // Configuration related to the CCA Chip
-    u_int32_t total_compute_cells = parser.get<u_int32_t>("cc");
-
     // Configuration related to the input data graph
     total_vertices = parser.get<u_int32_t>("v");
+
+    // Configuration related to the CCA Chip
+    std::string shape_arg = parser.get<std::string>("s");
+    computeCellShape shape_of_compute_cells;
+    u_int32_t CCA_dim;
+    u_int32_t total_compute_cells;
+
+    if (shape_arg == "square") {
+        shape_of_compute_cells = computeCellShape::sqaure;
+        CCA_dim = parser.get<u_int32_t>("d");
+        total_compute_cells = CCA_dim * CCA_dim;
+    } else {
+        std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
+        exit(0);
+    }
+
+    std::cout << "CCA Chip Details:\n\tShape: "
+              << ComputeCell::get_compute_cell_shape_name(shape_of_compute_cells) << "\n\tDim: " << CCA_dim
+              << " x " << CCA_dim << "\n\tTotal Compute Cells: " << total_compute_cells << "\n";
 
     // Declare the CCA Chip that is composed of ComputeCell(s)
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;

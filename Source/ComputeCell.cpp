@@ -40,7 +40,6 @@ send_operon(std::string message)
     });
 }
 
-
 int
 sssp_predicate(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
@@ -86,7 +85,8 @@ typedef int (*handler_func)(ComputeCell& cc,
                             int nargs,
                             const std::shared_ptr<int[]>& args);
 
-// TODO: This really needs to be a map or something so as to no make it constant and be able to extend it
+// TODO: This really needs to be a map or something so as to no make it constant and be able to
+// extend it
 inline static handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
 
 // TODO: move this to application
@@ -172,3 +172,64 @@ ComputeCell::run_a_cycle()
     // compute cells count
     return this->is_compute_cell_active();
 }
+
+std::string
+ComputeCell::get_compute_cell_shape_name(computeCellShape shape)
+{
+    switch (shape) {
+        case (computeCellShape::block_1D):
+            return std::string("block_1D");
+            break;
+        case (computeCellShape::triangular):
+            return std::string("triangular");
+            break;
+        case (computeCellShape::sqaure):
+            return std::string("sqaure");
+            break;
+        case (computeCellShape::hexagon):
+            return std::string("hexagon");
+            break;
+
+        default:
+            return std::string("Invalid Shape");
+            break;
+    }
+}
+
+computeCellShape
+ComputeCell::get_compute_cell_shape_enum(std::string shape)
+{
+    if (shape == "block_1D") {
+        return computeCellShape::block_1D;
+    } else if (shape == "triangular") {
+        return computeCellShape::triangular;
+    } else if (shape == "sqaure") {
+        return computeCellShape::sqaure;
+    } else if (shape == "hexagon") {
+        return computeCellShape::hexagon;
+    } else {
+        return computeCellShape::computeCellShape_invalid;
+    }
+}
+
+u_int32_t ComputeCell::get_number_of_neighbors()
+    {
+        switch (this->shape) {
+            case (computeCellShape::block_1D):
+                return 2;
+                break;
+            case (computeCellShape::triangular):
+                return 3;
+                break;
+            case (computeCellShape::sqaure):
+                return 4;
+                break;
+            case (computeCellShape::hexagon):
+                return 6;
+                break;
+
+            default:
+                return 0;
+                break;
+        }
+    }

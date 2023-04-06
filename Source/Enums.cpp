@@ -30,28 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef ENUMS_HPP
-#define ENUMS_HPP
-
 #include <stdlib.h>
 
-// TODO: Not sure why it gives errors when the definition is moved to Enum.cpp, same errors of
-// Task.cpp. That is why currently, it is `inline`
-template<typename E>
-inline constexpr typename std::underlying_type<E>::type
+/* template<typename E>
+constexpr typename std::underlying_type<E>::type
 get_underlying_enum_index(E e)
 {
     return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
-// TODO: later perhaps convert this to a std::map or something so that the user can easily put
-// his/her actions at runtime, especially if this is going to be a pre-compiled library.
-enum class eventId : u_int32_t
-{
-    sssp_predicate = 0,
-    sssp_work,
-    sssp_diffuse,
-    eventId_count
-};
-
-#endif // ENUMS_HPP
+} */
