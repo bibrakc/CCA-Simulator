@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name CCASimulator)
+set(executable_name SSSP_CCASimulator)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -56,22 +56,19 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
-# Add the executable for the main.cpp source file
-add_executable(${executable_name} main.cpp 
-               ${CMAKE_CURRENT_SOURCE_DIR}/../Source/memory_management.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/../Source/ComputeCell.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/../Source/Enums.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/../Source/CCASimulator.cpp
-               #Task.cpp
-               )
+add_library(CCASim
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/memory_management.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/ComputeCell.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/Enums.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/CCASimulator.cpp
+            #Task.cpp
+            )
 
 set(includeDirs "/opt/homebrew/opt/libomp/include")
-target_include_directories(${executable_name} PRIVATE ${includeDirs})
+target_include_directories(CCASim PUBLIC ${includeDirs} ${CMAKE_CURRENT_SOURCE_DIR}/../Include ${CMAKE_CURRENT_SOURCE_DIR}/../Include/Datastructure ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
 
-# Add the header file directory
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Include ${CMAKE_CURRENT_SOURCE_DIR}/../Include/Datastructure ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
+# Add the executable for the cca_sssp.cpp source file
+add_executable(${executable_name} cca_sssp.cpp)
 
-
-set_source_files_properties(main.cpp PROPERTIES LANGUAGE CXX)
-
-target_link_libraries(${executable_name} PRIVATE OpenMP::OpenMP_CXX)
+set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
+target_link_libraries(${executable_name} PRIVATE CCASim OpenMP::OpenMP_CXX)
