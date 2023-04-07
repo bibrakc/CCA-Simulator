@@ -61,6 +61,7 @@ add_executable(${executable_name} main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/../Source/memory_management.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/../Source/ComputeCell.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/../Source/Enums.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/../Source/CCASimulator.cpp
                #Task.cpp
                )
 
