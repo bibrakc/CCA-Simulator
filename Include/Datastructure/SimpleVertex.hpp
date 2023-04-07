@@ -30,13 +30,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#ifndef SimpleVertex_HPP
+#define SimpleVertex_HPP
+
 #include "Address.hpp"
 
-Address
-get_object_address_cyclic(u_int32_t object_id, size_t size_of_object, u_int32_t total_compute_cells)
+inline constexpr u_int32_t edges_max = 2;
+template<typename Address_T>
+struct SimpleVertex
 {
-    u_int32_t CC_id = object_id % total_compute_cells;
-    u_int32_t offset = (object_id / total_compute_cells) * size_of_object;
+    u_int32_t id{};
+    Address_T edges[edges_max]{};
+    u_int32_t number_of_edges{};
+    // u_int32_t sssp_distance;
+    SimpleVertex(u_int32_t id_in)
+        : id(id_in)
+        , number_of_edges(0)
+    {
+        /* std::cout << "SimpleVertex Constructor\n"; */
+    }
+    SimpleVertex() {/*  std::cout << "SimpleVertex default Constructor\n"; */ }
+    ~SimpleVertex() { /* std::cout << "SimpleVertex Destructor\n"; */ }
+};
 
-    return Address(CC_id, offset);
-}
+#endif // SimpleVertex_HPP

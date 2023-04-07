@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ComputeCell.hpp"
+#include "SimpleVertex.hpp"
 
 Task
 send_operon(std::string message)
@@ -40,12 +41,15 @@ send_operon(std::string message)
     });
 }
 
+// TODO: move this to application
 int
 sssp_predicate(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
     // std::cout << "in sssp_predicate" << std::endl;
     return 0;
 }
+
+// TODO: move this to application
 int
 sssp_work(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
@@ -57,6 +61,7 @@ sssp_work(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr
     return 0;
 }
 
+// TODO: move this to application
 int
 sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
@@ -64,8 +69,8 @@ sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_
     // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
     // std::cout << addr  << std::endl;
 
-    // cc.print_SimpleVertex(addr);
-    SimpleVertex* v = static_cast<SimpleVertex*>(cc.get_object(addr));
+    //cc.print_SimpleVertex(addr);
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
         std::string message = "Send from ";
         message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
@@ -98,7 +103,7 @@ print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
         return;
     }
 
-    SimpleVertex* vertex = (SimpleVertex*)cc.get_object(
+    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(
         vertex_addr); // (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
     std::cout << "Vertex ID: " << vertex->id << "\n";
 
@@ -106,6 +111,70 @@ print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
         std::cout << vertex->edges[i] << ", ";
     }
     std::cout << std::endl;
+}
+
+// Get the object memory location at address addr_in
+void*
+ComputeCell::get_object(Address addr_in) const
+{
+    return (this->memory.get() + addr_in.addr);
+}
+
+// Return the memory used in bytes
+u_int32_t
+ComputeCell::get_memory_used()
+{
+    return this->memory_curr_ptr - this->memory_raw_ptr;
+}
+
+// In bytes
+u_int32_t
+ComputeCell::get_memory_curr_ptr_offset()
+{
+    return get_memory_used();
+}
+
+// Get memory left in bytes
+u_int32_t
+ComputeCell::memory_available_in_bytes()
+{
+    return this->memory_size_in_bytes - get_memory_used();
+}
+
+// Returns the offset in memory for this newly created object
+std::optional<Address>
+ComputeCell::create_object_in_memory(void* obj, size_t size_of_obj)
+{
+    if (this->memory_available_in_bytes() < size_of_obj) {
+        return std::nullopt;
+    }
+
+    u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
+    memcpy(this->memory_curr_ptr, obj, size_of_obj);
+    this->memory_curr_ptr += size_of_obj;
+
+    return Address(this->id, obj_memory_addr_offset);
+}
+
+void
+ComputeCell::insert_action(const std::shared_ptr<Action>& action)
+{
+    this->action_queue.push(action);
+}
+
+// Checks if the compute cell is active or not
+// TODO: when communication is added then update checks for the communication buffer too
+bool
+ComputeCell::is_compute_cell_active()
+{
+    return (!this->action_queue.empty() || !this->task_queue.empty());
+}
+
+void
+ComputeCell::add_neighbor(
+    std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>> neighbor_compute_cell)
+{
+    this->neighbor_compute_cells.push_back(neighbor_compute_cell);
 }
 void
 ComputeCell::execute_action()

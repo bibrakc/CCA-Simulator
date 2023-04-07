@@ -32,14 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 #include "Address.hpp"
+#include "CCASimulator.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
 #include "Enums.hpp"
 #include "Operon.hpp"
-#include "CCASimulator.hpp"
 
 #include "cmdparser.hpp"
 #include "memory_management.hpp"
+
+// Datastructures
+#include "SimpleVertex.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -48,8 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 
 #include <omp.h>
-
-
 
 // TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
 // this inheritence makes sense later when the project matures.
@@ -96,8 +97,8 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                        Address src_vertex_addr,
                        Address dst_vertex_addr)
 {
-    SimpleVertex* vertex =
-        static_cast<SimpleVertex*>(CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
+    SimpleVertex<Address>* vertex = static_cast<SimpleVertex<Address>*>(
+        CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
 
     // Check if edges are not full
     // TODO: Later implement the hierarical parallel vertex object
@@ -116,12 +117,12 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t dst_vertex_id)
 {
 
-    std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n";
-    Address src_vertex_addr = get_vertex_address_cyclic(
-        src_vertex_id, total_vertices, sizeof(SimpleVertex), CCA_chip.size());
+   /*  std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n"; */
+    Address src_vertex_addr =
+        get_object_address_cyclic(src_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
-    Address dst_vertex_addr = get_vertex_address_cyclic(
-        dst_vertex_id, total_vertices, sizeof(SimpleVertex), CCA_chip.size());
+    Address dst_vertex_addr =
+        get_object_address_cyclic(dst_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
     return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
 }
@@ -138,16 +139,35 @@ configure_parser(cli::Parser& parser)
     // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
 }
 
-
-
-struct Graph
+class Graph
 {
+  public:
     u_int32_t total_vertices;
+    std::shared_ptr<SimpleVertex<u_int32_t>[]> vertices;
 
+    // TODO: Read this from file
     Graph(u_int32_t total_vertices_in)
-        : total_vertices(total_vertices_in)
     {
+        /* std::cout << "In Graph Constructor\n"; */
+        this->total_vertices = total_vertices_in;
+        this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
+
+        for (int i = 0; i < this->total_vertices; i++) {
+            /* std::cout << "In Graph Constructor -- Adding edge in vertex " << i << "\n"; */
+            this->vertices[i].id = i;
+
+            // Check if edges are not full
+            if (this->vertices[i].number_of_edges >= edges_max) {
+                std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
+                continue;
+            }
+
+            this->vertices[i].edges[this->vertices[i].number_of_edges] = i + 1;
+            this->vertices[i].number_of_edges++;
+        }
+        /* std::cout << "Leaving Graph Constructor\n"; */
     }
+    ~Graph() {/*  std::cout << "In Graph Destructor\n";  */}
 };
 
 int
@@ -190,48 +210,56 @@ main(int argc, char** argv)
     Graph input_graph(total_vertices);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
+    { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
+      // and we don't want it's constructor to be called everytime.
+        
+        SimpleVertex<Address> vertex_(0);
+        for (int i = 0; i < input_graph.total_vertices; i++) {
 
-    for (int i = 0; i < input_graph.total_vertices; i++) {
+            // Put a vertex in memory
+            vertex_.id = i;
 
-        // Put a vertex in memory
-        SimpleVertex vertex_(i);
-        // Get the Address of this vertex if it were to be cyclically allocated across the CCA chip
-        Address vertex_addr_cyclic =
-            get_vertex_address_cyclic(vertex_.id,
-                                      total_vertices,
-                                      sizeof(SimpleVertex),
-                                      cca_sqaure_simulator.total_compute_cells);
+            // Get the Address of this vertex if it were to be cyclically allocated across the CCA
+            // chip Note here we use SimpleVertex<Address> since the object is now going to be sent
+            // to the CCA chip and there the address type is Address (not u_int32_t ID)
+            Address vertex_addr_cyclic =
+                get_object_address_cyclic(vertex_.id,
+                                          sizeof(SimpleVertex<Address>),
+                                          cca_sqaure_simulator.total_compute_cells);
 
-        u_int32_t cc_id = vertex_addr_cyclic.cc_id;
+            // Get the ID of the compute cell where this vertex is to be allocated
+            u_int32_t cc_id = vertex_addr_cyclic.cc_id;
 
-        std::optional<Address> vertex_addr = cca_sqaure_simulator.allocate_and_insert_object_on_cc(
-            cc_id, &vertex_, sizeof(SimpleVertex));
-        //  cca_sqaure_simulator.CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_);
+            std::optional<Address> vertex_addr =
+                cca_sqaure_simulator.allocate_and_insert_object_on_cc(
+                    cc_id, &vertex_, sizeof(SimpleVertex<Address>));
 
-        if (!vertex_addr) {
-            std::cout << "Memory not allocated! Vertex ID: " << vertex_.id << "\n";
-            continue;
+            if (!vertex_addr) {
+                std::cout << "Memory not allocated! Vertex ID: " << input_graph.vertices[i].id
+                          << "\n";
+                continue;
+            }
+
+           /*  std::cout << "input_graph.vertices[i].id = " << input_graph.vertices[i].id
+                      << ", cca_sqaure_simulator.CCA_chip[cc_id]->id = "
+                      << cca_sqaure_simulator.CCA_chip[cc_id]->id
+                      << ", vertex_addr = " << vertex_addr.value()
+                      << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
+
+            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+            args_x[0] = 1;
+            args_x[1] = 7;
+
+            cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
+                std::make_shared<SSSPAction>(vertex_addr.value(),
+                                             actionType::application_action,
+                                             true,
+                                             2,
+                                             args_x,
+                                             eventId::sssp_predicate,
+                                             eventId::sssp_work,
+                                             eventId::sssp_diffuse));
         }
-
-        /* std::cout << "vertex_.id = " << vertex_.id
-                  << ", CCA_chip[cc_id]->id = " << CCA_chip[cc_id]->id
-                  << ", vertex_addr = " << vertex_addr.value() << ", get_vertex_address = " <<
-        vertex_addr_cyclic
-                  << "\n"; */
-
-        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        args_x[0] = 1;
-        args_x[1] = 7;
-
-        cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
-            std::make_shared<SSSPAction>(vertex_addr.value(),
-                                         actionType::application_action,
-                                         true,
-                                         2,
-                                         args_x,
-                                         eventId::sssp_predicate,
-                                         eventId::sssp_work,
-                                         eventId::sssp_diffuse));
     }
 
     std::cout << "Populating vertices by inserting edges: \n";

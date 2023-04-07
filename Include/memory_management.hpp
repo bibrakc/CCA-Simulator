@@ -36,9 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 
 Address
-get_vertex_address_cyclic(u_int32_t vertex_id,
-                          u_int32_t total_vertices,
-                          size_t size_of_vertex,
+get_object_address_cyclic(u_int32_t object_id,
+                          size_t size_of_object,
                           u_int32_t total_compute_cells);
 
 #endif // MEMORY_MANAGEMENT_HPP

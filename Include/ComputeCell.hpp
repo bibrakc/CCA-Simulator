@@ -45,19 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-inline constexpr u_int32_t edges_max = 2;
-struct SimpleVertex
-{
-    u_int32_t id;
-    Address edges[edges_max];
-    u_int32_t number_of_edges;
-    // u_int32_t sssp_distance;
-    SimpleVertex(u_int32_t id_in)
-        : id(id_in)
-        , number_of_edges(0)
-    {
-    }
-};
+
 
 enum class computeCellShape : u_int32_t
 {
@@ -69,9 +57,9 @@ enum class computeCellShape : u_int32_t
 };
 
 // TODO: Currently, decided to not use this and use a function
-// (ComputeCell::get_number_of_neighbors()) that returns the number of neighbors This was designed
-// to offer flexibity when the simulator (if or may) get converted to a compiled library and the
-// user adds new shapes.
+// (ComputeCell::get_number_of_neighbors()) that returns the number of neighbors. This map was
+// designed to offer flexibity when the simulator (if or may) get converted to a compiled library
+// and the user adds new shapes.
 /* static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
     { computeCellShape::block_1D, 2 },
     { computeCellShape::triangular, 3 },
@@ -83,30 +71,20 @@ enum class computeCellShape : u_int32_t
 class ComputeCell
 {
   public:
-    void* get_object(Address addr_in) const { return (this->memory.get() + addr_in.addr); }
+    // Get the object memory location at address addr_in
+    void* get_object(Address addr_in) const;
 
     // Return the memory used in bytes
-    u_int32_t get_memory_used() { return this->memory_curr_ptr - this->memory_raw_ptr; }
+    u_int32_t get_memory_used();
 
     // In bytes
-    u_int32_t get_memory_curr_ptr_offset() { return get_memory_used(); }
+    u_int32_t get_memory_curr_ptr_offset();
 
     // Get memory left in bytes
-    u_int32_t memory_available_in_bytes() { return this->memory_size_in_bytes - get_memory_used(); }
+    u_int32_t memory_available_in_bytes();
 
     // Returns the offset in memory for this newly created object
-    std::optional<Address> create_object_in_memory(void* obj, size_t size_of_obj)
-    {
-        if (this->memory_available_in_bytes() < size_of_obj) {
-            return std::nullopt;
-        }
-
-        u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
-        memcpy(this->memory_curr_ptr, obj, size_of_obj);
-        this->memory_curr_ptr += size_of_obj;
-
-        return Address(this->id, obj_memory_addr_offset);
-    }
+    std::optional<Address> create_object_in_memory(void* obj, size_t size_of_obj);
 
     friend std::ostream& operator<<(std::ostream& os, const ComputeCell& cc)
     {
@@ -123,7 +101,7 @@ class ComputeCell
         return os;
     }
 
-    void insert_action(const std::shared_ptr<Action>& action) { this->action_queue.push(action); }
+    void insert_action(const std::shared_ptr<Action>& action);
 
     void execute_action();
 
@@ -134,15 +112,9 @@ class ComputeCell
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update checks for the communication buffer too
-    bool is_compute_cell_active()
-    {
-        return (!this->action_queue.empty() || !this->task_queue.empty());
-    }
+    bool is_compute_cell_active();
 
-    void add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>> neighbor_compute_cell)
-    {
-        this->neighbor_compute_cells.push_back(neighbor_compute_cell);
-    }
+    void add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>> neighbor_compute_cell);
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
 
@@ -186,7 +158,7 @@ class ComputeCell
 
     // Memory of the Compute Cell in bytes.
     // TODO: This can be `static` since it is a set once and real-only and is the same for all CCs.
-    u_int32_t memory_size_in_bytes; // = 2 * 1024 * 1024; // 2 MB
+    u_int32_t memory_size_in_bytes;
 
     // The memory
     std::unique_ptr<char[]> memory;
