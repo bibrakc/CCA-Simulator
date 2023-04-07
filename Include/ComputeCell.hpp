@@ -108,6 +108,21 @@ class ComputeCell
         return Address(this->id, obj_memory_addr_offset);
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const ComputeCell& cc)
+    {
+        os << "CC Id: " << cc.id << ", CC Coordinates: (" << cc.cooridates.first << ", "
+           << cc.cooridates.second << ")\n";
+
+        os << "\t Neighbors: ";
+        for (auto& neighbor : cc.neighbor_compute_cells) {
+            auto [neighbor_id, neighbor_coordinate] = neighbor;
+            os << "[" << neighbor_id << ", (" << neighbor_coordinate.first << ", "
+               << neighbor_coordinate.second << ")] ";
+        }
+        os << "\n";
+        return os;
+    }
+
     void insert_action(const std::shared_ptr<Action>& action) { this->action_queue.push(action); }
 
     void execute_action();
@@ -124,9 +139,9 @@ class ComputeCell
         return (!this->action_queue.empty() || !this->task_queue.empty());
     }
 
-    void add_neighbor(u_int32_t neighbor_compute_cell_id)
+    void add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>> neighbor_compute_cell)
     {
-        this->neighbor_compute_cells.push_back(neighbor_compute_cell_id);
+        this->neighbor_compute_cells.push_back(neighbor_compute_cell);
     }
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
@@ -150,10 +165,12 @@ class ComputeCell
     // number_of_neighbors is the maximum number of connections a single Compute Cell can
     // architecturally have. A triangular CC has 3 neighbors, a square has 4, and hexagon has 6 etc.
     // TODO: Later read the shape from a config file and initialize it in the constructor
+    // TODO: This seems to be redundant unless we really want to discriminate the std::nullopt,
+    // later
     u_int32_t number_of_neighbors;
 
-    // IDs of the neighbors
-    std::vector<u_int32_t> neighbor_compute_cells;
+    // IDs and Coordinates of the neighbors
+    std::vector<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cells;
     // Per neighbor operon recieve queue.
     std::vector<std::queue<Operon>> channel_buffer_per_neighbor;
 
