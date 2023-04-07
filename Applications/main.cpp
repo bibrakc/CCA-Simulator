@@ -76,6 +76,9 @@ class SSSPAction : public Action
         this->work = work_in;
         this->diffuse = diffuse_in;
     }
+    ~SSSPAction()
+    { /* std::cout << "SSSPAction destructor\n"; */
+    }
 };
 
 // Configuration related to the input data graph
@@ -132,6 +135,96 @@ configure_parser(cli::Parser& parser)
     // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
 }
 
+inline std::pair<u_int32_t, u_int32_t>
+get_compute_cell_coordinates(u_int32_t cc_id,
+                             computeCellShape shape_of_compute_cells,
+                             u_int32_t dim)
+{
+    return std::pair<u_int32_t, u_int32_t>(cc_id / dim, cc_id % dim);
+}
+
+struct Graph
+{
+    u_int32_t total_vertices;
+
+    Graph(u_int32_t total_vertices_in)
+        : total_vertices(total_vertices_in)
+    {
+    }
+};
+
+class CCASimulator
+{
+  public:
+    computeCellShape shape_of_compute_cells;
+    u_int32_t dim;
+    u_int32_t total_compute_cells;
+
+    // Declare the CCA Chip that is composed of ComputeCell(s)
+    std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
+
+    bool global_active_cc;
+    u_long total_cycles;
+
+    CCASimulator(computeCellShape shape_in, u_int32_t dim_in, u_int32_t total_compute_cells_in)
+        : shape_of_compute_cells(shape_in)
+        , dim(dim_in)
+        , total_compute_cells(total_compute_cells_in)
+    {
+        this->global_active_cc = false;
+        this->total_cycles = 0;
+        this->create_the_chip();
+    }
+
+    void create_the_chip()
+    {
+
+        // Cannot simply openmp parallelize this. It is very atomic.
+        for (int i = 0; i < this->total_compute_cells; i++) {
+
+            // Create individual compute cells of shape computeCellShape::block_1D
+            this->CCA_chip.push_back(std::make_shared<ComputeCell>(
+                i,
+                shape_of_compute_cells,
+                get_compute_cell_coordinates(i, shape_of_compute_cells, this->dim),
+                2 * 1024 * 1024)); // 2 MB
+
+            // TODO: create neighbor links based on the shape of that cc
+            u_int32_t right_neighbor = (i == total_compute_cells - 1) ? 0 : i + 1;
+            this->CCA_chip.back()->add_neighbor(right_neighbor);
+            u_int32_t left_neighbor = (i == 0) ? total_compute_cells - 1 : i - 1;
+            this->CCA_chip.back()->add_neighbor(left_neighbor);
+        }
+    }
+
+    std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
+                                                            void* obj,
+                                                            size_t size_of_obj)
+    {
+        return this->CCA_chip[cc_id]->create_object_in_memory(obj, size_of_obj);
+    }
+
+    void run_simulation()
+    {
+        // TODO: later we can remove this and implement the termination detection itself. But for
+        // now this works.
+        this->global_active_cc = true;
+        this->total_cycles = 0;
+
+        while (this->global_active_cc) {
+            this->global_active_cc = false;
+
+#pragma omp parallel for reduction(| : this->global_active_cc)
+            for (int i = 0; i < this->CCA_chip.size(); i++) {
+                if (this->CCA_chip[i]->is_compute_cell_active()) {
+                    global_active_cc |= this->CCA_chip[i]->run_a_cycle();
+                }
+            }
+            total_cycles++;
+        }
+    }
+};
+
 int
 main(int argc, char** argv)
 {
@@ -150,7 +243,7 @@ main(int argc, char** argv)
     u_int32_t total_compute_cells;
 
     if (shape_arg == "square") {
-        shape_of_compute_cells = computeCellShape::sqaure;
+        shape_of_compute_cells = computeCellShape::square;
         CCA_dim = parser.get<u_int32_t>("d");
         total_compute_cells = CCA_dim * CCA_dim;
     } else {
@@ -158,42 +251,37 @@ main(int argc, char** argv)
         exit(0);
     }
 
+    std::cout << "Create the simulation environment that includes the CCA Chip: \n";
+    // Create the simulation environment
+    CCASimulator cca_sqaure_simulator(shape_of_compute_cells, CCA_dim, total_compute_cells);
+
     std::cout << "CCA Chip Details:\n\tShape: "
-              << ComputeCell::get_compute_cell_shape_name(shape_of_compute_cells) << "\n\tDim: " << CCA_dim
-              << " x " << CCA_dim << "\n\tTotal Compute Cells: " << total_compute_cells << "\n";
+              << ComputeCell::get_compute_cell_shape_name(
+                     cca_sqaure_simulator.shape_of_compute_cells)
+              << "\n\tDim: " << cca_sqaure_simulator.dim << " x " << cca_sqaure_simulator.dim
+              << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells << "\n";
 
-    // Declare the CCA Chip that is composed of ComputeCell(s)
-    std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
-
-    std::cout << "Populating the CCA Chip: \n";
-    // Cannot simply openmp parallelize this. It is very atomic.
-    for (int i = 0; i < total_compute_cells; i++) {
-
-        // Create individual compute cells of shape computeCellShape::block_1D
-        CCA_chip.push_back(std::make_shared<ComputeCell>(i, computeCellShape::block_1D));
-
-        u_int32_t right_neighbor = (i == total_compute_cells - 1) ? 0 : i + 1;
-        CCA_chip.back()->add_neighbor(right_neighbor);
-        u_int32_t left_neighbor = (i == 0) ? total_compute_cells - 1 : i - 1;
-        CCA_chip.back()->add_neighbor(left_neighbor);
-    }
+    // Generate or read the input data graph
+    Graph input_graph(total_vertices);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
-    for (int i = 0; i < total_vertices; i++) {
+    for (int i = 0; i < input_graph.total_vertices; i++) {
 
-        // put a vertex in memory
-        SimpleVertex vertex_;
-        vertex_.id = i;
-        vertex_.number_of_edges = 0;
-
-        Address vertex_addr_cyclic = get_vertex_address_cyclic(
-            vertex_.id, total_vertices, sizeof(SimpleVertex), total_compute_cells);
+        // Put a vertex in memory
+        SimpleVertex vertex_(i);
+        // Get the Address of this vertex if it were to be cyclically allocated across the CCA chip
+        Address vertex_addr_cyclic =
+            get_vertex_address_cyclic(vertex_.id,
+                                      total_vertices,
+                                      sizeof(SimpleVertex),
+                                      cca_sqaure_simulator.total_compute_cells);
 
         u_int32_t cc_id = vertex_addr_cyclic.cc_id;
 
-        std::optional<Address> vertex_addr =
-            CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_);
+        std::optional<Address> vertex_addr = cca_sqaure_simulator.allocate_and_insert_object_on_cc(
+            cc_id, &vertex_, sizeof(SimpleVertex));
+        //  cca_sqaure_simulator.CCA_chip[cc_id]->create_object_in_memory<SimpleVertex>(vertex_);
 
         if (!vertex_addr) {
             std::cout << "Memory not allocated! Vertex ID: " << vertex_.id << "\n";
@@ -210,44 +298,32 @@ main(int argc, char** argv)
         args_x[0] = 1;
         args_x[1] = 7;
 
-        CCA_chip[cc_id]->insert_action(std::make_shared<SSSPAction>(vertex_addr.value(),
-                                                                    actionType::application_action,
-                                                                    true,
-                                                                    2,
-                                                                    args_x,
-                                                                    eventId::sssp_predicate,
-                                                                    eventId::sssp_work,
-                                                                    eventId::sssp_diffuse));
+        cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
+            std::make_shared<SSSPAction>(vertex_addr.value(),
+                                         actionType::application_action,
+                                         true,
+                                         2,
+                                         args_x,
+                                         eventId::sssp_predicate,
+                                         eventId::sssp_work,
+                                         eventId::sssp_diffuse));
     }
 
     std::cout << "Populating vertices by inserting edges: \n";
-    for (int i = 0; i < total_vertices; i++) {
+    for (int i = 0; i < input_graph.total_vertices; i++) {
 
-        if (!insert_edge_by_vertex_id(CCA_chip, i, i + 1)) {
+        if (!insert_edge_by_vertex_id(cca_sqaure_simulator.CCA_chip, i, i + 1)) {
             std::cout << "Error! Edge not inserted successfully.\n";
         }
     }
 
-    bool global_active_cc = true;
-    u_long total_cycles = 0;
     std::cout << "Starting Execution on the CCA Chip: \n";
     auto start = std::chrono::steady_clock::now();
 
-    while (global_active_cc) {
-        global_active_cc = false;
-        // for (auto& cc : CCA_chip) {
-#pragma omp parallel for reduction(| : global_active_cc)
-        for (int i = 0; i < CCA_chip.size(); i++) {
-            // std::cout << "Running CC : " << cc->id << "\n\n";
-            if (CCA_chip[i]->is_compute_cell_active()) {
-                global_active_cc |= CCA_chip[i]->run_a_cycle();
-            }
-        }
-        total_cycles++;
-    }
+    cca_sqaure_simulator.run_simulation();
     auto end = std::chrono::steady_clock::now();
 
-    std::cout << "Total Cycles: " << total_cycles << "\n";
+    std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
     std::cout << "Elapsed time in nanoseconds: "
               << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns"
               << std::endl;

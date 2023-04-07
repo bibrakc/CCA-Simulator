@@ -74,9 +74,8 @@ class Action
     // Generate actions along the edges for the diffusion
     eventId diffuse;
 
-    // We can't just delete the args here since we don't know
-    ~Action()
-    { /* std::cout << "In Action destructor" << std::endl; */
+    virtual ~Action()
+    { /* std::cout << "Action class destructor" << std::endl;  */
     }
 };
 #endif // ACTION_HPP

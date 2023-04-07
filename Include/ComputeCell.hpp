@@ -51,24 +51,33 @@ struct SimpleVertex
     u_int32_t id;
     Address edges[edges_max];
     u_int32_t number_of_edges;
-    u_int32_t sssp_distance;
+    // u_int32_t sssp_distance;
+    SimpleVertex(u_int32_t id_in)
+        : id(id_in)
+        , number_of_edges(0)
+    {
+    }
 };
 
 enum class computeCellShape : u_int32_t
 {
     block_1D = 0,
     triangular,
-    sqaure, // block 2D
+    square, // block 2D
     hexagon,
     computeCellShape_invalid
 };
 
-static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
+// TODO: Currently, decided to not use this and use a function
+// (ComputeCell::get_number_of_neighbors()) that returns the number of neighbors This was designed
+// to offer flexibity when the simulator (if or may) get converted to a compiled library and the
+// user adds new shapes.
+/* static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
     { computeCellShape::block_1D, 2 },
     { computeCellShape::triangular, 3 },
     { computeCellShape::sqaure, 4 },
     { computeCellShape::hexagon, 6 }
-};
+}; */
 
 // Note this class is not thread-safe.
 class ComputeCell
@@ -86,16 +95,15 @@ class ComputeCell
     u_int32_t memory_available_in_bytes() { return this->memory_size_in_bytes - get_memory_used(); }
 
     // Returns the offset in memory for this newly created object
-    template<typename T>
-    std::optional<Address> create_object_in_memory(T obj)
+    std::optional<Address> create_object_in_memory(void* obj, size_t size_of_obj)
     {
-        if (this->memory_available_in_bytes() < sizeof(T)) {
+        if (this->memory_available_in_bytes() < size_of_obj) {
             return std::nullopt;
         }
 
         u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
-        memcpy(this->memory_curr_ptr, &obj, sizeof(T));
-        this->memory_curr_ptr = this->memory_curr_ptr + sizeof(T);
+        memcpy(this->memory_curr_ptr, obj, size_of_obj);
+        this->memory_curr_ptr += size_of_obj;
 
         return Address(this->id, obj_memory_addr_offset);
     }
@@ -125,15 +133,19 @@ class ComputeCell
 
     static computeCellShape get_compute_cell_shape_enum(std::string shape);
 
-    u_int32_t get_number_of_neighbors();
+    static u_int32_t get_number_of_neighbors(computeCellShape);
 
-    // Identity of the Compute Cell
+    // Identity of the Compute Cell.
     u_int32_t id;
+
+    // Coordinates of this Compute Cell in the CCA chip. It depends on the Chip dinemsions and
+    // shapes of CCs.
+    std::pair<u_int32_t, u_int32_t> cooridates;
 
     // Shape of the Compute Cell
     computeCellShape shape;
 
-    // Communication of the Compute Cell
+    // Communication of the Compute Cell.
 
     // number_of_neighbors is the maximum number of connections a single Compute Cell can
     // architecturally have. A triangular CC has 3 neighbors, a square has 4, and hexagon has 6 etc.
@@ -155,8 +167,11 @@ class ComputeCell
     // semantics/pragmatics of CCA.
     std::vector<Operon> send_recv_channel_buffer_per_neighbor;
 
-    // Memory of the Compute Cell in bytes
-    static constexpr u_int32_t memory_size_in_bytes = 2 * 1024 * 1024; // 2 MB
+    // Memory of the Compute Cell in bytes.
+    // TODO: This can be `static` since it is a set once and real-only and is the same for all CCs.
+    u_int32_t memory_size_in_bytes; // = 2 * 1024 * 1024; // 2 MB
+
+    // The memory
     std::unique_ptr<char[]> memory;
     char* memory_raw_ptr;
     char* memory_curr_ptr;
@@ -176,20 +191,23 @@ class ComputeCell
     std::queue<Task> task_queue;
 
     // Constructor
-    ComputeCell(u_int32_t id_in, computeCellShape shape)
+    ComputeCell(u_int32_t id_in,
+                computeCellShape shape_in,
+                std::pair<u_int32_t, u_int32_t> cooridates_in,
+                u_int32_t memory_per_cc_in_bytes)
     {
         /* cout << "Inside constructor of ComputeCell\n"; */
 
         this->id = id_in;
-        this->number_of_neighbors = computeCellShape_num_channels[shape];
-        // std::cout << "this->number_of_neighbors = " << this->number_of_neighbors << "\n";
+        this->shape = shape_in;
+        this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
+        this->cooridates = cooridates_in;
 
+        this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
     }
-
-    /* ~ComputeCell() { cout << "Inside destructor of ComputeCell\n"; } */
 };
 
 #endif // COMPUTE_CELL_HPP

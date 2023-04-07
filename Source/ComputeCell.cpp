@@ -183,8 +183,8 @@ ComputeCell::get_compute_cell_shape_name(computeCellShape shape)
         case (computeCellShape::triangular):
             return std::string("triangular");
             break;
-        case (computeCellShape::sqaure):
-            return std::string("sqaure");
+        case (computeCellShape::square):
+            return std::string("square");
             break;
         case (computeCellShape::hexagon):
             return std::string("hexagon");
@@ -204,7 +204,7 @@ ComputeCell::get_compute_cell_shape_enum(std::string shape)
     } else if (shape == "triangular") {
         return computeCellShape::triangular;
     } else if (shape == "sqaure") {
-        return computeCellShape::sqaure;
+        return computeCellShape::square;
     } else if (shape == "hexagon") {
         return computeCellShape::hexagon;
     } else {
@@ -212,24 +212,25 @@ ComputeCell::get_compute_cell_shape_enum(std::string shape)
     }
 }
 
-u_int32_t ComputeCell::get_number_of_neighbors()
-    {
-        switch (this->shape) {
-            case (computeCellShape::block_1D):
-                return 2;
-                break;
-            case (computeCellShape::triangular):
-                return 3;
-                break;
-            case (computeCellShape::sqaure):
-                return 4;
-                break;
-            case (computeCellShape::hexagon):
-                return 6;
-                break;
+u_int32_t
+ComputeCell::get_number_of_neighbors(computeCellShape shape_in)
+{
+    switch (shape_in) {
+        case (computeCellShape::block_1D):
+            return 2;
+            break;
+        case (computeCellShape::triangular):
+            return 3;
+            break;
+        case (computeCellShape::square):
+            return 4;
+            break;
+        case (computeCellShape::hexagon):
+            return 6;
+            break;
 
-            default:
-                return 0;
-                break;
-        }
+        default:
+            return 0;
+            break;
     }
+}
