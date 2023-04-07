@@ -56,16 +56,20 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
+set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Source)
 add_library(CCASim
-            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/memory_management.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/ComputeCell.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/Enums.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/../Source/CCASimulator.cpp
+            ${SourceDirectory}/memory_management.cpp
+            ${SourceDirectory}/ComputeCell.cpp
+            ${SourceDirectory}/Enums.cpp
+            ${SourceDirectory}/CCASimulator.cpp
             #Task.cpp
             )
 
-set(includeDirs "/opt/homebrew/opt/libomp/include")
-target_include_directories(CCASim PUBLIC ${includeDirs} ${CMAKE_CURRENT_SOURCE_DIR}/../Include ${CMAKE_CURRENT_SOURCE_DIR}/../Include/Datastructure ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
+set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
+set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Include)
+set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
+
+target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory} ${IncludeDirectory} ${IncludeDirectory}/Datastructure ${UtilitiesDirectory})
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
