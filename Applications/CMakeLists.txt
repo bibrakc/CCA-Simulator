@@ -52,6 +52,7 @@ if(APPLE)
         set(OpenMP_omp_LIBRARY omp)
     endif()
 
+    set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
 endif()
 
 find_package(OpenMP REQUIRED)
@@ -65,7 +66,6 @@ add_library(CCASim
             #Task.cpp
             )
 
-set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
 
