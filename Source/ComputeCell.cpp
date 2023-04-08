@@ -43,9 +43,8 @@ print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
         return;
     }
 
-    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(
-        vertex_addr); // (SimpleVertex*)(this->memory.get() + vertex_addr.addr);
-    std::cout << "Vertex ID: " << vertex->id << "\n";
+    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(vertex_addr);
+    std::cout << "Vertex ID: " << vertex->id << ", Addr: " << vertex_addr << "\n";
 
     for (int i = 0; i < vertex->number_of_edges; i++) {
         std::cout << "[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight << "} ]";

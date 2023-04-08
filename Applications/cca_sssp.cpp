@@ -262,6 +262,7 @@ class Graph
     {
         /* std::cout << "In Graph Constructor\n"; */
         this->total_vertices = total_vertices_in;
+
         this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
 
         for (int i = 0; i < this->total_vertices; i++) {
@@ -273,12 +274,17 @@ class Graph
                 std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
                 continue;
             }
-
-            this->vertices[i].edges[this->vertices[i].number_of_edges].edge = i + 1;
-            this->vertices[i].edges[this->vertices[i].number_of_edges].weight = 5;
-            this->vertices[i].number_of_edges++;
+            // Creating a ring graph.
+            u_int32_t dst_vertex_id = (i == this->total_vertices - 1) ? 0 : i + 1;
+            this->add_edge(this->vertices[i], dst_vertex_id, 5);
         }
         /* std::cout << "Leaving Graph Constructor\n"; */
+    }
+    void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
+    {
+        vertex.edges[vertex.number_of_edges].edge = dst_vertex_id;
+        vertex.edges[vertex.number_of_edges].weight = weight;
+        vertex.number_of_edges++;
     }
     ~Graph()
     { /*  std::cout << "In Graph Destructor\n";  */
@@ -314,7 +320,8 @@ main(int argc, char** argv)
 
     std::cout << "Create the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
-    CCASimulator cca_sqaure_simulator(shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells);
+    CCASimulator cca_sqaure_simulator(
+        shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells);
 
     std::cout << "CCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
