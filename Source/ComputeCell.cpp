@@ -131,8 +131,9 @@ ComputeCell::execute_action()
         // TODO: actually put the ifs
 
         // if predicate
-        event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
-
+        int predicate_resolution =
+            event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
+        std::cout << "execute_action() : predicate_resolution = " << predicate_resolution << "\n";
         // if work
         event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
 

@@ -98,18 +98,25 @@ sssp_predicate_func(ComputeCell& cc,
                     int nargs,
                     const std::shared_ptr<int[]>& args)
 {
-    std::cout << "in sssp_predicate" << std::endl;
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_distance = args[0];
+    if (v->sssp_distance > incoming_distance) {
+        std::cout << "vertex ID : " << v->id
+                  << " in sssp_predicate true | incoming_distance = " << incoming_distance
+                  << " v->sssp_distance = " << v->sssp_distance << std::endl;
+        return 1;
+    }
     return 0;
 }
 
 int
 sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
-    int x = args[0];
-    int y = args[1];
-    std::cout << "in sssp_work: x = " << x << ", y = " << y << std::endl;
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_distance = args[0];
 
-    int result = x + y;
+    // Update distance with the new distance
+    v->sssp_distance = incoming_distance;
     return 0;
 }
 // TODO: try to move such code to ComputeCell or somewhere
@@ -149,9 +156,9 @@ sssp_diffuse_func(ComputeCell& cc,
         message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
                    ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
 
-        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        args_x[0] = static_cast<int>(v->id);
-        args_x[1] = static_cast<int>(cc.id);
+        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
+        args_x[0] = static_cast<int>(v->edges[i].weight);
+        // args_x[1] = static_cast<int>(cc.id);
 
         /*       std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
                                                                     actionType::application_action,
@@ -165,7 +172,7 @@ sssp_diffuse_func(ComputeCell& cc,
         SSSPAction action(v->edges[i].edge,
                           actionType::application_action,
                           true,
-                          2,
+                          1,
                           args_x,
                           eventId::sssp_predicate,
                           eventId::sssp_work,
@@ -350,15 +357,16 @@ main(int argc, char** argv)
                        << ", vertex_addr = " << vertex_addr.value()
                        << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
 
-            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-            args_x[0] = 1;
-            args_x[1] = 7;
+            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
+            // Set distance to 0
+            args_x[0] = 0;
+            // args_x[1] = 7;
 
             cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
                 std::make_shared<SSSPAction>(vertex_addr.value(),
                                              actionType::application_action,
                                              true,
-                                             2,
+                                             1,
                                              args_x,
                                              eventId::sssp_predicate,
                                              eventId::sssp_work,

@@ -68,7 +68,7 @@ CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
                                            computeCellShape shape_of_compute_cells,
                                            u_int32_t dim)
 {
-    return std::pair<u_int32_t, u_int32_t>(cc_id / dim, cc_id % dim);
+    return std::pair<u_int32_t, u_int32_t>(cc_id % dim, cc_id / dim);
 }
 
 std::pair<u_int32_t, u_int32_t>
@@ -91,6 +91,7 @@ CCASimulator::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinat
 
     if (this->shape_of_compute_cells == computeCellShape::square) {
         auto [x, y] = cc_cooridinate;
+       // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim) + x << "\n";
         // TODO: create dim_x and dim_y for non square chip shapes
         return (y * this->dim) + x;
     }
