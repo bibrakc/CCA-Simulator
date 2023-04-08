@@ -45,8 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-
-
 enum class computeCellShape : u_int32_t
 {
     block_1D = 0,
@@ -68,6 +66,7 @@ enum class computeCellShape : u_int32_t
 }; */
 
 // Note this class is not thread-safe.
+// TODO: We can have a template for computeCellShape here
 class ComputeCell
 {
   public:
@@ -154,7 +153,13 @@ class ComputeCell
     // set of operons and will then execute those operons in the next cycle. This move is not part
     // of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
-    std::vector<Operon> send_recv_channel_buffer_per_neighbor;
+    std::vector<std::optional<Operon>> send_recv_channel_buffer_per_neighbor;
+
+    // This is also needed to satify the simulation as the network and logic on a single compute
+    // cell both work in paralell. We first perform logic operations (work) then we do networking
+    // related operations. This allows not just ease of programming but also opens the compute cells
+    // to be embarasingly parallel for openmp.
+    std::optional<Operon> staging_operon_from_logic;
 
     // Memory of the Compute Cell in bytes.
     // TODO: This can be `static` since it is a set once and real-only and is the same for all CCs.
@@ -191,6 +196,9 @@ class ComputeCell
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
         this->cooridates = cooridates_in;
+
+
+        this->staging_operon_from_logic = std::nullopt;
 
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);

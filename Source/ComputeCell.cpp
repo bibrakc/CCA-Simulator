@@ -31,68 +31,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ComputeCell.hpp"
+#include "Function.hpp"
 #include "SimpleVertex.hpp"
 
 Task
-send_operon(std::string message)
+send_operon(ComputeCell& cc, Operon operon_in)
 {
-    return Task([message](std::string xx) {
-        std::cout << "Executed second task! message: " << message << "\n";
+    if (cc.staging_operon_from_logic != std::nullopt) {
+        std::cerr << "Bug! cc: " << cc.id
+                  << " staging_operon_from_logic buffer is full! The program shouldn't have come "
+                     "to send_operon\n";
+        exit(0);
+    }
+    return Task([&cc, operon_in]() {
+        std::cout << "Sending operon from cc " << cc.id << "to cc << " << operon_in.first << "\n";
+        cc.staging_operon_from_logic = operon_in;
     });
 }
-
-// TODO: move this to application
-int
-sssp_predicate(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-{
-    // std::cout << "in sssp_predicate" << std::endl;
-    return 0;
-}
-
-// TODO: move this to application
-int
-sssp_work(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-{
-    // std::cout << "in sssp_work" << std::endl;
-    int x = args[0];
-    int y = args[1];
-
-    int result = x + y;
-    return 0;
-}
-
-// TODO: move this to application
-int
-sssp_diffuse(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-{
-    // std::cout << "in sssp_diffuse: " << std::endl;
-    // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
-    // std::cout << addr  << std::endl;
-
-    //cc.print_SimpleVertex(addr);
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
-    for (int i = 0; i < v->number_of_edges; i++) {
-        std::string message = "Send from ";
-        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
-                   std::to_string(v->edges[i].addr) + ")\n";
-
-        cc.task_queue.push(send_operon(message));
-    }
-
-    return 0;
-}
-
-// TODO: Maybe later convert these too `std::function`
-//       With perhaps a std::map of the functions
-//       that way we can add new functions at runtime (if needed)
-typedef int (*handler_func)(ComputeCell& cc,
-                            const Address& addr,
-                            int nargs,
-                            const std::shared_ptr<int[]>& args);
-
-// TODO: This really needs to be a map or something so as to no make it constant and be able to
-// extend it
-inline static handler_func event_handlers[] = { sssp_predicate, sssp_work, sssp_diffuse };
 
 // TODO: move this to application
 void
@@ -191,16 +146,13 @@ ComputeCell::execute_action()
         // TODO: actually put the ifs
 
         // if predicate
-        event_handlers[get_underlying_enum_index(action->predicate)](
-            *this, action->obj_addr, action->nargs, action->args);
+        event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
 
         // if work
-        event_handlers[get_underlying_enum_index(action->work)](
-            *this, action->obj_addr, action->nargs, action->args);
+        event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
 
         // if diffuse
-        event_handlers[get_underlying_enum_index(action->diffuse)](
-            *this, action->obj_addr, action->nargs, action->args);
+        event_handlers[action->diffuse](*this, action->obj_addr, action->nargs, action->args);
         return;
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";
@@ -223,7 +175,7 @@ ComputeCell::run_a_cycle()
         this->task_queue.pop();
 
         // Execute the task
-        current_task("The MeSSaGe fRoM 2oo8");
+        current_task();
     } else if (!this->action_queue
                     .empty()) { // Else execute an action if the action_queue is not empty
 

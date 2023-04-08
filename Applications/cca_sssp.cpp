@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
 #include "Enums.hpp"
+#include "Function.hpp"
 #include "Operon.hpp"
 
 #include "cmdparser.hpp"
@@ -51,6 +52,74 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 
 #include <omp.h>
+
+inline Operon
+construct_operon(u_int32_t cc_id, Action action)
+{
+    return std::pair<u_int32_t, Action>(cc_id, action);
+}
+
+
+int
+sssp_predicate_func(ComputeCell& cc,
+                    const Address& addr,
+                    int nargs,
+                    const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_predicate" << std::endl;
+    return 0;
+}
+
+
+int
+sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_work" << std::endl;
+    int x = args[0];
+    int y = args[1];
+
+    int result = x + y;
+    return 0;
+}
+
+
+int
+sssp_diffuse_func(ComputeCell& cc,
+                  const Address& addr,
+                  int nargs,
+                  const std::shared_ptr<int[]>& args)
+{
+    // std::cout << "in sssp_diffuse: " << std::endl;
+    // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
+    // std::cout << addr  << std::endl;
+
+    // cc.print_SimpleVertex(addr);
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    for (int i = 0; i < v->number_of_edges; i++) {
+        std::string message = "Send from ";
+        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
+                   std::to_string(v->edges[i].addr) + ")\n";
+
+   /*      std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
+                                                              actionType::application_action,
+                                                              true,
+                                                              2,
+                                                              args_x,
+                                                              eventId::sssp_predicate,
+                                                              eventId::sssp_work,
+                                                              eventId::sssp_diffuse)
+            Operon operon_to_send = construct_operon(cc.id, );
+        cc.task_queue.push(send_operon(cc, )); */
+    }
+
+    return 0;
+}
+
+// Later create a register function to do these from the main. Help with using the simulator in more
+// of an API style
+std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func },
+                                                   { eventId::sssp_work, sssp_work_func },
+                                                   { eventId::sssp_diffuse, sssp_diffuse_func } };
 
 // TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
 // this inheritence makes sense later when the project matures.
@@ -117,7 +186,7 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t dst_vertex_id)
 {
 
-   /*  std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n"; */
+    /*  std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n"; */
     Address src_vertex_addr =
         get_object_address_cyclic(src_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
@@ -167,7 +236,9 @@ class Graph
         }
         /* std::cout << "Leaving Graph Constructor\n"; */
     }
-    ~Graph() {/*  std::cout << "In Graph Destructor\n";  */}
+    ~Graph()
+    { /*  std::cout << "In Graph Destructor\n";  */
+    }
 };
 
 int
@@ -212,7 +283,7 @@ main(int argc, char** argv)
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
       // and we don't want it's constructor to be called everytime.
-        
+
         SimpleVertex<Address> vertex_(0);
         for (int i = 0; i < input_graph.total_vertices; i++) {
 
@@ -240,11 +311,11 @@ main(int argc, char** argv)
                 continue;
             }
 
-           /*  std::cout << "input_graph.vertices[i].id = " << input_graph.vertices[i].id
-                      << ", cca_sqaure_simulator.CCA_chip[cc_id]->id = "
-                      << cca_sqaure_simulator.CCA_chip[cc_id]->id
-                      << ", vertex_addr = " << vertex_addr.value()
-                      << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
+            /*  std::cout << "input_graph.vertices[i].id = " << input_graph.vertices[i].id
+                       << ", cca_sqaure_simulator.CCA_chip[cc_id]->id = "
+                       << cca_sqaure_simulator.CCA_chip[cc_id]->id
+                       << ", vertex_addr = " << vertex_addr.value()
+                       << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
 
             std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
             args_x[0] = 1;
