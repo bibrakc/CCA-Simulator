@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OPERON_HPP
 #define OPERON_HPP
 
+// cc_id, Action
 typedef std::pair<u_int32_t, Action> Operon;
 
 #endif // OPERON_HPP
