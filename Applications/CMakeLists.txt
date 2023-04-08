@@ -69,7 +69,10 @@ add_library(CCASim
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities)
 
-target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory} ${IncludeDirectory} ${IncludeDirectory}/Datastructure ${UtilitiesDirectory})
+target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory} 
+                           ${IncludeDirectory}
+                           ${IncludeDirectory}/Datastructure
+                           ${UtilitiesDirectory})
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)

@@ -6,7 +6,11 @@ The simulator enables exploring the design space of CCA class of non-Von Neumann
 
 ## Building
 ### Using CMake
-To generate the executable `CCASimulator`:
+To generate the executable `SSSP_CCASimulator`:
 
 - `$ cmake -S . -B build -D DEBUG_CODE=false` (or `DEBUG_CODE=true` for outputing debuging information)
 - `$ cmake --build build`
+
+## Executing
+### SSSP Application
+./Build/Applications/SSSP_CCASimulator -v 10 -s square -d 2
