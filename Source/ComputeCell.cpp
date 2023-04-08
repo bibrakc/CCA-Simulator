@@ -34,21 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "SimpleVertex.hpp"
 
-Task
-send_operon(ComputeCell& cc, Operon operon_in)
-{
-    if (cc.staging_operon_from_logic != std::nullopt) {
-        std::cerr << "Bug! cc: " << cc.id
-                  << " staging_operon_from_logic buffer is full! The program shouldn't have come "
-                     "to send_operon\n";
-        exit(0);
-    }
-    return Task([&cc, operon_in]() {
-        std::cout << "Sending operon from cc " << cc.id << "to cc << " << operon_in.first << "\n";
-        cc.staging_operon_from_logic = operon_in;
-    });
-}
-
 // TODO: move this to application
 void
 print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
@@ -172,10 +157,20 @@ ComputeCell::run_a_cycle()
         // std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
         //  Get a task from the task_queue
         Task current_task = this->task_queue.front();
-        this->task_queue.pop();
 
-        // Execute the task
-        current_task();
+        // Check if the staging buffer is not full
+        if ((this->staging_operon_from_logic != std::nullopt) &&
+            (current_task.first == taskType::send_operon_task_type)) {
+            std::cout << "cc: " << this->id
+                      << " staging_operon_from_logic buffer is full! This cycle is stalled. Will "
+                         "not dequeue the task from the task queue\n";
+
+        } else {
+            // remove the task from the queue and execute it.
+            this->task_queue.pop();
+            // Execute the task
+            current_task.second();
+        }
     } else if (!this->action_queue
                     .empty()) { // Else execute an action if the action_queue is not empty
 

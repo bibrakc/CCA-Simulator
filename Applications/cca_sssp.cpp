@@ -53,74 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
 
-inline Operon
-construct_operon(u_int32_t cc_id, Action action)
-{
-    return std::pair<u_int32_t, Action>(cc_id, action);
-}
-
-
-int
-sssp_predicate_func(ComputeCell& cc,
-                    const Address& addr,
-                    int nargs,
-                    const std::shared_ptr<int[]>& args)
-{
-    std::cout << "in sssp_predicate" << std::endl;
-    return 0;
-}
-
-
-int
-sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-{
-    std::cout << "in sssp_work" << std::endl;
-    int x = args[0];
-    int y = args[1];
-
-    int result = x + y;
-    return 0;
-}
-
-
-int
-sssp_diffuse_func(ComputeCell& cc,
-                  const Address& addr,
-                  int nargs,
-                  const std::shared_ptr<int[]>& args)
-{
-    // std::cout << "in sssp_diffuse: " << std::endl;
-    // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
-    // std::cout << addr  << std::endl;
-
-    // cc.print_SimpleVertex(addr);
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
-    for (int i = 0; i < v->number_of_edges; i++) {
-        std::string message = "Send from ";
-        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
-                   std::to_string(v->edges[i].addr) + ")\n";
-
-   /*      std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
-                                                              actionType::application_action,
-                                                              true,
-                                                              2,
-                                                              args_x,
-                                                              eventId::sssp_predicate,
-                                                              eventId::sssp_work,
-                                                              eventId::sssp_diffuse)
-            Operon operon_to_send = construct_operon(cc.id, );
-        cc.task_queue.push(send_operon(cc, )); */
-    }
-
-    return 0;
-}
-
-// Later create a register function to do these from the main. Help with using the simulator in more
-// of an API style
-std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func },
-                                                   { eventId::sssp_work, sssp_work_func },
-                                                   { eventId::sssp_diffuse, sssp_diffuse_func } };
-
 // TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
 // this inheritence makes sense later when the project matures.
 class SSSPAction : public Action
@@ -153,6 +85,101 @@ class SSSPAction : public Action
     { /* std::cout << "SSSPAction destructor\n"; */
     }
 };
+
+inline Operon
+construct_operon(const u_int32_t cc_id, const Action& action)
+{
+    return std::pair<u_int32_t, Action>(cc_id, action);
+}
+
+int
+sssp_predicate_func(ComputeCell& cc,
+                    const Address& addr,
+                    int nargs,
+                    const std::shared_ptr<int[]>& args)
+{
+    std::cout << "in sssp_predicate" << std::endl;
+    return 0;
+}
+
+int
+sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+{
+    int x = args[0];
+    int y = args[1];
+    std::cout << "in sssp_work: x = " << x << ", y = " << y << std::endl;
+
+    int result = x + y;
+    return 0;
+}
+// TODO: try to move such code to ComputeCell or somewhere
+inline Task
+send_operon(ComputeCell& cc, Operon operon_in)
+{
+    if (cc.staging_operon_from_logic != std::nullopt) {
+        std::cerr << "Bug! cc: " << cc.id
+                  << " staging_operon_from_logic buffer is full! The program shouldn't have come "
+                     "to send_operon\n";
+        exit(0);
+    }
+    return std::pair<taskType, Task_func>(taskType::send_operon_task_type,
+                                          Task_func([&cc, operon_in]() {
+                                              std::cout << "Sending operon from cc " << cc.id
+                                                        << " to cc << " << operon_in.first << "\n";
+                                               cc.staging_operon_from_logic = operon_in;
+                                          }));
+}
+
+int
+sssp_diffuse_func(ComputeCell& cc,
+                  const Address& addr,
+                  int nargs,
+                  const std::shared_ptr<int[]>& args)
+{
+    // std::cout << "in sssp_diffuse: " << std::endl;
+    // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
+    // std::cout << addr  << std::endl;
+
+    // cc.print_SimpleVertex(addr);
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    for (int i = 0; i < v->number_of_edges; i++) {
+        std::string message = "Send from ";
+        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
+                   std::to_string(v->edges[i].addr) + ")\n";
+
+        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+        args_x[0] = static_cast<int>(v->id);
+        args_x[1] = static_cast<int>(cc.id);
+
+        /*       std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
+                                                                    actionType::application_action,
+                                                                    true,
+                                                                    2,
+                                                                    args_x,
+                                                                    eventId::sssp_predicate,
+                                                                    eventId::sssp_work,
+                                                                    eventId::sssp_diffuse); */
+
+        SSSPAction action(v->edges[i],
+                          actionType::application_action,
+                          true,
+                          2,
+                          args_x,
+                          eventId::sssp_predicate,
+                          eventId::sssp_work,
+                          eventId::sssp_diffuse);
+        Operon operon_to_send = construct_operon(cc.id, action);
+        cc.task_queue.push(send_operon(cc, operon_to_send));
+    }
+
+    return 0;
+}
+
+// Later create a register function to do these from the main. Help with using the simulator in more
+// of an API style
+std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func },
+                                                   { eventId::sssp_work, sssp_work_func },
+                                                   { eventId::sssp_diffuse, sssp_diffuse_func } };
 
 // Configuration related to the input data graph
 u_int32_t total_vertices;

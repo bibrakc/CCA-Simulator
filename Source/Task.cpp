@@ -33,13 +33,3 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Task.hpp"
 #include <stdlib.h>
 
-
-
-/* Task
-send_operon(std::string message)
-{
-    return Task([message](std::string xx) {
-        std::cout << "Executed second task! message: " << message << "\n";
-    });
-}
- */

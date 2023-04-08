@@ -38,7 +38,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
 
-// Task
-typedef std::function<void()> Task;
+enum class taskType : u_int32_t
+{
+    send_operon_task_type = 0,
+    taskType_count
+};
+
+typedef std::function<void()> Task_func;
+
+// Task: [task type, task function]
+// task type can be sending, or other
+typedef std::pair<taskType, std::function<void()>> Task;
 
 #endif // TASK_HPP
