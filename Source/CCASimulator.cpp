@@ -63,12 +63,16 @@ CCASimulator::CCASimulator(computeCellShape shape_in,
     this->create_the_chip();
 } */
 
+// Chip is coordinates are from top-left....
 inline std::pair<u_int32_t, u_int32_t>
 CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
                                            computeCellShape shape_of_compute_cells,
-                                           u_int32_t dim)
+                                           u_int32_t dim_x,
+                                           u_int32_t dim_y)
 {
-    return std::pair<u_int32_t, u_int32_t>(cc_id % dim, cc_id / dim);
+    // std::cout << "cc_id: " << cc_id << " dim_x: " << dim_x << " dim_y: " << dim_y << " ---> (" <<
+    // cc_id % dim_y << ", " << cc_id / dim_y << ")\n";
+    return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
 }
 
 std::pair<u_int32_t, u_int32_t>
@@ -77,7 +81,7 @@ CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
 
     if (this->shape_of_compute_cells == computeCellShape::square) {
         // TODO: create dim_x and dim_y for non square chip shapes
-        return std::pair<u_int32_t, u_int32_t>(cc_id / this->dim, cc_id % this->dim);
+        return std::pair<u_int32_t, u_int32_t>(cc_id % this->dim_y, cc_id / this->dim_y);
     }
     // Shape not supported
     std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
@@ -91,9 +95,10 @@ CCASimulator::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinat
 
     if (this->shape_of_compute_cells == computeCellShape::square) {
         auto [x, y] = cc_cooridinate;
-       // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim) + x << "\n";
+        // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
+        // + x << "\n";
         // TODO: create dim_x and dim_y for non square chip shapes
-        return (y * this->dim) + x;
+        return (y * this->dim_x) + x;
     }
     // Shape not supported
     std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
@@ -108,8 +113,8 @@ CCASimulator::cc_exists(const SignedCoordinates cc_coordinate)
     if (this->shape_of_compute_cells == computeCellShape::square) {
 
         // If invalid
-        if ((cc_coordinate_x < 0) || (cc_coordinate_x >= this->dim) || (cc_coordinate_y < 0) ||
-            (cc_coordinate_y >= this->dim)) {
+        if ((cc_coordinate_x < 0) || (cc_coordinate_x >= this->dim_y) || (cc_coordinate_y < 0) ||
+            (cc_coordinate_y >= this->dim_x)) {
             return false;
         } else {
             return true;
@@ -217,13 +222,15 @@ CCASimulator::create_the_chip()
         this->CCA_chip.push_back(std::make_shared<ComputeCell>(
             i,
             shape_of_compute_cells,
-            this->get_compute_cell_coordinates(i, shape_of_compute_cells, this->dim),
+            this->get_compute_cell_coordinates(i, shape_of_compute_cells, this->dim_x, this->dim_y),
             2 * 1024 * 1024)); // 2 MB
 
         // Assign neighbor CCs to this CC. This is based on the Shape and Dim
         this->add_neighbor_compute_cells(this->CCA_chip.back());
 
-        std::cout << *this->CCA_chip.back().get();
+        if constexpr (debug_code) {
+            std::cout << *this->CCA_chip.back().get();
+        }
     }
 }
 

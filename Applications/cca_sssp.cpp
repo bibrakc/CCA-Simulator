@@ -239,10 +239,14 @@ void
 configure_parser(cli::Parser& parser)
 {
     parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
-    parser.set_required<u_int32_t>(
-        "d",
-        "dimension",
-        "Dimnesion of the shape. For example: A square is x^2. Only provide d (not d x d)");
+    parser.set_required<u_int32_t>("dx",
+                                   "dimensionx",
+                                   "Dimnesion of the shape in x direction. For example: A rectange "
+                                   "chip is x*y. Provide dx such that dx x dy)");
+    parser.set_required<u_int32_t>("dy",
+                                   "dimensiony",
+                                   "Dimnesion of the shape in y direction. For example: A rectange "
+                                   "chip is x*y. Provide dy such that dx x dy)");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
 }
@@ -295,13 +299,14 @@ main(int argc, char** argv)
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells;
-    u_int32_t CCA_dim;
+    u_int32_t CCA_dim_x, CCA_dim_y;
     u_int32_t total_compute_cells;
 
     if (shape_arg == "square") {
         shape_of_compute_cells = computeCellShape::square;
-        CCA_dim = parser.get<u_int32_t>("d");
-        total_compute_cells = CCA_dim * CCA_dim;
+        CCA_dim_x = parser.get<u_int32_t>("dx");
+        CCA_dim_y = parser.get<u_int32_t>("dy");
+        total_compute_cells = CCA_dim_x * CCA_dim_y;
     } else {
         std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
         exit(0);
@@ -309,12 +314,12 @@ main(int argc, char** argv)
 
     std::cout << "Create the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
-    CCASimulator cca_sqaure_simulator(shape_of_compute_cells, CCA_dim, total_compute_cells);
+    CCASimulator cca_sqaure_simulator(shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells);
 
     std::cout << "CCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
                      cca_sqaure_simulator.shape_of_compute_cells)
-              << "\n\tDim: " << cca_sqaure_simulator.dim << " x " << cca_sqaure_simulator.dim
+              << "\n\tDim: " << cca_sqaure_simulator.dim_x << " x " << cca_sqaure_simulator.dim_y
               << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells << "\n";
 
     // Generate or read the input data graph
