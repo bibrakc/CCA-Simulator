@@ -116,18 +116,20 @@ sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::share
 inline Task
 send_operon(ComputeCell& cc, Operon operon_in)
 {
-    if (cc.staging_operon_from_logic != std::nullopt) {
-        std::cerr << "Bug! cc: " << cc.id
-                  << " staging_operon_from_logic buffer is full! The program shouldn't have come "
-                     "to send_operon\n";
-        exit(0);
-    }
-    return std::pair<taskType, Task_func>(taskType::send_operon_task_type,
-                                          Task_func([&cc, operon_in]() {
-                                              std::cout << "Sending operon from cc " << cc.id
-                                                        << " to cc << " << operon_in.first << "\n";
-                                               cc.staging_operon_from_logic = operon_in;
-                                          }));
+
+    return std::pair<taskType, Task_func>(
+        taskType::send_operon_task_type, Task_func([&cc, operon_in]() {
+            if (cc.staging_operon_from_logic != std::nullopt) {
+                std::cerr
+                    << "Bug! cc: " << cc.id
+                    << " staging_operon_from_logic buffer is full! The program shouldn't have come "
+                       "to send_operon\n";
+                exit(0);
+            }
+            std::cout << "Sending operon from cc " << cc.id << " to cc << " << operon_in.first
+                      << "\n";
+            cc.staging_operon_from_logic = operon_in;
+        }));
 }
 
 int
@@ -144,8 +146,8 @@ sssp_diffuse_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
         std::string message = "Send from ";
-        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].cc_id) + ", " +
-                   std::to_string(v->edges[i].addr) + ")\n";
+        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
+                   ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
 
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         args_x[0] = static_cast<int>(v->id);
@@ -160,7 +162,7 @@ sssp_diffuse_func(ComputeCell& cc,
                                                                     eventId::sssp_work,
                                                                     eventId::sssp_diffuse); */
 
-        SSSPAction action(v->edges[i],
+        SSSPAction action(v->edges[i].edge,
                           actionType::application_action,
                           true,
                           2,
@@ -191,7 +193,8 @@ u_int32_t total_vertices;
 inline bool
 insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                        Address src_vertex_addr,
-                       Address dst_vertex_addr)
+                       Address dst_vertex_addr,
+                       u_int32_t edge_weight)
 {
     SimpleVertex<Address>* vertex = static_cast<SimpleVertex<Address>*>(
         CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
@@ -201,7 +204,8 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
     if (vertex->number_of_edges >= edges_max)
         return false;
 
-    vertex->edges[vertex->number_of_edges] = dst_vertex_addr;
+    vertex->edges[vertex->number_of_edges].edge = dst_vertex_addr;
+    vertex->edges[vertex->number_of_edges].weight = edge_weight;
     vertex->number_of_edges++;
 
     return true;
@@ -210,7 +214,8 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
 inline bool
 insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t src_vertex_id,
-                         u_int32_t dst_vertex_id)
+                         u_int32_t dst_vertex_id,
+                         u_int32_t edge_weight)
 {
 
     /*  std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n"; */
@@ -220,7 +225,7 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
     Address dst_vertex_addr =
         get_object_address_cyclic(dst_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
-    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr);
+    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr, edge_weight);
 }
 
 void
@@ -258,7 +263,8 @@ class Graph
                 continue;
             }
 
-            this->vertices[i].edges[this->vertices[i].number_of_edges] = i + 1;
+            this->vertices[i].edges[this->vertices[i].number_of_edges].edge = i + 1;
+            this->vertices[i].edges[this->vertices[i].number_of_edges].weight = 5;
             this->vertices[i].number_of_edges++;
         }
         /* std::cout << "Leaving Graph Constructor\n"; */
@@ -362,9 +368,16 @@ main(int argc, char** argv)
 
     std::cout << "Populating vertices by inserting edges: \n";
     for (int i = 0; i < input_graph.total_vertices; i++) {
+        u_int32_t src_vertex_id = input_graph.vertices[i].id;
+        for (int j = 0; j < input_graph.vertices[i].number_of_edges; j++) {
 
-        if (!insert_edge_by_vertex_id(cca_sqaure_simulator.CCA_chip, i, i + 1)) {
-            std::cout << "Error! Edge not inserted successfully.\n";
+            u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
+            u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
+            if (!insert_edge_by_vertex_id(
+                    cca_sqaure_simulator.CCA_chip, src_vertex_id, dst_vertex_id, edge_weight)) {
+                std::cout << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                          << edge_weight << ") not inserted successfully.\n";
+            }
         }
     }
 

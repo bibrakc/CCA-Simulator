@@ -34,18 +34,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SimpleVertex_HPP
 
 #include "Address.hpp"
+#include "Constants.hpp"
 
+template<typename Address_T>
+struct Edge
+{
+    Address_T edge;
+    u_int32_t weight;
+};
+
+inline constexpr u_int32_t max_distance = 999999;
 inline constexpr u_int32_t edges_max = 2;
 template<typename Address_T>
 struct SimpleVertex
 {
     u_int32_t id{};
-    Address_T edges[edges_max]{};
+    Edge<Address_T> edges[edges_max]{};
     u_int32_t number_of_edges{};
-    // u_int32_t sssp_distance;
+    u_int32_t sssp_distance;
     SimpleVertex(u_int32_t id_in)
         : id(id_in)
         , number_of_edges(0)
+        , sssp_distance(max_distance)
     {
         /* std::cout << "SimpleVertex Constructor\n"; */
     }

@@ -48,7 +48,7 @@ print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
     std::cout << "Vertex ID: " << vertex->id << "\n";
 
     for (int i = 0; i < vertex->number_of_edges; i++) {
-        std::cout << vertex->edges[i] << ", ";
+        std::cout << "[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight << "} ]";
     }
     std::cout << std::endl;
 }
@@ -157,7 +157,10 @@ ComputeCell::run_a_cycle()
         // std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
         //  Get a task from the task_queue
         Task current_task = this->task_queue.front();
-
+        std::cout << "(this->staging_operon_from_logic != std::nullopt) = "
+                  << (this->staging_operon_from_logic != std::nullopt)
+                  << "(current_task.first == taskType::send_operon_task_type) = "
+                  << (current_task.first == taskType::send_operon_task_type) << "\n";
         // Check if the staging buffer is not full
         if ((this->staging_operon_from_logic != std::nullopt) &&
             (current_task.first == taskType::send_operon_task_type)) {
