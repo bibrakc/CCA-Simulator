@@ -45,6 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
+typedef std::pair<int32_t, int32_t> SignedCoordinates;
+
 enum class computeCellShape : u_int32_t
 {
     block_1D = 0,
@@ -92,9 +94,13 @@ class ComputeCell
 
         os << "\t Neighbors: ";
         for (auto& neighbor : cc.neighbor_compute_cells) {
-            auto [neighbor_id, neighbor_coordinate] = neighbor;
-            os << "[" << neighbor_id << ", (" << neighbor_coordinate.first << ", "
-               << neighbor_coordinate.second << ")] ";
+            if (neighbor == std::nullopt) {
+                os << "[nullopt] ";
+            } else {
+                auto [neighbor_id, neighbor_coordinate] = neighbor.value();
+                os << "[" << neighbor_id << ", (" << neighbor_coordinate.first << ", "
+                   << neighbor_coordinate.second << ")] ";
+            }
         }
         os << "\n";
         return os;
@@ -111,16 +117,27 @@ class ComputeCell
     // Execute a single cycle for this Compute Cell
     // Return whether this compute cell is still active, meaning run_a_cycle needs to be called
     // again
-    bool run_a_computation_cycle();
+    void run_a_computation_cycle();
 
     // TODO: write comments
-    bool run_a_communication_cycle();
+    void prepare_a_communication_cycle();
+
+    // TODO: write comments
+    void run_a_communication_cycle();
+
+    // Run a cycle: This include all computation and communication work within a single cycle
+    bool run_a_cycle();
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update checks for the communication buffer too
     bool is_compute_cell_active();
 
-    void add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>> neighbor_compute_cell);
+    inline bool cc_exists(const SignedCoordinates cc_coordinate);
+
+    void add_neighbor_compute_cells();
+
+    void add_neighbor(
+        std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell);
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
 
@@ -164,10 +181,13 @@ class ComputeCell
     u_int32_t number_of_neighbors;
 
     // IDs and Coordinates of the neighbors
-    std::vector<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cells;
+    std::vector<std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>>>
+        neighbor_compute_cells;
 
-    // Per neighbor operon recieve queue.
-    // std::vector<std::queue<Operon>> channel_buffer_per_neighbor;
+    // Channel neighbor id index. To be initialized based on the shape of this CC and the dimensions
+    // of the chip. Note: the channels are enumerated (indexed) clockwise starting from left. 0 =
+    // left, 1 = up, 2 = right, and 3 = down for sqaure shape.
+    std::vector<std::optional<u_int32_t>> channel_neighbor_index;
 
     // Per neighbor send channel/link
     std::vector<std::optional<Operon>> send_channel_per_neighbor;
@@ -220,7 +240,6 @@ class ComputeCell
     // Constructor
     ComputeCell(u_int32_t id_in,
                 computeCellShape shape_in,
-                std::pair<u_int32_t, u_int32_t> cooridates_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
                 u_int32_t memory_per_cc_in_bytes)
@@ -230,21 +249,42 @@ class ComputeCell
         this->id = id_in;
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
-        this->cooridates = cooridates_in;
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
+
+        this->cooridates =
+            ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
 
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
 
+        // Assign neighbor CCs to this CC. This is based on the Shape and Dim
+        this->add_neighbor_compute_cells();
+
         this->staging_operon_from_logic = std::nullopt;
         for (int i = 0; i < this->number_of_neighbors; i++) {
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
         }
+
+        // TODO remove the channel_neighbor_index
+        /*         if (this->shape == computeCellShape::square) {
+
+                    // Initialize the index of the channels clockwise from the left with the cc
+           neighbor Ids this->channel_neighbor_index[0] = left neighbor;
+                             this->channel_neighbor_index[0] = up neighbor;
+                             this->channel_neighbor_index[0] = right neighbor;
+                             this->channel_neighbor_index[0] = down neighbor;
+
+                } else {
+                    // Shape  not supported
+                    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
+                              << "  not supported!\n";
+                    exit(0);
+                } */
     }
 };
 

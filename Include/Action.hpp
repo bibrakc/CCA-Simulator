@@ -73,8 +73,8 @@ class Action
 
     // Generate actions along the edges for the diffusion
     eventId diffuse;
-
-/*     Action(const Action& action_)
+/*     Action() {}
+    Action(const Action& action_)
     {
         std::cout << "Action class copy constructor called \n";
         this->action_type = action_.action_type;

@@ -46,8 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-typedef std::pair<int32_t, int32_t> SignedCoordinates;
-
 /* template<typename To, typename From>
 inline std::pair<To, To>
 convert_internal_type_of_pair(const std::pair<From, From>& p)
@@ -91,8 +89,6 @@ class CCASimulator
     std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id);
 
     u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate);
-
-    inline bool cc_exists(const SignedCoordinates cc_coordinate);
 
     void add_neighbor_compute_cells(std::shared_ptr<ComputeCell> cc);
 

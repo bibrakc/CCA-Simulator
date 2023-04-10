@@ -81,11 +81,11 @@ class SSSPAction : public Action
         this->work = work_in;
         this->diffuse = diffuse_in;
     }
-    
-/*     // Copy constructor
-    SSSPAction(const SSSPAction& ssspaction_) : Action(ssspaction_){
 
-    } */
+    /*     // Copy constructor
+        SSSPAction(const SSSPAction& ssspaction_) : Action(ssspaction_){
+
+        } */
     ~SSSPAction() override
     { /* std::cout << "SSSPAction destructor\n"; */
     }
