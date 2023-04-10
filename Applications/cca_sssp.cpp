@@ -156,6 +156,7 @@ sssp_diffuse_func(ComputeCell& cc,
         message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
                    ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
 
+        // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
         args_x[0] = static_cast<int>(v->edges[i].weight);
         // args_x[1] = static_cast<int>(cc.id);

@@ -143,8 +143,52 @@ ComputeCell::execute_action()
     std::cout << "Cannot execute action as the action_queue is empty!\n";
 }
 
+u_int32_t
+ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == dimensional routing
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        std::pair<u_int32_t, u_int32_t> dst_cc_coordinates =
+            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_x, this->dim_y);
+
+        // First check vertically in y axis then horizontally in x axis
+        if (this->cooridates.second > dst_cc_coordinates.second) {
+            return 1; // Clockwise 1 = up
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            return 3; // Clockwise 3 = down
+        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+            return 0; // Clockwise 0 = left
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            return 2; // Clockwise 2 = right
+        }
+    }
+    // Shape or routing not supported
+    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+void
+ComputeCell::prepare_a_cycle()
+{
+    // Move the operon from previous cycle (that was not able to be sent due to congestion) to the
+    // send link of the network
+    if (this->staging_operon_from_logic) {
+        Operon operon_ = this->staging_operon_from_logic.value();
+        u_int32_t dst_cc_id = operon_.first;
+
+        // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
+        // this operon to. The returned value is the index [0...number of neighbors) coresponding
+        // clockwise the channel id of the physical shape.
+        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+    }
+}
+
 bool
-ComputeCell::run_a_cycle()
+ComputeCell::run_a_computation_cycle()
 {
 
     // A single compute cell can perform work and communication in parallel in a single cycle
@@ -182,14 +226,19 @@ ComputeCell::run_a_cycle()
         this->execute_action();
     }
 
+    // Return the active status of this CC and later it can be used to update the global active
+    // compute cells count
+    return this->is_compute_cell_active();
+}
+bool
+ComputeCell::run_a_communication_cycle()
+{
+
     // Perform communication
 
     // House Keeping: Copy communication operator from neighbor to the current communication
     // buffer of this CC
-
-    // Return the active status of this CC and later it can be used to update the global active
-    // compute cells count
-    return this->is_compute_cell_active();
+    return true;
 }
 
 std::string
@@ -252,4 +301,38 @@ ComputeCell::get_number_of_neighbors(computeCellShape shape_in)
             return 0;
             break;
     }
+}
+
+std::pair<u_int32_t, u_int32_t>
+ComputeCell::cc_id_to_cooridinate(u_int32_t cc_id,
+                                  computeCellShape shape_,
+                                  u_int32_t dim_x,
+                                  u_int32_t dim_y)
+{
+
+    if (shape_ == computeCellShape::square) {
+
+        return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
+    }
+    // Shape not supported
+    std::cerr << ComputeCell::get_compute_cell_shape_name(shape_) << " not supported!\n";
+    exit(0);
+}
+
+u_int32_t
+ComputeCell::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
+                                  computeCellShape shape_,
+                                  u_int32_t dim_x,
+                                  u_int32_t dim_y)
+{
+
+    if (shape_ == computeCellShape::square) {
+        auto [x, y] = cc_cooridinate;
+        // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
+        // + x << "\n";
+        return (y * dim_x) + x;
+    }
+    // Shape not supported
+    std::cerr << ComputeCell::get_compute_cell_shape_name(shape_) << " not supported!\n";
+    exit(0);
 }

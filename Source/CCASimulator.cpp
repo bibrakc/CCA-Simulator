@@ -78,32 +78,16 @@ CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
 std::pair<u_int32_t, u_int32_t>
 CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
 {
-
-    if (this->shape_of_compute_cells == computeCellShape::square) {
-        // TODO: create dim_x and dim_y for non square chip shapes
-        return std::pair<u_int32_t, u_int32_t>(cc_id % this->dim_y, cc_id / this->dim_y);
-    }
-    // Shape not supported
-    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
-              << " not supported!\n";
-    exit(0);
+    return ComputeCell::cc_id_to_cooridinate(
+        cc_id, this->shape_of_compute_cells, this->dim_x, this->dim_y);
 }
 
 u_int32_t
 CCASimulator::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate)
 {
 
-    if (this->shape_of_compute_cells == computeCellShape::square) {
-        auto [x, y] = cc_cooridinate;
-        // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
-        // + x << "\n";
-        // TODO: create dim_x and dim_y for non square chip shapes
-        return (y * this->dim_x) + x;
-    }
-    // Shape not supported
-    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
-              << " not supported!\n";
-    exit(0);
+    return ComputeCell::cc_cooridinate_to_id(
+        cc_cooridinate, this->shape_of_compute_cells, this->dim_x, this->dim_y);
 }
 
 inline bool
@@ -223,6 +207,8 @@ CCASimulator::create_the_chip()
             i,
             shape_of_compute_cells,
             this->get_compute_cell_coordinates(i, shape_of_compute_cells, this->dim_x, this->dim_y),
+            this->dim_x,
+            this->dim_y,
             2 * 1024 * 1024)); // 2 MB
 
         // Assign neighbor CCs to this CC. This is based on the Shape and Dim
@@ -254,7 +240,7 @@ CCASimulator::run_simulation()
 #pragma omp parallel for reduction(| : this->global_active_cc)
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             if (this->CCA_chip[i]->is_compute_cell_active()) {
-                global_active_cc |= this->CCA_chip[i]->run_a_cycle();
+                global_active_cc |= this->CCA_chip[i]->run_a_computation_cycle();
             }
         }
         total_cycles++;

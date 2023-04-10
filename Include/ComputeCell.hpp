@@ -104,10 +104,17 @@ class ComputeCell
 
     void execute_action();
 
+    // Prepare the cycle. This involves moving operon data into either the action queue or send
+    // buffers of the network links
+    void prepare_a_cycle();
+
     // Execute a single cycle for this Compute Cell
     // Return whether this compute cell is still active, meaning run_a_cycle needs to be called
     // again
-    bool run_a_cycle();
+    bool run_a_computation_cycle();
+
+    // TODO: write comments
+    bool run_a_communication_cycle();
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update checks for the communication buffer too
@@ -121,6 +128,16 @@ class ComputeCell
 
     static u_int32_t get_number_of_neighbors(computeCellShape);
 
+    static std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id,
+                                                                computeCellShape shape,
+                                                                u_int32_t dim_x,
+                                                                u_int32_t dim_y);
+
+    static u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
+                                          computeCellShape shape_,
+                                          u_int32_t dim_x,
+                                          u_int32_t dim_y);
+
     // Identity of the Compute Cell.
     u_int32_t id;
 
@@ -130,6 +147,12 @@ class ComputeCell
 
     // Shape of the Compute Cell
     computeCellShape shape;
+
+    // Dimensions of the CCA chip this compute cell belongs to. This is needed for routing as the
+    // routing logic is implemented inside the compute cells and they need to be aware of the global
+    // chip configuration.
+    u_int32_t dim_x;
+    u_int32_t dim_y;
 
     // Communication of the Compute Cell.
 
@@ -142,8 +165,12 @@ class ComputeCell
 
     // IDs and Coordinates of the neighbors
     std::vector<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cells;
+
     // Per neighbor operon recieve queue.
-    std::vector<std::queue<Operon>> channel_buffer_per_neighbor;
+    // std::vector<std::queue<Operon>> channel_buffer_per_neighbor;
+
+    // Per neighbor send channel/link
+    std::vector<std::optional<Operon>> send_channel_per_neighbor;
 
     // This is needed to satisty simulation. Because a sending CC can not just enqueue an operon
     // into the current working buffer of a neighbor CC. If it does then the neighbor may start
@@ -153,13 +180,19 @@ class ComputeCell
     // set of operons and will then execute those operons in the next cycle. This move is not part
     // of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
-    std::vector<std::optional<Operon>> send_recv_channel_buffer_per_neighbor;
+    std::vector<std::optional<Operon>> recv_channel_per_neighbor;
 
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
     // related operations. This allows not just ease of programming but also opens the compute cells
     // to be embarasingly parallel for openmp.
     std::optional<Operon> staging_operon_from_logic;
+
+    // Routing
+    // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
+    // this operon to. The returned value is the index [0...number of neighbors) coresponding
+    // clockwise the channel id of the physical shape.
+    u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Memory of the Compute Cell in bytes.
     // TODO: This can be `static` since it is a set once and real-only and is the same for all CCs.
@@ -188,6 +221,8 @@ class ComputeCell
     ComputeCell(u_int32_t id_in,
                 computeCellShape shape_in,
                 std::pair<u_int32_t, u_int32_t> cooridates_in,
+                u_int32_t dim_x_in,
+                u_int32_t dim_y_in,
                 u_int32_t memory_per_cc_in_bytes)
     {
         /* cout << "Inside constructor of ComputeCell\n"; */
@@ -197,13 +232,19 @@ class ComputeCell
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
         this->cooridates = cooridates_in;
 
-
-        this->staging_operon_from_logic = std::nullopt;
+        this->dim_x = dim_x_in;
+        this->dim_y = dim_y_in;
 
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
+
+        this->staging_operon_from_logic = std::nullopt;
+        for (int i = 0; i < this->number_of_neighbors; i++) {
+            this->send_channel_per_neighbor.push_back(std::nullopt);
+            this->recv_channel_per_neighbor.push_back(std::nullopt);
+        }
     }
 };
 
