@@ -74,6 +74,19 @@ class Action
     // Generate actions along the edges for the diffusion
     eventId diffuse;
 
+/*     Action(const Action& action_)
+    {
+        std::cout << "Action class copy constructor called \n";
+        this->action_type = action_.action_type;
+        this->is_ready = action_.is_ready;
+        this->nargs = action_.nargs;
+        this->args = action_.args;
+        this->obj_addr = action_.obj_addr;
+        this->predicate = action_.predicate;
+        this->work = action_.work;
+        this->diffuse = action_.diffuse;
+    } */
+
     virtual ~Action()
     { /* std::cout << "Action class destructor" << std::endl;  */
     }

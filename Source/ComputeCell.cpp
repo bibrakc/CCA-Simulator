@@ -167,7 +167,8 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
         }
     }
     // Shape or routing not supported
-    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
+              << " or routing not supported!\n";
     exit(0);
 }
 
@@ -184,6 +185,32 @@ ComputeCell::prepare_a_cycle()
         // this operon to. The returned value is the index [0...number of neighbors) coresponding
         // clockwise the channel id of the physical shape.
         u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+
+        if (this->send_channel_per_neighbor[channel_to_send] != std::nullopt) {
+            std::cerr << "Bug! send_channel_per_neighbor " << channel_to_send
+                      << "shouldn't be non-empty\n";
+            exit(0);
+        }
+
+        // Prepare the send channel
+        this->send_channel_per_neighbor[channel_to_send] = this->staging_operon_from_logic;
+        // Empty the staging buffer
+        this->staging_operon_from_logic = std::nullopt;
+    }
+    // Move the operon from previous cycle recv channel to thier destination: action queue or send
+    // channel of a neighbor
+    std::cout << "this->recv_channel_per_neighbor.size() = " << this->recv_channel_per_neighbor.size() << "\n";
+    for (int i = 0; i<this->recv_channel_per_neighbor.size(); i++){
+        if(this->recv_channel_per_neighbor[i]){
+            Operon operon_ = this->recv_channel_per_neighbor[i].value();
+            u_int32_t dst_cc_id = operon_.first;
+            
+            // Check if this operon is destined for this compute cell
+            if (this->id == dst_cc_id){
+             //   this->action_queue.push(operon_.second);
+            }
+
+        }
     }
 }
 
