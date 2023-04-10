@@ -105,10 +105,12 @@ sssp_predicate_func(ComputeCell& cc,
 {
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
-    if (v->sssp_distance > incoming_distance) {
-        std::cout << "vertex ID : " << v->id
+
+     std::cout << "vertex ID : " << v->id
                   << " in sssp_predicate true | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
+    if (v->sssp_distance > incoming_distance) {
+       
         return 1;
     }
     return 0;
@@ -161,9 +163,10 @@ sssp_diffuse_func(ComputeCell& cc,
         message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
                    ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
 
+        std::cout << message;
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
-        args_x[0] = static_cast<int>(v->edges[i].weight);
+        args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         // args_x[1] = static_cast<int>(cc.id);
 
         /*       std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
@@ -183,7 +186,7 @@ sssp_diffuse_func(ComputeCell& cc,
                           eventId::sssp_predicate,
                           eventId::sssp_work,
                           eventId::sssp_diffuse);
-        Operon operon_to_send = construct_operon(cc.id, action);
+        Operon operon_to_send = construct_operon(v->edges[i].edge.cc_id, action);
         cc.task_queue.push(send_operon(cc, operon_to_send));
     }
 
@@ -280,9 +283,14 @@ class Graph
                 std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
                 continue;
             }
-            // Creating a ring graph.
+            /* // Creating a ring graph.
             u_int32_t dst_vertex_id = (i == this->total_vertices - 1) ? 0 : i + 1;
-            this->add_edge(this->vertices[i], dst_vertex_id, 5);
+            this->add_edge(this->vertices[i], dst_vertex_id, 5); */
+
+            // Creating a list graph.
+            u_int32_t dst_vertex_id = i + 1;
+            if (i != this->total_vertices - 1)
+                this->add_edge(this->vertices[i], dst_vertex_id, 5);
         }
         /* std::cout << "Leaving Graph Constructor\n"; */
     }
@@ -375,20 +383,24 @@ main(int argc, char** argv)
                        << ", vertex_addr = " << vertex_addr.value()
                        << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
 
-            std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
-            // Set distance to 0
-            args_x[0] = 0;
-            // args_x[1] = 7;
+            // only put action on a single vertex
+            if (vertex_.id == 0) {
 
-            cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
-                std::make_shared<SSSPAction>(vertex_addr.value(),
-                                             actionType::application_action,
-                                             true,
-                                             1,
-                                             args_x,
-                                             eventId::sssp_predicate,
-                                             eventId::sssp_work,
-                                             eventId::sssp_diffuse));
+                std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
+                // Set distance to 0
+                args_x[0] = 0;
+                // args_x[1] = 7;
+
+                cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
+                    std::make_shared<SSSPAction>(vertex_addr.value(),
+                                                 actionType::application_action,
+                                                 true,
+                                                 1,
+                                                 args_x,
+                                                 eventId::sssp_predicate,
+                                                 eventId::sssp_work,
+                                                 eventId::sssp_diffuse));
+            }
         }
     }
 
@@ -410,7 +422,20 @@ main(int argc, char** argv)
     std::cout << "Starting Execution on the CCA Chip: \n";
     auto start = std::chrono::steady_clock::now();
 
+    std::cout << "run_simulation\n";
     cca_sqaure_simulator.run_simulation();
+/*     std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation();
+    std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation();
+    std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation();
+    std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation();
+    std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation();
+    std::cout << "run_simulation\n";
+    cca_sqaure_simulator.run_simulation(); */
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
@@ -428,6 +453,14 @@ main(int argc, char** argv)
 
     std::cout << "Elapsed time in seconds: "
               << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
+
+
+    Address test_vertex_addr =
+        get_object_address_cyclic(3, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
+        
+        SimpleVertex<Address>* v_test = (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(test_vertex_addr);
+    std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id " << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
+
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
                 << args_x << ")\n"; */

@@ -34,6 +34,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "SimpleVertex.hpp"
 
+std::ostream&
+operator<<(std::ostream& os, const Operon& operon_)
+{
+    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
+
+    os << "\n";
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
+{
+
+    for (auto& op_ : operons_) {
+        if (op_ == std::nullopt) {
+                os << "[nullopt] ";
+            } else {
+                os << op_.value();
+            }
+    }
+    os << "\n";
+    return os;
+}
+
+
 template<typename To, typename From>
 inline std::pair<To, To>
 convert_internal_type_of_pair(const std::pair<From, From>& p)
@@ -214,14 +241,6 @@ ComputeCell::insert_action(const std::shared_ptr<Action>& action)
     this->action_queue.push(action);
 }
 
-// Checks if the compute cell is active or not
-// TODO: when communication is added then update checks for the communication buffer too
-bool
-ComputeCell::is_compute_cell_active()
-{
-    return (!this->action_queue.empty() || !this->task_queue.empty());
-}
-
 void
 ComputeCell::add_neighbor(
     std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell)
@@ -246,11 +265,13 @@ ComputeCell::execute_action()
         int predicate_resolution =
             event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
         std::cout << "execute_action() : predicate_resolution = " << predicate_resolution << "\n";
-        // if work
-        event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
+        if (predicate_resolution == 1) {
+            // if work
+            event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
 
-        // if diffuse
-        event_handlers[action->diffuse](*this, action->obj_addr, action->nargs, action->args);
+            // if diffuse
+            event_handlers[action->diffuse](*this, action->obj_addr, action->nargs, action->args);
+        }
         return;
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";
@@ -267,6 +288,9 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 
         std::pair<u_int32_t, u_int32_t> dst_cc_coordinates =
             ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_x, this->dim_y);
+        std::cout << "cc id : " << this->id << " dst_cc_coordinates = (" << dst_cc_coordinates.first << ", "
+                  << dst_cc_coordinates.second << ") -- origin = ( " << this->cooridates.first
+                  << ", " << this->cooridates.second << ")\n";
 
         // First check vertically in y axis then horizontally in x axis
         if (this->cooridates.second > dst_cc_coordinates.second) {
@@ -274,8 +298,10 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
         } else if (this->cooridates.second < dst_cc_coordinates.second) {
             return 3; // Clockwise 3 = down
         } else if (this->cooridates.first > dst_cc_coordinates.first) {
+            // std::cout <<"left\n";
             return 0; // Clockwise 0 = left
         } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // std::cout <<"right\n";
             return 2; // Clockwise 2 = right
         }
     }
@@ -294,10 +320,12 @@ ComputeCell::prepare_a_cycle()
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first;
 
+        std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
+                  << "\n";
         // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
         // this operon to. The returned value is the index [0...number of neighbors) coresponding
         // clockwise the channel id of the physical shape.
-        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+        u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
         if (this->send_channel_per_neighbor[channel_to_send] != std::nullopt) {
             std::cerr << "Bug! send_channel_per_neighbor " << channel_to_send
@@ -312,8 +340,8 @@ ComputeCell::prepare_a_cycle()
     }
     // Move the operon from previous cycle recv channel to thier destination: action queue or send
     // channel of a neighbor
-    std::cout << "this->recv_channel_per_neighbor.size() = "
-              << this->recv_channel_per_neighbor.size() << "\n";
+    /*  std::cout << "this->recv_channel_per_neighbor.size() = "
+               << this->recv_channel_per_neighbor.size() << "\n"; */
     for (int i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
         if (this->recv_channel_per_neighbor[i]) {
             Operon operon_ = this->recv_channel_per_neighbor[i].value();
@@ -326,14 +354,16 @@ ComputeCell::prepare_a_cycle()
                 this->recv_channel_per_neighbor[i] = std::nullopt;
             } else {
                 // It means the operon needs to be sent/passed to some neighbor
+                
                 u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
-
-                if (this->send_channel_per_neighbor[channel_to_send] != std::nullopt) {
+//std::cout << "cc id : " << this->id << " channel_to_send = " << channel_to_send << "IT IS THIS!!!\n";
+                if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
                     // Prepare the send channel
                     this->send_channel_per_neighbor[channel_to_send] = operon_;
                     // Flush the channel buffer
                     this->recv_channel_per_neighbor[i] = std::nullopt;
                 } else {
+                    std::cout << "stalled prepare_a_cycle send_channel_per_neighbor\n";
                     // increament the stall counter for send/recv
                 }
             }
@@ -409,31 +439,61 @@ ComputeCell::prepare_a_communication_cycle()
     }
 }
 
-void
-ComputeCell::run_a_communication_cycle()
+// Checks if the compute cell is active or not
+// TODO: when communication is added then update checks for the communication buffer too
+bool
+ComputeCell::is_compute_cell_active()
 {
+    bool send_channels = false;
+    bool recv_channels = false;
+    for (int i = 0; i < this->number_of_neighbors; i++) {
+        if (this->send_channel_per_neighbor[i] != std::nullopt) {
+            send_channels = true;
+            break;
+        }
+        if (this->recv_channel_per_neighbor[i] != std::nullopt) {
+            recv_channels = true;
+            break;
+        }
+    }
+    return (!this->action_queue.empty() || !this->task_queue.empty() ||
+            (this->staging_operon_from_logic != std::nullopt) || send_channels || recv_channels);
+}
 
+bool
+ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip)
+{
     // Perform communication
-    std::cout << "this->send_channel_per_neighbor.size() = "
-              << this->send_channel_per_neighbor.size() << "\n";
-    for (int i = 0; i < this->send_channel_per_neighbor.size(); i++) {
-        if (this->send_channel_per_neighbor[i]) { // is not std::nullopt
-            Operon operon_ = this->send_channel_per_neighbor[i].value();
-            u_int32_t dst_cc_id = operon_.first;
+    /*     std::cout << "this->send_channel_per_neighbor.size() = "
+                  << this->send_channel_per_neighbor.size() << "\n"; */
 
-            // The operon needs to be sent/passed to some neighbor
-            u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+    // For shape square
+    if (this->shape == computeCellShape::square) {
+        int receiving_direction[4] = { 2, 3, 0, 1 };
 
-            if (this->send_channel_per_neighbor[channel_to_send] != std::nullopt) {
-                // Prepare the send channel
-                this->send_channel_per_neighbor[channel_to_send] = operon_;
+        std::cout << "cc id: " << this->id << " run communication cycle send_channel_per_neighbor " << this->send_channel_per_neighbor;
+        for (int i = 0; i < this->send_channel_per_neighbor.size(); i++) {
+            if (this->send_channel_per_neighbor[i] != std::nullopt) { // is not std::nullopt
+                std::cout << "run communication send_channel_per_neighbor[i] = " << i << "\n";
+                Operon operon_ = this->send_channel_per_neighbor[i].value();
+
+                if (this->neighbor_compute_cells[i] == std::nullopt) {
+                    std::cerr << "Bug! neighbor_compute_cells[" << i << "] on cc " << this->id
+                              << " is nullopt. See why the send_channel_per_neighbor is not? \n";
+                    exit(0);
+                }
+                u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
+                CCA_chip[neighbor_id_]->recv_channel_per_neighbor[receiving_direction[i]] = operon_;
+
                 // Flush the channel buffer
-                this->recv_channel_per_neighbor[i] = std::nullopt;
+                this->send_channel_per_neighbor[i] = std::nullopt;
+
             } else {
                 // increament the stall counter for send/recv
             }
         }
     }
+    return this->is_compute_cell_active();
 }
 /*
 bool

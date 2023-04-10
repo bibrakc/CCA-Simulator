@@ -123,10 +123,10 @@ class ComputeCell
     void prepare_a_communication_cycle();
 
     // TODO: write comments
-    void run_a_communication_cycle();
+    bool run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip);
 
     // Run a cycle: This include all computation and communication work within a single cycle
-    bool run_a_cycle();
+   // bool run_a_cycle();
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update checks for the communication buffer too

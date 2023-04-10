@@ -118,15 +118,27 @@ CCASimulator::run_simulation()
     this->global_active_cc = true;
     this->total_cycles = 0;
 
-    /*     while (this->global_active_cc) {
-            this->global_active_cc = false;
+    while (this->global_active_cc) {
+        this->global_active_cc = false;
 
-    #pragma omp parallel for reduction(| : this->global_active_cc)
-            for (int i = 0; i < this->CCA_chip.size(); i++) {
-                if (this->CCA_chip[i]->is_compute_cell_active()) {
-                    global_active_cc |= this->CCA_chip[i]->run_a_computation_cycle();
-                }
+        // Run a cycle: First the computation cycle (that includes the preparation of operons from
+        // previous cycle)
+        for (int i = 0; i < this->CCA_chip.size(); i++) {
+            this->CCA_chip[i]->run_a_computation_cycle();
+        }
+
+        // Prepare communication cycle
+        for (int i = 0; i < this->CCA_chip.size(); i++) {
+            this->CCA_chip[i]->prepare_a_communication_cycle();
+        }
+
+        // Run communication cycle
+//#pragma omp parallel for reduction(| : this->global_active_cc)
+        for (int i = 0; i < this->CCA_chip.size(); i++) {
+            if (this->CCA_chip[i]->is_compute_cell_active()) {
+                global_active_cc |= this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
             }
-            total_cycles++;
-        } */
+        }
+        total_cycles++;
+    }
 }
