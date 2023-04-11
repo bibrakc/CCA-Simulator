@@ -329,8 +329,8 @@ ComputeCell::prepare_a_cycle()
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first;
 
-        /*   std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
-                    << "\n"; */
+       /*     std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
+                    << "\n";  */
 
         // Check if this operon is destined for this compute cell
         if (this->id == dst_cc_id) {
@@ -441,8 +441,9 @@ ComputeCell::run_a_computation_cycle()
         // std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
 
         this->execute_action();
-        return;
+      //  return;
     }
+   
 }
 
 // This act as synchronization and needs to be called before the actual communication cycle so as to
@@ -481,6 +482,7 @@ ComputeCell::prepare_a_communication_cycle()
             }
         }
     }
+   
 }
 
 // Checks if the compute cell is active or not

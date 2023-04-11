@@ -53,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
 
+
+static u_int32_t test_vertex;
+
 // TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
 // this inheritence makes sense later when the project matures.
 class SSSPAction : public Action
@@ -106,7 +109,7 @@ sssp_predicate_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
 
-    if (v->id == 7) {
+    if (v->id == 35) {
         std::cout << "vertex ID : " << v->id
                   << " in sssp_predicate true | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
@@ -478,7 +481,7 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
 
     ///////////////
-    u_int32_t test_vertex = parser.get<u_int32_t>("tv");
+    test_vertex = parser.get<u_int32_t>("tv");
 
     Address test_vertex_addr = get_object_address_cyclic(
         test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
