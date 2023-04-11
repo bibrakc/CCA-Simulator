@@ -53,7 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
 
-
 static u_int32_t test_vertex;
 
 // TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
@@ -108,16 +107,17 @@ sssp_predicate_func(ComputeCell& cc,
 {
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
+    int origin_vertex = args[1];
 
     if (v->id == 35) {
         std::cout << "vertex ID : " << v->id
-                  << " in sssp_predicate true | incoming_distance = " << incoming_distance
+                  << " sssp_predicate | origin vertex: " << origin_vertex << " | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
     }
 
     if constexpr (debug_code) {
         std::cout << "vertex ID : " << v->id
-                  << " in sssp_predicate true | incoming_distance = " << incoming_distance
+                  << " in sssp_predicate | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
     }
     if (v->sssp_distance > incoming_distance) {
@@ -179,20 +179,21 @@ sssp_diffuse_func(ComputeCell& cc,
         }
 
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
-        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
+        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
+        args_x[1] = static_cast<int>(v->id);
 
         SSSPAction action(v->edges[i].edge,
                           actionType::application_action,
                           true,
-                          1,
+                          2,
                           args_x,
                           eventId::sssp_predicate,
                           eventId::sssp_work,
                           eventId::sssp_diffuse);
         Operon operon_to_send = construct_operon(v->edges[i].edge.cc_id, action);
         cc.task_queue.push(send_operon(cc, operon_to_send));
-        }
+    }
     // These many new actions were created
     cc.statistics.actions_created += v->number_of_edges;
 
@@ -424,20 +425,22 @@ main(int argc, char** argv)
             // only put action on a single vertex
             if (vertex_.id == 0) {
 
-                std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
+                std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
                 // Set distance to 0
                 args_x[0] = 0;
-                // args_x[1] = 7;
-
+                // origin
+                args_x[1] = 0;
+                
                 cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
-                    std::make_shared<SSSPAction>(vertex_addr.value(),
-                                                 actionType::application_action,
-                                                 true,
-                                                 1,
-                                                 args_x,
-                                                 eventId::sssp_predicate,
-                                                 eventId::sssp_work,
-                                                 eventId::sssp_diffuse));
+                    SSSPAction(vertex_addr.value(),
+                               actionType::application_action,
+                               true,
+                               2,
+                               args_x,
+                               eventId::sssp_predicate,
+                               eventId::sssp_work,
+                               eventId::sssp_diffuse));
+                cca_sqaure_simulator.CCA_chip[cc_id]->statistics.actions_created++;
             }
         }
     }
@@ -497,6 +500,8 @@ main(int argc, char** argv)
         simulation_statistics.actions_created += cc->statistics.actions_created;
 
         simulation_statistics.actions_pushed += cc->statistics.actions_pushed;
+
+        simulation_statistics.actions_performed_work += cc->statistics.actions_performed_work;
 
         simulation_statistics.actions_false_on_predicate +=
             cc->statistics.actions_false_on_predicate;

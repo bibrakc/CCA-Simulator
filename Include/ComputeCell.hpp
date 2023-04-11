@@ -73,6 +73,8 @@ struct ComputeCellStatistics
     u_int32_t actions_pushed{};
 
     u_int32_t actions_invoked{};
+    u_int32_t actions_performed_work{};
+
     u_int32_t actions_false_on_predicate{}; // actions subsumed
     u_int32_t stall_logic_on_network{};     // When network is busy passing other operon
     u_int32_t stall_network_on_recv{};
@@ -85,6 +87,7 @@ struct ComputeCellStatistics
         os << "Statistics:\n\tactions_created: " << stat.actions_created
            << "\n\tactions_pushed: " << stat.actions_pushed
            << "\n\tactions_invoked: " << stat.actions_invoked
+           << "\n\tactions_performed_work: " << stat.actions_performed_work
            << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
            << "\n\tstall_logic_on_network: " << stat.stall_logic_on_network
            << "\n\tstall_network_on_recv: " << stat.stall_network_on_recv
@@ -132,7 +135,7 @@ class ComputeCell
         return os;
     }
 
-    void insert_action(const std::shared_ptr<Action>& action);
+    void insert_action(const Action& action);
 
     void execute_action();
 
@@ -213,7 +216,7 @@ class ComputeCell
     // Channel neighbor id index. To be initialized based on the shape of this CC and the dimensions
     // of the chip. Note: the channels are enumerated (indexed) clockwise starting from left. 0 =
     // left, 1 = up, 2 = right, and 3 = down for sqaure shape.
-    std::vector<std::optional<u_int32_t>> channel_neighbor_index;
+    // std::vector<std::optional<u_int32_t>> channel_neighbor_index;
 
     // Per neighbor send channel/link
     std::vector<std::optional<Operon>> send_channel_per_neighbor;
@@ -250,7 +253,7 @@ class ComputeCell
     char* memory_curr_ptr;
 
     // Actions queue of the Compute Cell
-    std::queue<std::shared_ptr<Action>> action_queue;
+    std::queue<Action> action_queue;
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe even better
@@ -298,22 +301,6 @@ class ComputeCell
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
         }
-
-        // TODO remove the channel_neighbor_index
-        /*         if (this->shape == computeCellShape::square) {
-
-                    // Initialize the index of the channels clockwise from the left with the cc
-           neighbor Ids this->channel_neighbor_index[0] = left neighbor;
-                             this->channel_neighbor_index[0] = up neighbor;
-                             this->channel_neighbor_index[0] = right neighbor;
-                             this->channel_neighbor_index[0] = down neighbor;
-
-                } else {
-                    // Shape  not supported
-                    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
-                              << "  not supported!\n";
-                    exit(0);
-                } */
     }
 };
 

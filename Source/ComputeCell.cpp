@@ -235,7 +235,7 @@ ComputeCell::create_object_in_memory(void* obj, size_t size_of_obj)
 }
 
 void
-ComputeCell::insert_action(const std::shared_ptr<Action>& action)
+ComputeCell::insert_action(const Action& action)
 {
     this->action_queue.push(action);
     this->statistics.actions_pushed++;
@@ -252,26 +252,27 @@ ComputeCell::execute_action()
 {
 
     if (!this->action_queue.empty()) {
-        std::shared_ptr<Action> action = this->action_queue.front();
+        Action action = this->action_queue.front();
         this->action_queue.pop();
 
         if constexpr (debug_code == true) {
-            print_SimpleVertex(*this, action->obj_addr);
+            print_SimpleVertex(*this, action.obj_addr);
         }
 
         // if predicate
         int predicate_resolution =
-            event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
+            event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
         // std::cout << "execute_action() : predicate_resolution = " << predicate_resolution <<
         // "\n";
 
         if (predicate_resolution == 1) {
             // if work
-            event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
+            event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
+            this->statistics.actions_performed_work++;
 
             // if diffuse
-            event_handlers[action->diffuse](*this, action->obj_addr, action->nargs, action->args);
+            event_handlers[action.diffuse](*this, action.obj_addr, action.nargs, action.args);
         } else {
             // This actions is discarded/subsumed
             this->statistics.actions_false_on_predicate++;
@@ -334,7 +335,7 @@ ComputeCell::prepare_a_cycle()
 
         // Check if this operon is destined for this compute cell
         if (this->id == dst_cc_id) {
-            this->insert_action(std::make_shared<Action>(operon_.second));
+            this->insert_action(operon_.second);
             //this->action_queue.push();
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
@@ -372,7 +373,7 @@ ComputeCell::prepare_a_cycle()
             // Check if this operon is destined for this compute cell
             if (this->id == dst_cc_id) {
                 //this->action_queue.push(std::make_shared<Action>(operon_.second));
-                this->insert_action(std::make_shared<Action>(operon_.second));
+                this->insert_action(operon_.second);
                 // Flush the channel buffer
                 this->recv_channel_per_neighbor[i] = std::nullopt;
             } else {
@@ -458,7 +459,7 @@ ComputeCell::prepare_a_communication_cycle()
         // Check if this operon is destined for this compute cell
         if (this->id == dst_cc_id) {
             //this->action_queue.push(std::make_shared<Action>(operon_.second));
-            this->insert_action(std::make_shared<Action>(operon_.second));
+            this->insert_action(operon_.second);
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
