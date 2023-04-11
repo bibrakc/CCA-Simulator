@@ -123,7 +123,7 @@ class ComputeCell
     void prepare_a_communication_cycle();
 
     // TODO: write comments
-    bool run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip);
+    void run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip);
 
     // Run a cycle: This include all computation and communication work within a single cycle
    // bool run_a_cycle();

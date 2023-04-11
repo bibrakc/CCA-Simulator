@@ -118,7 +118,9 @@ CCASimulator::run_simulation()
     this->global_active_cc = true;
     this->total_cycles = 0;
 
-    while (this->global_active_cc) {
+   // while (this->total_cycles < 50) {
+        while (this->global_active_cc) {
+        std::cout << "Cycle # "<< this->total_cycles << "\n\n";
         this->global_active_cc = false;
 
         // Run a cycle: First the computation cycle (that includes the preparation of operons from
@@ -135,10 +137,13 @@ CCASimulator::run_simulation()
         // Run communication cycle
 //#pragma omp parallel for reduction(| : this->global_active_cc)
         for (int i = 0; i < this->CCA_chip.size(); i++) {
-            if (this->CCA_chip[i]->is_compute_cell_active()) {
-                global_active_cc |= this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
-            }
+                this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
+        }
+        // Check for termination
+        for (int i = 0; i < this->CCA_chip.size(); i++) {
+         global_active_cc |= this->CCA_chip[i]->is_compute_cell_active();
         }
         total_cycles++;
+        std::cout << "\n--------\n";
     }
 }

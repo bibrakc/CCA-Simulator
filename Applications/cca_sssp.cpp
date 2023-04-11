@@ -110,7 +110,6 @@ sssp_predicate_func(ComputeCell& cc,
                   << " in sssp_predicate true | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
     if (v->sssp_distance > incoming_distance) {
-       
         return 1;
     }
     return 0;
@@ -140,7 +139,7 @@ send_operon(ComputeCell& cc, Operon operon_in)
                        "to send_operon\n";
                 exit(0);
             }
-            std::cout << "Sending operon from cc " << cc.id << " to cc << " << operon_in.first
+            std::cout << "Sending operon from cc: " << cc.id << " to cc: " << operon_in.first
                       << "\n";
             cc.staging_operon_from_logic = operon_in;
         }));
@@ -456,7 +455,7 @@ main(int argc, char** argv)
 
 
     Address test_vertex_addr =
-        get_object_address_cyclic(3, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
+        get_object_address_cyclic(50, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
         
         SimpleVertex<Address>* v_test = (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(test_vertex_addr);
     std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id " << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
