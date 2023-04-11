@@ -263,7 +263,9 @@ ComputeCell::execute_action()
         // if predicate
         int predicate_resolution =
             event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
-        std::cout << "execute_action() : predicate_resolution = " << predicate_resolution << "\n";
+
+        //std::cout << "execute_action() : predicate_resolution = " << predicate_resolution << "\n";
+        
         if (predicate_resolution == 1) {
             // if work
             event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
@@ -288,10 +290,12 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
         std::pair<u_int32_t, u_int32_t> dst_cc_coordinates =
             ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_x, this->dim_y);
 
-        std::cout << "cc id : " << this->id << " dst_cc_coordinates = (" << dst_cc_coordinates.first
-                  << ", " << dst_cc_coordinates.second << ") -- origin = ( "
-                  << this->cooridates.first << ", " << this->cooridates.second << ")\n";
-
+        if constexpr (debug_code) {
+            std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
+                      << dst_cc_coordinates.first << ", " << dst_cc_coordinates.second
+                      << ") -- origin = ( " << this->cooridates.first << ", "
+                      << this->cooridates.second << ")\n";
+        }
         // First check vertically in y axis then horizontally in x axis
         if (this->cooridates.second > dst_cc_coordinates.second) {
             return 1; // Clockwise 1 = up

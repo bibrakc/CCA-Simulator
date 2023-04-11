@@ -106,9 +106,11 @@ sssp_predicate_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
 
-     std::cout << "vertex ID : " << v->id
+    if constexpr (debug_code) {
+        std::cout << "vertex ID : " << v->id
                   << " in sssp_predicate true | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
+    }
     if (v->sssp_distance > incoming_distance) {
         return 1;
     }
@@ -139,8 +141,11 @@ send_operon(ComputeCell& cc, Operon operon_in)
                        "to send_operon\n";
                 exit(0);
             }
-            std::cout << "Sending operon from cc: " << cc.id << " to cc: " << operon_in.first
-                      << "\n";
+            if constexpr (debug_code) {
+                std::cout << "Sending operon from cc: " << cc.id << " to cc: " << operon_in.first
+                          << "\n";
+            }
+
             cc.staging_operon_from_logic = operon_in;
         }));
 }
@@ -158,11 +163,15 @@ sssp_diffuse_func(ComputeCell& cc,
     // cc.print_SimpleVertex(addr);
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
-        std::string message = "Send from ";
-        message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
-                   ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
 
-        std::cout << message;
+        if constexpr (debug_code) {
+            std::string message = "Send from ";
+            message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
+                       ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
+
+            std::cout << message;
+        }
+
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
@@ -420,21 +429,7 @@ main(int argc, char** argv)
 
     std::cout << "Starting Execution on the CCA Chip: \n";
     auto start = std::chrono::steady_clock::now();
-
-    std::cout << "run_simulation\n";
     cca_sqaure_simulator.run_simulation();
-/*     std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation();
-    std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation();
-    std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation();
-    std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation();
-    std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation();
-    std::cout << "run_simulation\n";
-    cca_sqaure_simulator.run_simulation(); */
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
@@ -453,12 +448,14 @@ main(int argc, char** argv)
     std::cout << "Elapsed time in seconds: "
               << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
 
+    Address test_vertex_addr = get_object_address_cyclic(
+        7, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
 
-    Address test_vertex_addr =
-        get_object_address_cyclic(50, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
-        
-        SimpleVertex<Address>* v_test = (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(test_vertex_addr);
-    std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id " << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
+    SimpleVertex<Address>* v_test =
+        (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
+            test_vertex_addr);
+    std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id "
+              << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
 
     /*   args_x = nullptr;
       std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
