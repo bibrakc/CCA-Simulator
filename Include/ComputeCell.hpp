@@ -67,6 +67,32 @@ enum class computeCellShape : u_int32_t
     { computeCellShape::hexagon, 6 }
 }; */
 
+struct ComputeCellStatistics
+{
+    u_int32_t actions_created{};
+    u_int32_t actions_pushed{};
+
+    u_int32_t actions_invoked{};
+    u_int32_t actions_false_on_predicate{}; // actions subsumed
+    u_int32_t stall_logic_on_network{};     // When network is busy passing other operon
+    u_int32_t stall_network_on_recv{};
+    u_int32_t stall_network_on_send{};
+
+    // u_int32_t cycles_active{};
+
+    friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
+    {
+        os << "Statistics:\n\tactions_created: " << stat.actions_created
+           << "\n\tactions_pushed: " << stat.actions_pushed
+           << "\n\tactions_invoked: " << stat.actions_invoked
+           << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
+           << "\n\tstall_logic_on_network: " << stat.stall_logic_on_network
+           << "\n\tstall_network_on_recv: " << stat.stall_network_on_recv
+           << "\n\tstall_network_on_send: " << stat.stall_network_on_send << "\n";
+        return os;
+    }
+};
+
 // Note this class is not thread-safe.
 // TODO: We can have a template for computeCellShape here
 class ComputeCell
@@ -126,7 +152,7 @@ class ComputeCell
     void run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip);
 
     // Run a cycle: This include all computation and communication work within a single cycle
-   // bool run_a_cycle();
+    // bool run_a_cycle();
 
     // Checks if the compute cell is active or not
     // TODO: when communication is added then update checks for the communication buffer too
@@ -236,6 +262,9 @@ class ComputeCell
     // std::queue<std::shared_ptr<Task>> task_queue;
     // TaskQueue task_queue;
     std::queue<Task> task_queue;
+
+    // Performance measurements and counters
+    ComputeCellStatistics statistics;
 
     // Constructor
     ComputeCell(u_int32_t id_in,

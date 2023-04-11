@@ -238,6 +238,7 @@ void
 ComputeCell::insert_action(const std::shared_ptr<Action>& action)
 {
     this->action_queue.push(action);
+    this->statistics.actions_pushed++;
 }
 
 void
@@ -258,21 +259,25 @@ ComputeCell::execute_action()
             print_SimpleVertex(*this, action->obj_addr);
         }
 
-        // TODO: actually put the ifs
-
         // if predicate
         int predicate_resolution =
             event_handlers[action->predicate](*this, action->obj_addr, action->nargs, action->args);
 
-        //std::cout << "execute_action() : predicate_resolution = " << predicate_resolution << "\n";
-        
+        // std::cout << "execute_action() : predicate_resolution = " << predicate_resolution <<
+        // "\n";
+
         if (predicate_resolution == 1) {
             // if work
             event_handlers[action->work](*this, action->obj_addr, action->nargs, action->args);
 
             // if diffuse
             event_handlers[action->diffuse](*this, action->obj_addr, action->nargs, action->args);
+        } else {
+            // This actions is discarded/subsumed
+            this->statistics.actions_false_on_predicate++;
         }
+        // Increament the counter for actions that were invoked
+        this->statistics.actions_invoked++;
         return;
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";
@@ -324,12 +329,13 @@ ComputeCell::prepare_a_cycle()
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first;
 
-        std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
-                  << "\n";
+        /*   std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
+                    << "\n"; */
 
         // Check if this operon is destined for this compute cell
         if (this->id == dst_cc_id) {
-            this->action_queue.push(std::make_shared<Action>(operon_.second));
+            this->insert_action(std::make_shared<Action>(operon_.second));
+            //this->action_queue.push();
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
@@ -365,7 +371,8 @@ ComputeCell::prepare_a_cycle()
 
             // Check if this operon is destined for this compute cell
             if (this->id == dst_cc_id) {
-                this->action_queue.push(std::make_shared<Action>(operon_.second));
+                //this->action_queue.push(std::make_shared<Action>(operon_.second));
+                this->insert_action(std::make_shared<Action>(operon_.second));
                 // Flush the channel buffer
                 this->recv_channel_per_neighbor[i] = std::nullopt;
             } else {
@@ -381,8 +388,9 @@ ComputeCell::prepare_a_cycle()
                     // Flush the channel buffer
                     this->recv_channel_per_neighbor[i] = std::nullopt;
                 } else {
-                    std::cout << "stalled prepare_a_cycle send_channel_per_neighbor\n";
-                    // increament the stall counter for send/recv
+                    this->statistics.stall_network_on_send++;
+                    // std::cout << "stalled prepare_a_cycle send_channel_per_neighbor\n";
+                    //  increament the stall counter for send/recv
                 }
             }
         }
@@ -412,12 +420,14 @@ ComputeCell::run_a_computation_cycle()
                           << "(current_task.first == taskType::send_operon_task_type) = "
                           << (current_task.first == taskType::send_operon_task_type) << "\n"; */
 
-        // Check if the staging buffer is not full
-        if ((this->staging_operon_from_logic != std::nullopt) &&
+        // Check if the staging buffer is not full and the task type is send operon
+        // In that case stall and don't do anything. Because the task can't send operon
+        if (this->staging_operon_from_logic &&
             (current_task.first == taskType::send_operon_task_type)) {
             std::cout << "cc: " << this->id
                       << " staging_operon_from_logic buffer is full! This cycle is stalled. Will "
                          "not dequeue the task from the task queue\n";
+            this->statistics.stall_logic_on_network++;
 
         } else {
             // remove the task from the queue and execute it.
@@ -431,6 +441,7 @@ ComputeCell::run_a_computation_cycle()
         // std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
 
         this->execute_action();
+        return;
     }
 }
 
@@ -445,7 +456,8 @@ ComputeCell::prepare_a_communication_cycle()
 
         // Check if this operon is destined for this compute cell
         if (this->id == dst_cc_id) {
-            this->action_queue.push(std::make_shared<Action>(operon_.second));
+            //this->action_queue.push(std::make_shared<Action>(operon_.second));
+            this->insert_action(std::make_shared<Action>(operon_.second));
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
@@ -464,6 +476,7 @@ ComputeCell::prepare_a_communication_cycle()
                 // Empty the staging buffer
                 this->staging_operon_from_logic = std::nullopt;
             } else {
+                this->statistics.stall_network_on_send++;
                 // increase the stall counter
             }
         }
@@ -478,17 +491,17 @@ ComputeCell::is_compute_cell_active()
     bool send_channels = false;
     bool recv_channels = false;
     for (int i = 0; i < this->number_of_neighbors; i++) {
-        if (this->send_channel_per_neighbor[i] != std::nullopt) {
+        if (this->send_channel_per_neighbor[i]) {
             send_channels = true;
             break;
         }
-        if (this->recv_channel_per_neighbor[i] != std::nullopt) {
+        if (this->recv_channel_per_neighbor[i]) {
             recv_channels = true;
             break;
         }
     }
     return (!this->action_queue.empty() || !this->task_queue.empty() ||
-            (this->staging_operon_from_logic != std::nullopt) || send_channels || recv_channels);
+            (this->staging_operon_from_logic) || send_channels || recv_channels);
 }
 
 void
@@ -510,6 +523,16 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>
                 //   this->send_channel_per_neighbor[i].value() << "\n";
                 Operon operon_ = this->send_channel_per_neighbor[i].value();
 
+                u_int32_t dst_cc_id = operon_.first;
+
+                // Check if this operon is destined for this compute cell
+                if (this->id == dst_cc_id) {
+                    std::cerr << "Bug! run_a_communication_cycle()\tsend_channel_per_neighbor[" << i
+                              << "] on cc " << this->id
+                              << " is sending to itself. See why this condition even exists? \n";
+                    exit(0);
+                }
+
                 if (this->neighbor_compute_cells[i] == std::nullopt) {
                     std::cerr << "Bug! neighbor_compute_cells[" << i << "] on cc " << this->id
                               << " is nullopt. See why the send_channel_per_neighbor is not? \n";
@@ -522,6 +545,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>
                 this->send_channel_per_neighbor[i] = std::nullopt;
 
             } else {
+                this->statistics.stall_network_on_recv++;
                 // increament the stall counter for send/recv
             }
         }

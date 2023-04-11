@@ -106,6 +106,12 @@ sssp_predicate_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
 
+    if (v->id == 7) {
+        std::cout << "vertex ID : " << v->id
+                  << " in sssp_predicate true | incoming_distance = " << incoming_distance
+                  << " v->sssp_distance = " << v->sssp_distance << std::endl;
+    }
+
     if constexpr (debug_code) {
         std::cout << "vertex ID : " << v->id
                   << " in sssp_predicate true | incoming_distance = " << incoming_distance
@@ -150,17 +156,14 @@ send_operon(ComputeCell& cc, Operon operon_in)
         }));
 }
 
+// Return the number of diffusions created, i.e. v->number_of_edges. These are used for performance
+// measurements
 int
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   int nargs,
                   const std::shared_ptr<int[]>& args)
 {
-    // std::cout << "in sssp_diffuse: " << std::endl;
-    // std::cout << "(" << addr.cc_id << ", " << addr.addr << ")" << std::endl;
-    // std::cout << addr  << std::endl;
-
-    // cc.print_SimpleVertex(addr);
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
 
@@ -175,16 +178,6 @@ sssp_diffuse_func(ComputeCell& cc,
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         std::shared_ptr<int[]> args_x = std::make_shared<int[]>(1);
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
-        // args_x[1] = static_cast<int>(cc.id);
-
-        /*       std::shared_ptr action = std::make_shared<SSSPAction>(v->edges[i],
-                                                                    actionType::application_action,
-                                                                    true,
-                                                                    2,
-                                                                    args_x,
-                                                                    eventId::sssp_predicate,
-                                                                    eventId::sssp_work,
-                                                                    eventId::sssp_diffuse); */
 
         SSSPAction action(v->edges[i].edge,
                           actionType::application_action,
@@ -196,7 +189,9 @@ sssp_diffuse_func(ComputeCell& cc,
                           eventId::sssp_diffuse);
         Operon operon_to_send = construct_operon(v->edges[i].edge.cc_id, action);
         cc.task_queue.push(send_operon(cc, operon_to_send));
-    }
+        }
+    // These many new actions were created
+    cc.statistics.actions_created += v->number_of_edges;
 
     return 0;
 }
@@ -208,7 +203,7 @@ std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, ss
                                                    { eventId::sssp_diffuse, sssp_diffuse_func } };
 
 // Configuration related to the input data graph
-u_int32_t total_vertices;
+/* u_int32_t total_vertices; */
 
 // Note: We could have put this function as part of the ComputeCell class but then it would have
 // introduced application specific functionality into the compute cell. Perhaps, if we really want
@@ -255,7 +250,8 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
 void
 configure_parser(cli::Parser& parser)
 {
-    parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
+    // parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
+    parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");
     parser.set_required<u_int32_t>("dx",
                                    "dimensionx",
                                    "Dimnesion of the shape in x direction. For example: A rectange "
@@ -266,6 +262,8 @@ configure_parser(cli::Parser& parser)
                                    "chip is x*y. Provide dy such that dx x dy)");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
+
+    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
 }
 
 class Graph
@@ -281,25 +279,30 @@ class Graph
         this->total_vertices = total_vertices_in;
 
         this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
-
         for (int i = 0; i < this->total_vertices; i++) {
-            /* std::cout << "In Graph Constructor -- Adding edge in vertex " << i << "\n"; */
             this->vertices[i].id = i;
-
-            // Check if edges are not full
-            if (this->vertices[i].number_of_edges >= edges_max) {
-                std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
-                continue;
-            }
-            /* // Creating a ring graph.
-            u_int32_t dst_vertex_id = (i == this->total_vertices - 1) ? 0 : i + 1;
-            this->add_edge(this->vertices[i], dst_vertex_id, 5); */
-
-            // Creating a list graph.
-            u_int32_t dst_vertex_id = i + 1;
-            if (i != this->total_vertices - 1)
-                this->add_edge(this->vertices[i], dst_vertex_id, 5);
+            this->vertices[i].number_of_edges = 0;
+            // this->vertices[i]
         }
+        /*         for (int i = 0; i < this->total_vertices; i++) {
+
+                    this->vertices[i].id = i;
+
+                    // Check if edges are not full
+                    if (this->vertices[i].number_of_edges >= edges_max) {
+                        std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
+                        continue;
+                    }
+                    / * // Creating a ring graph.
+                    u_int32_t dst_vertex_id = (i == this->total_vertices - 1) ? 0 : i + 1;
+                    this->add_edge(this->vertices[i], dst_vertex_id, 5); * /
+
+                    // Creating a list graph.
+                    u_int32_t dst_vertex_id = i + 1;
+                    if (i != this->total_vertices - 1)
+                        this->add_edge(this->vertices[i], dst_vertex_id, 5);
+                } */
+
         /* std::cout << "Leaving Graph Constructor\n"; */
     }
     void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
@@ -322,7 +325,8 @@ main(int argc, char** argv)
     parser.run_and_exit_if_error();
 
     // Configuration related to the input data graph
-    total_vertices = parser.get<u_int32_t>("v");
+    // total_vertices = parser.get<u_int32_t>("v");
+    std::string input_graph_path = parser.get<std::string>("f");
 
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
@@ -352,7 +356,30 @@ main(int argc, char** argv)
               << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells << "\n";
 
     // Generate or read the input data graph
+    FILE* input_graph_file_handler = NULL;
+
+    if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == NULL)
+        return -1;
+
+    u_int32_t total_vertices = 0;
+    u_int32_t total_edges = 0;
+
+    fscanf(input_graph_file_handler, "%d\t%d", &total_vertices, &total_vertices);
+    fscanf(input_graph_file_handler, "%d", &total_edges);
+
+    std::cout << "The graph: " << input_graph_path << " has total_vertices: " << total_vertices
+              << " with " << total_edges << " egdes.\n";
+
     Graph input_graph(total_vertices);
+
+    // Read from file and insert edges
+    u_int32_t vertex_from;
+    u_int32_t vertex_to;
+    u_int32_t weight;
+    for (int i = 0; i < total_edges; i++) {
+        fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
+        input_graph.add_edge(input_graph.vertices[vertex_from], vertex_to, weight);
+    }
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
@@ -415,6 +442,8 @@ main(int argc, char** argv)
     std::cout << "Populating vertices by inserting edges: \n";
     for (int i = 0; i < input_graph.total_vertices; i++) {
         u_int32_t src_vertex_id = input_graph.vertices[i].id;
+        // std::cout << "vertex id: " << src_vertex_id << " has edge: " <<
+        // input_graph.vertices[i].number_of_edges << "\n";
         for (int j = 0; j < input_graph.vertices[i].number_of_edges; j++) {
 
             u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
@@ -448,8 +477,11 @@ main(int argc, char** argv)
     std::cout << "Elapsed time in seconds: "
               << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
 
+    ///////////////
+    u_int32_t test_vertex = parser.get<u_int32_t>("tv");
+
     Address test_vertex_addr = get_object_address_cyclic(
-        7, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
+        test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
 
     SimpleVertex<Address>* v_test =
         (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
@@ -457,9 +489,21 @@ main(int argc, char** argv)
     std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id "
               << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
 
-    /*   args_x = nullptr;
-      std::cout << "in main(): args_x.use_count() == " << args_x.use_count() << " (object @ "
-                << args_x << ")\n"; */
+    ComputeCellStatistics simulation_statistics;
+    for (auto& cc : cca_sqaure_simulator.CCA_chip) {
+        simulation_statistics.actions_created += cc->statistics.actions_created;
+
+        simulation_statistics.actions_pushed += cc->statistics.actions_pushed;
+
+        simulation_statistics.actions_false_on_predicate +=
+            cc->statistics.actions_false_on_predicate;
+        simulation_statistics.actions_invoked += cc->statistics.actions_invoked;
+        simulation_statistics.stall_logic_on_network += cc->statistics.stall_logic_on_network;
+        simulation_statistics.stall_network_on_recv += cc->statistics.stall_network_on_recv;
+        simulation_statistics.stall_network_on_send += cc->statistics.stall_network_on_send;
+    }
+
+    std::cout << simulation_statistics;
 
     return 0;
 }

@@ -96,7 +96,7 @@ CCASimulator::create_the_chip()
                                                                shape_of_compute_cells,
                                                                this->dim_x,
                                                                this->dim_y,
-                                                               2 * 1024 * 1024)); // 2 MB
+                                                               7 * 1024 * 1024)); // 7 MB
 
         if constexpr (debug_code) {
             std::cout << *this->CCA_chip.back().get();
@@ -118,7 +118,7 @@ CCASimulator::run_simulation()
     this->global_active_cc = true;
     this->total_cycles = 0;
 
-    // while (this->total_cycles < 50) {
+     //while (this->total_cycles < 3000) {
     while (this->global_active_cc) {
 
         // std::cout << "Cycle # "<< this->total_cycles << "\n\n";
@@ -127,21 +127,24 @@ CCASimulator::run_simulation()
 
         // Run a cycle: First the computation cycle (that includes the preparation of operons from
         // previous cycle)
+        #pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle();
         }
 
         // Prepare communication cycle
+        #pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle();
         }
 
         // Run communication cycle
-        // #pragma omp parallel for reduction(| : this->global_active_cc)
+        #pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
         // Check for termination
+        #pragma omp parallel for reduction(| : this->global_active_cc)
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             global_active_cc |= this->CCA_chip[i]->is_compute_cell_active();
         }

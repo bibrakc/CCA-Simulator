@@ -78,4 +78,5 @@ target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory}
 add_executable(${executable_name} cca_sssp.cpp)
 
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASim OpenMP::OpenMP_CXX)
+target_link_libraries(${executable_name} PRIVATE CCASim /opt/homebrew/opt/libomp/lib/libomp.a)# OpenMP::OpenMP_CXX)
+#target_link_libraries(${executable_name} PRIVATE CCASim OpenMP::OpenMP_CXX)
