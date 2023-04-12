@@ -108,12 +108,12 @@ sssp_predicate_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
     int origin_vertex = args[1];
-
+/* 
     if (v->id == 35) {
         std::cout << "vertex ID : " << v->id
                   << " sssp_predicate | origin vertex: " << origin_vertex << " | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
-    }
+    } */
 
     if constexpr (debug_code) {
         std::cout << "vertex ID : " << v->id

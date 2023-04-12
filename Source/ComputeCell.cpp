@@ -309,6 +309,8 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
             // std::cout <<"right\n";
             return 2; // Clockwise 2 = right
         }
+        std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
+                  << "Bug: routing not sucessful!\n";
     }
     // Shape or routing not supported
     std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
@@ -344,18 +346,20 @@ ComputeCell::prepare_a_cycle()
             //    "prepare_a_cycle: staging_operon_from_logic get_route_towards_cc_id\n";
             u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
-            Something going on here with these preparations of cycles
+            // Something going on here with these preparations of cycles
             /*    if (this->send_channel_per_neighbor[channel_to_send]) {
                    std::cerr << "Bug! send_channel_per_neighbor " << channel_to_send
                              << "shouldn't be non-empty\n";
                    exit(0);
                } */
-            if (this->send_channel_per_neighbor[channel_to_send] != std::nullopt) {
-        
+            if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
+
                 // Prepare the send channel
                 this->send_channel_per_neighbor[channel_to_send] = this->staging_operon_from_logic;
                 // Empty the staging buffer
                 this->staging_operon_from_logic = std::nullopt;
+            } else {
+                this->statistics.stall_logic_on_network++;
             }
         }
     }
@@ -424,9 +428,11 @@ ComputeCell::run_a_computation_cycle()
         // In that case stall and don't do anything. Because the task can't send operon
         if (this->staging_operon_from_logic &&
             (current_task.first == taskType::send_operon_task_type)) {
-            std::cout << "cc: " << this->id
-                      << " staging_operon_from_logic buffer is full! This cycle is stalled. Will "
-                         "not dequeue the task from the task queue\n";
+
+            /*       std::cout << "cc: " << this->id
+                            << " staging_operon_from_logic buffer is full! This cycle is stalled.
+               Will " "not dequeue the task from the task queue\n"; */
+
             this->statistics.stall_logic_on_network++;
 
         } else {
