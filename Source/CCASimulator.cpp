@@ -89,7 +89,7 @@ CCASimulator::create_the_chip()
     // Cannot simply openmp parallelize this. It is very atomic.
     for (u_int32_t i = 0; i < this->total_compute_cells; i++) {
 
-        // Create individual compute cells of shape computeCellShape::block_1D
+        // Create individual compute cells of computeCellShape shape_of_compute_cells
         this->CCA_chip.push_back(std::make_shared<ComputeCell>(i,
                                                                shape_of_compute_cells,
                                                                this->dim_x,
