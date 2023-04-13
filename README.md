@@ -2,7 +2,7 @@
 Event level simulator for Continuum Computer Architecture (CCA) class of designs
 
 ## Summary
-The simulator enables exploring the design space of CCA class of non-Von Neumann intelligent memory systems that use event-driven mechanism to perform computations.
+The CCA Simulator enables exploring design space of the CCA class of non-Von Neumann intelligent memory systems. These systems are concieved to be highly fine-grain parallel and use event-driven mechanisms to perform computation.
 
 ## Building
 ### Using CMake
