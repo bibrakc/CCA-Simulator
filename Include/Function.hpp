@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FUNCTION_HPP
 #define FUNCTION_HPP
 
-#include "ComputeCell.hpp"
 #include "Address.hpp"
+#include "ComputeCell.hpp"
 #include "Enums.hpp"
 
 // TODO: Maybe later convert these too `std::function`
@@ -45,7 +45,7 @@ typedef int (*handler_func)(ComputeCell& cc,
                             int nargs,
                             const std::shared_ptr<int[]>& args);
 
-// TODO: This really needs to be a map or something so as to no make it constant and be able to
+// TODO: This really needs to be a map or something so as to not make it constant and be able to
 // extend it
 extern std::map<eventId, handler_func> event_handlers;
 

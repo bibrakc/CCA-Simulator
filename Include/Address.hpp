@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ADDRESS_HPP
 #define ADDRESS_HPP
 
-
 #include <iostream>
 #include <stdlib.h>
 
@@ -59,17 +58,15 @@ struct Address
     // Copy constructor
     Address(const Address& addr_in)
     {
-        
+
         this->cc_id = addr_in.cc_id;
         this->addr = addr_in.addr;
-        
     }
 
     Address(int id, int address_in)
     {
         this->cc_id = id;
         this->addr = address_in;
-        
     }
     friend std::ostream& operator<<(std::ostream& os, const Address& ad)
     {

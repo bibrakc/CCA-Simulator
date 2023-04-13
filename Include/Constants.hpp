@@ -33,12 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-// GCC throws error: expected primary-expression before ';' token when defining debug_code.
-// Therefore, these #ifndef ...
-#ifndef DEBUG_CODE
-#define DEBUG_CODE false
-#endif
-
 // Compile with: -DDEBUG_CODE=true/false
 inline constexpr bool debug_code = DEBUG_CODE;
 

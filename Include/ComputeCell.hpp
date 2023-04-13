@@ -42,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "memory_management.hpp"
 
 #include <map>
+#include <optional>
 #include <queue>
 #include <stdlib.h>
-#include <optional>
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
@@ -57,17 +57,6 @@ enum class computeCellShape : u_int32_t
     computeCellShape_invalid
 };
 
-// TODO: Currently, decided to not use this and use a function
-// (ComputeCell::get_number_of_neighbors()) that returns the number of neighbors. This map was
-// designed to offer flexibity when the simulator (if or may) get converted to a compiled library
-// and the user adds new shapes.
-/* static std::map<computeCellShape, u_int32_t> computeCellShape_num_channels = {
-    { computeCellShape::block_1D, 2 },
-    { computeCellShape::triangular, 3 },
-    { computeCellShape::sqaure, 4 },
-    { computeCellShape::hexagon, 6 }
-}; */
-
 struct ComputeCellStatistics
 {
     u_int32_t actions_created{};
@@ -76,12 +65,12 @@ struct ComputeCellStatistics
     u_int32_t actions_invoked{};
     u_int32_t actions_performed_work{};
 
-    u_int32_t actions_false_on_predicate{}; // actions subsumed
+    u_int32_t actions_false_on_predicate{}; // # of Actions subsumed
     u_int32_t stall_logic_on_network{};     // When network is busy passing other operon
     u_int32_t stall_network_on_recv{};
     u_int32_t stall_network_on_send{};
 
-    // u_int32_t cycles_active{};
+    // u_int32_t cycles_active{}; // # of Cycles for which this CC was active
 
     friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
     {
@@ -98,7 +87,6 @@ struct ComputeCellStatistics
 };
 
 // Note this class is not thread-safe.
-// TODO: We can have a template for computeCellShape here
 class ComputeCell
 {
   public:
@@ -155,11 +143,7 @@ class ComputeCell
     // TODO: write comments
     void run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip);
 
-    // Run a cycle: This include all computation and communication work within a single cycle
-    // bool run_a_cycle();
-
     // Checks if the compute cell is active or not
-    // TODO: when communication is added then update checks for the communication buffer too
     bool is_compute_cell_active();
 
     inline bool cc_exists(const SignedCoordinates cc_coordinate);
@@ -214,11 +198,6 @@ class ComputeCell
     std::vector<std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>>>
         neighbor_compute_cells;
 
-    // Channel neighbor id index. To be initialized based on the shape of this CC and the dimensions
-    // of the chip. Note: the channels are enumerated (indexed) clockwise starting from left. 0 =
-    // left, 1 = up, 2 = right, and 3 = down for sqaure shape.
-    // std::vector<std::optional<u_int32_t>> channel_neighbor_index;
-
     // Per neighbor send channel/link
     std::vector<std::optional<Operon>> send_channel_per_neighbor;
 
@@ -262,9 +241,6 @@ class ComputeCell
 
     // Tasks for the Compute Cell. These tasks exist only for this simulator and are not part of the
     // actual internals of any Compute Cell.
-    // TODO:
-    // std::queue<std::shared_ptr<Task>> task_queue;
-    // TaskQueue task_queue;
     std::queue<Task> task_queue;
 
     // Performance measurements and counters
@@ -277,8 +253,6 @@ class ComputeCell
                 u_int32_t dim_y_in,
                 u_int32_t memory_per_cc_in_bytes)
     {
-        /* cout << "Inside constructor of ComputeCell\n"; */
-
         this->id = id_in;
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);

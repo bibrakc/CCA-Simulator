@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ComputeCell.hpp"
 #include "Operon.hpp"
 
-#include <stdlib.h>
 #include <functional>
+#include <stdlib.h>
 
 enum class taskType : u_int32_t
 {

@@ -429,8 +429,9 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-/*     std::cout << "Elapsed time in seconds: "
-              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n"; */
+    /*     std::cout << "Elapsed time in seconds: "
+                  << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << "
+       sec\n"; */
 
     ///////////////
 
@@ -440,7 +441,8 @@ main(int argc, char** argv)
     SimpleVertex<Address>* v_test =
         (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
             test_vertex_addr);
-    std::cout << " SSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id << " is: " << v_test->sssp_distance << "\n";
+    std::cout << " SSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
+              << " is: " << v_test->sssp_distance << "\n";
 
     ComputeCellStatistics simulation_statistics;
     for (auto& cc : cca_sqaure_simulator.CCA_chip) {

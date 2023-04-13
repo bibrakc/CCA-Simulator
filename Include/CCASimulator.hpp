@@ -46,13 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-/* template<typename To, typename From>
-inline std::pair<To, To>
-convert_internal_type_of_pair(const std::pair<From, From>& p)
-{
-    return std::make_pair(static_cast<To>(p.first), static_cast<To>(p.second));
-} */
-
 typedef unsigned long u_long;
 
 class CCASimulator

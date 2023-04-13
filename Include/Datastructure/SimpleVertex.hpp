@@ -59,8 +59,12 @@ struct SimpleVertex
     {
         /* std::cout << "SimpleVertex Constructor\n"; */
     }
-    SimpleVertex() {/*  std::cout << "SimpleVertex default Constructor\n"; */ }
-    ~SimpleVertex() { /* std::cout << "SimpleVertex Destructor\n"; */ }
+    SimpleVertex()
+    { /*  std::cout << "SimpleVertex default Constructor\n"; */
+    }
+    ~SimpleVertex()
+    { /* std::cout << "SimpleVertex Destructor\n"; */
+    }
 };
 
 #endif // SimpleVertex_HPP

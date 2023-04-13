@@ -54,7 +54,7 @@ class Action
     // Sets to `true` when all dependencies for this action are satisfied
     // and this action is ready to be executed
     // TODO: Think about how to use it in complex settings
-    bool is_ready;
+    // bool is_ready;
 
     // Number of arguments to the action function
     int nargs;
@@ -74,20 +74,6 @@ class Action
 
     // Generate actions along the edges for the diffusion
     eventId diffuse;
-/*     
-    Action() {}
-    Action(const Action& action_)
-    {
-        std::cout << "Action class copy constructor called \n";
-        this->action_type = action_.action_type;
-        this->is_ready = action_.is_ready;
-        this->nargs = action_.nargs;
-        this->args = action_.args;
-        this->obj_addr = action_.obj_addr;
-        this->predicate = action_.predicate;
-        this->work = action_.work;
-        this->diffuse = action_.diffuse;
-    } */
 
     virtual ~Action()
     { /* std::cout << "Action class destructor" << std::endl;  */

@@ -40,32 +40,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "memory_management.hpp"
 
-/* #include <map>
-#include <queue> */
 #include <stdlib.h>
 
+// Chip's coordinates are from top-left....
 /*
-CCASimulator::CCASimulator(computeCellShape shape_in,
-                           u_int32_t dim_in,
-                           u_int32_t total_compute_cells_in)
-    : shape_of_compute_cells(shape_in)
-    , dim(dim_in)
-    , total_compute_cells(total_compute_cells_in)
-{
-    this->global_active_cc = false;
-    this->total_cycles = 0;
-    this->create_the_chip();
-} */
-
-// Chip is coordinates are from top-left....
+For a CCA chip of 4x4 with square shaped compute cells
+(0,0)----(1,0)----(2,0)----(3,0)
+ |         |         |         |
+ |         |         |         |
+(0,1)----(1,1)----(2,1)----(3,1)
+ |         |         |         |
+ |         |         |         |
+(0,2)----(1,2)----(2,2)----(3,2)
+ |         |         |         |
+ |         |         |         |
+(0,3)----(1,3)----(2,3)----(3,3)
+*/
 inline std::pair<u_int32_t, u_int32_t>
 CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
                                            computeCellShape shape_of_compute_cells,
                                            u_int32_t dim_x,
                                            u_int32_t dim_y)
 {
-    // std::cout << "cc_id: " << cc_id << " dim_x: " << dim_x << " dim_y: " << dim_y << " ---> (" <<
-    // cc_id % dim_y << ", " << cc_id / dim_y << ")\n";
+    /* std::cout << "cc_id: " << cc_id << " dim_x: " << dim_x << " dim_y: " << dim_y << " ---> ("
+              << cc_id % dim_y << ", " << cc_id / dim_y << ")\n"; */
     return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
 }
 
@@ -116,13 +114,9 @@ CCASimulator::run_simulation()
     // TODO: later we can remove this and implement the termination detection itself. But for
     // now this works.
     this->total_cycles = 0;
-
     bool global_active_cc_local = true;
 
-    // while (this->total_cycles < 3000) {
     while (global_active_cc_local) {
-
-        // std::cout << "Cycle # "<< this->total_cycles << "\n\n";
 
         global_active_cc_local = false;
 
@@ -150,7 +144,6 @@ CCASimulator::run_simulation()
             global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
         }
         total_cycles++;
-        //  std::cout << "\n--------\n";
     }
     this->global_active_cc = global_active_cc_local;
 }
