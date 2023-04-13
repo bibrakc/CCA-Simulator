@@ -8,7 +8,7 @@ The simulator enables exploring the design space of CCA class of non-Von Neumann
 ### Using CMake
 To generate the executable `SSSP_CCASimulator`:
 
-- `$ cmake -S . -B build -D DEBUG_CODE=false` (or `DEBUG_CODE=true` for outputing debuging information)
+- `$ CC=gcc-12 CXX=g++-12 cmake -S . -B build -D DEBUG_CODE=false` (or `DEBUG_CODE=true` for outputing debuging information)
 - `$ cmake --build build`
 
 ## Executing

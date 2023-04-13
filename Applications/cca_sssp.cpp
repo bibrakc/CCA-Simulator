@@ -109,11 +109,11 @@ sssp_predicate_func(ComputeCell& cc,
     int incoming_distance = args[0];
     int origin_vertex = args[1];
 /* 
-    if (v->id == 35) {
+    if (v->id == test_vertex) {
         std::cout << "vertex ID : " << v->id
                   << " sssp_predicate | origin vertex: " << origin_vertex << " | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
-    } */
+    }  */
 
     if constexpr (debug_code) {
         std::cout << "vertex ID : " << v->id
@@ -328,6 +328,8 @@ main(int argc, char** argv)
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
+    test_vertex = parser.get<u_int32_t>("tv");
+
     // Configuration related to the input data graph
     // total_vertices = parser.get<u_int32_t>("v");
     std::string input_graph_path = parser.get<std::string>("f");
@@ -484,7 +486,7 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
 
     ///////////////
-    test_vertex = parser.get<u_int32_t>("tv");
+
 
     Address test_vertex_addr = get_object_address_cyclic(
         test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());

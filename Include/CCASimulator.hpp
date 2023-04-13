@@ -53,6 +53,8 @@ convert_internal_type_of_pair(const std::pair<From, From>& p)
     return std::make_pair(static_cast<To>(p.first), static_cast<To>(p.second));
 } */
 
+typedef unsigned long u_long;
+
 class CCASimulator
 {
   public:

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Address.hpp"
 #include "Enums.hpp"
+#include <memory>
 
 enum class actionType : u_int32_t
 {

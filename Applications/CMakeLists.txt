@@ -36,25 +36,7 @@ project(${executable_name} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 
-if(APPLE)
-    set(CMAKE_C_COMPILER clang)
-    set(CMAKE_CXX_COMPILER clang++)
-
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang\$")
-        set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
-        set(OpenMP_C_LIB_NAMES "omp")
-        set(OpenMP_omp_LIBRARY omp)
-    endif()
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang\$")
-        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
-        set(OpenMP_CXX_LIB_NAMES "omp")
-        set(OpenMP_omp_LIBRARY omp)
-    endif()
-
-    set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
-endif()
-
+set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../Source)
@@ -74,9 +56,10 @@ target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory}
                            ${IncludeDirectory}/Datastructure
                            ${UtilitiesDirectory})
 
+target_link_libraries(CCASim PUBLIC OpenMP::OpenMP_CXX)
+
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
 
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASim /opt/homebrew/opt/libomp/lib/libomp.a)# OpenMP::OpenMP_CXX)
-#target_link_libraries(${executable_name} PRIVATE CCASim OpenMP::OpenMP_CXX)
+target_link_libraries(${executable_name} PRIVATE CCASim)

@@ -115,40 +115,42 @@ CCASimulator::run_simulation()
 {
     // TODO: later we can remove this and implement the termination detection itself. But for
     // now this works.
-    this->global_active_cc = true;
     this->total_cycles = 0;
 
-     //while (this->total_cycles < 3000) {
-    while (this->global_active_cc) {
+    bool global_active_cc_local = true;
+
+    // while (this->total_cycles < 3000) {
+    while (global_active_cc_local) {
 
         // std::cout << "Cycle # "<< this->total_cycles << "\n\n";
 
-        this->global_active_cc = false;
+        global_active_cc_local = false;
 
-        // Run a cycle: First the computation cycle (that includes the preparation of operons from
-        // previous cycle)
-        #pragma omp parallel for
+// Run a cycle: First the computation cycle (that includes the preparation of operons from
+// previous cycle)
+#pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle();
         }
 
-        // Prepare communication cycle
-        #pragma omp parallel for
+// Prepare communication cycle
+#pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle();
         }
 
-        // Run communication cycle
-        #pragma omp parallel for
+// Run communication cycle
+#pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
-        // Check for termination
-        #pragma omp parallel for reduction(| : this->global_active_cc)
+// Check for termination
+#pragma omp parallel for reduction(| : global_active_cc_local)
         for (int i = 0; i < this->CCA_chip.size(); i++) {
-            global_active_cc |= this->CCA_chip[i]->is_compute_cell_active();
+            global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
         }
         total_cycles++;
         //  std::cout << "\n--------\n";
     }
+    this->global_active_cc = global_active_cc_local;
 }

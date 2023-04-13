@@ -34,6 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "SimpleVertex.hpp"
 
+// For memcpy()
+#include <cstring>
+
 std::ostream&
 operator<<(std::ostream& os, const Operon& operon_)
 {

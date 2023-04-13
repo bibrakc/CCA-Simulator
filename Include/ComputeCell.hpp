@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <queue>
 #include <stdlib.h>
+#include <optional>
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
