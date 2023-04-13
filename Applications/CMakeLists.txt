@@ -28,38 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 cmake_minimum_required(VERSION 3.26)
-
-set(executable_name SSSP_CCASimulator)
-project(${executable_name} LANGUAGES CXX)
+project(CCA-Simulator LANGUAGES CXX)
 
 # Set C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
-add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 
-set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
-find_package(OpenMP REQUIRED)
-
-set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
-add_library(CCASim
-            ${SourceDirectory}/memory_management.cpp
-            ${SourceDirectory}/ComputeCell.cpp
-            ${SourceDirectory}/Enums.cpp
-            ${SourceDirectory}/CCASimulator.cpp
-            #Task.cpp
-            )
-
-set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
-set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
-
-target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory} 
-                           ${IncludeDirectory}
-                           ${IncludeDirectory}/Datastructure
-                           ${UtilitiesDirectory})
-
-target_link_libraries(CCASim PUBLIC OpenMP::OpenMP_CXX)
-
-# Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_sssp.cpp)
-
-set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASim)
+# Add the source directory
+add_subdirectory(Single_Source_Shortest_Path)

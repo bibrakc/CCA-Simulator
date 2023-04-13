@@ -54,7 +54,7 @@ class Action
     // Sets to `true` when all dependencies for this action are satisfied
     // and this action is ready to be executed
     // TODO: Think about how to use it in complex settings
-    // bool is_ready;
+    bool is_ready;
 
     // Number of arguments to the action function
     int nargs;
