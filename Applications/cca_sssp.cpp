@@ -69,8 +69,6 @@ class SSSPAction : public Action
                eventId work_in,
                eventId diffuse_in)
     {
-        // std::cout << "sssp action constructor\n";
-
         this->obj_addr = vertex_addr_in;
 
         this->action_type = type;
@@ -84,13 +82,7 @@ class SSSPAction : public Action
         this->diffuse = diffuse_in;
     }
 
-    /*     // Copy constructor
-        SSSPAction(const SSSPAction& ssspaction_) : Action(ssspaction_){
-
-        } */
-    ~SSSPAction() override
-    { /* std::cout << "SSSPAction destructor\n"; */
-    }
+    ~SSSPAction() override {}
 };
 
 inline Operon
@@ -108,18 +100,13 @@ sssp_predicate_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
     int origin_vertex = args[1];
-/* 
-    if (v->id == test_vertex) {
-        std::cout << "vertex ID : " << v->id
-                  << " sssp_predicate | origin vertex: " << origin_vertex << " | incoming_distance = " << incoming_distance
-                  << " v->sssp_distance = " << v->sssp_distance << std::endl;
-    }  */
 
     if constexpr (debug_code) {
-        std::cout << "vertex ID : " << v->id
-                  << " in sssp_predicate | incoming_distance = " << incoming_distance
+        std::cout << "vertex ID : " << v->id << " sssp_predicate | origin vertex: " << origin_vertex
+                  << " | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
     }
+
     if (v->sssp_distance > incoming_distance) {
         return 1;
     }
@@ -159,8 +146,6 @@ send_operon(ComputeCell& cc, Operon operon_in)
         }));
 }
 
-// Return the number of diffusions created, i.e. v->number_of_edges. These are used for performance
-// measurements
 int
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
@@ -205,9 +190,6 @@ sssp_diffuse_func(ComputeCell& cc,
 std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func },
                                                    { eventId::sssp_work, sssp_work_func },
                                                    { eventId::sssp_diffuse, sssp_diffuse_func } };
-
-// Configuration related to the input data graph
-/* u_int32_t total_vertices; */
 
 // Note: We could have put this function as part of the ComputeCell class but then it would have
 // introduced application specific functionality into the compute cell. Perhaps, if we really want
@@ -254,7 +236,6 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
 void
 configure_parser(cli::Parser& parser)
 {
-    // parser.set_required<u_int32_t>("v", "vertices", "Number of vertices");
     parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");
     parser.set_required<u_int32_t>("dx",
                                    "dimensionx",
@@ -265,9 +246,9 @@ configure_parser(cli::Parser& parser)
                                    "Dimnesion of the shape in y direction. For example: A rectange "
                                    "chip is x*y. Provide dy such that dx x dy)");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    // parser.set_required<u_int32_t>("cc", "computecells", "Number of compute cells");
-
     parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
+    parser.set_required<u_int32_t>(
+        "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
 }
 
 class Graph
@@ -276,38 +257,15 @@ class Graph
     u_int32_t total_vertices;
     std::shared_ptr<SimpleVertex<u_int32_t>[]> vertices;
 
-    // TODO: Read this from file
     Graph(u_int32_t total_vertices_in)
     {
-        /* std::cout << "In Graph Constructor\n"; */
         this->total_vertices = total_vertices_in;
 
         this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
         for (int i = 0; i < this->total_vertices; i++) {
             this->vertices[i].id = i;
             this->vertices[i].number_of_edges = 0;
-            // this->vertices[i]
         }
-        /*         for (int i = 0; i < this->total_vertices; i++) {
-
-                    this->vertices[i].id = i;
-
-                    // Check if edges are not full
-                    if (this->vertices[i].number_of_edges >= edges_max) {
-                        std::cerr << "Cannot add more edges to Vertex: " << i << "\n";
-                        continue;
-                    }
-                    / * // Creating a ring graph.
-                    u_int32_t dst_vertex_id = (i == this->total_vertices - 1) ? 0 : i + 1;
-                    this->add_edge(this->vertices[i], dst_vertex_id, 5); * /
-
-                    // Creating a list graph.
-                    u_int32_t dst_vertex_id = i + 1;
-                    if (i != this->total_vertices - 1)
-                        this->add_edge(this->vertices[i], dst_vertex_id, 5);
-                } */
-
-        /* std::cout << "Leaving Graph Constructor\n"; */
     }
     void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
@@ -315,9 +273,7 @@ class Graph
         vertex.edges[vertex.number_of_edges].weight = weight;
         vertex.number_of_edges++;
     }
-    ~Graph()
-    { /*  std::cout << "In Graph Destructor\n";  */
-    }
+    ~Graph() {}
 };
 
 int
@@ -328,10 +284,13 @@ main(int argc, char** argv)
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
+    // SSSP root vertex
+    u_int32_t root_vertex = parser.get<u_int32_t>("root");
+
+    // Test vertex to print its distance from the root
     test_vertex = parser.get<u_int32_t>("tv");
 
     // Configuration related to the input data graph
-    // total_vertices = parser.get<u_int32_t>("v");
     std::string input_graph_path = parser.get<std::string>("f");
 
     // Configuration related to the CCA Chip
@@ -350,7 +309,7 @@ main(int argc, char** argv)
         exit(0);
     }
 
-    std::cout << "Create the simulation environment that includes the CCA Chip: \n";
+    std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
     CCASimulator cca_sqaure_simulator(
         shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells);
@@ -394,7 +353,7 @@ main(int argc, char** argv)
         SimpleVertex<Address> vertex_(0);
         for (int i = 0; i < input_graph.total_vertices; i++) {
 
-            // Put a vertex in memory
+            // Put a vertex in memory with id = i
             vertex_.id = i;
 
             // Get the Address of this vertex if it were to be cyclically allocated across the CCA
@@ -413,26 +372,20 @@ main(int argc, char** argv)
                     cc_id, &vertex_, sizeof(SimpleVertex<Address>));
 
             if (!vertex_addr) {
-                std::cout << "Memory not allocated! Vertex ID: " << input_graph.vertices[i].id
-                          << "\n";
-                continue;
+                std::cerr << "Error! Memory not allocated! Vertex ID: "
+                          << input_graph.vertices[i].id << "\n";
+                exit(0);
             }
 
-            /*  std::cout << "input_graph.vertices[i].id = " << input_graph.vertices[i].id
-                       << ", cca_sqaure_simulator.CCA_chip[cc_id]->id = "
-                       << cca_sqaure_simulator.CCA_chip[cc_id]->id
-                       << ", vertex_addr = " << vertex_addr.value()
-                       << ", get_vertex_address = " << vertex_addr_cyclic << "\n"; */
-
-            // only put action on a single vertex
-            if (vertex_.id == 0) {
+            // Only put the SSSP seed action on a single vertex. In this case SSSP root = root
+            if (vertex_.id == root_vertex) {
 
                 std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
                 // Set distance to 0
                 args_x[0] = 0;
-                // origin
+                // Origin
                 args_x[1] = 0;
-                
+
                 cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
                     SSSPAction(vertex_addr.value(),
                                actionType::application_action,
@@ -450,16 +403,17 @@ main(int argc, char** argv)
     std::cout << "Populating vertices by inserting edges: \n";
     for (int i = 0; i < input_graph.total_vertices; i++) {
         u_int32_t src_vertex_id = input_graph.vertices[i].id;
-        // std::cout << "vertex id: " << src_vertex_id << " has edge: " <<
-        // input_graph.vertices[i].number_of_edges << "\n";
+
         for (int j = 0; j < input_graph.vertices[i].number_of_edges; j++) {
 
             u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
             u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
+
             if (!insert_edge_by_vertex_id(
                     cca_sqaure_simulator.CCA_chip, src_vertex_id, dst_vertex_id, edge_weight)) {
-                std::cout << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                           << edge_weight << ") not inserted successfully.\n";
+                exit(0);
             }
         }
     }
@@ -470,23 +424,15 @@ main(int argc, char** argv)
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
-    std::cout << "Elapsed time in nanoseconds: "
-              << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ns"
-              << std::endl;
-
-    std::cout << "Elapsed time in microseconds: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " µs"
-              << std::endl;
 
     std::cout << "Elapsed time in milliseconds: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    std::cout << "Elapsed time in seconds: "
-              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n";
+/*     std::cout << "Elapsed time in seconds: "
+              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " sec\n"; */
 
     ///////////////
-
 
     Address test_vertex_addr = get_object_address_cyclic(
         test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
@@ -494,8 +440,7 @@ main(int argc, char** argv)
     SimpleVertex<Address>* v_test =
         (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
             test_vertex_addr);
-    std::cout << "test_vertex_addr cc id " << test_vertex_addr.cc_id << " test vertex id "
-              << v_test->id << " sssp distance = " << v_test->sssp_distance << "\n";
+    std::cout << " SSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id << " is: " << v_test->sssp_distance << "\n";
 
     ComputeCellStatistics simulation_statistics;
     for (auto& cc : cca_sqaure_simulator.CCA_chip) {
