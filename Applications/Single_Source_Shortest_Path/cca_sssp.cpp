@@ -372,19 +372,20 @@ main(int argc, char** argv)
                     cc_id, &vertex_, sizeof(SimpleVertex<Address>));
 
             if (!vertex_addr) {
-                std::cerr << "Error! Memory not allocated! Vertex ID: "
+                std::cerr << "Error! Memory not allocated for Vertex ID: "
                           << input_graph.vertices[i].id << "\n";
                 exit(0);
             }
 
-            // Only put the SSSP seed action on a single vertex. In this case SSSP root = root
+            // Only put the SSSP seed action on a single vertex. 
+            // In this case SSSP root = root_vertex
             if (vertex_.id == root_vertex) {
 
                 std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
                 // Set distance to 0
                 args_x[0] = 0;
-                // Origin
-                args_x[1] = 0;
+                // Origin vertex from where this action came
+                args_x[1] = root_vertex;
 
                 cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
                     SSSPAction(vertex_addr.value(),
