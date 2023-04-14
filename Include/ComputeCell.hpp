@@ -84,6 +84,20 @@ struct ComputeCellStatistics
            << "\n\tstall_network_on_send: " << stat.stall_network_on_send << "\n";
         return os;
     }
+
+    ComputeCellStatistics& operator+=(const ComputeCellStatistics& rhs)
+    {
+        this->actions_created += rhs.actions_created;
+        this->actions_pushed += rhs.actions_pushed;
+        this->actions_performed_work += rhs.actions_performed_work;
+        this->actions_false_on_predicate += rhs.actions_false_on_predicate;
+        this->actions_invoked += rhs.actions_invoked;
+        this->stall_logic_on_network += rhs.stall_logic_on_network;
+        this->stall_network_on_recv += rhs.stall_network_on_recv;
+        this->stall_network_on_send += rhs.stall_network_on_send;
+
+        return *this;
+    }
 };
 
 // Note this class is not thread-safe.

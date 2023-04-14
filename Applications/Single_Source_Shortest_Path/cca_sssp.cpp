@@ -446,18 +446,8 @@ main(int argc, char** argv)
 
     ComputeCellStatistics simulation_statistics;
     for (auto& cc : cca_sqaure_simulator.CCA_chip) {
-        simulation_statistics.actions_created += cc->statistics.actions_created;
 
-        simulation_statistics.actions_pushed += cc->statistics.actions_pushed;
-
-        simulation_statistics.actions_performed_work += cc->statistics.actions_performed_work;
-
-        simulation_statistics.actions_false_on_predicate +=
-            cc->statistics.actions_false_on_predicate;
-        simulation_statistics.actions_invoked += cc->statistics.actions_invoked;
-        simulation_statistics.stall_logic_on_network += cc->statistics.stall_logic_on_network;
-        simulation_statistics.stall_network_on_recv += cc->statistics.stall_network_on_recv;
-        simulation_statistics.stall_network_on_send += cc->statistics.stall_network_on_send;
+        simulation_statistics += cc->statistics;
     }
 
     std::cout << simulation_statistics;
