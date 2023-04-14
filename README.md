@@ -1,5 +1,5 @@
 # CCA-Simulator
-Event level simulator for [Continuum Computer Architecture (CCA)](https://superfri.org/index.php/superfri/article/view/188) class of designs
+Event-level simulator for [Continuum Computer Architecture (CCA)](https://superfri.org/index.php/superfri/article/view/188) class of designs.
 
 ## Summary
 The CCA Simulator enables exploring design space of the CCA class of non-Von Neumann intelligent memory systems. These systems are concieved to be highly fine-grain parallel and use event-driven mechanisms to perform computation.
@@ -13,4 +13,4 @@ To generate the executable `SSSP_CCASimulator`:
 
 ## Executing
 ### SSSP Application
-`./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Input_Graphs/Erdos-Renyi_ef_4_v_7.edgelist  -s square -dx 10 -dy 10 -root 0 -tv 35`
+`$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Input_Graphs/Erdos-Renyi_ef_4_v_7.edgelist  -s square -dx 10 -dy 10 -root 0 -tv 35`
