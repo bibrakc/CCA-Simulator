@@ -249,8 +249,10 @@ configure_parser(cli::Parser& parser)
     parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
     parser.set_required<u_int32_t>(
         "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
-    parser.set_optional<u_int32_t>(
-        "m", "memory_per_cc", 1 * 512 * 1024, "Memory per compute cell in bytes. Default is 0.5 MB");
+    parser.set_optional<u_int32_t>("m",
+                                   "memory_per_cc",
+                                   1 * 512 * 1024,
+                                   "Memory per compute cell in bytes. Default is 0.5 MB");
 }
 
 class Graph
@@ -324,7 +326,11 @@ main(int argc, char** argv)
                      cca_sqaure_simulator.shape_of_compute_cells)
               << "\n\tDim: " << cca_sqaure_simulator.dim_x << " x " << cca_sqaure_simulator.dim_y
               << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells
-              << "\n\tMemory Per Compute Cell: " << cca_sqaure_simulator.memory_per_cc << "\n\n";
+              << "\n\tMemory Per Compute Cell: "
+              << cca_sqaure_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
+              << "\n\tTotal Chip Memory: "
+              << cca_sqaure_simulator.total_chip_memory / static_cast<double>(1024*1024) << " MB"
+              << "\n\n";
 
     // Generate or read the input data graph
     FILE* input_graph_file_handler = NULL;

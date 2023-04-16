@@ -56,6 +56,7 @@ class CCASimulator
     u_int32_t total_compute_cells;
 
     u_int32_t memory_per_cc;
+    u_int32_t total_chip_memory;
 
     // Declare the CCA Chip that is composed of ComputeCell(s)
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
@@ -76,6 +77,7 @@ class CCASimulator
     {
         this->global_active_cc = false;
         this->total_cycles = 0;
+        this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
         this->create_the_chip();
     }
 
