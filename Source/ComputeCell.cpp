@@ -667,7 +667,7 @@ ComputeCell::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate
         auto [x, y] = cc_cooridinate;
         // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
         // + x << "\n";
-        return (y * dim_x) + x;
+        return (y * dim_y) + x;
     }
     // Shape not supported
     std::cerr << ComputeCell::get_compute_cell_shape_name(shape_) << " not supported!\n";

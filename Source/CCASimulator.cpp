@@ -94,7 +94,7 @@ CCASimulator::create_the_chip()
                                                                shape_of_compute_cells,
                                                                this->dim_x,
                                                                this->dim_y,
-                                                               7 * 1024 * 1024)); // 7 MB
+                                                               2 * 1024 * 1024)); // 2 MB
 
         if constexpr (debug_code) {
             std::cout << *this->CCA_chip.back().get();
