@@ -249,6 +249,8 @@ configure_parser(cli::Parser& parser)
     parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
     parser.set_required<u_int32_t>(
         "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
+    parser.set_optional<u_int32_t>(
+        "m", "memory_per_cc", 1 * 512 * 1024, "Memory per compute cell in bytes. Default is 0.5 MB");
 }
 
 class Graph
@@ -309,16 +311,20 @@ main(int argc, char** argv)
         exit(0);
     }
 
+    // Get the memory per cc or use the default
+    u_int32_t memory_per_cc = parser.get<u_int32_t>("m");
+
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
     CCASimulator cca_sqaure_simulator(
-        shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells);
+        shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells, memory_per_cc);
 
-    std::cout << "CCA Chip Details:\n\tShape: "
+    std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
                      cca_sqaure_simulator.shape_of_compute_cells)
               << "\n\tDim: " << cca_sqaure_simulator.dim_x << " x " << cca_sqaure_simulator.dim_y
-              << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells << "\n";
+              << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells
+              << "\n\tMemory Per Compute Cell: " << cca_sqaure_simulator.memory_per_cc << "\n\n";
 
     // Generate or read the input data graph
     FILE* input_graph_file_handler = NULL;
@@ -377,7 +383,7 @@ main(int argc, char** argv)
                 exit(0);
             }
 
-            // Only put the SSSP seed action on a single vertex. 
+            // Only put the SSSP seed action on a single vertex.
             // In this case SSSP root = root_vertex
             if (vertex_.id == root_vertex) {
 
@@ -419,7 +425,7 @@ main(int argc, char** argv)
         }
     }
 
-    std::cout << "Starting Execution on the CCA Chip: \n";
+    std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
     cca_sqaure_simulator.run_simulation();
     auto end = std::chrono::steady_clock::now();
@@ -442,7 +448,7 @@ main(int argc, char** argv)
     SimpleVertex<Address>* v_test =
         (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
             test_vertex_addr);
-    std::cout << " SSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
+    std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
               << " is: " << v_test->sssp_distance << "\n";
 
     ComputeCellStatistics simulation_statistics;

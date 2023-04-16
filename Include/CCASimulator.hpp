@@ -55,6 +55,8 @@ class CCASimulator
     u_int32_t dim_x, dim_y;
     u_int32_t total_compute_cells;
 
+    u_int32_t memory_per_cc;
+
     // Declare the CCA Chip that is composed of ComputeCell(s)
     std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
 
@@ -64,11 +66,13 @@ class CCASimulator
     CCASimulator(computeCellShape shape_in,
                  u_int32_t dim_x_in,
                  u_int32_t dim_y_in,
-                 u_int32_t total_compute_cells_in)
+                 u_int32_t total_compute_cells_in,
+                 u_int32_t memory_per_cc_in)
         : shape_of_compute_cells(shape_in)
         , dim_x(dim_x_in)
         , dim_y(dim_y_in)
         , total_compute_cells(total_compute_cells_in)
+        , memory_per_cc(memory_per_cc_in)
     {
         this->global_active_cc = false;
         this->total_cycles = 0;
