@@ -36,7 +36,6 @@ project(${executable_name} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 
-set(OMPIncludeDirectory "/opt/homebrew/opt/libomp/include")
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
@@ -51,7 +50,7 @@ add_library(CCASim
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
-target_include_directories(CCASim PUBLIC ${OMPIncludeDirectory} 
+target_include_directories(CCASim PUBLIC 
                            ${IncludeDirectory}
                            ${IncludeDirectory}/Datastructure
                            ${UtilitiesDirectory})
