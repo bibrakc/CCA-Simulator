@@ -90,11 +90,8 @@ CCASimulator::create_the_chip()
     for (u_int32_t i = 0; i < this->total_compute_cells; i++) {
 
         // Create individual compute cells of computeCellShape shape_of_compute_cells
-        this->CCA_chip.push_back(std::make_shared<ComputeCell>(i,
-                                                               shape_of_compute_cells,
-                                                               this->dim_x,
-                                                               this->dim_y,
-                                                               2 * 1024 * 1024)); // 2 MB
+        this->CCA_chip.push_back(std::make_shared<ComputeCell>(
+            i, shape_of_compute_cells, this->dim_x, this->dim_y, this->memory_per_cc));
 
         if constexpr (debug_code) {
             std::cout << *this->CCA_chip.back().get();
