@@ -15,7 +15,7 @@ import pandas as pd
 # For argument parsing
 import sys
 
-# nme of the graph
+# name of the graph
 A = ""
 
 Output_filename = ""
