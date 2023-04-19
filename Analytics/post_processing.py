@@ -40,7 +40,6 @@ import math
 
 args = sys.argv
 
-# graph_types = ["Powerlaw", "Scalefree", "Smallworld", "Erdos"]
 output_file = args[1]
 
 # open the file in read mode
