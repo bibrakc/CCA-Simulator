@@ -65,23 +65,71 @@ struct ComputeCellStatistics
     u_int32_t actions_invoked{};
     u_int32_t actions_performed_work{};
 
-    u_int32_t actions_false_on_predicate{}; // # of Actions subsumed
-    u_int32_t stall_logic_on_network{};     // When network is busy passing other operon
+    // # of Actions subsumed
+    u_int32_t actions_false_on_predicate{};
+
+    // When network is busy passing other operon so the operons from logic to network get stalled
+    u_int32_t stall_logic_on_network{};
     u_int32_t stall_network_on_recv{};
     u_int32_t stall_network_on_send{};
 
-    // u_int32_t cycles_active{}; // # of Cycles for which this CC was active
+    // Accumulation of the percentage this CC was active.
+    // For example: A square CC has 4 network connections, where each connection has 2 links, making
+    // 8 total channels. For a single CC to be 100% occupied (working/active) it needs to use all of
+    // these channels. To avoid couting an event twice only the send event from a CC is counted. In
+    // that case for a single square CC to be 100% active in a single cycle it needs to send 4
+    // operons along all of its 4 neighbors. The logic also plays part in being active. Therefore,
+    // when a CC is active working on logic that includes predicate resolution, work, and creating
+    // and sending operons it is considered to be active. In that way for the entire CC to be 100%
+    // active for a single cycle all 5 consituents need to be active. For a single cycle we count
+    // the active status of network and logic and then divide the counter by 5 to get the percent.
+    // This percent is accumulated and is later used with the total active cycles to find resource
+    // usage.
+    // TODO: refine this methodology
+    long double cycles_resource_usage{};
+    // Start this counter with 5 for the square CC and then decreament as the resources are used for
+    // that cycle. This reverse way of counting will also help in distinguishing between an inactive
+    // cycle and a cycle in which the CC a deadlocked.
+    u_int32_t cycle_resource_use_counter{};
 
+    // # of Cycles for which this CC was not active: Starvation
+    // When `cycle_resource_use_counter = 0` then that cycle the CC was inactive
+    u_int32_t cycles_inactive{};
+
+    inline void generate_label(std::ostream& os)
+    {
+        os << "cc_id\tcc_coordinate_x\tcc_coordinate_y\tactions_created\tactions_pushed\tactions_"
+              "invoked\tactions_performed_work\tactions_false_on_predicate\tstall_logic_on_"
+              "network\tstall_network_on_recv\tstall_network_on_send\tcycles_resource_"
+              "usage\tcycles_inactive\n";
+    }
+
+    inline void output_results_in_a_single_line(std::ostream& os,
+                                                u_int32_t cc_id,
+                                                std::pair<u_int32_t, u_int32_t> cc_cooridinates)
+    {
+        os << cc_id << "\t" << cc_cooridinates.first << "\t" << cc_cooridinates.second << "\t"
+           << this->actions_created << "\t" << this->actions_pushed << "\t" << this->actions_invoked
+           << "\t" << this->actions_performed_work << "\t" << this->actions_false_on_predicate
+           << "\t" << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
+           << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
+           << this->cycles_inactive;
+    }
+
+    // Overloading <<
     friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
     {
-        os << "Statistics:\n\tactions_created: " << stat.actions_created
+        os << "Statistics:"
+           << "\n\tactions_created: " << stat.actions_created
            << "\n\tactions_pushed: " << stat.actions_pushed
            << "\n\tactions_invoked: " << stat.actions_invoked
            << "\n\tactions_performed_work: " << stat.actions_performed_work
            << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
-           << "\n\tstall_logic_on_network: " << stat.stall_logic_on_network
+           << "\n\n\tstall_logic_on_network: " << stat.stall_logic_on_network
            << "\n\tstall_network_on_recv: " << stat.stall_network_on_recv
-           << "\n\tstall_network_on_send: " << stat.stall_network_on_send << "\n";
+           << "\n\tstall_network_on_send: " << stat.stall_network_on_send
+           << "\n\n\tcycles_resource_usage: " << stat.cycles_resource_usage
+           << "\n\tcycles_inactive: " << stat.cycles_inactive << "\n";
         return os;
     }
 
@@ -89,12 +137,16 @@ struct ComputeCellStatistics
     {
         this->actions_created += rhs.actions_created;
         this->actions_pushed += rhs.actions_pushed;
+        this->actions_invoked += rhs.actions_invoked;
         this->actions_performed_work += rhs.actions_performed_work;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
-        this->actions_invoked += rhs.actions_invoked;
+
         this->stall_logic_on_network += rhs.stall_logic_on_network;
         this->stall_network_on_recv += rhs.stall_network_on_recv;
         this->stall_network_on_send += rhs.stall_network_on_send;
+
+        this->cycles_resource_usage += rhs.cycles_resource_usage;
+        this->cycles_inactive += rhs.cycles_inactive;
 
         return *this;
     }

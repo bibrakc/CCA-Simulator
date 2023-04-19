@@ -47,6 +47,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <chrono>
 #include <iostream>
+
+// std::ofstream
+#include <fstream>
 #include <map>
 #include <queue>
 #include <stdlib.h>
@@ -237,6 +240,10 @@ void
 configure_parser(cli::Parser& parser)
 {
     parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");
+    parser.set_required<std::string>("g",
+                                     "graphname",
+                                     "Name of the input graph used to set the name of the output "
+                                     "file. Example: Erdos or anything");
     parser.set_required<u_int32_t>("dx",
                                    "dimensionx",
                                    "Dimnesion of the shape in x direction. For example: A rectange "
@@ -253,6 +260,8 @@ configure_parser(cli::Parser& parser)
                                    "memory_per_cc",
                                    1 * 512 * 1024,
                                    "Memory per compute cell in bytes. Default is 0.5 MB");
+    parser.set_optional<std::string>(
+        "od", "outputdirectory", "./", "Path to the output file directory. Default: ./");
 }
 
 class Graph
@@ -296,6 +305,10 @@ main(int argc, char** argv)
 
     // Configuration related to the input data graph
     std::string input_graph_path = parser.get<std::string>("f");
+    std::string graph_name = parser.get<std::string>("g");
+
+    // Optional output directory path
+    std::string output_file_directory = parser.get<std::string>("od");
 
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
@@ -329,7 +342,7 @@ main(int argc, char** argv)
               << "\n\tMemory Per Compute Cell: "
               << cca_sqaure_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
               << "\n\tTotal Chip Memory: "
-              << cca_sqaure_simulator.total_chip_memory / static_cast<double>(1024*1024) << " MB"
+              << cca_sqaure_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
               << "\n\n";
 
     // Generate or read the input data graph
@@ -438,15 +451,10 @@ main(int argc, char** argv)
 
     std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
 
-    std::cout << "Elapsed time in milliseconds: "
+    std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
+                 "itself): "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
-
-    /*     std::cout << "Elapsed time in seconds: "
-                  << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << "
-       sec\n"; */
-
-    ///////////////
 
     Address test_vertex_addr = get_object_address_cyclic(
         test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
@@ -464,6 +472,45 @@ main(int argc, char** argv)
     }
 
     std::cout << simulation_statistics;
+
+    // Write results to a file
+    std::string output_file_name = "square_x_" + std::to_string(cca_sqaure_simulator.dim_x) +
+                                   "_y_" + std::to_string(cca_sqaure_simulator.dim_y) + "_graph_" +
+                                   graph_name + "_v_" + std::to_string(total_vertices) + "_e_" +
+                                   std::to_string(total_edges);
+    std::string output_file_path = output_file_directory + "/" + output_file_name;
+    std::cout << "\nWriting results to output file: " << output_file_path << "\n";
+    std::ofstream output_file(output_file_path);
+
+    // Output CCA Chip details
+    cca_sqaure_simulator.generate_label(output_file);
+    cca_sqaure_simulator.output_description_in_a_single_line(output_file);
+
+    // Output input graph details
+    output_file << "graph_file\tvertices\tedges\troot_vertex\n"
+                << input_graph_path << "\t" << total_vertices << "\t" << total_edges << "\t"
+                << root_vertex << "\n";
+
+    // Output total cycles, total actions, total actions performed work, total actions false on
+    // predicate. TODO: Somehow put the resource usage as a percentage...?
+    output_file
+        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
+           "false_on_predicate\n"
+        << cca_sqaure_simulator.total_cycles << "\t" << simulation_statistics.actions_invoked
+        << "\t" << simulation_statistics.actions_performed_work << "\t"
+        << simulation_statistics.actions_false_on_predicate << "\n";
+
+    // Output statistics for each compute cell
+    simulation_statistics.generate_label(output_file);
+    for (auto& cc : cca_sqaure_simulator.CCA_chip) {
+        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
+        if (&cc != &cca_sqaure_simulator.CCA_chip.back()) {
+            output_file << "\n";
+        }
+    }
+
+    // Close the output file
+    output_file.close();
 
     return 0;
 }

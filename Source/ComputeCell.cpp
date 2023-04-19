@@ -330,9 +330,6 @@ ComputeCell::prepare_a_cycle()
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first;
 
-        /*     std::cout << "prepare_a_cycle: cc id : " << this->id << " dst_cc_id : " << dst_cc_id
-                     << "\n";  */
-
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
         if (this->id == dst_cc_id) {
@@ -344,17 +341,8 @@ ComputeCell::prepare_a_cycle()
             // Based on the routing algorithm and the shape of CCs it will return which neighbor to
             // pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-
-            //    std::cout << "cc id: " << this->id << " dst_cc_id: " << dst_cc_id <<
-            //    "prepare_a_cycle: staging_operon_from_logic get_route_towards_cc_id\n";
             u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
-            // Something going on here with these preparations of cycles
-            /*    if (this->send_channel_per_neighbor[channel_to_send]) {
-                   std::cerr << "Bug! send_channel_per_neighbor " << channel_to_send
-                             << "shouldn't be non-empty\n";
-                   exit(0);
-               } */
             if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
 
                 // Prepare the send channel
@@ -366,10 +354,9 @@ ComputeCell::prepare_a_cycle()
             }
         }
     }
+
     // Move the operon from previous cycle recv channel to thier destination: action queue or send
     // channel of a neighbor
-    /*  std::cout << "this->recv_channel_per_neighbor.size() = "
-               << this->recv_channel_per_neighbor.size() << "\n"; */
     for (int i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
         if (this->recv_channel_per_neighbor[i]) {
             Operon operon_ = this->recv_channel_per_neighbor[i].value();
@@ -383,21 +370,16 @@ ComputeCell::prepare_a_cycle()
                 this->recv_channel_per_neighbor[i] = std::nullopt;
             } else {
                 // It means the operon needs to be sent/passed to some neighbor
-
-                //        std::cout << "cc id: " << this->id << " dst_cc_id: " << dst_cc_id <<
-                //        "prepare_a_cycle: recv loop get_route_towards_cc_id\n";
                 u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
-                // std::cout << "cc id : " << this->id << " channel_to_send = " << channel_to_send
-                // << "IT IS THIS!!!\n";
+
                 if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
                     // Prepare the send channel
                     this->send_channel_per_neighbor[channel_to_send] = operon_;
                     // Flush the channel buffer
                     this->recv_channel_per_neighbor[i] = std::nullopt;
                 } else {
+                    // Increament the stall counter for send/recv
                     this->statistics.stall_network_on_send++;
-                    // std::cout << "stalled prepare_a_cycle send_channel_per_neighbor\n";
-                    //  increament the stall counter for send/recv
                 }
             }
         }
@@ -411,46 +393,44 @@ ComputeCell::run_a_computation_cycle()
     // This function does both. First it performs work if there is any. Then it performs
     // communication
 
+    // Initialize the counter for measuring resource usage and starvation. Start with all then
+    // decreament as they are active. Later use that to find the percent active status for this
+    // cycle. If nothing was decreamented it means that this cycle was totally inactive with the CC
+    // starving.
+    this->statistics.cycle_resource_use_counter =
+        ComputeCell::get_number_of_neighbors(this->shape) + 1; // +1 for logic
+
     // Apply the network operations from the previous cycle and prepare this cycle for computation
     // and communication
     this->prepare_a_cycle();
 
-    // Perform execution of work
-    // Exectute a task if the task_queue is not empty
+    // Perform execution of work. Exectute a task if the task_queue is not empty
     if (!this->task_queue.empty()) {
-        // std::cout << "run_a_cycle | task | CC : " << this->id << "\n";
         //  Get a task from the task_queue
         Task current_task = this->task_queue.front();
-
-        /*         std::cout << "(this->staging_operon_from_logic != std::nullopt) = "
-                          << (this->staging_operon_from_logic != std::nullopt)
-                          << "(current_task.first == taskType::send_operon_task_type) = "
-                          << (current_task.first == taskType::send_operon_task_type) << "\n"; */
 
         // Check if the staging buffer is not full and the task type is send operon
         // In that case stall and don't do anything. Because the task can't send operon
         if (this->staging_operon_from_logic &&
             (current_task.first == taskType::send_operon_task_type)) {
 
-            /*       std::cout << "cc: " << this->id
-                            << " staging_operon_from_logic buffer is full! This cycle is stalled.
-               Will " "not dequeue the task from the task queue\n"; */
-
             this->statistics.stall_logic_on_network++;
-
         } else {
-            // remove the task from the queue and execute it.
+            // Remove the task from the queue and execute it.
+
             this->task_queue.pop();
             // Execute the task
             current_task.second();
         }
-    } else if (!this->action_queue
-                    .empty()) { // Else execute an action if the action_queue is not empty
+        // The logic was active. In this cycle it diffused or performaned a task.
+        this->statistics.cycle_resource_use_counter--;
 
-        // std::cout << "run_a_cycle | action | CC : " << this->id << "\n";
-
+    } else if (!this->action_queue.empty()) {
+        // Else execute an action if the action_queue is not empty
         this->execute_action();
-        //  return;
+
+        // The logic was active. In this cycle it did predicate resolution and action work.
+        this->statistics.cycle_resource_use_counter--;
     }
 }
 
@@ -493,43 +473,19 @@ ComputeCell::prepare_a_communication_cycle()
     }
 }
 
-// Checks if the compute cell is active or not
-// TODO: when communication is added then update checks for the communication buffer too
-bool
-ComputeCell::is_compute_cell_active()
-{
-    bool send_channels = false;
-    bool recv_channels = false;
-    for (int i = 0; i < this->number_of_neighbors; i++) {
-        if (this->send_channel_per_neighbor[i]) {
-            send_channels = true;
-            break;
-        }
-        if (this->recv_channel_per_neighbor[i]) {
-            recv_channels = true;
-            break;
-        }
-    }
-    return (!this->action_queue.empty() || !this->task_queue.empty() ||
-            (this->staging_operon_from_logic) || send_channels || recv_channels);
-}
-
 void
 ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip)
 {
-    // Perform communication
-    /*     std::cout << "this->send_channel_per_neighbor.size() = "
-                  << this->send_channel_per_neighbor.size() << "\n"; */
-
     // For shape square
     if (this->shape == computeCellShape::square) {
         int receiving_direction[4] = { 2, 3, 0, 1 };
 
-        // std::cout << "cc id: " << this->id << " run communication cycle send_channel_per_neighbor
-        // " << this->send_channel_per_neighbor;
         for (int i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
             if (this->send_channel_per_neighbor[i]) { // is not std::nullopt
+
+                // Update the cycle_resource_use_counter
+                this->statistics.cycle_resource_use_counter--;
 
                 Operon operon_ = this->send_channel_per_neighbor[i].value();
                 u_int32_t dst_cc_id = operon_.first;
@@ -564,19 +520,38 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>
             }
         }
     }
+
+    // Since this is the end of the cycle find out how much percent of the CC was active and whether
+    // it was inactive altogether?
+    u_int32_t number_of_resources_per_cc = ComputeCell::get_number_of_neighbors(this->shape) + 1;
+    if (this->statistics.cycle_resource_use_counter == number_of_resources_per_cc) {
+        this->statistics.cycles_inactive++;
+    } else {
+        this->statistics.cycles_resource_usage +=
+            (number_of_resources_per_cc - this->statistics.cycle_resource_use_counter) /
+            static_cast<long double>(number_of_resources_per_cc);
+    }
 }
-/*
+
+// Checks if the compute cell is active or not
 bool
-ComputeCell::run_a_cycle()
+ComputeCell::is_compute_cell_active()
 {
-    this->prepare_a_cycle();
-    this->r
-
-
-     // Return the active status of this CC and later it can be used to update the global active
-    // compute cells count
-    return this->is_compute_cell_active();
-} */
+    bool send_channels = false;
+    bool recv_channels = false;
+    for (int i = 0; i < this->number_of_neighbors; i++) {
+        if (this->send_channel_per_neighbor[i]) {
+            send_channels = true;
+            break;
+        }
+        if (this->recv_channel_per_neighbor[i]) {
+            recv_channels = true;
+            break;
+        }
+    }
+    return (!this->action_queue.empty() || !this->task_queue.empty() ||
+            (this->staging_operon_from_logic) || send_channels || recv_channels);
+}
 
 std::string
 ComputeCell::get_compute_cell_shape_name(computeCellShape shape)
@@ -635,8 +610,9 @@ ComputeCell::get_number_of_neighbors(computeCellShape shape_in)
             break;
 
         default:
-            return 0;
-            break;
+            std::cerr << "Shape: " << ComputeCell::get_compute_cell_shape_name(shape_in)
+                      << " not supported!\n";
+            exit(0);
     }
 }
 

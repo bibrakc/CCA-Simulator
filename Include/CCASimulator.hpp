@@ -81,6 +81,18 @@ class CCASimulator
         this->create_the_chip();
     }
 
+    inline void generate_label(std::ostream& os)
+    {
+        os << "shape\tdim_x\tdim_y\ttotal_compute_cells\ttotal_chip_memory(byes)\n";
+    }
+
+    inline void output_description_in_a_single_line(std::ostream& os)
+    {
+        os << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells) << "\t"
+           << this->dim_x << "\t" << this->dim_y << "\t" << this->total_compute_cells << "\t"
+           << this->total_chip_memory << "\n";
+    }
+
     inline std::pair<u_int32_t, u_int32_t> get_compute_cell_coordinates(
         u_int32_t cc_id,
         computeCellShape shape_of_compute_cells,
