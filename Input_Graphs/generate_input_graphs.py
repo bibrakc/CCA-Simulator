@@ -221,7 +221,6 @@ def plot_degree_bar(G):
 
 # Main
 
-
 args = sys.argv
 
 # graph_types = ["Powerlaw", "Scalefree", "Smallworld", "Erdos"]

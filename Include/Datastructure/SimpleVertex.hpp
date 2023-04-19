@@ -44,7 +44,7 @@ struct Edge
 };
 
 inline constexpr u_int32_t max_distance = 999999;
-inline constexpr u_int32_t edges_max = 40;
+inline constexpr u_int32_t edges_max = 50;
 template<typename Address_T>
 struct SimpleVertex
 {

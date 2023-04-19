@@ -1,5 +1,5 @@
 # Generate Synthetic Graphs Using NetworkX
-`$ generate_input_graphs.py <Powerlaw|Scalefree|Smallworld|Erdos> <edge-factor> <scale-factor>`
+`$ python3 generate_input_graphs.py <Powerlaw|Scalefree|Smallworld|Erdos> <edge-factor> <scale-factor>`
 
 Here:
 1. `[Powerlaw, Scalefree, Smallworld, Erdos]` are the graph types.
