@@ -48,6 +48,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
+// Type of the Cell: ComputeCell or HtreeNode
+enum class CellType : u_int32_t
+{
+    compute_cell = 0,
+    htee_node,
+    CellType_invalid
+};
+
+// Shape of the ComputeCell
 enum class computeCellShape : u_int32_t
 {
     block_1D = 0,
@@ -238,6 +247,9 @@ class ComputeCell
     // Identity of the Compute Cell.
     u_int32_t id;
 
+    // Type of the Cell: ComputeCell or Htree node?
+    CellType type;
+
     // Coordinates of this Compute Cell in the CCA chip. It depends on the Chip dinemsions and
     // shapes of CCs.
     std::pair<u_int32_t, u_int32_t> cooridates;
@@ -314,12 +326,14 @@ class ComputeCell
 
     // Constructor
     ComputeCell(u_int32_t id_in,
+                CellType type_in,
                 computeCellShape shape_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
                 u_int32_t memory_per_cc_in_bytes)
     {
         this->id = id_in;
+        this->type = type_in;
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
 

@@ -371,6 +371,8 @@ main(int argc, char** argv)
         input_graph.add_edge(input_graph.vertices[vertex_from], vertex_to, weight);
     }
 
+    std::unique_ptr<MemoryAlloctor> allocator = std::make_unique<CyclicMemoryAllocator>();
+
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
       // and we don't want it's constructor to be called everytime.
@@ -381,17 +383,12 @@ main(int argc, char** argv)
             // Put a vertex in memory with id = i
             vertex_.id = i;
 
-            // Get the Address of this vertex if it were to be cyclically allocated across the CCA
-            // chip Note here we use SimpleVertex<Address> since the object is now going to be sent
-            // to the CCA chip and there the address type is Address (not u_int32_t ID)
-            Address vertex_addr_cyclic =
-                get_object_address_cyclic(vertex_.id,
-                                          sizeof(SimpleVertex<Address>),
-                                          cca_sqaure_simulator.total_compute_cells);
-
             // Get the ID of the compute cell where this vertex is to be allocated
-            u_int32_t cc_id = vertex_addr_cyclic.cc_id;
+            u_int32_t cc_id = allocator->get_next_available_cc(cca_sqaure_simulator);
 
+            // Get the Address of this vertex allocated on the CCA chip. Note here we use
+            // SimpleVertex<Address> since the object is now going to be sent to the CCA chip and
+            // there the address type is Address (not u_int32_t ID)
             std::optional<Address> vertex_addr =
                 cca_sqaure_simulator.allocate_and_insert_object_on_cc(
                     cc_id, &vertex_, sizeof(SimpleVertex<Address>));
