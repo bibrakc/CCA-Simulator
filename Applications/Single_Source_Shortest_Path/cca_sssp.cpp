@@ -200,24 +200,19 @@ std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, ss
 // to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
 // no difference on the simulation. This is just a software engineering decision.
 inline bool
-insert_edge_by_address(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+insert_edge_by_address(CCASimulator& cca_simulator,
                        Address src_vertex_addr,
                        Address dst_vertex_addr,
                        u_int32_t edge_weight)
 {
-    // dynamic_pointer_cast to go down/across class hierarchy
-    auto compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[src_vertex_addr.cc_id]);
-
-    if (!compute_cell) {
-        std::cout << "Bug! Not a type ComputeCell in function insert_edge_by_address\n";
-        exit(0);
-    }
 
     SimpleVertex<Address>* vertex =
-        static_cast<SimpleVertex<Address>*>(compute_cell->get_object(src_vertex_addr));
+        static_cast<SimpleVertex<Address>*>(cca_simulator.get_object(src_vertex_addr));
 
     // Check if edges are not full
     // TODO: Later implement the hierarical parallel vertex object
+    // TODO: Also create an abstract function to add edge in the object rather than having these
+    // implementation details here
     if (vertex->number_of_edges >= edges_max)
         return false;
 
@@ -227,21 +222,6 @@ insert_edge_by_address(std::vector<std::shared_ptr<Cell>>& CCA_chip,
 
     return true;
 }
-
-/* inline bool
-insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
-                         u_int32_t src_vertex_id,
-                         u_int32_t dst_vertex_id,
-                         u_int32_t edge_weight)
-{
-    Address src_vertex_addr =
-        get_object_address_cyclic(src_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
-
-    Address dst_vertex_addr =
-        get_object_address_cyclic(dst_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
-
-    return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr, edge_weight);
-} */
 
 void
 configure_parser(cli::Parser& parser)
@@ -439,18 +419,6 @@ main(int argc, char** argv)
                                                            eventId::sssp_diffuse));
                     compute_cell->statistics.actions_created++;
                 }
-
-                /*                 cca_square_simulator.CCA_chip[cc_id]->insert_action(
-                                    SSSPAction(vertex_addr.value(),
-                                               actionType::application_action,
-                                               true,
-                                               2,
-                                               args_x,
-                                               eventId::sssp_predicate,
-                                               eventId::sssp_work,
-                                               eventId::sssp_diffuse));
-                                cca_square_simulator.CCA_chip[cc_id]->statistics.actions_created++;
-                 */
             }
         }
     }
@@ -464,7 +432,7 @@ main(int argc, char** argv)
             u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
             u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
 
-            if (!insert_edge_by_address(cca_square_simulator.CCA_chip,
+            if (!insert_edge_by_address(cca_square_simulator,
                                         vertex_addresses[src_vertex_id],
                                         vertex_addresses[dst_vertex_id],
                                         edge_weight)) {
