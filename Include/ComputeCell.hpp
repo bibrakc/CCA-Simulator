@@ -202,29 +202,6 @@ class ComputeCell : public Cell
     // Checks if the compute cell is active or not
     bool is_compute_cell_active();
 
-    inline bool cc_exists(const SignedCoordinates cc_coordinate);
-
-    void add_neighbor_compute_cells();
-
-    void add_neighbor(
-        std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell);
-
-    static std::string get_compute_cell_shape_name(computeCellShape shape);
-
-    static computeCellShape get_compute_cell_shape_enum(std::string shape);
-
-    static u_int32_t get_number_of_neighbors(computeCellShape);
-
-    static std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id,
-                                                                computeCellShape shape,
-                                                                u_int32_t dim_x,
-                                                                u_int32_t dim_y);
-
-    static u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
-                                          computeCellShape shape_,
-                                          u_int32_t dim_x,
-                                          u_int32_t dim_y);
-
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
     // related operations. This allows not just ease of programming but also opens the compute cells

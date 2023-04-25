@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CELL_HPP
 #define CELL_HPP
 
-#include "Action.hpp"
-#include "Address.hpp"
 #include "Constants.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
@@ -114,6 +112,30 @@ class Cell
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
     std::vector<std::optional<Operon>> recv_channel_per_neighbor;
+
+    static std::string get_compute_cell_shape_name(computeCellShape shape);
+
+    static computeCellShape get_compute_cell_shape_enum(std::string shape);
+
+    static u_int32_t get_number_of_neighbors(computeCellShape);
+
+    static std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id,
+                                                                computeCellShape shape,
+                                                                u_int32_t dim_x,
+                                                                u_int32_t dim_y);
+
+    static u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
+                                          computeCellShape shape_,
+                                          u_int32_t dim_x,
+                                          u_int32_t dim_y);
+
+    inline bool cc_exists(const SignedCoordinates cc_coordinate);
+
+    void add_neighbor(
+        std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell);
+
+    // Configure this Cell and assign neighbors in the CCA grid
+    void add_neighbor_compute_cells();
 };
 
 #endif // CELL_HPP

@@ -41,6 +41,7 @@ find_package(OpenMP REQUIRED)
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
 add_library(CCASim
             ${SourceDirectory}/memory_management.cpp
+            ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/Enums.cpp
             ${SourceDirectory}/CCASimulator.cpp

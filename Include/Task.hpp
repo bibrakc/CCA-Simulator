@@ -33,9 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TASK_HPP
 #define TASK_HPP
 
-#include "ComputeCell.hpp"
-#include "Operon.hpp"
-
 #include <functional>
 #include <stdlib.h>
 
