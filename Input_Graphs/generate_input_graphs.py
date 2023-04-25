@@ -273,6 +273,7 @@ if graph == "Erdos":
 for (u, v) in G_gen.edges():
     G_gen.edges[u, v]['weight'] = random.randint(1, 5)
 
+print("Graph generated with weights\n")
 
 # Analyze the graph that you have created
 
@@ -283,7 +284,7 @@ end = time.time()
 print("Time in Degree_Distribution: ", end-start, "\n")
 
 
-start = time.time()
+""" start = time.time()
 Clustering_Analysis(G_gen)
 end = time.time()
 print("Time in Clustering_Analysis: ", end-start, "\n")
@@ -292,7 +293,7 @@ print("Time in Clustering_Analysis: ", end-start, "\n")
 start = time.time()
 ShortestPaths_Analysis(G_gen)
 end = time.time()
-print("Time in SSSP: ", end-start, "\n")
+print("Time in SSSP: ", end-start, "\n") """
 
 
 length, path = nx.single_source_dijkstra(G_gen, 0, 35, weight='weight')
