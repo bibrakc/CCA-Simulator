@@ -226,8 +226,6 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t dst_vertex_id,
                          u_int32_t edge_weight)
 {
-
-    /*  std::cout << "Inserting " << src_vertex_id << " --> " << dst_vertex_id << "\n"; */
     Address src_vertex_addr =
         get_object_address_cyclic(src_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
@@ -374,6 +372,8 @@ main(int argc, char** argv)
 
     std::unique_ptr<MemoryAlloctor> allocator = std::make_unique<CyclicMemoryAllocator>();
 
+    std::map<u_int32_t, Address> vertex_addresses;
+
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
       // and we don't want it's constructor to be called everytime.
@@ -399,6 +399,9 @@ main(int argc, char** argv)
                           << input_graph.vertices[i].id << "\n";
                 exit(0);
             }
+
+            // Insert into the vertex_addresses map
+            vertex_addresses[i] = vertex_addr.value();
 
             // Only put the SSSP seed action on a single vertex.
             // In this case SSSP root = root_vertex
@@ -433,13 +436,14 @@ main(int argc, char** argv)
             u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
             u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
 
-            if (!insert_edge_by_vertex_id(
-                    cca_square_simulator.CCA_chip, src_vertex_id, dst_vertex_id, edge_weight)) {
+            if (!insert_edge_by_address(cca_square_simulator.CCA_chip,
+                                        vertex_addresses[src_vertex_id],
+                                        vertex_addresses[dst_vertex_id],
+                                        edge_weight)) {
                 std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                           << edge_weight << ") not inserted successfully.\n";
                 exit(0);
             }
-        }
     }
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
