@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Action.hpp"
 #include "Address.hpp"
 #include "CCASimulator.hpp"
+#include "Cell.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
 #include "Enums.hpp"
