@@ -211,16 +211,7 @@ insert_edge_by_address(CCASimulator& cca_simulator,
 
     // Check if edges are not full
     // TODO: Later implement the hierarical parallel vertex object
-    // TODO: Also create an abstract function to add edge in the object rather than having these
-    // implementation details here
-    if (vertex->number_of_edges >= edges_max)
-        return false;
-
-    vertex->edges[vertex->number_of_edges].edge = dst_vertex_addr;
-    vertex->edges[vertex->number_of_edges].weight = edge_weight;
-    vertex->number_of_edges++;
-
-    return true;
+    return vertex->insert_edge(dst_vertex_addr, edge_weight);
 }
 
 void
