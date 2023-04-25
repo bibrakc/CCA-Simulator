@@ -195,10 +195,7 @@ std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, ss
                                                    { eventId::sssp_work, sssp_work_func },
                                                    { eventId::sssp_diffuse, sssp_diffuse_func } };
 
-// Note: We could have put this function as part of the ComputeCell class but then it would have
-// introduced application specific functionality into the compute cell. Perhaps, if we really want
-// to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
-// no difference on the simulation. This is just a software engineering decision.
+// Insert edge by `Address` type src and dst
 inline bool
 insert_edge_by_address(CCASimulator& cca_simulator,
                        Address src_vertex_addr,
