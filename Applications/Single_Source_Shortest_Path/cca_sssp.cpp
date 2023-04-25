@@ -331,18 +331,18 @@ main(int argc, char** argv)
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
-    CCASimulator cca_sqaure_simulator(
+    CCASimulator cca_square_simulator(
         shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells, memory_per_cc);
 
     std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
-                     cca_sqaure_simulator.shape_of_compute_cells)
-              << "\n\tDim: " << cca_sqaure_simulator.dim_x << " x " << cca_sqaure_simulator.dim_y
-              << "\n\tTotal Compute Cells: " << cca_sqaure_simulator.total_compute_cells
+                     cca_square_simulator.shape_of_compute_cells)
+              << "\n\tDim: " << cca_square_simulator.dim_x << " x " << cca_square_simulator.dim_y
+              << "\n\tTotal Compute Cells: " << cca_square_simulator.total_compute_cells
               << "\n\tMemory Per Compute Cell: "
-              << cca_sqaure_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
+              << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
               << "\n\tTotal Chip Memory: "
-              << cca_sqaure_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
+              << cca_square_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
               << "\n\n";
 
     // Generate or read the input data graph
@@ -384,13 +384,13 @@ main(int argc, char** argv)
             vertex_.id = i;
 
             // Get the ID of the compute cell where this vertex is to be allocated
-            u_int32_t cc_id = allocator->get_next_available_cc(cca_sqaure_simulator);
+            u_int32_t cc_id = allocator->get_next_available_cc(cca_square_simulator);
 
             // Get the Address of this vertex allocated on the CCA chip. Note here we use
             // SimpleVertex<Address> since the object is now going to be sent to the CCA chip and
             // there the address type is Address (not u_int32_t ID)
             std::optional<Address> vertex_addr =
-                cca_sqaure_simulator.allocate_and_insert_object_on_cc(
+                cca_square_simulator.allocate_and_insert_object_on_cc(
                     cc_id, &vertex_, sizeof(SimpleVertex<Address>));
 
             if (!vertex_addr) {
@@ -409,7 +409,7 @@ main(int argc, char** argv)
                 // Origin vertex from where this action came
                 args_x[1] = root_vertex;
 
-                cca_sqaure_simulator.CCA_chip[cc_id]->insert_action(
+                cca_square_simulator.CCA_chip[cc_id]->insert_action(
                     SSSPAction(vertex_addr.value(),
                                actionType::application_action,
                                true,
@@ -418,7 +418,7 @@ main(int argc, char** argv)
                                eventId::sssp_predicate,
                                eventId::sssp_work,
                                eventId::sssp_diffuse));
-                cca_sqaure_simulator.CCA_chip[cc_id]->statistics.actions_created++;
+                cca_square_simulator.CCA_chip[cc_id]->statistics.actions_created++;
             }
         }
     }
@@ -433,7 +433,7 @@ main(int argc, char** argv)
             u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
 
             if (!insert_edge_by_vertex_id(
-                    cca_sqaure_simulator.CCA_chip, src_vertex_id, dst_vertex_id, edge_weight)) {
+                    cca_square_simulator.CCA_chip, src_vertex_id, dst_vertex_id, edge_weight)) {
                 std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                           << edge_weight << ") not inserted successfully.\n";
                 exit(0);
@@ -443,10 +443,10 @@ main(int argc, char** argv)
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
-    cca_sqaure_simulator.run_simulation();
+    cca_square_simulator.run_simulation();
     auto end = std::chrono::steady_clock::now();
 
-    std::cout << "Total Cycles: " << cca_sqaure_simulator.total_cycles << "\n";
+    std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
 
     std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
                  "itself): "
@@ -454,16 +454,16 @@ main(int argc, char** argv)
               << std::endl;
 
     Address test_vertex_addr = get_object_address_cyclic(
-        test_vertex, sizeof(SimpleVertex<Address>), cca_sqaure_simulator.CCA_chip.size());
+        test_vertex, sizeof(SimpleVertex<Address>), cca_square_simulator.CCA_chip.size());
 
     SimpleVertex<Address>* v_test =
-        (SimpleVertex<Address>*)cca_sqaure_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
+        (SimpleVertex<Address>*)cca_square_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
             test_vertex_addr);
     std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
               << " is: " << v_test->sssp_distance << "\n";
 
     ComputeCellStatistics simulation_statistics;
-    for (auto& cc : cca_sqaure_simulator.CCA_chip) {
+    for (auto& cc : cca_square_simulator.CCA_chip) {
 
         simulation_statistics += cc->statistics;
     }
@@ -471,8 +471,8 @@ main(int argc, char** argv)
     std::cout << simulation_statistics;
 
     // Write results to a file
-    std::string output_file_name = "square_x_" + std::to_string(cca_sqaure_simulator.dim_x) +
-                                   "_y_" + std::to_string(cca_sqaure_simulator.dim_y) + "_graph_" +
+    std::string output_file_name = "square_x_" + std::to_string(cca_square_simulator.dim_x) +
+                                   "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
                                    graph_name + "_v_" + std::to_string(total_vertices) + "_e_" +
                                    std::to_string(total_edges);
     std::string output_file_path = output_file_directory + "/" + output_file_name;
@@ -480,8 +480,8 @@ main(int argc, char** argv)
     std::ofstream output_file(output_file_path);
 
     // Output CCA Chip details
-    cca_sqaure_simulator.generate_label(output_file);
-    cca_sqaure_simulator.output_description_in_a_single_line(output_file);
+    cca_square_simulator.generate_label(output_file);
+    cca_square_simulator.output_description_in_a_single_line(output_file);
 
     // Output input graph details
     output_file << "graph_file\tvertices\tedges\troot_vertex\n"
@@ -493,15 +493,15 @@ main(int argc, char** argv)
     output_file
         << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
            "false_on_predicate\n"
-        << cca_sqaure_simulator.total_cycles << "\t" << simulation_statistics.actions_invoked
+        << cca_square_simulator.total_cycles << "\t" << simulation_statistics.actions_invoked
         << "\t" << simulation_statistics.actions_performed_work << "\t"
         << simulation_statistics.actions_false_on_predicate << "\n";
 
     // Output statistics for each compute cell
     simulation_statistics.generate_label(output_file);
-    for (auto& cc : cca_sqaure_simulator.CCA_chip) {
+    for (auto& cc : cca_square_simulator.CCA_chip) {
         cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
-        if (&cc != &cca_sqaure_simulator.CCA_chip.back()) {
+        if (&cc != &cca_square_simulator.CCA_chip.back()) {
             output_file << "\n";
         }
     }
