@@ -120,8 +120,6 @@ class MemoryAlloctor
   public:
     u_int32_t next_cc_id{};
     virtual u_int32_t get_next_available_cc(CCASimulator&) = 0;
-
-    MemoryAlloctor() { std::cout << "MemoryAlloctor constructor called\n"; }
 };
 
 // Cyclic allocator across all Compute Cells
@@ -138,8 +136,6 @@ class CyclicMemoryAllocator : public MemoryAlloctor
         this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
         return cc_available;
     }
-
-    CyclicMemoryAllocator() { std::cout << "CyclicMemoryAllocator constructor called\n"; }
 };
 
 #endif // CCASimulator_HPP
