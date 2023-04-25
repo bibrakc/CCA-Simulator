@@ -370,8 +370,12 @@ main(int argc, char** argv)
         input_graph.add_edge(input_graph.vertices[vertex_from], vertex_to, weight);
     }
 
+    // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
+    // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAlloctor> allocator = std::make_unique<CyclicMemoryAllocator>();
 
+    // Store the address of vertices in a map so as to retrieve easily for edge insertion and other
+    // tasks
     std::map<u_int32_t, Address> vertex_addresses;
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
@@ -444,6 +448,7 @@ main(int argc, char** argv)
                           << edge_weight << ") not inserted successfully.\n";
                 exit(0);
             }
+        }
     }
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
