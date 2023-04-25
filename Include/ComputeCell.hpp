@@ -52,14 +52,14 @@ typedef std::pair<int32_t, int32_t> SignedCoordinates;
 enum class CellType : u_int32_t
 {
     compute_cell = 0,
-    htee_node,
+    second_layer_network_node, // Htree node
     CellType_invalid
 };
 
 // Shape of the ComputeCell
 enum class computeCellShape : u_int32_t
 {
-    block_1D = 0,
+    block_1D = 0, // TODO: remove this
     triangular,
     square, // block 2D
     hexagon,
@@ -161,8 +161,58 @@ struct ComputeCellStatistics
     }
 };
 
+// Base class for Cells: These cells can be regular compute cells or nodes to the secondary network
+// such as a Htree
+class Cell
+{
+  public:
+    // Identity of the Cell.
+    u_int32_t id;
+
+    // Type of the Cell: ComputeCell or Htree node?
+    CellType type;
+
+    // Coordinates of this Cell in the CCA chip. It depends on the Chip dinemsions and
+    // shapes of Cells.
+    std::pair<u_int32_t, u_int32_t> cooridates;
+
+    // Shape of the Cell
+    computeCellShape shape;
+
+    // Dimensions of the CCA chip this cell belongs to. This is needed for routing as the routing
+    // logic is implemented inside the cells and they need to be aware of the global chip
+    // configuration.
+    u_int32_t dim_x;
+    u_int32_t dim_y;
+
+    // Communication of the Cell.
+
+    // number_of_neighbors is the maximum number of connections a single Cell can architecturally
+    // have. A triangular Cell has 3 neighbors, a square has 4, and hexagon has 6 etc.
+    // TODO: This seems to be redundant unless we really want to discriminate the std::nullopt,
+    // later
+    u_int32_t number_of_neighbors;
+
+    // IDs and Coordinates of the neighbors
+    std::vector<std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>>>
+        neighbor_compute_cells;
+
+    // Per neighbor send channel/link
+    std::vector<std::optional<Operon>> send_channel_per_neighbor;
+
+    // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
+    // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
+    // computation (or work) on that operon in the current simulation cycle. The receiving neighbor
+    // must process it in the next cycle. Therefore, this send/recv buffer serves that purpose. At
+    // the end of each simulation cycle each Cell will move an operon from this buffer to its
+    // working set of operons and will then execute those operons in the next cycle. This move is
+    // not part of the computation but is only there for simulation so as not to break the
+    // semantics/pragmatics of CCA.
+    std::vector<std::optional<Operon>> recv_channel_per_neighbor;
+};
+
 // Note this class is not thread-safe.
-class ComputeCell
+class ComputeCell : public Cell
 {
   public:
     // Get the object memory location at address addr_in
@@ -244,51 +294,6 @@ class ComputeCell
                                           u_int32_t dim_x,
                                           u_int32_t dim_y);
 
-    // Identity of the Compute Cell.
-    u_int32_t id;
-
-    // Type of the Cell: ComputeCell or Htree node?
-    CellType type;
-
-    // Coordinates of this Compute Cell in the CCA chip. It depends on the Chip dinemsions and
-    // shapes of CCs.
-    std::pair<u_int32_t, u_int32_t> cooridates;
-
-    // Shape of the Compute Cell
-    computeCellShape shape;
-
-    // Dimensions of the CCA chip this compute cell belongs to. This is needed for routing as the
-    // routing logic is implemented inside the compute cells and they need to be aware of the global
-    // chip configuration.
-    u_int32_t dim_x;
-    u_int32_t dim_y;
-
-    // Communication of the Compute Cell.
-
-    // number_of_neighbors is the maximum number of connections a single Compute Cell can
-    // architecturally have. A triangular CC has 3 neighbors, a square has 4, and hexagon has 6 etc.
-    // TODO: Later read the shape from a config file and initialize it in the constructor
-    // TODO: This seems to be redundant unless we really want to discriminate the std::nullopt,
-    // later
-    u_int32_t number_of_neighbors;
-
-    // IDs and Coordinates of the neighbors
-    std::vector<std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>>>
-        neighbor_compute_cells;
-
-    // Per neighbor send channel/link
-    std::vector<std::optional<Operon>> send_channel_per_neighbor;
-
-    // This is needed to satisty simulation. Because a sending CC can not just enqueue an operon
-    // into the current working buffer of a neighbor CC. If it does then the neighbor may start
-    // computation (or work) on that operon in the current simulation cycle. The receiving neighbor
-    // must process it in the next cycle. Therefore, this send/recv buffer serves that purpose. At
-    // the end of each simulation cycle each CC will move an operon from this buffer to its working
-    // set of operons and will then execute those operons in the next cycle. This move is not part
-    // of the computation but is only there for simulation so as not to break the
-    // semantics/pragmatics of CCA.
-    std::vector<std::optional<Operon>> recv_channel_per_neighbor;
-
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
     // related operations. This allows not just ease of programming but also opens the compute cells
@@ -302,7 +307,7 @@ class ComputeCell
     u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Memory of the Compute Cell in bytes.
-    // TODO: This can be `static` since it is a set once and real-only and is the same for all CCs.
+    // TODO: This can be `static` since it is a set once and read-only and is the same for all CCs.
     u_int32_t memory_size_in_bytes;
 
     // The memory
@@ -314,7 +319,7 @@ class ComputeCell
     std::queue<Action> action_queue;
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
-    // or depending on the policy. So it can be both FIFO and LIFO, maybe even better
+    // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
     // std::shared_ptr<Action> get_an_action();
 
     // Tasks for the Compute Cell. These tasks exist only for this simulator and are not part of the
