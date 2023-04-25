@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 #include "Address.hpp"
+#include "Cell.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
 #include "Operon.hpp"
@@ -59,7 +60,7 @@ class CCASimulator
     u_int32_t total_chip_memory;
 
     // Declare the CCA Chip that is composed of ComputeCell(s)
-    std::vector<std::shared_ptr<ComputeCell>> CCA_chip;
+    std::vector<std::shared_ptr<Cell>> CCA_chip;
 
     bool global_active_cc;
     u_long total_cycles;
@@ -111,6 +112,9 @@ class CCASimulator
                                                             size_t size_of_obj);
 
     void run_simulation();
+
+    // Get the pointer to the object at `Address addr_in`
+    void* get_object(Address addr_in) const;
 };
 
 // TODO: Find a better file/location for MemoryAlloctor classes

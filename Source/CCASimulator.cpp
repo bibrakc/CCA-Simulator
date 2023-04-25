@@ -103,10 +103,28 @@ CCASimulator::create_the_chip()
     }
 }
 
+// Get the pointer to the object at `Address addr_in`
+void*
+CCASimulator::get_object(Address addr_in) const
+{
+    // dynamic_pointer_cast to go down/across class hierarchy
+    auto compute_cell = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[addr_in.cc_id]);
+    if (!compute_cell) {
+        std::cerr << "Bug! Invalid addr in CCASimulator::get_object\n";
+    }
+    return compute_cell->get_object(addr_in);
+}
+
 std::optional<Address>
 CCASimulator::allocate_and_insert_object_on_cc(u_int32_t cc_id, void* obj, size_t size_of_obj)
 {
-    return this->CCA_chip[cc_id]->create_object_in_memory(obj, size_of_obj);
+
+    // TODO: Hahaha comedy! See how to made this casting and pointers more graceful and elegant ASAP
+
+    // std::shared_ptr<ComputeCell> cc_ptr = this->CCA_chip[cc_id];
+    ComputeCell* cc_ptr = static_cast<ComputeCell*>(this->CCA_chip[cc_id].get());
+    return cc_ptr->create_object_in_memory(obj, size_of_obj);
+    // return this->CCA_chip[cc_id]->create_object_in_memory(obj, size_of_obj);
 }
 
 void

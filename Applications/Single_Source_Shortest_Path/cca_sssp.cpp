@@ -200,13 +200,21 @@ std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, ss
 // to introduce some special `insert_edge` instruction then we can rethink this. In anycase it makes
 // no difference on the simulation. This is just a software engineering decision.
 inline bool
-insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
+insert_edge_by_address(std::vector<std::shared_ptr<Cell>>& CCA_chip,
                        Address src_vertex_addr,
                        Address dst_vertex_addr,
                        u_int32_t edge_weight)
 {
-    SimpleVertex<Address>* vertex = static_cast<SimpleVertex<Address>*>(
-        CCA_chip[src_vertex_addr.cc_id]->get_object(src_vertex_addr));
+    // dynamic_pointer_cast to go down/across class hierarchy
+    auto compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[src_vertex_addr.cc_id]);
+
+    if (!compute_cell) {
+        std::cout << "Bug! Not a type ComputeCell in function insert_edge_by_address\n";
+        exit(0);
+    }
+
+    SimpleVertex<Address>* vertex =
+        static_cast<SimpleVertex<Address>*>(compute_cell->get_object(src_vertex_addr));
 
     // Check if edges are not full
     // TODO: Later implement the hierarical parallel vertex object
@@ -220,7 +228,7 @@ insert_edge_by_address(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
     return true;
 }
 
-inline bool
+/* inline bool
 insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
                          u_int32_t src_vertex_id,
                          u_int32_t dst_vertex_id,
@@ -233,7 +241,7 @@ insert_edge_by_vertex_id(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip,
         get_object_address_cyclic(dst_vertex_id, sizeof(SimpleVertex<Address>), CCA_chip.size());
 
     return insert_edge_by_address(CCA_chip, src_vertex_addr, dst_vertex_addr, edge_weight);
-}
+} */
 
 void
 configure_parser(cli::Parser& parser)
@@ -417,16 +425,32 @@ main(int argc, char** argv)
                 // Origin vertex from where this action came
                 args_x[1] = root_vertex;
 
-                cca_square_simulator.CCA_chip[cc_id]->insert_action(
-                    SSSPAction(vertex_addr.value(),
-                               actionType::application_action,
-                               true,
-                               2,
-                               args_x,
-                               eventId::sssp_predicate,
-                               eventId::sssp_work,
-                               eventId::sssp_diffuse));
-                cca_square_simulator.CCA_chip[cc_id]->statistics.actions_created++;
+                // dynamic_pointer_cast to go down/across class hierarchy
+                auto compute_cell =
+                    std::dynamic_pointer_cast<ComputeCell>(cca_square_simulator.CCA_chip[cc_id]);
+                if (compute_cell) {
+                    compute_cell->insert_action(SSSPAction(vertex_addr.value(),
+                                                           actionType::application_action,
+                                                           true,
+                                                           2,
+                                                           args_x,
+                                                           eventId::sssp_predicate,
+                                                           eventId::sssp_work,
+                                                           eventId::sssp_diffuse));
+                    compute_cell->statistics.actions_created++;
+                }
+
+                /*                 cca_square_simulator.CCA_chip[cc_id]->insert_action(
+                                    SSSPAction(vertex_addr.value(),
+                                               actionType::application_action,
+                                               true,
+                                               2,
+                                               args_x,
+                                               eventId::sssp_predicate,
+                                               eventId::sssp_work,
+                                               eventId::sssp_diffuse));
+                                cca_square_simulator.CCA_chip[cc_id]->statistics.actions_created++;
+                 */
             }
         }
     }
@@ -463,18 +487,16 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    Address test_vertex_addr = get_object_address_cyclic(
-        test_vertex, sizeof(SimpleVertex<Address>), cca_square_simulator.CCA_chip.size());
+    Address test_vertex_addr = vertex_addresses[test_vertex];
 
     SimpleVertex<Address>* v_test =
-        (SimpleVertex<Address>*)cca_square_simulator.CCA_chip[test_vertex_addr.cc_id]->get_object(
-            test_vertex_addr);
+        static_cast<SimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+
     std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
               << " is: " << v_test->sssp_distance << "\n";
 
     ComputeCellStatistics simulation_statistics;
     for (auto& cc : cca_square_simulator.CCA_chip) {
-
         simulation_statistics += cc->statistics;
     }
 

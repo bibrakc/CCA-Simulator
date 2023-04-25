@@ -360,7 +360,7 @@ ComputeCell::prepare_a_communication_cycle()
 }
 
 void
-ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<ComputeCell>>& CCA_chip)
+ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
     // For shape square
     if (this->shape == computeCellShape::square) {
