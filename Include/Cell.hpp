@@ -50,7 +50,7 @@ typedef std::pair<int32_t, int32_t> SignedCoordinates;
 enum class CellType : u_int32_t
 {
     compute_cell = 0,
-    second_layer_network_node, // Htree node
+    sink_cell, // Htree node connection point
     CellType_invalid
 };
 

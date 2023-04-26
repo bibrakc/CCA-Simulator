@@ -30,20 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef HTREE_CELL_HPP
-#define HTREE_CELL_HPP
+#ifndef SINK_CELL_HPP
+#define SINK_CELL_HPP
 
-// #include "Action.hpp"
-// #include "Address.hpp"
 #include "Cell.hpp"
-// #include "Constants.hpp"
-// #include "Operon.hpp"
-// #include "Task.hpp"
 
 #include <iostream>
 #include <stdlib.h>
 
-class HtreeCell : public Cell
+class SinkCell : public Cell
 {
   public:
     // Prepare the cycle. This involves moving operon data into either the action queue or send
@@ -81,20 +76,20 @@ class HtreeCell : public Cell
     std::vector<std::optional<Operon>> recv_channel_to_htree_node;
 
     // Constructor
-    HtreeCell(u_int32_t id_in,
-              CellType type_in,
-              u_int32_t connecting_htree_node_id_in,
-              computeCellShape shape_in,
-              u_int32_t dim_x_in,
-              u_int32_t dim_y_in,
-              u_int32_t hx_in,
-              u_int32_t hy_in,
-              u_int32_t hdepth_in)
+    SinkCell(u_int32_t id_in,
+             CellType type_in,
+             u_int32_t connecting_htree_node_id_in,
+             computeCellShape shape_in,
+             u_int32_t dim_x_in,
+             u_int32_t dim_y_in,
+             u_int32_t hx_in,
+             u_int32_t hy_in,
+             u_int32_t hdepth_in)
     {
         this->id = id_in;
         this->type = type_in;
         this->statistics.type = this->type;
-        
+
         this->connecting_htree_node_id = connecting_htree_node_id_in;
         this->shape = shape_in;
         this->number_of_neighbors = Cell::get_number_of_neighbors(this->shape);
@@ -124,4 +119,4 @@ class HtreeCell : public Cell
     }
 };
 
-#endif // HTREE_CELL_HPP
+#endif // SINK_CELL_HPP

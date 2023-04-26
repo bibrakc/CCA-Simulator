@@ -66,7 +66,7 @@ class CCASimulator
     u_int32_t memory_per_cc;
     u_int32_t total_chip_memory;
 
-    // Declare the CCA Chip that is composed of Compute Cell(s) and any HtreeCell(s)
+    // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
 
     bool global_active_cc;

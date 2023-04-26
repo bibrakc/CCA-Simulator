@@ -170,8 +170,8 @@ Cell::get_cell_type_name(CellType type)
         case (CellType::compute_cell):
             return std::string("ComputeCell");
             break;
-        case (CellType::second_layer_network_node):
-            return std::string("Htree");
+        case (CellType::sink_cell):
+            return std::string("SinkCell");
             break;
         default:
             return std::string("Invalid CellType");

@@ -29,7 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include "HtreeCell.hpp"
+#include "SinkCell.hpp"
 #include "Cell.hpp"
 // #include "Function.hpp"
 //  #include "SimpleVertex.hpp"
@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // TODO: Modify this to include the 2nd layer Htree network
 u_int32_t
-HtreeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
+SinkCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 {
 
     // Algorithm == dimensional routing
@@ -77,7 +77,7 @@ HtreeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 }
 
 void
-HtreeCell::prepare_a_cycle()
+SinkCell::prepare_a_cycle()
 {
 
     // Move the operon from previous cycle recv channel to thier destination: action queue or send
@@ -89,7 +89,7 @@ HtreeCell::prepare_a_cycle()
 
             // Check if this operon is destined for this compute cell
             if (this->id == dst_cc_id) {
-                std::cerr << "Bug! An HtreeCell cannot invoke an action\n";
+                std::cerr << "Bug! An SinkCell cannot invoke an action\n";
                 exit(0);
             } else {
                 // It means the operon needs to be sent/passed to some neighbor
@@ -110,7 +110,7 @@ HtreeCell::prepare_a_cycle()
 }
 
 void
-HtreeCell::run_a_computation_cycle()
+SinkCell::run_a_computation_cycle()
 {
     // Initialize the counter for measuring resource usage and starvation. Start with all then
     // decreament as they are active. Later use that to find the percent active status for this
@@ -123,19 +123,19 @@ HtreeCell::run_a_computation_cycle()
     // and communication
     this->prepare_a_cycle();
 
-    // An HtreeCell has nothing much do to here for computation
+    // An SinkCell has nothing much do to here for computation
 }
 
 // This act as synchronization and needs to be called before the actual communication cycle so as to
 // not cause race conditions on the communicaton buffer. It also applies to the ... TODO fix comment
 void
-HtreeCell::prepare_a_communication_cycle()
+SinkCell::prepare_a_communication_cycle()
 {
     // Htree has not Action creation from logic and therefore this function will be empty
 }
 
 void
-HtreeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
     // For shape square
     if (this->shape == computeCellShape::square) {
@@ -197,7 +197,7 @@ HtreeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
 // Checks if the compute cell is active or not
 bool
-HtreeCell::is_compute_cell_active()
+SinkCell::is_compute_cell_active()
 {
     bool send_channels = false;
     bool recv_channels = false;

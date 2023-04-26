@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
-#include "HtreeCell.hpp"
+#include "SinkCell.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
 
@@ -93,10 +93,10 @@ CCASimulator::create_the_chip()
 
             u_int32_t cc_id = i * this->dim_y + j;
 
-            if (cc_id == 3) {
+            if ((cc_id == 3) || (cc_id == 5) || (cc_id == 11) || (cc_id == 20) || (cc_id == 1)) {
                 this->CCA_chip.push_back(
-                    std::make_shared<HtreeCell>(cc_id,
-                                                CellType::second_layer_network_node,
+                    std::make_shared<SinkCell>(cc_id,
+                                                CellType::sink_cell,
                                                 0, // id of the connecting node
                                                 shape_of_compute_cells,
                                                 this->dim_x,
