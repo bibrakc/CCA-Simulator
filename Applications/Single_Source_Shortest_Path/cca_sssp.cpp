@@ -267,9 +267,11 @@ class Graph
     }
     void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
-        vertex.edges[vertex.number_of_edges].edge = dst_vertex_id;
-        vertex.edges[vertex.number_of_edges].weight = weight;
-        vertex.number_of_edges++;
+        if (!vertex.insert_edge(dst_vertex_id, weight)) {
+            std::cerr << "Error! add_edge() Edge (" << vertex.id << ". " << dst_vertex_id
+                      << ") cannot be inserted\n";
+            exit(0);
+        }
     }
     ~Graph() {}
 };
