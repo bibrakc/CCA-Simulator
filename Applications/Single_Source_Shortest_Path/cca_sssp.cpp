@@ -219,14 +219,6 @@ configure_parser(cli::Parser& parser)
                                      "graphname",
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
-    parser.set_required<u_int32_t>("dx",
-                                   "dimensionx",
-                                   "Dimnesion of the shape in x direction. For example: A rectange "
-                                   "chip is x*y. Provide dx such that dx x dy)");
-    parser.set_required<u_int32_t>("dy",
-                                   "dimensiony",
-                                   "Dimnesion of the shape in y direction. For example: A rectange "
-                                   "chip is x*y. Provide dy such that dx x dy)");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
     parser.set_required<u_int32_t>(
@@ -239,12 +231,15 @@ configure_parser(cli::Parser& parser)
         "od", "outputdirectory", "./", "Path to the output file directory. Default: ./");
 
     parser.set_optional<u_int32_t>(
-        "hx", "htree_x", 8, "Rows of Cells that are served by a single end Htree node.");
-    parser.set_optional<u_int32_t>("hy",
-                                   "htree_y",
-                                   17,
-                                   "Columns of Cells that are served by a single end Htree node. "
-                                   "This needs to be an odd value");
+        "hx",
+        "htree_x",
+        9,
+        "Rows of Cells that are served by a single end Htree node. hx must be an odd value");
+    parser.set_optional<u_int32_t>(
+        "hy",
+        "htree_y",
+        17,
+        "Columns of Cells that are served by a single end Htree node. hy must be an odd value");
 
     parser.set_optional<u_int32_t>("hdepth",
                                    "htree_depth",
@@ -279,6 +274,20 @@ class Graph
     ~Graph() {}
 };
 
+u_int32_t
+get_htree_dims(u_int32_t dim, u_int32_t depth)
+{
+
+    if (depth == 0) {
+        return dim;
+    }
+
+    if (depth == 1) {
+        return 2 * dim;
+    }
+    return 2 * get_htree_dims(dim, depth - 1);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -300,25 +309,13 @@ main(int argc, char** argv)
     // Optional output directory path
     std::string output_file_directory = parser.get<std::string>("od");
 
-    // Configuration related to the CCA Chip
-    std::string shape_arg = parser.get<std::string>("s");
-    computeCellShape shape_of_compute_cells;
-    u_int32_t CCA_dim_x, CCA_dim_y;
-    u_int32_t total_compute_cells;
-
-    if (shape_arg == "square") {
-        shape_of_compute_cells = computeCellShape::square;
-        CCA_dim_x = parser.get<u_int32_t>("dx");
-        CCA_dim_y = parser.get<u_int32_t>("dy");
-        total_compute_cells = CCA_dim_x * CCA_dim_y;
-    } else {
-        std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-        exit(0);
-    }
-
     // Get the rows and columbs of cells that are served by a single end Htree node. This will help
     // in construction of the CCA chip, Htree, and routing
     u_int32_t hx = parser.get<u_int32_t>("hx");
+    if (!(hx % 2)) {
+        std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
+        exit(0);
+    }
     u_int32_t hy = parser.get<u_int32_t>("hy");
     if (!(hy % 2)) {
         std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
@@ -327,6 +324,22 @@ main(int argc, char** argv)
 
     // Get the depth of Htree
     u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
+
+    // Configuration related to the CCA Chip
+    std::string shape_arg = parser.get<std::string>("s");
+    computeCellShape shape_of_compute_cells;
+    u_int32_t CCA_dim_x, CCA_dim_y;
+    u_int32_t total_compute_cells;
+
+    if (shape_arg == "square") {
+        shape_of_compute_cells = computeCellShape::square;
+        CCA_dim_x = get_htree_dims(hx, hdepth);
+        CCA_dim_y = get_htree_dims(hy, hdepth);
+        total_compute_cells = CCA_dim_x * CCA_dim_y;
+    } else {
+        std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
+        exit(0);
+    }
 
     // Get the memory per cc or use the default
     u_int32_t memory_per_cc = parser.get<u_int32_t>("m");
