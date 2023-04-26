@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
+#include "HtreeCell.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
 
@@ -91,17 +92,31 @@ CCASimulator::create_the_chip()
         for (u_int32_t j = 0; j < this->dim_y; j++) {
 
             u_int32_t cc_id = i * this->dim_y + j;
-            // Create individual compute cells of computeCellShape shape_of_compute_cells
-            this->CCA_chip.push_back(std::make_shared<ComputeCell>(cc_id,
-                                                                   CellType::compute_cell,
-                                                                   shape_of_compute_cells,
-                                                                   this->dim_x,
-                                                                   this->dim_y,
-                                                                   this->hx,
-                                                                   this->hy,
-                                                                   this->hdepth,
-                                                                   this->memory_per_cc));
 
+            if (cc_id == 3) {
+                this->CCA_chip.push_back(
+                    std::make_shared<HtreeCell>(cc_id,
+                                                CellType::second_layer_network_node,
+                                                0, // id of the connecting node
+                                                shape_of_compute_cells,
+                                                this->dim_x,
+                                                this->dim_y,
+                                                this->hx,
+                                                this->hy,
+                                                this->hdepth));
+
+            } else {
+                // Create individual compute cells of computeCellShape shape_of_compute_cells
+                this->CCA_chip.push_back(std::make_shared<ComputeCell>(cc_id,
+                                                                       CellType::compute_cell,
+                                                                       shape_of_compute_cells,
+                                                                       this->dim_x,
+                                                                       this->dim_y,
+                                                                       this->hx,
+                                                                       this->hy,
+                                                                       this->hdepth,
+                                                                       this->memory_per_cc));
+            }
             if constexpr (debug_code) {
                 std::cout << *this->CCA_chip.back().get();
             }

@@ -96,32 +96,29 @@ struct ComputeCellStatistics
     long double cycles_resource_usage{};
     // Start this counter with 5 for the square CC and then decreament as the resources are used for
     // that cycle. This reverse way of counting will also help in distinguishing between an inactive
-    // cycle and a cycle in which the CC a deadlocked.
+    // cycle and a cycle in which the CC a deadlocked/waiting.
     u_int32_t cycle_resource_use_counter{};
 
     // # of Cycles for which this CC was not active: Starvation
     // When `cycle_resource_use_counter = 0` then that cycle the CC was inactive
     u_int32_t cycles_inactive{};
 
+    // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
+    CellType type;
+
     inline void generate_label(std::ostream& os)
     {
-        os << "cc_id\tcc_coordinate_x\tcc_coordinate_y\tactions_created\tactions_pushed\tactions_"
+        os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tactions_created\tactions_"
+              "pushed\tactions_"
               "invoked\tactions_performed_work\tactions_false_on_predicate\tstall_logic_on_"
               "network\tstall_network_on_recv\tstall_network_on_send\tcycles_resource_"
               "usage\tcycles_inactive\n";
     }
 
-    inline void output_results_in_a_single_line(std::ostream& os,
-                                                u_int32_t cc_id,
-                                                std::pair<u_int32_t, u_int32_t> cc_cooridinates)
-    {
-        os << cc_id << "\t" << cc_cooridinates.first << "\t" << cc_cooridinates.second << "\t"
-           << this->actions_created << "\t" << this->actions_pushed << "\t" << this->actions_invoked
-           << "\t" << this->actions_performed_work << "\t" << this->actions_false_on_predicate
-           << "\t" << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
-           << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
-           << this->cycles_inactive;
-    }
+    // Print all the stats in a single line
+    void output_results_in_a_single_line(std::ostream& os,
+                                         u_int32_t cc_id,
+                                         std::pair<u_int32_t, u_int32_t> cc_cooridinates);
 
     // Overloading <<
     friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
@@ -214,6 +211,8 @@ class Cell
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;
+
+    static std::string get_cell_type_name(CellType type);
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
 

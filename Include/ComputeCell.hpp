@@ -131,6 +131,8 @@ class ComputeCell : public Cell
     {
         this->id = id_in;
         this->type = type_in;
+        this->statistics.type = this->type;
+
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
 

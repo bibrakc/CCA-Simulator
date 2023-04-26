@@ -148,6 +148,37 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate)
     exit(0);
 }
 
+void
+ComputeCellStatistics::output_results_in_a_single_line(
+    std::ostream& os,
+    u_int32_t cc_id,
+    std::pair<u_int32_t, u_int32_t> cc_cooridinates)
+{
+    os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
+       << "\t" << cc_cooridinates.second << "\t" << this->actions_created << "\t"
+       << this->actions_pushed << "\t" << this->actions_invoked << "\t"
+       << this->actions_performed_work << "\t" << this->actions_false_on_predicate << "\t"
+       << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
+       << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
+       << this->cycles_inactive;
+}
+
+std::string
+Cell::get_cell_type_name(CellType type)
+{
+    switch (type) {
+        case (CellType::compute_cell):
+            return std::string("ComputeCell");
+            break;
+        case (CellType::second_layer_network_node):
+            return std::string("Htree");
+            break;
+        default:
+            return std::string("Invalid CellType");
+            break;
+    }
+}
+
 std::string
 Cell::get_compute_cell_shape_name(computeCellShape shape)
 {
