@@ -13,4 +13,4 @@ To generate the executable `SSSP_CCASimulator`:
 
 ## Executing
 ### SSSP Application
-`$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_7_v_14.edgelist -g Erdos -od ./Output -s square -dx 20 -dy 20 -root 0 -tv 35 -m 900000`
+`$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_4_v_8.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 9000 -hx 9 -hy 11 -hdepth 2`
