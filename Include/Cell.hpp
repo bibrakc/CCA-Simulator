@@ -64,9 +64,6 @@ enum class computeCellShape : u_int32_t
     computeCellShape_invalid
 };
 
-
-
-
 struct ComputeCellStatistics
 {
     u_int32_t actions_created{};
@@ -186,6 +183,9 @@ class Cell
     u_int32_t dim_x;
     u_int32_t dim_y;
 
+    // Dimensions and depth of the Htree. Here hx and hy are the dimensions of the block of cells
+    // covered by a single end node of the Htree.
+    u_int32_t hx, hy, hdepth;
 
     // Communication of the Cell.
 
@@ -214,7 +214,6 @@ class Cell
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;
-
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
 

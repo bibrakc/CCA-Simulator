@@ -37,30 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // For memcpy()
 #include <cstring>
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
-{
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
-
-    os << "\n";
-    return os;
-}
-
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
-{
-
-    for (auto& op_ : operons_) {
-        if (op_ == std::nullopt) {
-            os << "[nullopt] ";
-        } else {
-            os << op_.value();
-        }
-    }
-    os << "\n";
-    return os;
-}
-
 // TODO: move this to application
 void
 print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)

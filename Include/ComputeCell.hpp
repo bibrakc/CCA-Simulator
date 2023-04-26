@@ -124,6 +124,9 @@ class ComputeCell : public Cell
                 computeCellShape shape_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
+                u_int32_t hx_in,
+                u_int32_t hy_in,
+                u_int32_t hdepth_in,
                 u_int32_t memory_per_cc_in_bytes)
     {
         this->id = id_in;
@@ -133,6 +136,10 @@ class ComputeCell : public Cell
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
+
+        this->hx = hx_in;
+        this->hy = hy_in;
+        this->hdepth = hdepth_in;
 
         this->cooridates =
             ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);

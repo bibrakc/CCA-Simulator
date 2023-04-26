@@ -64,7 +64,10 @@ class HtreeCell : public Cell
               u_int32_t connecting_htree_node_id_in,
               computeCellShape shape_in,
               u_int32_t dim_x_in,
-              u_int32_t dim_y_in)
+              u_int32_t dim_y_in,
+              u_int32_t hx_in,
+              u_int32_t hy_in,
+              u_int32_t hdepth_in)
     {
         this->id = id_in;
         this->type = type_in;
@@ -74,6 +77,10 @@ class HtreeCell : public Cell
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
+
+        this->hx = hx_in;
+        this->hy = hy_in;
+        this->hdepth = hdepth_in;
 
         this->cooridates =
             Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);

@@ -53,13 +53,20 @@ class CCASimulator
 {
   public:
     computeCellShape shape_of_compute_cells;
+
+    // Dimensions of the CCA chip.
     u_int32_t dim_x, dim_y;
+
+    // Dimensions and depth of the Htree. Here hx and hy are the dimensions of the block of cells
+    // covered by a single end node of the Htree.
+    u_int32_t hx, hy, hdepth;
     u_int32_t total_compute_cells;
 
+    // Memory per compute cell and the total combined memory of this CCA chip
     u_int32_t memory_per_cc;
     u_int32_t total_chip_memory;
 
-    // Declare the CCA Chip that is composed of ComputeCell(s)
+    // Declare the CCA Chip that is composed of Compute Cell(s) and any HtreeCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
 
     bool global_active_cc;
@@ -68,11 +75,17 @@ class CCASimulator
     CCASimulator(computeCellShape shape_in,
                  u_int32_t dim_x_in,
                  u_int32_t dim_y_in,
+                 u_int32_t hx_in,
+                 u_int32_t hy_in,
+                 u_int32_t hdepth_in,
                  u_int32_t total_compute_cells_in,
                  u_int32_t memory_per_cc_in)
         : shape_of_compute_cells(shape_in)
         , dim_x(dim_x_in)
         , dim_y(dim_y_in)
+        , hx(hx_in)
+        , hy(hy_in)
+        , hdepth(hdepth_in)
         , total_compute_cells(total_compute_cells_in)
         , memory_per_cc(memory_per_cc_in)
     {
@@ -84,14 +97,15 @@ class CCASimulator
 
     inline void generate_label(std::ostream& os)
     {
-        os << "shape\tdim_x\tdim_y\ttotal_compute_cells\ttotal_chip_memory(byes)\n";
+        os << "shape\tdim_x\tdim_y\thx\thy\thdepth\ttotal_compute_cells\ttotal_chip_memory(byes)\n";
     }
 
     inline void output_description_in_a_single_line(std::ostream& os)
     {
         os << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells) << "\t"
-           << this->dim_x << "\t" << this->dim_y << "\t" << this->total_compute_cells << "\t"
-           << this->total_chip_memory << "\n";
+           << this->dim_x << "\t" << this->dim_y << "\t" << this->hx << "\t" << this->hy << "\t"
+           << this->hdepth << "\t" << this->total_compute_cells << "\t" << this->total_chip_memory
+           << "\n";
     }
 
     inline std::pair<u_int32_t, u_int32_t> get_compute_cell_coordinates(

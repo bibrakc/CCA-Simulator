@@ -237,6 +237,21 @@ configure_parser(cli::Parser& parser)
                                    "Memory per compute cell in bytes. Default is 0.5 MB");
     parser.set_optional<std::string>(
         "od", "outputdirectory", "./", "Path to the output file directory. Default: ./");
+
+    parser.set_optional<u_int32_t>(
+        "hx", "htree_x", 8, "Rows of Cells that are served by a single end Htree node.");
+    parser.set_optional<u_int32_t>("hy",
+                                   "htree_y",
+                                   17,
+                                   "Columns of Cells that are served by a single end Htree node. "
+                                   "This needs to be an odd value");
+
+    parser.set_optional<u_int32_t>("hdepth",
+                                   "htree_depth",
+                                   0,
+                                   "Depth of the Htree. This is the size of the Htree. \n\t0: No "
+                                   "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
+                                   "as it recurssively constructs more...");
 }
 
 class Graph
@@ -301,18 +316,38 @@ main(int argc, char** argv)
         exit(0);
     }
 
+    // Get the rows and columbs of cells that are served by a single end Htree node. This will help
+    // in construction of the CCA chip, Htree, and routing
+    u_int32_t hx = parser.get<u_int32_t>("hx");
+    u_int32_t hy = parser.get<u_int32_t>("hy");
+    if (!(hy % 2)) {
+        std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
+        exit(0);
+    }
+
+    // Get the depth of Htree
+    u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
+
     // Get the memory per cc or use the default
     u_int32_t memory_per_cc = parser.get<u_int32_t>("m");
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
-    CCASimulator cca_square_simulator(
-        shape_of_compute_cells, CCA_dim_x, CCA_dim_y, total_compute_cells, memory_per_cc);
+    CCASimulator cca_square_simulator(shape_of_compute_cells,
+                                      CCA_dim_x,
+                                      CCA_dim_y,
+                                      hx,
+                                      hy,
+                                      hdepth,
+                                      total_compute_cells,
+                                      memory_per_cc);
 
     std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
                      cca_square_simulator.shape_of_compute_cells)
               << "\n\tDim: " << cca_square_simulator.dim_x << " x " << cca_square_simulator.dim_y
+              << "\n\tHtree End Node Coverage Block: " << hx << " x " << hy
+              << "\n\tHtree Depth: " << hdepth
               << "\n\tTotal Compute Cells: " << cca_square_simulator.total_compute_cells
               << "\n\tMemory Per Compute Cell: "
               << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"

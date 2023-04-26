@@ -30,16 +30,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef OPERON_HPP
-#define OPERON_HPP
-
+#include "Operon.hpp"
 #include "Action.hpp"
 
+// #include <utility>
 #include <optional>
-#include <utility>
 #include <vector>
 
-// cc_id, Action
-typedef std::pair<u_int32_t, Action> Operon;
+std::ostream&
+operator<<(std::ostream& os, const Operon& operon_)
+{
+    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
 
-#endif // OPERON_HPP
+    os << "\n";
+    return os;
+}
+
+std::ostream&
+operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
+{
+
+    for (auto& op_ : operons_) {
+        if (op_ == std::nullopt) {
+            os << "[nullopt] ";
+        } else {
+            os << op_.value();
+        }
+    }
+    os << "\n";
+    return os;
+}

@@ -45,6 +45,7 @@ add_library(CCASim
             ${SourceDirectory}/ComputeCell.cpp
             #${SourceDirectory}/HtreeCell.cpp
             ${SourceDirectory}/Enums.cpp
+            ${SourceDirectory}/Operon.cpp
             ${SourceDirectory}/CCASimulator.cpp
             #Task.cpp
             )
