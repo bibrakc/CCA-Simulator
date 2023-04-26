@@ -46,6 +46,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class HtreeCell : public Cell
 {
   public:
+    // Prepare the cycle. This involves moving operon data into either the action queue or send
+    // buffers of the network links
+    void prepare_a_cycle();
+
+    // Execute a single cycle for this cell
+    void run_a_computation_cycle();
+
+    // TODO: write comments
+    void prepare_a_communication_cycle();
+
+    // TODO: write comments
+    void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+
+    // Checks if the cell is active or not
+    bool is_compute_cell_active();
+
+    // Routing
+    // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
+    // this operon to. The returned value is the index [0...number of neighbors) coresponding
+    // clockwise the channel id of the physical shape.
+    u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
+
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
     u_int32_t connecting_htree_node_id;

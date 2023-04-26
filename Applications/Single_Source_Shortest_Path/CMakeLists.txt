@@ -43,7 +43,7 @@ add_library(CCASim
             ${SourceDirectory}/memory_management.cpp
             ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/ComputeCell.cpp
-            #${SourceDirectory}/HtreeCell.cpp
+            ${SourceDirectory}/HtreeCell.cpp
             ${SourceDirectory}/Enums.cpp
             ${SourceDirectory}/Operon.cpp
             ${SourceDirectory}/CCASimulator.cpp

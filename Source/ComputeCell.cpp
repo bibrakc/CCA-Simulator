@@ -174,6 +174,7 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
             // std::cout <<"right\n";
             return 2; // Clockwise 2 = right
         }
+        // TODO: use Cell:: instead
         std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
                   << "Bug: routing not sucessful!\n";
     }

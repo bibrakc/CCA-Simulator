@@ -219,7 +219,6 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id,
 {
 
     if (shape_ == computeCellShape::square) {
-
         return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
     }
     // Shape not supported
