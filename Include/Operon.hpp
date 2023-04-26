@@ -35,9 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 
-#include <optional>
 #include <utility>
-#include <vector>
 
 // cc_id, Action
 typedef std::pair<u_int32_t, Action> Operon;
