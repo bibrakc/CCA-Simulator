@@ -46,30 +46,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class HtreeCell : public Cell
 {
   public:
+    // This is the id of the Htree node in the second layer network. Think of this as connecting in
+    // the 3rd dimension under the chip using TSA (Through Silicon Via)
+    u_int32_t connecting_htree_node_id;
+
+    // Send channel/link toward the second layer Htree. The width of this channel is based on the
+    // shape of the Cells. For an square it is 4, meaning 4 Operons can be sent in a single cycle.
+    std::vector<std::optional<Operon>> send_channel_to_htree_node;
+
+    // Same as the base class `Cell` this is needed to satisty simulation. Read the comment for
+    // `recv_channel_per_neighbor` in the base class `Cell`
+    std::vector<std::optional<Operon>> recv_channel_to_htree_node;
+
     // Constructor
     HtreeCell(u_int32_t id_in,
               CellType type_in,
+              u_int32_t connecting_htree_node_id_in,
               computeCellShape shape_in,
               u_int32_t dim_x_in,
               u_int32_t dim_y_in)
     {
         this->id = id_in;
         this->type = type_in;
+        this->connecting_htree_node_id = connecting_htree_node_id_in;
         this->shape = shape_in;
-        this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
+        this->number_of_neighbors = Cell::get_number_of_neighbors(this->shape);
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
 
         this->cooridates =
-            ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
+            Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
 
-        // Assign neighbor CCs to this CC. This is based on the Shape and Dim
-        // this->add_neighbor_compute_cells();
+        // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
+        this->add_neighbor_compute_cells();
 
         for (int i = 0; i < this->number_of_neighbors; i++) {
+            // Channels/Links per neighbor in the 2D mesh
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
+
+            // Channels/Links to the secondary network Htree node
+            this->send_channel_to_htree_node.push_back(std::nullopt);
+            this->recv_channel_to_htree_node.push_back(std::nullopt);
         }
     }
 };
