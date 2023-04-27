@@ -98,12 +98,9 @@ CCASimulator::create_square_cell_htree_chip()
 
             u_int32_t cc_id = i * this->dim_y + j;
 
-            // if (next_row_sink_cells == i)
-
+            // Insert the sink cell
             if ((next_row_sink_cells == i) && (next_col_sink_cells == j)) {
-                if constexpr (debug_code) {
-                    std::cout << "sink cell: " << cc_id << ", (" << i << ", " << j << ")\n";
-                }
+
                 // Create the sink cells where the chip connects to the underlying second layer
                 // network (for example the Htree)
                 this->CCA_chip.push_back(std::make_shared<SinkCell>(cc_id,
@@ -140,13 +137,49 @@ CCASimulator::create_square_cell_htree_chip()
     }
 }
 
+// Create the chip of type square cells with only mesh connetion. There is not htree or any second
+// layer network involved. It includes creating the cells and initializing them with IDs and their
+// types and more
+void
+CCASimulator::create_square_cell_mesh_only_chip()
+{
+
+    // Cannot simply openmp parallelize this. It is very atomic.
+    for (u_int32_t i = 0; i < this->dim_x; i++) {
+        for (u_int32_t j = 0; j < this->dim_y; j++) {
+
+            u_int32_t cc_id = i * this->dim_y + j;
+
+            // Create individual compute cells of computeCellShape shape_of_compute_cells
+            this->CCA_chip.push_back(std::make_shared<ComputeCell>(cc_id,
+                                                                   CellType::compute_cell,
+                                                                   shape_of_compute_cells,
+                                                                   this->dim_x,
+                                                                   this->dim_y,
+                                                                   this->hx,
+                                                                   this->hy,
+                                                                   this->hdepth,
+                                                                   this->memory_per_cc));
+
+            if constexpr (debug_code) {
+                std::cout << *this->CCA_chip.back().get();
+            }
+        }
+    }
+}
+
 // The main chip creation function
 void
 CCASimulator::create_the_chip()
 {
 
     if (this->shape_of_compute_cells == computeCellShape::square) {
-        this->create_square_cell_htree_chip();
+        if (this->hdepth == 0) {
+            this->create_square_cell_mesh_only_chip();
+        } else {
+
+            this->create_square_cell_htree_chip();
+        }
     } else {
         std::cerr << "Error! Cannot create chip of non-supported type cell shape\n";
         exit(0);

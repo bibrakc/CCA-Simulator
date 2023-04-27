@@ -120,13 +120,8 @@ class CCASimulator
 
     void add_neighbor_compute_cells(std::shared_ptr<ComputeCell> cc);
 
-    // Create the chip. It includes creating the cells and initializing them with IDs and their
-    // types and more
-    void create_square_cell_htree_chip();
-    
     // The main chip creation function
     void create_the_chip();
-
 
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,
@@ -136,6 +131,16 @@ class CCASimulator
 
     // Get the pointer to the object at `Address addr_in`
     void* get_object(Address addr_in) const;
+
+  private:
+    // Create the chip. It includes creating the cells and initializing them with IDs and their
+    // types and more
+    void create_square_cell_htree_chip();
+
+    // Create the chip of type square cells with only mesh connetion. There is not htree or any
+    // second layer network involved. It includes creating the cells and initializing them with IDs
+    // and their types and more
+    void create_square_cell_mesh_only_chip();
 };
 
 // TODO: Find a better file/location for MemoryAlloctor classes

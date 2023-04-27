@@ -100,6 +100,24 @@ ComputeCell::create_object_in_memory(void* obj, size_t size_of_obj)
     return Address(this->id, obj_memory_addr_offset);
 }
 
+// Each compute cell has a sink cell configured such that when it has to send an operon to far flung
+// compute cell it routes to the Htree network and has to sink the operon into the sink cell that is
+// nearby
+std::optional<Coordinates>
+ComputeCell::get_cc_htree_sink_cell()
+{
+    if (this->hdepth == 0) {
+        return std::nullopt;
+    }
+
+    u_int32_t nearby_row = (this->hx / 2) + (this->cooridates.second / this->hx) * this->hx;
+    u_int32_t nearby_col = (this->hy / 2) + (this->cooridates.first / this->hy) * this->hy;
+
+    // We store cooridinates from top-left therefore in a row it is (0,0), (1,0), (2,0), (3,0) ....
+    // That is why the row is the second in the pair/tuple and the column is the first entry
+    return Coordinates(nearby_col, nearby_row);
+}
+
 void
 ComputeCell::insert_action(const Action& action)
 {
@@ -122,9 +140,6 @@ ComputeCell::execute_action()
         // if predicate
         int predicate_resolution =
             event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
-
-        // std::cout << "execute_action() : predicate_resolution = " << predicate_resolution <<
-        // "\n";
 
         if (predicate_resolution == 1) {
             // if work

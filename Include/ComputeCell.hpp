@@ -98,8 +98,12 @@ class ComputeCell : public Cell
     // clockwise the channel id of the physical shape.
     u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
 
+    // Sink cell nearby this compute cell. Used to route operons that are sent to far flung compute
+    // cells in the CCA chip. If the network is mesh only then there is no sink cell hence the use
+    // of `std::optional`
+    std::optional<Coordinates> sink_cell;
+
     // Memory of the Compute Cell in bytes.
-    // TODO: This can be `static` since it is a set once and read-only and is the same for all CCs.
     u_int32_t memory_size_in_bytes;
 
     // The memory
@@ -146,6 +150,8 @@ class ComputeCell : public Cell
         this->cooridates =
             ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
 
+        this->sink_cell = this->get_cc_htree_sink_cell();
+
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
@@ -160,6 +166,12 @@ class ComputeCell : public Cell
             this->recv_channel_per_neighbor.push_back(std::nullopt);
         }
     }
+
+  private:
+    // Each compute cell has a sink cell configured such that when it has to send an operon to far
+    // flung compute cell it routes to the Htree network and has to sink the operon into the sink
+    // cell that is nearby
+    std::optional<Coordinates> get_cc_htree_sink_cell();
 };
 
 #endif // COMPUTE_CELL_HPP

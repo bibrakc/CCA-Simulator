@@ -44,6 +44,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
+typedef std::pair<int32_t, int32_t> Coordinates;
+
+// Overload printing for Coordinates
+std::ostream&
+operator<<(std::ostream& os, const Coordinates& coord);
+
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
 // Type of the Cell: ComputeCell or HtreeNode

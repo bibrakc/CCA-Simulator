@@ -32,6 +32,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
+// Overload printing for Coordinates
+std::ostream&
+operator<<(std::ostream& os, const Coordinates& coord)
+{
+    os << "(" << coord.first << ", " << coord.second << ")";
+    return os;
+}
+
+
 // Utility function to convert type of pair
 template<typename To, typename From>
 inline std::pair<To, To>
@@ -250,7 +259,7 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id,
 {
 
     if (shape_ == computeCellShape::square) {
-        return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
+        return Coordinates(cc_id % dim_y, cc_id / dim_y);
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(shape_) << " not supported!\n";
