@@ -120,7 +120,14 @@ class CCASimulator
 
     void add_neighbor_compute_cells(std::shared_ptr<ComputeCell> cc);
 
+    // Create the chip. It includes creating the cells and initializing them with IDs and their
+    // types and more
+    void create_square_cell_htree_chip();
+    
+    // The main chip creation function
     void create_the_chip();
+
+
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,
                                                             size_t size_of_obj);

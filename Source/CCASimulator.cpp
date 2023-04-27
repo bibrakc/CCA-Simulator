@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
-#include "SinkCell.hpp"
 #include "Operon.hpp"
+#include "SinkCell.hpp"
 #include "Task.hpp"
 
 #include "memory_management.hpp"
@@ -83,27 +83,39 @@ CCASimulator::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinat
         cc_cooridinate, this->shape_of_compute_cells, this->dim_x, this->dim_y);
 }
 
+// Create the chip of type square cells with Htree. It includes creating the cells and initializing
+// them with IDs and their types and more
 void
-CCASimulator::create_the_chip()
+CCASimulator::create_square_cell_htree_chip()
 {
-
+    // Where the first sink cells exist for the Htree
+    // If second layer network type == Htree
+    u_int32_t next_row_sink_cells = this->hx / 2;
+    u_int32_t next_col_sink_cells = this->hy / 2;
     // Cannot simply openmp parallelize this. It is very atomic.
     for (u_int32_t i = 0; i < this->dim_x; i++) {
         for (u_int32_t j = 0; j < this->dim_y; j++) {
 
             u_int32_t cc_id = i * this->dim_y + j;
 
-            if ((cc_id == 3) || (cc_id == 5) || (cc_id == 11) || (cc_id == 20) || (cc_id == 1)) {
-                this->CCA_chip.push_back(
-                    std::make_shared<SinkCell>(cc_id,
-                                                CellType::sink_cell,
-                                                0, // id of the connecting node
-                                                shape_of_compute_cells,
-                                                this->dim_x,
-                                                this->dim_y,
-                                                this->hx,
-                                                this->hy,
-                                                this->hdepth));
+            // if (next_row_sink_cells == i)
+
+            if ((next_row_sink_cells == i) && (next_col_sink_cells == j)) {
+                if constexpr (debug_code) {
+                    std::cout << "sink cell: " << cc_id << ", (" << i << ", " << j << ")\n";
+                }
+                // Create the sink cells where the chip connects to the underlying second layer
+                // network (for example the Htree)
+                this->CCA_chip.push_back(std::make_shared<SinkCell>(cc_id,
+                                                                    CellType::sink_cell,
+                                                                    0, // id of the connecting node
+                                                                    shape_of_compute_cells,
+                                                                    this->dim_x,
+                                                                    this->dim_y,
+                                                                    this->hx,
+                                                                    this->hy,
+                                                                    this->hdepth));
+                next_col_sink_cells += this->hy;
 
             } else {
                 // Create individual compute cells of computeCellShape shape_of_compute_cells
@@ -121,6 +133,23 @@ CCASimulator::create_the_chip()
                 std::cout << *this->CCA_chip.back().get();
             }
         }
+        if (next_row_sink_cells == i) {
+            next_row_sink_cells += this->hx;
+            next_col_sink_cells = this->hy / 2;
+        }
+    }
+}
+
+// The main chip creation function
+void
+CCASimulator::create_the_chip()
+{
+
+    if (this->shape_of_compute_cells == computeCellShape::square) {
+        this->create_square_cell_htree_chip();
+    } else {
+        std::cerr << "Error! Cannot create chip of non-supported type cell shape\n";
+        exit(0);
     }
 }
 
