@@ -2,7 +2,7 @@
 
 using namespace std;
 
-// Binary Tree Node
+// H-Tree Node
 struct Node
 {
     int id;
