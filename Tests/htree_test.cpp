@@ -13,7 +13,10 @@ struct Node
     Node* in_second; // down or right
     Node* out;       // outside of this htree
 
-    Node(int value, int x, int y)
+    int in_bandwidth;
+    int out_bandwidth;
+
+    Node(int value, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
         id = value;
         cooridinate_x = x;
@@ -22,8 +25,25 @@ struct Node
         in_first = nullptr;
         in_second = nullptr;
         out = nullptr;
+
+        this->in_bandwidth = in_bandhwidth_in;
+        this->out_bandwidth = out_bandhwidth_in;
     }
 };
+
+// Overload printing for Node
+std::ostream&
+operator<<(std::ostream& os, const Node* node)
+{
+
+    if (node->in_first == nullptr && node->in_second == nullptr) {
+        os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
+           << ")] ";
+    } else {
+        os << node->id << " ";
+    }
+    return os;
+}
 
 Node*
 create_vertical(int initial_row,
@@ -63,7 +83,7 @@ create_horizontal(int initial_row,
                                  2 * hy_factor,
                                  up_alternate_minus_one,
                                  (left_alternate_minus_one + 1) % 2,
-                                 down_alternate_plus_one, 
+                                 down_alternate_plus_one,
                                  right_alternate_plus_one,
                                  current_row,
                                  current_col - (initial_col / hy_factor) - left_alternate_minus_one,
@@ -80,7 +100,7 @@ create_horizontal(int initial_row,
                         down_alternate_plus_one,
                         (right_alternate_plus_one + 1) % 2,
                         current_row,
-                        current_col + (initial_col / hy_factor) + 1, //right_alternate_plus_one,
+                        current_col + (initial_col / hy_factor) + 1, // right_alternate_plus_one,
                         depth - 1,
                         value);
 
@@ -131,18 +151,19 @@ create_vertical(int initial_row,
                                  depth,
                                  value);
 
-    Node* down = create_horizontal(initial_row,
-                                   initial_col,
-                                   2 * hx_factor,
-                                   hy_factor,
-                                   0, // fix
-                                   0, // fix
-                                   0, // fix
-                                   0, // fix
-                                   current_row + (initial_row / hx_factor) + 1,
-                                   current_col,
-                                   depth,
-                                   value);
+    Node* down =
+        create_horizontal(initial_row,
+                          initial_col,
+                          2 * hx_factor,
+                          hy_factor,
+                          up_alternate_minus_one,
+                          left_alternate_minus_one,
+                          (down_alternate_plus_one + 1) % 2,
+                          right_alternate_plus_one,
+                          current_row + (initial_row / hx_factor) + down_alternate_plus_one,
+                          current_col,
+                          depth,
+                          value);
 
     Node* center = new Node(value, current_col, current_row);
     value++;
@@ -188,11 +209,54 @@ create_htree(int hx, int hy, int depth)
     int chip_center_y = (dim_y / 2) - 1;
 
     cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
-
     cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y << ")\n";
 
-    Node* center = create_horizontal(
-        chip_center_x, chip_center_y, 2, 2, 0, 1, 0, 1, chip_center_x, chip_center_y, depth, value);
+    int left_sub_htree_initial_row = chip_center_x;
+    int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2) - 1;
+
+    Node* left = create_vertical(chip_center_x,
+                                 chip_center_y,
+                                 2, // divisor factor for the next division in rows
+                                 4, // divisor factor for the next division in cols
+                                 0, // up_alternate_minus_one,
+                                 0, // (left_alternate_minus_one + 1) % 2,
+                                 0, // down_alternate_plus_one,
+                                 0, // right_alternate_plus_one,
+                                 left_sub_htree_initial_row,
+                                 left_sub_htree_initial_col,
+                                 depth - 1,
+                                 value);
+
+    int right_sub_htree_initial_row = chip_center_x;
+    int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2) + 1;
+
+    Node* right = create_vertical(chip_center_x,
+                                  chip_center_y,
+                                  2, // divisor factor for the next division in rows
+                                  4, // divisor factor for the next division in cols
+                                  0, // up_alternate_minus_one,
+                                  0, // left_alternate_minus_one,
+                                  0, // down_alternate_plus_one,
+                                  0, // (right_alternate_plus_one + 1) % 2,
+                                  right_sub_htree_initial_row,
+                                  right_sub_htree_initial_col,
+                                  depth - 1,
+                                  value);
+
+    // Join left and right
+    Node* center = new Node(value, chip_center_y, chip_center_x);
+    value++;
+
+    center->in_first = left;
+    if (left) {
+        left->out = center;
+    }
+
+    center->in_second = right;
+    if (right) {
+        right->out = center;
+    }
+
     center->out = nullptr;
 
     return center;
@@ -200,19 +264,14 @@ create_htree(int hx, int hy, int depth)
 
 // In-order traversal of the binary tree
 void
-inorderTraversal(Node* root)
+Traversal(Node* root)
 {
     if (root != nullptr) {
-        inorderTraversal(root->in_first);
+        Traversal(root->in_first);
 
-        inorderTraversal(root->in_second);
+        Traversal(root->in_second);
 
-        if (root->in_first == nullptr && root->in_second == nullptr) {
-            cout << "[" << root->id << "-> (" << root->cooridinate_x << ", " << root->cooridinate_y
-                 << ")] ";
-        } else {
-            cout << root->id << " ";
-        }
+        cout << root;
     }
 }
 
@@ -236,9 +295,9 @@ main(int argc, char* argv[])
 
     cout << "root value = " << root->id << "\n";
 
-    // Print the tree using in-order traversal
-    cout << "In-order traversal: ";
-    inorderTraversal(root);
+    // Print the tree using traversal
+    cout << "Traversal: ";
+    Traversal(root);
     cout << endl;
 
     return 0;
