@@ -38,9 +38,10 @@ operator<<(std::ostream& os, const Node* node)
 
     if (node->in_first == nullptr && node->in_second == nullptr) {
         os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
-           << ")] ";
+           << "){out: " << node->out_bandwidth << ", in: " << node->in_bandwidth << "}], ";
     } else {
-        os << node->id << " ";
+        os << "(" << node->id << ", out: " << node->out_bandwidth << ", in: " << node->in_bandwidth
+           << "), ";
     }
     return os;
 }
@@ -104,8 +105,24 @@ create_horizontal(int initial_row,
                         depth - 1,
                         value);
 
+    u_int32_t out_bandwidth_value = 0;
+    u_int32_t in_bandwidth_value = 0;
+
+    // This means that it is an end node
+    if (depth == 0) {
+        out_bandwidth_value = 4;
+        in_bandwidth_value = 0;
+    } else if (depth == 1) {
+        out_bandwidth_value = 8;
+        in_bandwidth_value = 4;
+    } else {
+        out_bandwidth_value = right->out_bandwidth * 2;
+        in_bandwidth_value = right->out_bandwidth;
+    }
+
     // Join left and right
-    Node* center = new Node(value, current_col, current_row);
+    Node* center =
+        new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = left;
@@ -165,7 +182,21 @@ create_vertical(int initial_row,
                           depth,
                           value);
 
-    Node* center = new Node(value, current_col, current_row);
+    u_int32_t out_bandwidth_value = 0;
+    u_int32_t in_bandwidth_value = 0;
+
+    /*     // This means that its neighbors are end nodes
+        if (depth == 1) {
+            // if (up->in_first == nullptr && up->in_second == nullptr) {
+            out_bandwidth_value = 8;
+            in_bandwidth_value = 4;
+        } else { */
+    out_bandwidth_value = up->out_bandwidth * 2;
+    in_bandwidth_value = up->out_bandwidth;
+    // }
+
+    Node* center =
+        new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = up;
@@ -243,8 +274,16 @@ create_htree(int hx, int hy, int depth)
                                   depth - 1,
                                   value);
 
+    u_int32_t out_bandwidth_value = 0;
+    u_int32_t in_bandwidth_value = 0;
+    if (right) {
+        out_bandwidth_value = right->out_bandwidth * 2;
+        in_bandwidth_value = right->out_bandwidth;
+    }
+
     // Join left and right
-    Node* center = new Node(value, chip_center_y, chip_center_x);
+    Node* center =
+        new Node(value, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = left;
