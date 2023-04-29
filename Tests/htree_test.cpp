@@ -361,7 +361,7 @@ main(int argc, char* argv[])
     std::vector<int> all_possible_rows;
     std::vector<int> all_possible_cols;
 
-    int total_rows_cols_with_htree_nodes = static_cast<int>(pow(2, 3));
+    int total_rows_cols_with_htree_nodes = static_cast<int>(pow(2, depth));
 
     int first_row = std::ceil(hx / 2.0);
     int first_col = std::ceil(hy / 2.0);
