@@ -35,14 +35,21 @@ struct Node
 std::ostream&
 operator<<(std::ostream& os, const Node* node)
 {
-
-    if (node->in_first == nullptr && node->in_second == nullptr) {
+    /*
+     if (node->in_first == nullptr && node->in_second == nullptr) {
         os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
            << "){out: " << node->out_bandwidth << ", in: " << node->in_bandwidth << "}], ";
     } else {
         os << "(" << node->id << ", out: " << node->out_bandwidth << ", in: " << node->in_bandwidth
            << "), ";
+    } */
+    if (node->in_first == nullptr && node->in_second == nullptr) {
+        os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
+           << ")], ";
+    } else {
+        os << node->id << ", ";
     }
+
     return os;
 }
 
@@ -226,7 +233,11 @@ get_htree_dims(int dim, int depth)
 }
 
 Node*
-create_htree(int hx, int hy, int depth)
+create_htree(int hx,
+             int hy,
+             int depth,
+             const std::vector<int>& all_possible_rows,
+             const std::vector<int>& all_possible_cols)
 {
     if (depth == 0) {
         return nullptr;
@@ -315,6 +326,30 @@ Traversal(Node* root)
 }
 
 int
+findClosestValue(const std::vector<int>& arr, int x)
+{
+    int left = 0;
+    int right = arr.size() - 1;
+    int closest = arr[0];
+
+    while (left <= right) {
+        int mid = (left + right) / 2;
+
+        if (abs(arr[mid] - x) < abs(closest - x)) {
+            closest = arr[mid];
+        }
+
+        if (arr[mid] > x) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+
+    return closest;
+}
+
+int
 main(int argc, char* argv[])
 {
     if (argc < 4) {
@@ -327,10 +362,45 @@ main(int argc, char* argv[])
     int depth = std::atoi(argv[3]);
 
     std::cout << "hx: " << hx << " hy: " << hy << " depth: " << depth << std::endl;
+
+    std::vector<int> all_possible_rows;
+    std::vector<int> all_possible_cols;
+
+    int total_rows_cols_with_htree_nodes = static_cast<int>(pow(2, 3));
+
+    int first_row = std::ceil(hx / 2.0);
+    int first_col = std::ceil(hy / 2.0);
+
+    int range_rows = total_rows_cols_with_htree_nodes * hx;
+    int range_cols = total_rows_cols_with_htree_nodes * hy;
+    std::cout << "range_rows: " << range_rows << ", first_row: " << first_row
+              << "range_cols: " << range_cols << ", first_col: " << first_col << "\n";
+
+    for (int i = first_row; i < range_rows; i += hx) {
+        all_possible_rows.push_back(i);
+    }
+
+    for (int i = first_col; i < range_cols; i += hy) {
+        all_possible_cols.push_back(i);
+    }
+
+    // Print the vector elements
+    std::cout << "All Possible Rows" << std::endl;
+    for (int i = 0; i < all_possible_rows.size(); ++i) {
+        std::cout << all_possible_rows[i] << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "All Possible Cols" << std::endl;
+    for (int i = 0; i < all_possible_cols.size(); ++i) {
+        std::cout << all_possible_cols[i] << " ";
+    }
+    std::cout << std::endl;
+
     Node* root = nullptr;
 
     // Insert nodes into the binary tree
-    root = create_htree(hx, hy, depth);
+    root = create_htree(hx, hy, depth, all_possible_rows, all_possible_cols);
 
     cout << "root value = " << root->id << "\n";
 
