@@ -1,4 +1,6 @@
+#include <cmath>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -53,29 +55,50 @@ operator<<(std::ostream& os, const Node* node)
     return os;
 }
 
+int
+findClosestValue(const std::vector<int>& arr, int x)
+{
+    int left = 0;
+    int right = arr.size() - 1;
+    int closest = arr[0];
+
+    while (left <= right) {
+        int mid = (left + right) / 2;
+
+        if (abs(arr[mid] - x) < abs(closest - x)) {
+            closest = arr[mid];
+        }
+
+        if (arr[mid] > x) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    std::cout << "closest for " << x << " is " << closest << "\n";
+
+    return closest;
+}
+
 Node*
-create_vertical(int initial_row,
+create_vertical(const std::vector<int>& all_possible_rows,
+                const std::vector<int>& all_possible_cols,
+                int initial_row,
                 int initial_col,
                 int hx_factor,
                 int hy_factor,
-                int up_alternate_minus_one,
-                int left_alternate_minus_one,
-                int down_alternate_plus_one,
-                int right_alternate_plus_one,
                 int current_row,
                 int current_col,
                 int depth,
                 int& value);
 
 Node*
-create_horizontal(int initial_row,
+create_horizontal(const std::vector<int>& all_possible_rows,
+                  const std::vector<int>& all_possible_cols,
+                  int initial_row,
                   int initial_col,
                   int hx_factor,
                   int hy_factor,
-                  int up_alternate_minus_one,
-                  int left_alternate_minus_one,
-                  int down_alternate_plus_one,
-                  int right_alternate_plus_one,
                   int current_row,
                   int current_col,
                   int depth,
@@ -85,40 +108,48 @@ create_horizontal(int initial_row,
     if (depth < 0) {
         return nullptr;
     }
-    Node* left = create_vertical(initial_row,
+    Node* left = create_vertical(all_possible_rows,
+                                 all_possible_cols,
+                                 initial_row,
                                  initial_col,
                                  hx_factor,
                                  2 * hy_factor,
-                                 up_alternate_minus_one,
-                                 (left_alternate_minus_one + 1) % 2,
-                                 down_alternate_plus_one,
-                                 right_alternate_plus_one,
                                  current_row,
-                                 current_col - (initial_col / hy_factor) - left_alternate_minus_one,
+                                 current_col - (initial_col / hy_factor),
                                  depth - 1,
                                  value);
 
-    Node* right =
-        create_vertical(initial_row,
-                        initial_col,
-                        hx_factor,
-                        2 * hy_factor,
-                        up_alternate_minus_one,
-                        left_alternate_minus_one,
-                        down_alternate_plus_one,
-                        (right_alternate_plus_one + 1) % 2,
-                        current_row,
-                        current_col + (initial_col / hy_factor) + 1, // right_alternate_plus_one,
-                        depth - 1,
-                        value);
+    Node* right = create_vertical(all_possible_rows,
+                                  all_possible_cols,
+                                  initial_row,
+                                  initial_col,
+                                  hx_factor,
+                                  2 * hy_factor,
+                                  current_row,
+                                  current_col + (initial_col / hy_factor),
+                                  depth - 1,
+                                  value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
+    Node* center = nullptr;
 
     // This means that it is an end node
     if (depth == 0) {
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
+
+        center = new Node(
+            value,
+            findClosestValue(all_possible_cols, current_col) - 1, // -1 for C zero-based index
+            findClosestValue(all_possible_rows, current_row) - 1, // -1 for C zero-based index
+            in_bandwidth_value,
+            out_bandwidth_value);
+        center->in_first = nullptr;
+        center->in_second = nullptr;
+        value++;
+        return center;
+
     } else if (depth == 1) {
         out_bandwidth_value = 8;
         in_bandwidth_value = 4;
@@ -128,8 +159,7 @@ create_horizontal(int initial_row,
     }
 
     // Join left and right
-    Node* center =
-        new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
+    center = new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = left;
@@ -145,14 +175,12 @@ create_horizontal(int initial_row,
 }
 
 Node*
-create_vertical(int initial_row,
+create_vertical(const std::vector<int>& all_possible_rows,
+                const std::vector<int>& all_possible_cols,
+                int initial_row,
                 int initial_col,
                 int hx_factor,
                 int hy_factor,
-                int up_alternate_minus_one,
-                int left_alternate_minus_one,
-                int down_alternate_plus_one,
-                int right_alternate_plus_one,
                 int current_row,
                 int current_col,
                 int depth,
@@ -162,32 +190,27 @@ create_vertical(int initial_row,
     if (depth < 0) {
         return nullptr;
     }
-    Node* up = create_horizontal(initial_row,
+    Node* up = create_horizontal(all_possible_rows,
+                                 all_possible_cols,
+                                 initial_row,
                                  initial_col,
                                  2 * hx_factor,
                                  hy_factor,
-                                 (up_alternate_minus_one + 1) % 2,
-                                 left_alternate_minus_one,
-                                 down_alternate_plus_one,
-                                 right_alternate_plus_one,
-                                 current_row - (initial_row / hx_factor) - up_alternate_minus_one,
+                                 current_row - (initial_row / hx_factor),
                                  current_col,
                                  depth,
                                  value);
 
-    Node* down =
-        create_horizontal(initial_row,
-                          initial_col,
-                          2 * hx_factor,
-                          hy_factor,
-                          up_alternate_minus_one,
-                          left_alternate_minus_one,
-                          (down_alternate_plus_one + 1) % 2,
-                          right_alternate_plus_one,
-                          current_row + (initial_row / hx_factor) + down_alternate_plus_one,
-                          current_col,
-                          depth,
-                          value);
+    Node* down = create_horizontal(all_possible_rows,
+                                   all_possible_cols,
+                                   initial_row,
+                                   initial_col,
+                                   2 * hx_factor,
+                                   hy_factor,
+                                   current_row + (initial_row / hx_factor),
+                                   current_col,
+                                   depth,
+                                   value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -247,39 +270,35 @@ create_htree(int hx,
     int dim_x = get_htree_dims(hx, depth);
     int dim_y = get_htree_dims(hy, depth);
 
-    int chip_center_x = (dim_x / 2) - 1;
-    int chip_center_y = (dim_y / 2) - 1;
+    int chip_center_x = (dim_x / 2);
+    int chip_center_y = (dim_y / 2);
 
     cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
     cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y << ")\n";
 
     int left_sub_htree_initial_row = chip_center_x;
-    int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2) - 1;
+    int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
 
-    Node* left = create_vertical(chip_center_x,
+    Node* left = create_vertical(all_possible_rows,
+                                 all_possible_cols,
+                                 chip_center_x,
                                  chip_center_y,
                                  2, // divisor factor for the next division in rows
                                  4, // divisor factor for the next division in cols
-                                 0, // up_alternate_minus_one,
-                                 0, // (left_alternate_minus_one + 1) % 2,
-                                 0, // down_alternate_plus_one,
-                                 0, // right_alternate_plus_one,
                                  left_sub_htree_initial_row,
                                  left_sub_htree_initial_col,
                                  depth - 1,
                                  value);
 
     int right_sub_htree_initial_row = chip_center_x;
-    int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2) + 1;
+    int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
 
-    Node* right = create_vertical(chip_center_x,
+    Node* right = create_vertical(all_possible_rows,
+                                  all_possible_cols,
+                                  chip_center_x,
                                   chip_center_y,
                                   2, // divisor factor for the next division in rows
                                   4, // divisor factor for the next division in cols
-                                  0, // up_alternate_minus_one,
-                                  0, // left_alternate_minus_one,
-                                  0, // down_alternate_plus_one,
-                                  0, // (right_alternate_plus_one + 1) % 2,
                                   right_sub_htree_initial_row,
                                   right_sub_htree_initial_col,
                                   depth - 1,
@@ -326,30 +345,6 @@ Traversal(Node* root)
 }
 
 int
-findClosestValue(const std::vector<int>& arr, int x)
-{
-    int left = 0;
-    int right = arr.size() - 1;
-    int closest = arr[0];
-
-    while (left <= right) {
-        int mid = (left + right) / 2;
-
-        if (abs(arr[mid] - x) < abs(closest - x)) {
-            closest = arr[mid];
-        }
-
-        if (arr[mid] > x) {
-            right = mid - 1;
-        } else {
-            left = mid + 1;
-        }
-    }
-
-    return closest;
-}
-
-int
 main(int argc, char* argv[])
 {
     if (argc < 4) {
@@ -373,8 +368,6 @@ main(int argc, char* argv[])
 
     int range_rows = total_rows_cols_with_htree_nodes * hx;
     int range_cols = total_rows_cols_with_htree_nodes * hy;
-    std::cout << "range_rows: " << range_rows << ", first_row: " << first_row
-              << "range_cols: " << range_cols << ", first_col: " << first_col << "\n";
 
     for (int i = first_row; i < range_rows; i += hx) {
         all_possible_rows.push_back(i);
