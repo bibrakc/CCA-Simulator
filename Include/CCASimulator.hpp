@@ -158,8 +158,8 @@ class CyclicMemoryAllocator : public MemoryAlloctor
   public:
     u_int32_t get_next_available_cc(CCASimulator& cca_simulator)
     {
-        // Skip the Cell is it is not of type ComputeCell
-        if (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell) {
+        // Skip the Cell if it is not of type ComputeCell
+        while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell) {
             this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
         }
         u_int32_t cc_available = this->next_cc_id;
