@@ -1,15 +1,28 @@
 #include <cmath>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <vector>
+
 using namespace std;
+
+typedef std::pair<int32_t, int32_t> Coordinates;
+
+// Overload printing for Node
+std::ostream&
+operator<<(std::ostream& os, const Coordinates coordinates)
+{
+    os << "(" << coordinates.first << ", " << coordinates.second << ")";
+    return os;
+}
 
 // H-Tree Node
 struct Node
 {
     int id;
-    int cooridinate_x;
-    int cooridinate_y;
+    Coordinates cooridinates;
+    /*     int cooridinate_x;
+        int cooridinate_y; */
 
     std::shared_ptr<Node> in_first;  // up or left
     std::shared_ptr<Node> in_second; // down or right
@@ -21,8 +34,8 @@ struct Node
     Node(int value, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
         id = value;
-        cooridinate_x = x;
-        cooridinate_y = y;
+        cooridinates.first = x;
+        cooridinates.second = y;
 
         in_first = nullptr;
         in_second = nullptr;
@@ -46,8 +59,8 @@ operator<<(std::ostream& os, const Node* node)
            << "), ";
     } */
     if (node->in_first == nullptr && node->in_second == nullptr) {
-        os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
-           << ")], ";
+        os << "[" << node->id << " -> (" << node->cooridinates.first << ", "
+           << node->cooridinates.second << ")], ";
     } else {
         os << node->id << ", ";
     }
@@ -333,16 +346,32 @@ create_htree(int hx,
     return center;
 }
 
-// In-order traversal of the binary tree
+// Print the Htree in this order: top-left, down-left, top-right, down-right
 void
-Traversal(std::shared_ptr<Node>& root)
+print_htree(std::shared_ptr<Node>& root)
 {
     if (root != nullptr) {
-        Traversal(root->in_first);
+        print_htree(root->in_first);
 
-        Traversal(root->in_second);
+        print_htree(root->in_second);
 
         cout << root;
+    }
+}
+// Print the Htree in this order: top-left, down-left, top-right, down-right
+void
+populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<Node>>& htree_end_nodes,
+                                 std::shared_ptr<Node>& root)
+{
+    if (root != nullptr) {
+        populate_coorodinates_to_ptr_map(htree_end_nodes, root->in_first);
+
+        populate_coorodinates_to_ptr_map(htree_end_nodes, root->in_second);
+
+        // End node in the Htree
+        if (root->in_first == nullptr || root->in_second == nullptr) {
+            htree_end_nodes[root->cooridinates] = root;
+        }
     }
 }
 
@@ -401,8 +430,16 @@ main(int argc, char* argv[])
 
     // Print the tree using traversal
     cout << "Traversal: ";
-    Traversal(root);
+    print_htree(root);
     cout << endl;
+
+    std::map<Coordinates, std::shared_ptr<Node>> htree_end_nodes;
+    populate_coorodinates_to_ptr_map(htree_end_nodes, root);
+
+    // Print the map elements
+    for (const auto& entry : htree_end_nodes) {
+        std::cout << entry.first << ": " << entry.second << std::endl;
+    }
 
     return 0;
 }
