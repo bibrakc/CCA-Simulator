@@ -1,7 +1,7 @@
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <vector>
-
 using namespace std;
 
 // H-Tree Node
@@ -11,9 +11,9 @@ struct Node
     int cooridinate_x;
     int cooridinate_y;
 
-    Node* in_first;  // up or left
-    Node* in_second; // down or right
-    Node* out;       // outside of this htree
+    std::shared_ptr<Node> in_first;  // up or left
+    std::shared_ptr<Node> in_second; // down or right
+    std::shared_ptr<Node> out;       // outside of this htree
 
     int in_bandwidth;
     int out_bandwidth;
@@ -80,7 +80,7 @@ findClosestValue(const std::vector<int>& arr, int x)
     return closest;
 }
 
-Node*
+std::shared_ptr<Node>
 create_vertical(const std::vector<int>& all_possible_rows,
                 const std::vector<int>& all_possible_cols,
                 int initial_row,
@@ -92,7 +92,7 @@ create_vertical(const std::vector<int>& all_possible_rows,
                 int depth,
                 int& value);
 
-Node*
+std::shared_ptr<Node>
 create_horizontal(const std::vector<int>& all_possible_rows,
                   const std::vector<int>& all_possible_cols,
                   int initial_row,
@@ -108,43 +108,44 @@ create_horizontal(const std::vector<int>& all_possible_rows,
     if (depth < 0) {
         return nullptr;
     }
-    Node* left = create_vertical(all_possible_rows,
-                                 all_possible_cols,
-                                 initial_row,
-                                 initial_col,
-                                 hx_factor,
-                                 2 * hy_factor,
-                                 current_row,
-                                 current_col - (initial_col / hy_factor),
-                                 depth - 1,
-                                 value);
+    std::shared_ptr<Node> left = create_vertical(all_possible_rows,
+                                                 all_possible_cols,
+                                                 initial_row,
+                                                 initial_col,
+                                                 hx_factor,
+                                                 2 * hy_factor,
+                                                 current_row,
+                                                 current_col - (initial_col / hy_factor),
+                                                 depth - 1,
+                                                 value);
 
-    Node* right = create_vertical(all_possible_rows,
-                                  all_possible_cols,
-                                  initial_row,
-                                  initial_col,
-                                  hx_factor,
-                                  2 * hy_factor,
-                                  current_row,
-                                  current_col + (initial_col / hy_factor),
-                                  depth - 1,
-                                  value);
+    std::shared_ptr<Node> right = create_vertical(all_possible_rows,
+                                                  all_possible_cols,
+                                                  initial_row,
+                                                  initial_col,
+                                                  hx_factor,
+                                                  2 * hy_factor,
+                                                  current_row,
+                                                  current_col + (initial_col / hy_factor),
+                                                  depth - 1,
+                                                  value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
-    Node* center = nullptr;
+    std::shared_ptr<Node> center = nullptr;
 
     // This means that it is an end node
     if (depth == 0) {
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
 
-        center = new Node(
+        center = std::make_shared<Node>(
             value,
             findClosestValue(all_possible_cols, current_col) - 1, // -1 for C zero-based index
             findClosestValue(all_possible_rows, current_row) - 1, // -1 for C zero-based index
             in_bandwidth_value,
             out_bandwidth_value);
+
         center->in_first = nullptr;
         center->in_second = nullptr;
         value++;
@@ -159,7 +160,8 @@ create_horizontal(const std::vector<int>& all_possible_rows,
     }
 
     // Join left and right
-    center = new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
+    center = std::make_shared<Node>(
+        value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = left;
@@ -174,7 +176,7 @@ create_horizontal(const std::vector<int>& all_possible_rows,
     return center;
 }
 
-Node*
+std::shared_ptr<Node>
 create_vertical(const std::vector<int>& all_possible_rows,
                 const std::vector<int>& all_possible_cols,
                 int initial_row,
@@ -190,27 +192,27 @@ create_vertical(const std::vector<int>& all_possible_rows,
     if (depth < 0) {
         return nullptr;
     }
-    Node* up = create_horizontal(all_possible_rows,
-                                 all_possible_cols,
-                                 initial_row,
-                                 initial_col,
-                                 2 * hx_factor,
-                                 hy_factor,
-                                 current_row - (initial_row / hx_factor),
-                                 current_col,
-                                 depth,
-                                 value);
+    std::shared_ptr<Node> up = create_horizontal(all_possible_rows,
+                                                 all_possible_cols,
+                                                 initial_row,
+                                                 initial_col,
+                                                 2 * hx_factor,
+                                                 hy_factor,
+                                                 current_row - (initial_row / hx_factor),
+                                                 current_col,
+                                                 depth,
+                                                 value);
 
-    Node* down = create_horizontal(all_possible_rows,
-                                   all_possible_cols,
-                                   initial_row,
-                                   initial_col,
-                                   2 * hx_factor,
-                                   hy_factor,
-                                   current_row + (initial_row / hx_factor),
-                                   current_col,
-                                   depth,
-                                   value);
+    std::shared_ptr<Node> down = create_horizontal(all_possible_rows,
+                                                   all_possible_cols,
+                                                   initial_row,
+                                                   initial_col,
+                                                   2 * hx_factor,
+                                                   hy_factor,
+                                                   current_row + (initial_row / hx_factor),
+                                                   current_col,
+                                                   depth,
+                                                   value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -225,8 +227,8 @@ create_vertical(const std::vector<int>& all_possible_rows,
     in_bandwidth_value = up->out_bandwidth;
     // }
 
-    Node* center =
-        new Node(value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
+    std::shared_ptr<Node> center = std::make_shared<Node>(
+        value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = up;
@@ -255,7 +257,7 @@ get_htree_dims(int dim, int depth)
     return 2 * get_htree_dims(dim, depth - 1);
 }
 
-Node*
+std::shared_ptr<Node>
 create_htree(int hx,
              int hy,
              int depth,
@@ -279,30 +281,30 @@ create_htree(int hx,
     int left_sub_htree_initial_row = chip_center_x;
     int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
 
-    Node* left = create_vertical(all_possible_rows,
-                                 all_possible_cols,
-                                 chip_center_x,
-                                 chip_center_y,
-                                 2, // divisor factor for the next division in rows
-                                 4, // divisor factor for the next division in cols
-                                 left_sub_htree_initial_row,
-                                 left_sub_htree_initial_col,
-                                 depth - 1,
-                                 value);
+    std::shared_ptr<Node> left = create_vertical(all_possible_rows,
+                                                 all_possible_cols,
+                                                 chip_center_x,
+                                                 chip_center_y,
+                                                 2, // divisor factor for the next division in rows
+                                                 4, // divisor factor for the next division in cols
+                                                 left_sub_htree_initial_row,
+                                                 left_sub_htree_initial_col,
+                                                 depth - 1,
+                                                 value);
 
     int right_sub_htree_initial_row = chip_center_x;
     int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
 
-    Node* right = create_vertical(all_possible_rows,
-                                  all_possible_cols,
-                                  chip_center_x,
-                                  chip_center_y,
-                                  2, // divisor factor for the next division in rows
-                                  4, // divisor factor for the next division in cols
-                                  right_sub_htree_initial_row,
-                                  right_sub_htree_initial_col,
-                                  depth - 1,
-                                  value);
+    std::shared_ptr<Node> right = create_vertical(all_possible_rows,
+                                                  all_possible_cols,
+                                                  chip_center_x,
+                                                  chip_center_y,
+                                                  2, // divisor factor for the next division in rows
+                                                  4, // divisor factor for the next division in cols
+                                                  right_sub_htree_initial_row,
+                                                  right_sub_htree_initial_col,
+                                                  depth - 1,
+                                                  value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -312,8 +314,8 @@ create_htree(int hx,
     }
 
     // Join left and right
-    Node* center =
-        new Node(value, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
+    std::shared_ptr<Node> center = std::make_shared<Node>(
+        value, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = left;
@@ -333,7 +335,7 @@ create_htree(int hx,
 
 // In-order traversal of the binary tree
 void
-Traversal(Node* root)
+Traversal(std::shared_ptr<Node>& root)
 {
     if (root != nullptr) {
         Traversal(root->in_first);
@@ -390,7 +392,7 @@ main(int argc, char* argv[])
     }
     std::cout << std::endl;
 
-    Node* root = nullptr;
+    std::shared_ptr<Node> root = nullptr;
 
     // Insert nodes into the binary tree
     root = create_htree(hx, hy, depth, all_possible_rows, all_possible_cols);
