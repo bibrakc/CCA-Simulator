@@ -108,15 +108,15 @@ class CCASimulator
            << "\n";
     }
 
-    inline std::pair<u_int32_t, u_int32_t> get_compute_cell_coordinates(
+    inline Coordinates get_compute_cell_coordinates(
         u_int32_t cc_id,
         computeCellShape shape_of_compute_cells,
         u_int32_t dim_x,
         u_int32_t dim_y);
 
-    std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id);
+    Coordinates cc_id_to_cooridinate(u_int32_t cc_id);
 
-    u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate);
+    u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate);
 
     void add_neighbor_compute_cells(std::shared_ptr<ComputeCell> cc);
 

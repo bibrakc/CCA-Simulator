@@ -47,7 +47,7 @@ SinkCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        std::pair<u_int32_t, u_int32_t> dst_cc_coordinates =
+        Coordinates dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_x, this->dim_y);
 
         if constexpr (debug_code) {

@@ -124,7 +124,7 @@ struct ComputeCellStatistics
     // Print all the stats in a single line
     void output_results_in_a_single_line(std::ostream& os,
                                          u_int32_t cc_id,
-                                         std::pair<u_int32_t, u_int32_t> cc_cooridinates);
+                                         Coordinates cc_cooridinates);
 
     // Overloading <<
     friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
@@ -199,8 +199,7 @@ class Cell
     u_int32_t number_of_neighbors;
 
     // IDs and Coordinates of the neighbors
-    std::vector<std::optional<std::pair<u_int32_t, Coordinates>>>
-        neighbor_compute_cells;
+    std::vector<std::optional<std::pair<u_int32_t, Coordinates>>> neighbor_compute_cells;
 
     // Per neighbor send channel/link
     std::vector<std::optional<Operon>> send_channel_per_neighbor;
@@ -227,9 +226,9 @@ class Cell
     static u_int32_t get_number_of_neighbors(computeCellShape);
 
     static Coordinates cc_id_to_cooridinate(u_int32_t cc_id,
-                                                                computeCellShape shape,
-                                                                u_int32_t dim_x,
-                                                                u_int32_t dim_y);
+                                            computeCellShape shape,
+                                            u_int32_t dim_x,
+                                            u_int32_t dim_y);
 
     static u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate,
                                           computeCellShape shape_,
@@ -238,8 +237,7 @@ class Cell
 
     inline bool cc_exists(const SignedCoordinates cc_coordinate);
 
-    void add_neighbor(
-        std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
+    void add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
 
     // Configure this Cell and assign neighbors in the CCA grid
     void add_neighbor_compute_cells();

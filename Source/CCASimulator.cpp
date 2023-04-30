@@ -57,7 +57,7 @@ For a CCA chip of 4x4 with square shaped compute cells
  |         |         |         |
 (0,3)----(1,3)----(2,3)----(3,3)
 */
-inline std::pair<u_int32_t, u_int32_t>
+inline Coordinates
 CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
                                            computeCellShape shape_of_compute_cells,
                                            u_int32_t dim_x,
@@ -65,10 +65,10 @@ CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
 {
     /* std::cout << "cc_id: " << cc_id << " dim_x: " << dim_x << " dim_y: " << dim_y << " ---> ("
               << cc_id % dim_y << ", " << cc_id / dim_y << ")\n"; */
-    return std::pair<u_int32_t, u_int32_t>(cc_id % dim_y, cc_id / dim_y);
+    return Coordinates(cc_id % dim_y, cc_id / dim_y);
 }
 
-std::pair<u_int32_t, u_int32_t>
+Coordinates
 CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
 {
     return ComputeCell::cc_id_to_cooridinate(
@@ -76,7 +76,7 @@ CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
 }
 
 u_int32_t
-CCASimulator::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate)
+CCASimulator::cc_cooridinate_to_id(Coordinates cc_cooridinate)
 {
 
     return ComputeCell::cc_cooridinate_to_id(
@@ -101,7 +101,8 @@ CCASimulator::create_square_cell_htree_chip()
             // Insert the sink cell
             if ((next_row_sink_cells == i) && (next_col_sink_cells == j)) {
 
-               // std::cout << "SinkCell: (" << next_col_sink_cells << "," << next_row_sink_cells << ")\n";
+                // std::cout << "SinkCell: (" << next_col_sink_cells << "," << next_row_sink_cells
+                // << ")\n";
 
                 // Create the sink cells where the chip connects to the underlying
                 // second layer network (for example the Htree)
