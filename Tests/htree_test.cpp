@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 using namespace std;
@@ -68,7 +69,7 @@ union_coverage_ranges(const Coordinates& c1,
     return std::pair<Coordinates, Coordinates>(findMin(c1, c2, c3, c4), findMax(c1, c2, c3, c4));
 }
 
-// Overload printing for Node
+// Overload printing for Coordinates
 std::ostream&
 operator<<(std::ostream& os, const Coordinates coordinates)
 {
@@ -77,24 +78,27 @@ operator<<(std::ostream& os, const Coordinates coordinates)
 }
 
 // H-Tree Node
-struct Node
+struct HtreeNode
 {
     int id;
     Coordinates cooridinates;
 
-    std::shared_ptr<Node> in_first;  // up or left
-    std::shared_ptr<Node> in_second; // down or right
-    std::shared_ptr<Node> out;       // outside of this htree
+    std::shared_ptr<HtreeNode> in_first;  // up or left
+    std::shared_ptr<HtreeNode> in_second; // down or right
+    std::shared_ptr<HtreeNode> out;       // outside of this htree
 
-    int in_bandwidth;
-    int out_bandwidth;
+    int in_bandwidth;  // Number of channels per in lane
+    int out_bandwidth; // Number of channels per out lane
 
     Coordinates coverage_top_left;
     Coordinates coverage_bottom_right;
 
-    Node(int value, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
+    // ID of the sink cell that this HtreeNode connects to. Only if it is an end htree node.
+    std::optional<u_int32_t> sink_cell_connector;
+
+    HtreeNode(int index, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
-        id = value;
+        id = index;
         cooridinates.first = x;
         cooridinates.second = y;
 
@@ -104,21 +108,16 @@ struct Node
 
         this->in_bandwidth = in_bandhwidth_in;
         this->out_bandwidth = out_bandhwidth_in;
+
+        sink_cell_connector = std::nullopt;
     }
 };
 
-// Overload printing for Node
+// Overload printing for HtreeNode
 std::ostream&
-operator<<(std::ostream& os, const Node* node)
+operator<<(std::ostream& os, const HtreeNode* node)
 {
-    /*
-     if (node->in_first == nullptr && node->in_second == nullptr) {
-        os << "[" << node->id << " -> (" << node->cooridinate_x << ", " << node->cooridinate_y
-           << "){out: " << node->out_bandwidth << ", in: " << node->in_bandwidth << "}], ";
-    } else {
-        os << "(" << node->id << ", out: " << node->out_bandwidth << ", in: " << node->in_bandwidth
-           << "), ";
-    } */
+
     if (node->in_first == nullptr && node->in_second == nullptr) {
         os << "[" << node->id << " -> " << node->cooridinates
            << " {Coverage 1: " << node->coverage_top_left
@@ -151,12 +150,12 @@ findClosestValue(const std::vector<int>& arr, int x)
             left = mid + 1;
         }
     }
-    //std::cout << "closest for " << x << " is " << closest << "\n";
+    // std::cout << "closest for " << x << " is " << closest << "\n";
 
     return closest;
 }
 
-std::shared_ptr<Node>
+std::shared_ptr<HtreeNode>
 create_vertical(int hx,
                 int hy,
                 const std::vector<int>& all_possible_rows,
@@ -170,9 +169,9 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
-                int& value);
+                int& index);
 
-std::shared_ptr<Node>
+std::shared_ptr<HtreeNode>
 create_horizontal(int hx,
                   int hy,
                   const std::vector<int>& all_possible_rows,
@@ -186,13 +185,13 @@ create_horizontal(int hx,
                   Coordinates coverage_top_left_in,
                   Coordinates coverage_bottom_right_in,
                   int depth,
-                  int& value)
+                  int& index)
 {
 
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<Node> left = create_vertical(
+    std::shared_ptr<HtreeNode> left = create_vertical(
         hx,
         hy,
         all_possible_rows,
@@ -207,9 +206,9 @@ create_horizontal(int hx,
         Coordinates(coverage_bottom_right_in.first - coverage_bottom_right_in.first / 2,
                     coverage_bottom_right_in.second),
         depth - 1,
-        value);
+        index);
 
-    std::shared_ptr<Node> right =
+    std::shared_ptr<HtreeNode> right =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -224,19 +223,19 @@ create_horizontal(int hx,
                                     coverage_top_left_in.second),
                         coverage_bottom_right_in,
                         depth - 1,
-                        value);
+                        index);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
-    std::shared_ptr<Node> center = nullptr;
+    std::shared_ptr<HtreeNode> center = nullptr;
 
     // This means that it is an end node
     if (depth == 0) {
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
 
-        center = std::make_shared<Node>(
-            value,
+        center = std::make_shared<HtreeNode>(
+            index,
             findClosestValue(all_possible_cols, current_col) - 1, // -1 for C zero-based index
             findClosestValue(all_possible_rows, current_row) - 1, // -1 for C zero-based index
             in_bandwidth_value,
@@ -244,7 +243,7 @@ create_horizontal(int hx,
 
         center->in_first = nullptr;
         center->in_second = nullptr;
-        value++;
+        index++;
 
         center->coverage_top_left = Coordinates(center->cooridinates.first - (hy / 2),
                                                 center->cooridinates.second - (hx / 2));
@@ -262,9 +261,9 @@ create_horizontal(int hx,
     }
 
     // Join left and right
-    center = std::make_shared<Node>(
-        value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
-    value++;
+    center = std::make_shared<HtreeNode>(
+        index, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
+    index++;
 
     center->in_first = left;
     Coordinates left_coverage_top_left;
@@ -296,7 +295,7 @@ create_horizontal(int hx,
     return center;
 }
 
-std::shared_ptr<Node>
+std::shared_ptr<HtreeNode>
 create_vertical(int hx,
                 int hy,
                 const std::vector<int>& all_possible_rows,
@@ -310,13 +309,13 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
-                int& value)
+                int& index)
 {
 
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<Node> up = create_horizontal(
+    std::shared_ptr<HtreeNode> up = create_horizontal(
         hx,
         hy,
         all_possible_rows,
@@ -330,9 +329,9 @@ create_vertical(int hx,
         coverage_top_left_in,
         Coordinates(coverage_bottom_right_in.first, coverage_bottom_right_in.second / 2),
         depth,
-        value);
+        index);
 
-    std::shared_ptr<Node> down = create_horizontal(
+    std::shared_ptr<HtreeNode> down = create_horizontal(
         hx,
         hy,
         all_possible_rows,
@@ -347,7 +346,7 @@ create_vertical(int hx,
                     coverage_top_left_in.second + (coverage_bottom_right_in.second / 2) + 1),
         coverage_bottom_right_in,
         depth,
-        value);
+        index);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -355,9 +354,9 @@ create_vertical(int hx,
     out_bandwidth_value = up->out_bandwidth * 2;
     in_bandwidth_value = up->out_bandwidth;
 
-    std::shared_ptr<Node> center = std::make_shared<Node>(
-        value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
-    value++;
+    std::shared_ptr<HtreeNode> center = std::make_shared<HtreeNode>(
+        index, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
+    index++;
 
     center->in_first = up;
     Coordinates up_coverage_top_left;
@@ -403,7 +402,7 @@ get_htree_dims(int dim, int depth)
     return 2 * get_htree_dims(dim, depth - 1);
 }
 
-std::shared_ptr<Node>
+std::shared_ptr<HtreeNode>
 create_htree(int hx,
              int hy,
              int depth,
@@ -414,7 +413,7 @@ create_htree(int hx,
         return nullptr;
     }
     // Create two verticals and join them
-    int value = 0;
+    int index = 0;
     int dim_x = get_htree_dims(hx, depth);
     int dim_y = get_htree_dims(hy, depth);
 
@@ -430,7 +429,7 @@ create_htree(int hx,
     Coordinates chip_coverage_top_left = Coordinates(0, 0);
     Coordinates chip_coverage_bottom_right = Coordinates(dim_y - 1, dim_x - 1);
 
-    std::shared_ptr<Node> left =
+    std::shared_ptr<HtreeNode> left =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -444,12 +443,12 @@ create_htree(int hx,
                         chip_coverage_top_left,
                         Coordinates(chip_center_y - 1, chip_coverage_bottom_right.second),
                         depth - 1,
-                        value);
+                        index);
 
     int right_sub_htree_initial_row = chip_center_x;
     int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
 
-    std::shared_ptr<Node> right =
+    std::shared_ptr<HtreeNode> right =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -463,7 +462,7 @@ create_htree(int hx,
                         Coordinates(chip_center_y + 1, chip_coverage_top_left.second),
                         chip_coverage_bottom_right,
                         depth - 1,
-                        value);
+                        index);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -473,9 +472,9 @@ create_htree(int hx,
     }
 
     // Join left and right
-    std::shared_ptr<Node> center = std::make_shared<Node>(
-        value, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
-    value++;
+    std::shared_ptr<HtreeNode> center = std::make_shared<HtreeNode>(
+        index, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
+    index++;
 
     center->in_first = left;
     if (left) {
@@ -497,7 +496,7 @@ create_htree(int hx,
 
 // Print the Htree in this order: top-left, down-left, top-right, down-right
 void
-print_htree(std::shared_ptr<Node>& root)
+print_htree(std::shared_ptr<HtreeNode>& root)
 {
     if (root != nullptr) {
         print_htree(root->in_first);
@@ -506,10 +505,22 @@ print_htree(std::shared_ptr<Node>& root)
         cout << root;
     }
 }
-// Print the Htree in this order: top-left, down-left, top-right, down-right
 void
-populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<Node>>& htree_end_nodes,
-                                 std::shared_ptr<Node>& root)
+populate_id_to_ptr_vector(std::vector<std::shared_ptr<HtreeNode>>& htree_all_nodes,
+                          std::shared_ptr<HtreeNode>& root)
+{
+    if (root != nullptr) {
+        populate_id_to_ptr_vector(htree_all_nodes, root->in_first);
+        populate_id_to_ptr_vector(htree_all_nodes, root->in_second);
+
+        htree_all_nodes.push_back(root);
+    }
+}
+
+// Traverse the Htree in this order: top-left, down-left, top-right, down-right
+void
+populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<HtreeNode>>& htree_end_nodes,
+                                 std::shared_ptr<HtreeNode>& root)
 {
     if (root != nullptr) {
         populate_coorodinates_to_ptr_map(htree_end_nodes, root->in_first);
@@ -568,27 +579,38 @@ main(int argc, char* argv[])
     }
     std::cout << std::endl;
 
-    std::shared_ptr<Node> root = nullptr;
+    std::shared_ptr<HtreeNode> root = nullptr;
 
     // Insert nodes into the binary tree
     root = create_htree(hx, hy, depth, all_possible_rows, all_possible_cols);
 
-    cout << "root value = " << root->id << "\n";
+    cout << "root index = " << root->id << "\n";
 
     // Print the tree using traversal
-    cout << "Traversal:\n";
-    print_htree(root);
-    cout << endl;
+    /*     cout << "Traversal:\n";
+        print_htree(root);
+        cout << endl; */
 
-    std::map<Coordinates, std::shared_ptr<Node>> htree_end_nodes;
+    std::map<Coordinates, std::shared_ptr<HtreeNode>> htree_end_nodes;
     populate_coorodinates_to_ptr_map(htree_end_nodes, root);
 
-    cout << "Printing the map: " << endl;
+    /*     cout << "Printing the map: " << endl;
+        // Print the map elements
+        for (const auto& entry : htree_end_nodes) {
+            std::cout << entry.first << ": " << entry.second;
+        }
 
-    // Print the map elements
-    for (const auto& entry : htree_end_nodes) {
-        std::cout << entry.first << ": " << entry.second << std::endl;
+        std::cout << std::endl; */
+
+    std::vector<std::shared_ptr<HtreeNode>> htree_all_nodes;
+    populate_id_to_ptr_vector(htree_all_nodes, root);
+
+    cout << "Printing the vector of all htree nodes: " << endl;
+    // Print the vector elements
+    for (const auto& htree_node : htree_all_nodes) {
+        std::cout << htree_node;
     }
+    std::cout << std::endl;
 
     return 0;
 }
