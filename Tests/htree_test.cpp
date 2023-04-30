@@ -3,61 +3,69 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <vector>
 
 using namespace std;
 
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
+// CC Id and numerical payload instead of action for development
+typedef std::pair<u_int32_t, u_int32_t> Operon;
+
+// For Htree routing. Later take the Coordinates out and send to the CCA chip though the sink cell
+typedef std::pair<Coordinates, Operon> CoordinatedOperon;
+
 Coordinates
 findMin(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
 {
-    Coordinates unionCoord;
-    unionCoord.first = c1.first;
-    unionCoord.second = c1.second;
+    Coordinates coordinates_min;
+    coordinates_min.first = c1.first;
+    coordinates_min.second = c1.second;
 
     // Find the minimum x-values
-    if (c2.first < unionCoord.first)
-        unionCoord.first = c2.first;
-    if (c3.first < unionCoord.first)
-        unionCoord.first = c3.first;
-    if (c4.first < unionCoord.first)
-        unionCoord.first = c4.first;
+    if (c2.first < coordinates_min.first)
+        coordinates_min.first = c2.first;
+    if (c3.first < coordinates_min.first)
+        coordinates_min.first = c3.first;
+    if (c4.first < coordinates_min.first)
+        coordinates_min.first = c4.first;
 
     // Find the minimum y-values
-    if (c2.second < unionCoord.second)
-        unionCoord.second = c2.second;
-    if (c3.second < unionCoord.second)
-        unionCoord.second = c3.second;
-    if (c4.second < unionCoord.second)
-        unionCoord.second = c4.second;
+    if (c2.second < coordinates_min.second)
+        coordinates_min.second = c2.second;
+    if (c3.second < coordinates_min.second)
+        coordinates_min.second = c3.second;
+    if (c4.second < coordinates_min.second)
+        coordinates_min.second = c4.second;
 
-    return unionCoord;
+    return coordinates_min;
 }
+
 Coordinates
 findMax(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
 {
-    Coordinates unionCoord;
-    unionCoord.first = c1.first;
-    unionCoord.second = c1.second;
+    Coordinates coordinates_max;
+    coordinates_max.first = c1.first;
+    coordinates_max.second = c1.second;
 
     // Find the maximum x-values
-    if (c2.first > unionCoord.first)
-        unionCoord.first = c2.first;
-    if (c3.first > unionCoord.first)
-        unionCoord.first = c3.first;
-    if (c4.first > unionCoord.first)
-        unionCoord.first = c4.first;
+    if (c2.first > coordinates_max.first)
+        coordinates_max.first = c2.first;
+    if (c3.first > coordinates_max.first)
+        coordinates_max.first = c3.first;
+    if (c4.first > coordinates_max.first)
+        coordinates_max.first = c4.first;
 
     // Find the maximum y-values
-    if (c2.second > unionCoord.second)
-        unionCoord.second = c2.second;
-    if (c3.second > unionCoord.second)
-        unionCoord.second = c3.second;
-    if (c4.second > unionCoord.second)
-        unionCoord.second = c4.second;
+    if (c2.second > coordinates_max.second)
+        coordinates_max.second = c2.second;
+    if (c3.second > coordinates_max.second)
+        coordinates_max.second = c3.second;
+    if (c4.second > coordinates_max.second)
+        coordinates_max.second = c4.second;
 
-    return unionCoord;
+    return coordinates_max;
 }
 
 std::pair<Coordinates, Coordinates>
@@ -77,15 +85,80 @@ operator<<(std::ostream& os, const Coordinates coordinates)
     return os;
 }
 
+// Fixed size queue to be used for storing Operons. The fixed queue size is the bandwidth at that
+// HtreeNode
+template<typename T>
+class FixedSizeQueue
+{
+  private:
+    std::queue<T> underlying_queue;
+    u_int32_t size_max;
+
+  public:
+    FixedSizeQueue(u_int32_t size_max_in)
+        : size_max(size_max_in)
+    {
+    }
+
+    bool push(const T& value)
+    {
+        // Not able to enqueue. Return false
+        if (underlying_queue.size() == this->size_max) {
+            return false;
+        }
+        this->underlying_queue.push(value);
+        return true;
+    }
+
+    // Dequeue FIFO
+    T front() const { return underlying_queue.front(); }
+    // Pop
+    void pop() { underlying_queue.pop(); }
+
+    // Recturn the current size of the queue
+    u_int32_t size() const { return underlying_queue.size(); }
+};
+
 // H-Tree Node
 struct HtreeNode
 {
+
+    bool put_operon_from_sink_cell(const CoordinatedOperon operon)
+    {
+        return this->recv_channel_from_sink_cell->push(operon);
+    }
+
+    bool put_operon_from_within_htree_node(const CoordinatedOperon operon,
+                                           u_int32_t relationship_of_sender)
+    {
+        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv_channel_to_use;
+        if (this->recv_channel[relationship_of_sender]) {
+            recv_channel_to_use = this->recv_channel[relationship_of_sender].value();
+        } else {
+            std::cerr << "Bug! Using a recv_channel that doesn't exist\n";
+            exit(0);
+        }
+        return recv_channel_to_use->push(operon);
+    }
+
     int id;
     Coordinates cooridinates;
 
     std::shared_ptr<HtreeNode> in_first;  // up or left
     std::shared_ptr<HtreeNode> in_second; // down or right
     std::shared_ptr<HtreeNode> out;       // outside of this htree
+
+    // How to know if this node is up, down, left, or right of its neighbor node?
+    // The neighbor node itself will set this to either 0, 1, 2 or 3.
+    // 0: I am your left neighbor, which means that when you output operons to me please put
+    // in my `recv_in_channel[0]`.
+    // 1: Likewie this is up, meaning out in my `recv_in_channel[1]`
+    // 2: right `recv_in_channel[2]`
+    // 3: down `recv_in_channel[3]`
+    u_int32_t relationship_with_my_out;
+
+    u_int32_t relationship_with_my_in_first;
+    u_int32_t relationship_with_my_in_second;
 
     int in_bandwidth;  // Number of channels per in lane
     int out_bandwidth; // Number of channels per out lane
@@ -96,20 +169,74 @@ struct HtreeNode
     // ID of the sink cell that this HtreeNode connects to. Only if it is an end htree node.
     std::optional<u_int32_t> sink_cell_connector;
 
+    // Only to be used for end htree nodes that connect with the CCA chip through sink cells
+    std::shared_ptr<FixedSizeQueue<Operon>> send_channel_to_sink_cell;
+    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv_channel_from_sink_cell;
+
+    std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send_channel[4];
+    std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv_channel[4];
+
+    /*
+    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> send_out_channel;
+    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv_out_channel;
+    */
+
     HtreeNode(int index, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
-        id = index;
-        cooridinates.first = x;
-        cooridinates.second = y;
+        this->id = index;
+        this->cooridinates.first = x;
+        this->cooridinates.second = y;
 
-        in_first = nullptr;
-        in_second = nullptr;
-        out = nullptr;
+        this->in_first = nullptr;
+        this->in_second = nullptr;
+        this->out = nullptr;
 
         this->in_bandwidth = in_bandhwidth_in;
         this->out_bandwidth = out_bandhwidth_in;
 
-        sink_cell_connector = std::nullopt;
+        // Later for each end node htree node that connects with a sink cell in the CCA chip these
+        // will be assigned their proper values
+        this->sink_cell_connector = std::nullopt;
+
+        this->send_channel_to_sink_cell = nullptr;
+        this->recv_channel_from_sink_cell = nullptr;
+
+        // This means that it is an end htree node that is connected to a sink cell in the CCA chip
+        if (in_bandhwidth_in == 0) {
+
+            // End node has 4 links to the square type shape sink cell
+            this->send_channel_to_sink_cell =
+                std::make_shared<FixedSizeQueue<Operon>>(out_bandhwidth_in);
+            this->recv_channel_from_sink_cell =
+                std::make_shared<FixedSizeQueue<CoordinatedOperon>>(out_bandhwidth_in);
+
+            /* this->send_in_channel[0] = nullptr;
+            this->recv_in_channel[1] = nullptr;
+
+            this->send_in_channel[0] = nullptr;
+            this->recv_in_channel[1] = nullptr; */
+        } /* else {
+
+              this->send_in_first_channel =
+                 std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->in_bandwidth);
+             this->recv_in_first_channel =
+                 std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->in_bandwidth);
+
+             this->send_in_second_channel =
+                 std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->in_bandwidth);
+             this->recv_in_second_channel =
+                 std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->in_bandwidth);
+        } */
+
+        /* this->send_out_channel =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->out_bandwidth);
+        this->recv_out_channel =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(this->out_bandwidth); */
+
+        for (int i = 0; i < 4; i++) {
+            this->recv_channel[i] = std::nullopt;
+            this->send_channel[i] = std::nullopt;
+        }
     }
 };
 
@@ -126,32 +253,29 @@ operator<<(std::ostream& os, const HtreeNode* node)
         os << node->id << " {Coverage 1: " << node->coverage_top_left
            << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
     }
-
     return os;
 }
 
 int
-findClosestValue(const std::vector<int>& arr, int x)
+findClosestValue(const std::vector<int>& values, int point)
 {
     int left = 0;
-    int right = arr.size() - 1;
-    int closest = arr[0];
+    int right = values.size() - 1;
+    int closest = values[0];
 
     while (left <= right) {
         int mid = (left + right) / 2;
 
-        if (abs(arr[mid] - x) < abs(closest - x)) {
-            closest = arr[mid];
+        if (abs(values[mid] - point) < abs(closest - point)) {
+            closest = values[mid];
         }
 
-        if (arr[mid] > x) {
+        if (values[mid] > point) {
             right = mid - 1;
         } else {
             left = mid + 1;
         }
     }
-    // std::cout << "closest for " << x << " is " << closest << "\n";
-
     return closest;
 }
 
@@ -229,11 +353,22 @@ create_horizontal(int hx,
     u_int32_t in_bandwidth_value = 0;
     std::shared_ptr<HtreeNode> center = nullptr;
 
-    // This means that it is an end node
+    // Set the bandwidth
     if (depth == 0) {
+        // TODO: Later instead of hardcoding `4` instead use the shape of the sink cell to determine
+        // the value
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
+    } else if (depth == 1) {
+        out_bandwidth_value = 8;
+        in_bandwidth_value = 4;
+    } else {
+        out_bandwidth_value = right->out_bandwidth * 2;
+        in_bandwidth_value = right->out_bandwidth;
+    }
 
+    // This means that it is an end node
+    if (depth == 0) {
         center = std::make_shared<HtreeNode>(
             index,
             findClosestValue(all_possible_cols, current_col) - 1, // -1 for C zero-based index
@@ -251,13 +386,6 @@ create_horizontal(int hx,
                                                     center->cooridinates.second + (hx / 2));
 
         return center;
-
-    } else if (depth == 1) {
-        out_bandwidth_value = 8;
-        in_bandwidth_value = 4;
-    } else {
-        out_bandwidth_value = right->out_bandwidth * 2;
-        in_bandwidth_value = right->out_bandwidth;
     }
 
     // Join left and right
@@ -266,19 +394,34 @@ create_horizontal(int hx,
     index++;
 
     center->in_first = left;
+    // I will put in recv_channel[2] of up
+    center->relationship_with_my_in_first = 2;
     Coordinates left_coverage_top_left;
     Coordinates left_coverage_bottom_right;
     if (left) {
         left->out = center;
+
+        // For left the `center` is to the right, therefore left will put in recv_channel[0] of
+        // center
+        left->relationship_with_my_out = 0;
+
         left_coverage_top_left = left->coverage_top_left;
         left_coverage_bottom_right = left->coverage_bottom_right;
     }
 
     center->in_second = right;
+    // For the center its `in_second` is right, therefore from the `in_second` point of view it is
+    // 0. `center` will put in recv_channel[0] of right
+    center->relationship_with_my_in_second = 0;
     Coordinates right_coverage_top_left;
     Coordinates right_coverage_bottom_right;
     if (right) {
         right->out = center;
+
+        // For right the `center` is to the left, therefore right will put in recv_channel[2] of
+        // center
+        center->relationship_with_my_out = 2;
+
         right_coverage_top_left = right->coverage_top_left;
         right_coverage_bottom_right = right->coverage_bottom_right;
     }
@@ -359,19 +502,32 @@ create_vertical(int hx,
     index++;
 
     center->in_first = up;
+    // I will put in recv_channel[3] of up
+    center->relationship_with_my_in_first = 3;
     Coordinates up_coverage_top_left;
     Coordinates up_coverage_bottom_right;
     if (up) {
         up->out = center;
+
+        // For up the `center` is down, therefore up will put in recv_channel[1] of center
+        up->relationship_with_my_out = 1;
+
         up_coverage_top_left = up->coverage_top_left;
         up_coverage_bottom_right = up->coverage_bottom_right;
     }
 
     center->in_second = down;
+    // For the center its `in_second` is down, therefore from the `in_second` point of view it is 1.
+    // `center` will put in recv_channel[1] of down
+    center->relationship_with_my_in_second = 1;
     Coordinates down_coverage_top_left;
     Coordinates down_coverage_bottom_right;
     if (down) {
         down->out = center;
+
+        // For down the `center` is up, therefore down will put in recv_channel[3] of center
+        center->relationship_with_my_out = 3;
+
         down_coverage_top_left = down->coverage_top_left;
         down_coverage_bottom_right = down->coverage_bottom_right;
     }
@@ -477,13 +633,19 @@ create_htree(int hx,
     index++;
 
     center->in_first = left;
+    center->relationship_with_my_in_first = 2; // I will put in recv_channel[2]
     if (left) {
         left->out = center;
+        left->relationship_with_my_out = 0; // Meaning it will use recv_channel[0]
     }
 
     center->in_second = right;
+    // TODO: delete this as center will be delted and left and right parts of the base Htree will be
+    // combined together
+    center->relationship_with_my_in_second = 0;
     if (right) {
         right->out = center;
+        right->relationship_with_my_out = 2; // Meaning it will use recv_channel[2]
     }
 
     center->out = nullptr;
