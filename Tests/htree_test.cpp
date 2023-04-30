@@ -825,13 +825,15 @@ main(int argc, char* argv[])
     std::map<Coordinates, std::shared_ptr<HtreeNode>> htree_end_nodes;
     populate_coorodinates_to_ptr_map(htree_end_nodes, root);
 
-    /*     cout << "Printing the map: " << endl;
-        // Print the map elements
-        for (const auto& entry : htree_end_nodes) {
-            std::cout << entry.first << ": " << entry.second;
-        }
+    /*
+    cout << "Printing the map: " << endl;
+    // Print the map elements
+    for (const auto& entry : htree_end_nodes) {
+         std::cout << entry.first << ": " << entry.second;
+    }
 
-        std::cout << std::endl; */
+    std::cout << std::endl;
+    */
 
     std::vector<std::shared_ptr<HtreeNode>> htree_all_nodes;
     populate_id_to_ptr_vector(htree_all_nodes, root);
