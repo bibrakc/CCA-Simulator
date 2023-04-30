@@ -119,6 +119,15 @@ class FixedSizeQueue
     u_int32_t size() const { return underlying_queue.size(); }
 };
 
+// TODO: see if we keep this globally here or use the HtreeNode function?
+bool
+is_coordinate_in_range(const Coordinates start, const Coordinates end, const Coordinates point)
+{
+    // Check if the point is within the range
+    return ((point.first >= start.first) && (point.first <= end.first) &&
+            (point.second >= start.second) && (point.second <= end.second));
+}
+
 // H-Tree Node
 struct HtreeNode
 {
@@ -140,6 +149,17 @@ struct HtreeNode
         }
         return recv_channel_to_use->push(operon);
     }
+
+    bool is_coordinate_in_range(const Coordinates point)
+    {
+        // Check if the point is within the range
+        return ((point.first >= this->coverage_top_left.first) &&
+                (point.first <= this->coverage_bottom_right.first) &&
+                (point.second >= this->coverage_top_left.second) &&
+                (point.second <= this->coverage_bottom_right.second));
+    }
+
+    bool is_end_htree_node() { return (!this->in_first && !this->in_second); }
 
     int id;
     Coordinates cooridinates;
@@ -695,6 +715,55 @@ populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<HtreeNode
     }
 }
 
+// Overload printing for HtreeNode
+void
+print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_all_nodes,
+                               u_int32_t id)
+{
+
+    std::cout << "Htree Node: " << id << "\n";
+    if (htree_all_nodes[id]->in_first) {
+        std::cout << "\tin_first: " << htree_all_nodes[id]->in_first->id
+                  << ", relationship: " << htree_all_nodes[id]->relationship_with_my_in_first
+                  << "\n";
+    }
+    if (htree_all_nodes[id]->in_second) {
+        std::cout << "\tin_second: " << htree_all_nodes[id]->in_second->id
+                  << ", relationship: " << htree_all_nodes[id]->relationship_with_my_in_second
+                  << "\n";
+    }
+
+    if (htree_all_nodes[id]->out) {
+        std::cout << "\tout: " << htree_all_nodes[id]->out->id
+                  << ", relationship: " << htree_all_nodes[id]->relationship_with_my_out << "\n";
+    }
+
+    Coordinates cc(2, 3);
+    std::cout << "Where to route " << cc << "?\n";
+
+    // First check if this is the end htree node
+    if (htree_all_nodes[id]->is_end_htree_node()) {
+        // Does the route needs to go thought the sink channel?
+        if (htree_all_nodes[id]->is_coordinate_in_range(cc)) {
+            std::cout << "\tSend to sink cell\n";
+        } else {
+            std::cout << "\tSend to out\n";
+        }
+        // Check if it can go to `in_first`?
+    } else if (is_coordinate_in_range(htree_all_nodes[id]->in_first->coverage_top_left,
+                                      htree_all_nodes[id]->in_first->coverage_bottom_right,
+                                      cc)) {
+
+        std::cout << "\tSend to in_first\n";
+    } else if (is_coordinate_in_range(htree_all_nodes[id]->in_second->coverage_top_left,
+                                      htree_all_nodes[id]->in_second->coverage_bottom_right,
+                                      cc)) {
+        std::cout << "\tSend to in_second\n";
+    } else {
+        std::cout << "\tSend to out\n";
+    }
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -773,6 +842,14 @@ main(int argc, char* argv[])
         std::cout << htree_node;
     }
     std::cout << std::endl;
+
+    print_details_of_an_htree_node(htree_all_nodes, 0);
+
+    print_details_of_an_htree_node(htree_all_nodes, 6);
+
+    print_details_of_an_htree_node(htree_all_nodes, 1);
+
+    print_details_of_an_htree_node(htree_all_nodes, 4);
 
     return 0;
 }
