@@ -6,7 +6,7 @@
 
 using namespace std;
 
-typedef std::pair<int32_t, int32_t> Coordinates;
+typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
 // Overload printing for Node
 std::ostream&
@@ -21,8 +21,6 @@ struct Node
 {
     int id;
     Coordinates cooridinates;
-    /*     int cooridinate_x;
-        int cooridinate_y; */
 
     std::shared_ptr<Node> in_first;  // up or left
     std::shared_ptr<Node> in_second; // down or right
@@ -352,7 +350,6 @@ print_htree(std::shared_ptr<Node>& root)
 {
     if (root != nullptr) {
         print_htree(root->in_first);
-
         print_htree(root->in_second);
 
         cout << root;
@@ -365,7 +362,6 @@ populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<Node>>& h
 {
     if (root != nullptr) {
         populate_coorodinates_to_ptr_map(htree_end_nodes, root->in_first);
-
         populate_coorodinates_to_ptr_map(htree_end_nodes, root->in_second);
 
         // End node in the Htree

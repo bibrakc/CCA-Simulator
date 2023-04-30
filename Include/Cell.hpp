@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-typedef std::pair<int32_t, int32_t> Coordinates;
+typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
 // Overload printing for Coordinates
 std::ostream&
@@ -175,7 +175,7 @@ class Cell
 
     // Coordinates of this Cell in the CCA chip. It depends on the Chip dinemsions and
     // shapes of Cells.
-    std::pair<u_int32_t, u_int32_t> cooridates;
+    Coordinates cooridates;
 
     // Shape of the Cell
     computeCellShape shape;
@@ -199,7 +199,7 @@ class Cell
     u_int32_t number_of_neighbors;
 
     // IDs and Coordinates of the neighbors
-    std::vector<std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>>>
+    std::vector<std::optional<std::pair<u_int32_t, Coordinates>>>
         neighbor_compute_cells;
 
     // Per neighbor send channel/link
@@ -226,12 +226,12 @@ class Cell
 
     static u_int32_t get_number_of_neighbors(computeCellShape);
 
-    static std::pair<u_int32_t, u_int32_t> cc_id_to_cooridinate(u_int32_t cc_id,
+    static Coordinates cc_id_to_cooridinate(u_int32_t cc_id,
                                                                 computeCellShape shape,
                                                                 u_int32_t dim_x,
                                                                 u_int32_t dim_y);
 
-    static u_int32_t cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
+    static u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate,
                                           computeCellShape shape_,
                                           u_int32_t dim_x,
                                           u_int32_t dim_y);
@@ -239,7 +239,7 @@ class Cell
     inline bool cc_exists(const SignedCoordinates cc_coordinate);
 
     void add_neighbor(
-        std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell);
+        std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
 
     // Configure this Cell and assign neighbors in the CCA grid
     void add_neighbor_compute_cells();

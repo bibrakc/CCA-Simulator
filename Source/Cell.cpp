@@ -40,7 +40,6 @@ operator<<(std::ostream& os, const Coordinates& coord)
     return os;
 }
 
-
 // Utility function to convert type of pair
 template<typename To, typename From>
 inline std::pair<To, To>
@@ -50,8 +49,7 @@ convert_internal_type_of_pair(const std::pair<From, From>& p)
 }
 
 void
-Cell::add_neighbor(
-    std::optional<std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>> neighbor_compute_cell)
+Cell::add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell)
 {
     this->neighbor_compute_cells.push_back(neighbor_compute_cell);
 }
@@ -77,8 +75,8 @@ Cell::add_neighbor_compute_cells()
             auto left_neighbor_id = Cell::cc_cooridinate_to_id(
                 left_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
 
-            this->add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>(
-                left_neighbor_id, left_neighbor_unsigned));
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
         } else {
             this->add_neighbor(std::nullopt);
         }
@@ -92,8 +90,8 @@ Cell::add_neighbor_compute_cells()
             auto up_neighbor_id = Cell::cc_cooridinate_to_id(
                 up_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
 
-            this->add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>(
-                up_neighbor_id, up_neighbor_unsigned));
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
         } else {
             this->add_neighbor(std::nullopt);
         }
@@ -106,22 +104,21 @@ Cell::add_neighbor_compute_cells()
             auto right_neighbor_id = Cell::cc_cooridinate_to_id(
                 right_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
 
-            this->add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>(
-                right_neighbor_id, right_neighbor_unsigned));
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
         } else {
             this->add_neighbor(std::nullopt);
         }
         // Down neighbor
-        SignedCoordinates down_neighbor =
-            std::pair<int32_t, int32_t>(cc_coordinate_x, cc_coordinate_y + 1);
+        SignedCoordinates down_neighbor = Coordinates(cc_coordinate_x, cc_coordinate_y + 1);
         if (this->cc_exists(down_neighbor)) {
             auto down_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
             auto down_neighbor_id = Cell::cc_cooridinate_to_id(
                 down_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
 
-            this->add_neighbor(std::pair<u_int32_t, std::pair<u_int32_t, u_int32_t>>(
-                down_neighbor_id, down_neighbor_unsigned));
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
         } else {
             this->add_neighbor(std::nullopt);
         }
@@ -158,10 +155,9 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate)
 }
 
 void
-ComputeCellStatistics::output_results_in_a_single_line(
-    std::ostream& os,
-    u_int32_t cc_id,
-    std::pair<u_int32_t, u_int32_t> cc_cooridinates)
+ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
+                                                       u_int32_t cc_id,
+                                                       Coordinates cc_cooridinates)
 {
     os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
        << "\t" << cc_cooridinates.second << "\t" << this->actions_created << "\t"
@@ -251,7 +247,7 @@ Cell::get_number_of_neighbors(computeCellShape shape_in)
     }
 }
 
-std::pair<u_int32_t, u_int32_t>
+Coordinates
 Cell::cc_id_to_cooridinate(u_int32_t cc_id,
                            computeCellShape shape_,
                            u_int32_t dim_x,
@@ -267,7 +263,7 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id,
 }
 
 u_int32_t
-Cell::cc_cooridinate_to_id(std::pair<u_int32_t, u_int32_t> cc_cooridinate,
+Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
                            computeCellShape shape_,
                            u_int32_t dim_x,
                            u_int32_t dim_y)
