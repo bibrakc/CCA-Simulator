@@ -8,6 +8,66 @@ using namespace std;
 
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
+Coordinates
+findMin(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+{
+    Coordinates unionCoord;
+    unionCoord.first = c1.first;
+    unionCoord.second = c1.second;
+
+    // Find the minimum x-values
+    if (c2.first < unionCoord.first)
+        unionCoord.first = c2.first;
+    if (c3.first < unionCoord.first)
+        unionCoord.first = c3.first;
+    if (c4.first < unionCoord.first)
+        unionCoord.first = c4.first;
+
+    // Find the minimum y-values
+    if (c2.second < unionCoord.second)
+        unionCoord.second = c2.second;
+    if (c3.second < unionCoord.second)
+        unionCoord.second = c3.second;
+    if (c4.second < unionCoord.second)
+        unionCoord.second = c4.second;
+
+    return unionCoord;
+}
+Coordinates
+findMax(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+{
+    Coordinates unionCoord;
+    unionCoord.first = c1.first;
+    unionCoord.second = c1.second;
+
+    // Find the maximum x-values
+    if (c2.first > unionCoord.first)
+        unionCoord.first = c2.first;
+    if (c3.first > unionCoord.first)
+        unionCoord.first = c3.first;
+    if (c4.first > unionCoord.first)
+        unionCoord.first = c4.first;
+
+    // Find the maximum y-values
+    if (c2.second > unionCoord.second)
+        unionCoord.second = c2.second;
+    if (c3.second > unionCoord.second)
+        unionCoord.second = c3.second;
+    if (c4.second > unionCoord.second)
+        unionCoord.second = c4.second;
+
+    return unionCoord;
+}
+
+std::pair<Coordinates, Coordinates>
+union_coverage_ranges(const Coordinates& c1,
+                      const Coordinates& c2,
+                      const Coordinates& c3,
+                      const Coordinates& c4)
+{
+    return std::pair<Coordinates, Coordinates>(findMin(c1, c2, c3, c4), findMax(c1, c2, c3, c4));
+}
+
 // Overload printing for Node
 std::ostream&
 operator<<(std::ostream& os, const Coordinates coordinates)
@@ -28,6 +88,9 @@ struct Node
 
     int in_bandwidth;
     int out_bandwidth;
+
+    Coordinates coverage_top_left;
+    Coordinates coverage_bottom_right;
 
     Node(int value, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
@@ -57,10 +120,12 @@ operator<<(std::ostream& os, const Node* node)
            << "), ";
     } */
     if (node->in_first == nullptr && node->in_second == nullptr) {
-        os << "[" << node->id << " -> (" << node->cooridinates.first << ", "
-           << node->cooridinates.second << ")], ";
+        os << "[" << node->id << " -> " << node->cooridinates
+           << " {Coverage 1: " << node->coverage_top_left
+           << ", Coverage 2: " << node->coverage_bottom_right << "}]\n";
     } else {
-        os << node->id << ", ";
+        os << node->id << " {Coverage 1: " << node->coverage_top_left
+           << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
     }
 
     return os;
@@ -86,13 +151,15 @@ findClosestValue(const std::vector<int>& arr, int x)
             left = mid + 1;
         }
     }
-    std::cout << "closest for " << x << " is " << closest << "\n";
+    //std::cout << "closest for " << x << " is " << closest << "\n";
 
     return closest;
 }
 
 std::shared_ptr<Node>
-create_vertical(const std::vector<int>& all_possible_rows,
+create_vertical(int hx,
+                int hy,
+                const std::vector<int>& all_possible_rows,
                 const std::vector<int>& all_possible_cols,
                 int initial_row,
                 int initial_col,
@@ -100,11 +167,15 @@ create_vertical(const std::vector<int>& all_possible_rows,
                 int hy_factor,
                 int current_row,
                 int current_col,
+                Coordinates coverage_top_left_in,
+                Coordinates coverage_bottom_right_in,
                 int depth,
                 int& value);
 
 std::shared_ptr<Node>
-create_horizontal(const std::vector<int>& all_possible_rows,
+create_horizontal(int hx,
+                  int hy,
+                  const std::vector<int>& all_possible_rows,
                   const std::vector<int>& all_possible_cols,
                   int initial_row,
                   int initial_col,
@@ -112,6 +183,8 @@ create_horizontal(const std::vector<int>& all_possible_rows,
                   int hy_factor,
                   int current_row,
                   int current_col,
+                  Coordinates coverage_top_left_in,
+                  Coordinates coverage_bottom_right_in,
                   int depth,
                   int& value)
 {
@@ -119,27 +192,39 @@ create_horizontal(const std::vector<int>& all_possible_rows,
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<Node> left = create_vertical(all_possible_rows,
-                                                 all_possible_cols,
-                                                 initial_row,
-                                                 initial_col,
-                                                 hx_factor,
-                                                 2 * hy_factor,
-                                                 current_row,
-                                                 current_col - (initial_col / hy_factor),
-                                                 depth - 1,
-                                                 value);
+    std::shared_ptr<Node> left = create_vertical(
+        hx,
+        hy,
+        all_possible_rows,
+        all_possible_cols,
+        initial_row,
+        initial_col,
+        hx_factor,
+        2 * hy_factor,
+        current_row,
+        current_col - (initial_col / hy_factor),
+        coverage_top_left_in,
+        Coordinates(coverage_bottom_right_in.first - coverage_bottom_right_in.first / 2,
+                    coverage_bottom_right_in.second),
+        depth - 1,
+        value);
 
-    std::shared_ptr<Node> right = create_vertical(all_possible_rows,
-                                                  all_possible_cols,
-                                                  initial_row,
-                                                  initial_col,
-                                                  hx_factor,
-                                                  2 * hy_factor,
-                                                  current_row,
-                                                  current_col + (initial_col / hy_factor),
-                                                  depth - 1,
-                                                  value);
+    std::shared_ptr<Node> right =
+        create_vertical(hx,
+                        hy,
+                        all_possible_rows,
+                        all_possible_cols,
+                        initial_row,
+                        initial_col,
+                        hx_factor,
+                        2 * hy_factor,
+                        current_row,
+                        current_col + (initial_col / hy_factor),
+                        Coordinates(coverage_top_left_in.first + coverage_bottom_right_in.first / 2,
+                                    coverage_top_left_in.second),
+                        coverage_bottom_right_in,
+                        depth - 1,
+                        value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -160,6 +245,12 @@ create_horizontal(const std::vector<int>& all_possible_rows,
         center->in_first = nullptr;
         center->in_second = nullptr;
         value++;
+
+        center->coverage_top_left = Coordinates(center->cooridinates.first - (hy / 2),
+                                                center->cooridinates.second - (hx / 2));
+        center->coverage_bottom_right = Coordinates(center->cooridinates.first + (hy / 2),
+                                                    center->cooridinates.second + (hx / 2));
+
         return center;
 
     } else if (depth == 1) {
@@ -176,19 +267,39 @@ create_horizontal(const std::vector<int>& all_possible_rows,
     value++;
 
     center->in_first = left;
+    Coordinates left_coverage_top_left;
+    Coordinates left_coverage_bottom_right;
     if (left) {
         left->out = center;
+        left_coverage_top_left = left->coverage_top_left;
+        left_coverage_bottom_right = left->coverage_bottom_right;
     }
 
     center->in_second = right;
+    Coordinates right_coverage_top_left;
+    Coordinates right_coverage_bottom_right;
     if (right) {
         right->out = center;
+        right_coverage_top_left = right->coverage_top_left;
+        right_coverage_bottom_right = right->coverage_bottom_right;
     }
+
+    auto [union_coverage_top_left, union_coverage_bottom_right] =
+        union_coverage_ranges(left_coverage_top_left,
+                              left_coverage_bottom_right,
+                              right_coverage_top_left,
+                              right_coverage_bottom_right);
+
+    center->coverage_top_left = union_coverage_top_left;
+    center->coverage_bottom_right = union_coverage_bottom_right;
+
     return center;
 }
 
 std::shared_ptr<Node>
-create_vertical(const std::vector<int>& all_possible_rows,
+create_vertical(int hx,
+                int hy,
+                const std::vector<int>& all_possible_rows,
                 const std::vector<int>& all_possible_cols,
                 int initial_row,
                 int initial_col,
@@ -196,6 +307,8 @@ create_vertical(const std::vector<int>& all_possible_rows,
                 int hy_factor,
                 int current_row,
                 int current_col,
+                Coordinates coverage_top_left_in,
+                Coordinates coverage_bottom_right_in,
                 int depth,
                 int& value)
 {
@@ -203,53 +316,75 @@ create_vertical(const std::vector<int>& all_possible_rows,
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<Node> up = create_horizontal(all_possible_rows,
-                                                 all_possible_cols,
-                                                 initial_row,
-                                                 initial_col,
-                                                 2 * hx_factor,
-                                                 hy_factor,
-                                                 current_row - (initial_row / hx_factor),
-                                                 current_col,
-                                                 depth,
-                                                 value);
+    std::shared_ptr<Node> up = create_horizontal(
+        hx,
+        hy,
+        all_possible_rows,
+        all_possible_cols,
+        initial_row,
+        initial_col,
+        2 * hx_factor,
+        hy_factor,
+        current_row - (initial_row / hx_factor),
+        current_col,
+        coverage_top_left_in,
+        Coordinates(coverage_bottom_right_in.first, coverage_bottom_right_in.second / 2),
+        depth,
+        value);
 
-    std::shared_ptr<Node> down = create_horizontal(all_possible_rows,
-                                                   all_possible_cols,
-                                                   initial_row,
-                                                   initial_col,
-                                                   2 * hx_factor,
-                                                   hy_factor,
-                                                   current_row + (initial_row / hx_factor),
-                                                   current_col,
-                                                   depth,
-                                                   value);
+    std::shared_ptr<Node> down = create_horizontal(
+        hx,
+        hy,
+        all_possible_rows,
+        all_possible_cols,
+        initial_row,
+        initial_col,
+        2 * hx_factor,
+        hy_factor,
+        current_row + (initial_row / hx_factor),
+        current_col,
+        Coordinates(coverage_top_left_in.first,
+                    coverage_top_left_in.second + (coverage_bottom_right_in.second / 2) + 1),
+        coverage_bottom_right_in,
+        depth,
+        value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
 
-    /*     // This means that its neighbors are end nodes
-        if (depth == 1) {
-            // if (up->in_first == nullptr && up->in_second == nullptr) {
-            out_bandwidth_value = 8;
-            in_bandwidth_value = 4;
-        } else { */
     out_bandwidth_value = up->out_bandwidth * 2;
     in_bandwidth_value = up->out_bandwidth;
-    // }
 
     std::shared_ptr<Node> center = std::make_shared<Node>(
         value, current_col, current_row, in_bandwidth_value, out_bandwidth_value);
     value++;
 
     center->in_first = up;
+    Coordinates up_coverage_top_left;
+    Coordinates up_coverage_bottom_right;
     if (up) {
         up->out = center;
+        up_coverage_top_left = up->coverage_top_left;
+        up_coverage_bottom_right = up->coverage_bottom_right;
     }
+
     center->in_second = down;
+    Coordinates down_coverage_top_left;
+    Coordinates down_coverage_bottom_right;
     if (down) {
         down->out = center;
+        down_coverage_top_left = down->coverage_top_left;
+        down_coverage_bottom_right = down->coverage_bottom_right;
     }
+
+    auto [union_coverage_top_left, union_coverage_bottom_right] =
+        union_coverage_ranges(up_coverage_top_left,
+                              up_coverage_bottom_right,
+                              down_coverage_top_left,
+                              down_coverage_bottom_right);
+
+    center->coverage_top_left = union_coverage_top_left;
+    center->coverage_bottom_right = union_coverage_bottom_right;
 
     return center;
 }
@@ -283,8 +418,8 @@ create_htree(int hx,
     int dim_x = get_htree_dims(hx, depth);
     int dim_y = get_htree_dims(hy, depth);
 
-    int chip_center_x = (dim_x / 2);
-    int chip_center_y = (dim_y / 2);
+    int chip_center_x = (dim_x / 2); // row
+    int chip_center_y = (dim_y / 2); // col
 
     cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
     cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y << ")\n";
@@ -292,30 +427,43 @@ create_htree(int hx,
     int left_sub_htree_initial_row = chip_center_x;
     int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
 
-    std::shared_ptr<Node> left = create_vertical(all_possible_rows,
-                                                 all_possible_cols,
-                                                 chip_center_x,
-                                                 chip_center_y,
-                                                 2, // divisor factor for the next division in rows
-                                                 4, // divisor factor for the next division in cols
-                                                 left_sub_htree_initial_row,
-                                                 left_sub_htree_initial_col,
-                                                 depth - 1,
-                                                 value);
+    Coordinates chip_coverage_top_left = Coordinates(0, 0);
+    Coordinates chip_coverage_bottom_right = Coordinates(dim_y - 1, dim_x - 1);
+
+    std::shared_ptr<Node> left =
+        create_vertical(hx,
+                        hy,
+                        all_possible_rows,
+                        all_possible_cols,
+                        chip_center_x,
+                        chip_center_y,
+                        2, // divisor factor for the next division in rows
+                        4, // divisor factor for the next division in cols
+                        left_sub_htree_initial_row,
+                        left_sub_htree_initial_col,
+                        chip_coverage_top_left,
+                        Coordinates(chip_center_y - 1, chip_coverage_bottom_right.second),
+                        depth - 1,
+                        value);
 
     int right_sub_htree_initial_row = chip_center_x;
     int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
 
-    std::shared_ptr<Node> right = create_vertical(all_possible_rows,
-                                                  all_possible_cols,
-                                                  chip_center_x,
-                                                  chip_center_y,
-                                                  2, // divisor factor for the next division in rows
-                                                  4, // divisor factor for the next division in cols
-                                                  right_sub_htree_initial_row,
-                                                  right_sub_htree_initial_col,
-                                                  depth - 1,
-                                                  value);
+    std::shared_ptr<Node> right =
+        create_vertical(hx,
+                        hy,
+                        all_possible_rows,
+                        all_possible_cols,
+                        chip_center_x,
+                        chip_center_y,
+                        2, // divisor factor for the next division in rows
+                        4, // divisor factor for the next division in cols
+                        right_sub_htree_initial_row,
+                        right_sub_htree_initial_col,
+                        Coordinates(chip_center_y + 1, chip_coverage_top_left.second),
+                        chip_coverage_bottom_right,
+                        depth - 1,
+                        value);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
@@ -340,6 +488,9 @@ create_htree(int hx,
     }
 
     center->out = nullptr;
+
+    center->coverage_top_left = chip_coverage_top_left;
+    center->coverage_bottom_right = chip_coverage_bottom_right;
 
     return center;
 }
@@ -425,12 +576,14 @@ main(int argc, char* argv[])
     cout << "root value = " << root->id << "\n";
 
     // Print the tree using traversal
-    cout << "Traversal: ";
+    cout << "Traversal:\n";
     print_htree(root);
     cout << endl;
 
     std::map<Coordinates, std::shared_ptr<Node>> htree_end_nodes;
     populate_coorodinates_to_ptr_map(htree_end_nodes, root);
+
+    cout << "Printing the map: " << endl;
 
     // Print the map elements
     for (const auto& entry : htree_end_nodes) {
