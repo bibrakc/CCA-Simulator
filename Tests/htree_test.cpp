@@ -169,7 +169,6 @@ struct HtreeNode
 
     bool is_htree_node_active()
     {
-
         bool send_channels_active = false;
         bool recv_channels_active = false;
         for (int i = 0; i < 4; i++) {
@@ -187,9 +186,19 @@ struct HtreeNode
             }
         }
 
-        return ((this->recv_channel_from_sink_cell->size() != 0) ||
-                (this->send_channel_to_sink_cell->size() != 0) || send_channels_active ||
-                recv_channels_active);
+        bool send_sink_active = false;
+        bool recv_sink_active = false;
+        if (this->is_end_htree_node()) {
+            if (this->send_channel_to_sink_cell->size() != 0) {
+                send_sink_active = true;
+            }
+            if (this->recv_channel_from_sink_cell->size() != 0) {
+                recv_sink_active = true;
+            }
+        }
+
+        return (send_channels_active || recv_channels_active || send_sink_active ||
+                recv_sink_active);
     }
 
     void transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
@@ -197,14 +206,13 @@ struct HtreeNode
                   CoordinatedOperon operon)
     {
         if (send == std::nullopt) {
-            std::cerr << this->id << ": Bug! send_channel cannot be null\n";
+            std::cerr << this->id << ": Bug! transfer: send_channel cannot be null\n";
             exit(0);
         }
         std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> current_send_channel = send.value();
 
-        if (current_send_channel->push(operon)) {
-            recv->pop();
-        } else {
+        if (!current_send_channel->push(operon)) {
+
             // Put this back since it was not sent in this cycle due to the send_channel
             // being full
             recv->push(operon);
@@ -265,9 +273,8 @@ struct HtreeNode
                               << " to sink cell\n";
 
                     Operon simple_operon = operon.second;
-                    if (this->send_channel_to_sink_cell->push(simple_operon)) {
-                        recv->pop();
-                    } else {
+                    if (!this->send_channel_to_sink_cell->push(simple_operon)) {
+
                         // Put this back since it was not sent in this cycle due to the send_channel
                         // being full
                         recv->push(operon);
@@ -276,8 +283,11 @@ struct HtreeNode
                     }
 
                 } else {
-                    std::cout << this->id << ":\tSend " << destination_cc_coorinates << " to out\n";
+
                     transfer(recv, send[this->local_index_send_channel_out], operon);
+                    std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                              << " to out | this->local_index_send_channel_out = "
+                              << this->local_index_send_channel_out << "\n";
                 }
                 // Check if it can go to `in_first`?
             } else if (is_coordinate_in_a_particular_range(this->in_first->coverage_top_left,
@@ -285,9 +295,10 @@ struct HtreeNode
                                                            destination_cc_coorinates)) {
 
                 // Send to in_first
-                std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                          << " to in_first\n";
+
                 transfer(recv, send[this->local_index_send_channel_in_first], operon);
+                std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                          << " to in_first returned from transder\n";
 
             } else if (is_coordinate_in_a_particular_range(this->in_second->coverage_top_left,
                                                            this->in_second->coverage_bottom_right,
@@ -308,7 +319,11 @@ struct HtreeNode
 
     void prepare_communication_cycle()
     {
-
+        std::cout << this->id << ": in prepare_communication_cycle()\n";
+        if (!this->is_htree_node_active()) {
+            return;
+        }
+        std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
         // Shift from recv_channel queues to send_channel queues
 
         // First recv from sink cell
@@ -325,16 +340,23 @@ struct HtreeNode
                 shift_from_a_single_recv_channel_to_send_channels(
                     this->recv_channel[recv_channel_index].value(), this->send_channel);
             }
+
             recv_channel_index = (recv_channel_index + 1) % 4;
         }
 
         this->current_recv_channel_to_start_a_cycle =
             (this->current_recv_channel_to_start_a_cycle + 1) % 4;
+
+        std::cout << this->id << ":\tleaving prepare_communication_cycle()\n";
     }
 
     void run_a_communication_cylce()
     {
-
+        std::cout << this->id << ": in run_a_communication_cylce\n";
+        if (!this->is_htree_node_active()) {
+            return;
+        }
+        std::cout << this->id << ":\t starting run_a_communication_cylce\n";
         // Send from `send_*` queues to remote `recv_*` queues
 
         // First send from end node to sink cell
@@ -362,9 +384,16 @@ struct HtreeNode
                 this->send_channel[this->local_index_send_channel_in_second],
                 this->in_second->recv_channel[this->remote_index_recv_channel_in_second]);
         }
-        // Then send from out
-        transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
-                              this->out->recv_channel[this->remote_index_recv_channel_out]);
+
+        if (this->id != 6) {
+            std::cout << this->id
+                      << ": remote_index_recv_channel_out = " << this->remote_index_recv_channel_out
+                      << "\n";
+            // Then send from out
+            transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
+                                  this->out->recv_channel[this->remote_index_recv_channel_out]);
+        }
+        std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
     }
 
     int id;
@@ -624,16 +653,17 @@ create_horizontal(int hx,
         // For left the `center` is to the right, therefore left will put in recv_channel[0] of
         // center
         left->remote_index_recv_channel_out = 0;
+        left->local_index_send_channel_out = center->remote_index_recv_channel_in_first;
+
+        center->local_index_send_channel_in_first = left->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
         left_coverage_top_left = left->coverage_top_left;
         left_coverage_bottom_right = left->coverage_bottom_right;
-
-        center->recv_channel[left->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        center->send_channel[left->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-
-        center->local_index_send_channel_in_first = left->remote_index_recv_channel_out;
     }
     // Work on right
     center->in_second = right;
@@ -655,16 +685,12 @@ create_horizontal(int hx,
         // For right the `center` is to the left, therefore right will put in recv_channel[2] of
         // center
         right->remote_index_recv_channel_out = 2;
+        right->local_index_send_channel_out = center->remote_index_recv_channel_in_second;
+
+        center->local_index_send_channel_in_second = right->remote_index_recv_channel_out;
 
         right_coverage_top_left = right->coverage_top_left;
         right_coverage_bottom_right = right->coverage_bottom_right;
-
-        center->recv_channel[right->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        center->send_channel[right->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-
-        center->local_index_send_channel_in_second = right->remote_index_recv_channel_out;
     }
 
     auto [union_coverage_top_left, union_coverage_bottom_right] =
@@ -757,25 +783,22 @@ create_vertical(int hx,
         up->send_channel[center->remote_index_recv_channel_in_first] =
             std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
-        // For up the `center` is down, therefore up will put in recv_channel[1] of center
+        // For `up` the `center` is down, therefore `up` will put in recv_channel[1] of center
         up->remote_index_recv_channel_out = 1;
 
         // For end htree nodes set their local out
         if (depth == 0) {
             up->local_index_send_channel_out = 3;
-            // std::cout << "set local_index_send_channel_out = 3 for up end node: " << up->id <<
-            // "\n";
         }
+        center->local_index_send_channel_in_first = up->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
         up_coverage_top_left = up->coverage_top_left;
         up_coverage_bottom_right = up->coverage_bottom_right;
-
-        center->recv_channel[up->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        center->send_channel[up->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-
-        center->local_index_send_channel_in_first = up->remote_index_recv_channel_out;
     }
 
     // Work on the down
@@ -802,15 +825,15 @@ create_vertical(int hx,
             down->local_index_send_channel_out = 1;
         }
 
+        center->local_index_send_channel_in_second = down->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+
         down_coverage_top_left = down->coverage_top_left;
         down_coverage_bottom_right = down->coverage_bottom_right;
-
-        center->recv_channel[center->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        center->send_channel[center->remote_index_recv_channel_out] =
-            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-
-        center->local_index_send_channel_in_second = center->remote_index_recv_channel_out;
     }
 
     auto [union_coverage_top_left, union_coverage_bottom_right] =
@@ -913,31 +936,31 @@ create_htree(int hx,
         index, chip_center_y, chip_center_x, in_bandwidth_value, out_bandwidth_value);
     index++;
 
+    // Work on left
     center->in_first = left;
-
-    center->recv_channel[0] =
-        std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-    center->send_channel[0] =
-        std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
     center->remote_index_recv_channel_in_first = 2; // I will put in recv_channel[2]
     if (left) {
         left->out = center;
 
-        left->recv_channel[2] =
+        left->recv_channel[center->remote_index_recv_channel_in_first] =
             std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        left->send_channel[2] =
+        left->send_channel[center->remote_index_recv_channel_in_first] =
             std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
         left->remote_index_recv_channel_out = 0; // Meaning it will use recv_channel[0]
+        left->local_index_send_channel_out = center->remote_index_recv_channel_in_first;
+
+        center->local_index_send_channel_in_first = left->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_first] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
     }
 
+    // Work on right
     center->in_second = right;
-
-    center->recv_channel[2] =
-        std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-    center->send_channel[2] =
-        std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
     // TODO: delete this as center will be delted and left and right parts of the base Htree will be
     // combined together
@@ -945,12 +968,20 @@ create_htree(int hx,
     if (right) {
         right->out = center;
 
-        right->recv_channel[0] =
+        right->recv_channel[center->remote_index_recv_channel_in_second] =
             std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
-        right->send_channel[0] =
+        right->send_channel[center->remote_index_recv_channel_in_second] =
             std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
         right->remote_index_recv_channel_out = 2; // Meaning it will use recv_channel[2]
+        right->local_index_send_channel_out = center->remote_index_recv_channel_in_second;
+
+        center->local_index_send_channel_in_second = right->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
     }
 
     center->out = nullptr;
@@ -1148,7 +1179,7 @@ main(int argc, char* argv[])
 
     print_details_of_an_htree_node(htree_all_nodes, 2);
 
-    print_details_of_an_htree_node(htree_all_nodes, 10);
+    print_details_of_an_htree_node(htree_all_nodes, 5);
 
     std::cout << std::endl;
     cout << "Testing Routing: " << endl;
