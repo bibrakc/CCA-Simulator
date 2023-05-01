@@ -1022,7 +1022,7 @@ populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<HtreeNode
     }
 }
 
-// Overload printing for HtreeNode
+
 void
 print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_all_nodes,
                                u_int32_t id)
@@ -1051,34 +1051,6 @@ print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_al
                   << ", local relationship: " << htree_all_nodes[id]->local_index_send_channel_out
                   << ", out_bandwidth: " << htree_all_nodes[id]->out_bandwidth << "\n";
     }
-    /*
-        Coordinates cc(2, 3);
-        std::cout << "Where to route " << cc << "?\n";
-
-        // First check if this is the end htree node
-        if (htree_all_nodes[id]->is_end_htree_node()) {
-            // Does the route needs to go thought the sink channel?
-            if (htree_all_nodes[id]->is_coordinate_in_my_range(cc)) {
-                std::cout << "\tSend to sink cell\n";
-            } else {
-                std::cout << "\tSend to out\n";
-            }
-            // Check if it can go to `in_first`?
-        } else if (is_coordinate_in_a_particular_range(
-                       htree_all_nodes[id]->in_first->coverage_top_left,
-                       htree_all_nodes[id]->in_first->coverage_bottom_right,
-                       cc)) {
-
-            std::cout << "\tSend to in_first\n";
-        } else if (is_coordinate_in_a_particular_range(
-                       htree_all_nodes[id]->in_second->coverage_top_left,
-                       htree_all_nodes[id]->in_second->coverage_bottom_right,
-                       cc)) {
-            std::cout << "\tSend to in_second\n";
-        } else {
-            std::cout << "\tSend to out\n";
-        }
-        */
 }
 
 int
@@ -1177,7 +1149,7 @@ main(int argc, char* argv[])
 
         print_details_of_an_htree_node(htree_all_nodes, 29);
 
-        print_details_of_an_htree_node(htree_all_nodes, 30); 
+        print_details_of_an_htree_node(htree_all_nodes, 30);
         */
 
     // Merge two halves of the Htree and remove the root
