@@ -110,21 +110,22 @@ class FixedSizeQueue
         return true;
     }
 
-    // Dequeue FIFO
+    // Get from front FIFO
     T front() const { return underlying_queue.front(); }
-    // Pop
+
+    // Pop/Dequeue
     void pop() { underlying_queue.pop(); }
 
-    // Recturn the current size of the queue
+    // Return the current size of the queue
     u_int32_t size() const { return underlying_queue.size(); }
 
-    // Recturn the max size of the queue
+    // Return the max size of the queue
     u_int32_t queue_size_max() const { return this->size_max; }
 };
 
 // TODO: see if we keep this globally here or use the HtreeNode function?
 bool
-is_coordinate_in_range(const Coordinates start, const Coordinates end, const Coordinates point)
+is_coordinate_in_a_particular_range(const Coordinates start, const Coordinates end, const Coordinates point)
 {
     // Check if the point is within the range
     return ((point.first >= start.first) && (point.first <= end.first) &&
@@ -153,7 +154,7 @@ struct HtreeNode
         return recv_channel_to_use->push(operon);
     }
 
-    bool is_coordinate_in_range(const Coordinates point)
+    bool is_coordinate_in_my_range(const Coordinates point)
     {
         // Check if the point is within the range
         return ((point.first >= this->coverage_top_left.first) &&
@@ -189,10 +190,87 @@ struct HtreeNode
                 recv_channels_active);
     }
 
+    void transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+                  std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
+                  CoordinatedOperon operon)
+    {
+        if (send == std::nullopt) {
+            std::cerr << this->id << ": Bug! send_channel cannot be null\n";
+            exit(0);
+        }
+        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> current_send_channel = send.value();
+
+        if (current_send_channel->push(operon)) {
+            recv->pop();
+        } else {
+            // Put this back since it was not sent in this cycle due to the send_channel
+            // being full
+            recv->push(operon);
+            std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size() << "\n";
+        }
+    }
+
+    void shift_from_a_single_recv_channel_to_send_channels(
+        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+        std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send[])
+    {
+
+        // Pop all operons into a vector to avoid deadlock on a send_channel if it is full.
+        // In case a send_channel is full then just push back that operon into the recv channel
+        std::vector<CoordinatedOperon> recv_operons;
+        while (recv->size()) {
+            recv_operons.push_back(recv->front());
+            recv->pop();
+        }
+
+        for (CoordinatedOperon operon : recv_operons) {
+
+            Coordinates destination_cc_coorinates = operon.first;
+
+            // Find route.
+
+            // First check if this is the end htree node
+            if (this->is_end_htree_node()) {
+                // Does the route needs to go thought the sink channel?
+                if (this->is_coordinate_in_my_range(destination_cc_coorinates)) {
+                    std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                              << " to sink cell\n";
+                } else {
+                    std::cout << this->id << ":\tSend " << destination_cc_coorinates << " to out\n";
+                    transfer(recv, send[this->relationship_with_my_out], operon);
+                }
+                // Check if it can go to `in_first`?
+            } else if (is_coordinate_in_a_particular_range(this->in_first->coverage_top_left,
+                                              this->in_first->coverage_bottom_right,
+                                              destination_cc_coorinates)) {
+
+                // Send to in_first
+                std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                          << " to in_first\n";
+                transfer(recv, send[this->relationship_with_my_in_first], operon);
+
+            } else if (is_coordinate_in_a_particular_range(this->in_second->coverage_top_left,
+                                              this->in_second->coverage_bottom_right,
+                                              destination_cc_coorinates)) {
+
+                // Send to in_second
+                std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                          << " to in_second\n";
+                transfer(recv, send[this->relationship_with_my_in_second], operon);
+            } else {
+
+                // Send to out
+                std::cout << this->id << ":\tSend " << destination_cc_coorinates << " to out\n";
+                transfer(recv, send[this->relationship_with_my_out], operon);
+            }
+        }
+    }
+
     void prepare_communication_cycle()
     {
 
-        // Shift from recv queues to send queues
+        // Shift from recv_channel queues to send_channel queues
+
     }
 
     void run_a_communication_cylce()
@@ -850,18 +928,18 @@ print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_al
     // First check if this is the end htree node
     if (htree_all_nodes[id]->is_end_htree_node()) {
         // Does the route needs to go thought the sink channel?
-        if (htree_all_nodes[id]->is_coordinate_in_range(cc)) {
+        if (htree_all_nodes[id]->is_coordinate_in_my_range(cc)) {
             std::cout << "\tSend to sink cell\n";
         } else {
             std::cout << "\tSend to out\n";
         }
         // Check if it can go to `in_first`?
-    } else if (is_coordinate_in_range(htree_all_nodes[id]->in_first->coverage_top_left,
+    } else if (is_coordinate_in_a_particular_range(htree_all_nodes[id]->in_first->coverage_top_left,
                                       htree_all_nodes[id]->in_first->coverage_bottom_right,
                                       cc)) {
 
         std::cout << "\tSend to in_first\n";
-    } else if (is_coordinate_in_range(htree_all_nodes[id]->in_second->coverage_top_left,
+    } else if (is_coordinate_in_a_particular_range(htree_all_nodes[id]->in_second->coverage_top_left,
                                       htree_all_nodes[id]->in_second->coverage_bottom_right,
                                       cc)) {
         std::cout << "\tSend to in_second\n";
