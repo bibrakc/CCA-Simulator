@@ -394,7 +394,7 @@ struct HtreeNode
             transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
                                   this->out->recv_channel[this->remote_index_recv_channel_out]);
         }
-      //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
+        //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
     }
 
     int id;
@@ -793,9 +793,8 @@ create_vertical(int hx,
         up->remote_index_recv_channel_out = 1;
 
         // For end htree nodes set their local out
-        if (depth == 0) {
-            up->local_index_send_channel_out = 3;
-        }
+        up->local_index_send_channel_out = 3;
+
         center->local_index_send_channel_in_first = up->remote_index_recv_channel_out;
 
         center->recv_channel[center->local_index_send_channel_in_first] =
@@ -827,9 +826,7 @@ create_vertical(int hx,
         down->remote_index_recv_channel_out = 3;
 
         // For end htree nodes set their local out
-        if (depth == 0) {
-            down->local_index_send_channel_out = 1;
-        }
+        down->local_index_send_channel_out = 1;
 
         center->local_index_send_channel_in_second = down->remote_index_recv_channel_out;
 
@@ -1187,12 +1184,14 @@ main(int argc, char* argv[])
 
     print_details_of_an_htree_node(htree_all_nodes, 6);
 
+    print_details_of_an_htree_node(htree_all_nodes, 14);
+
     std::cout << std::endl;
     cout << "Testing Routing: " << endl;
     std::cout << std::endl;
 
     // Insert seed Operon from sink cell to an end node cell
-    Coordinates cc(3, 21); // Final destination CC
+    Coordinates cc(34, 21); // Final destination CC
     Operon operon(101, 42);
     CoordinatedOperon seed_operon(cc, operon);
 
