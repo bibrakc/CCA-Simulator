@@ -319,11 +319,11 @@ struct HtreeNode
 
     void prepare_communication_cycle()
     {
-        std::cout << this->id << ": in prepare_communication_cycle()\n";
+        //  std::cout << this->id << ": in prepare_communication_cycle()\n";
         if (!this->is_htree_node_active()) {
             return;
         }
-        std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
+        // std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
         // Shift from recv_channel queues to send_channel queues
 
         // First recv from sink cell
@@ -347,16 +347,16 @@ struct HtreeNode
         this->current_recv_channel_to_start_a_cycle =
             (this->current_recv_channel_to_start_a_cycle + 1) % 4;
 
-        std::cout << this->id << ":\tleaving prepare_communication_cycle()\n";
+        // std::cout << this->id << ":\tleaving prepare_communication_cycle()\n";
     }
 
     void run_a_communication_cylce()
     {
-        std::cout << this->id << ": in run_a_communication_cylce\n";
+        //   std::cout << this->id << ": in run_a_communication_cylce\n";
         if (!this->is_htree_node_active()) {
             return;
         }
-        std::cout << this->id << ":\t starting run_a_communication_cylce\n";
+        // std::cout << this->id << ":\t starting run_a_communication_cylce\n";
         // Send from `send_*` queues to remote `recv_*` queues
 
         // First send from end node to sink cell
@@ -385,15 +385,16 @@ struct HtreeNode
                 this->in_second->recv_channel[this->remote_index_recv_channel_in_second]);
         }
 
-        if (this->id != 6) {
-            std::cout << this->id
-                      << ": remote_index_recv_channel_out = " << this->remote_index_recv_channel_out
-                      << "\n";
+        if (this->id != 30) {
+            /*  std::cout << this->id
+                       << ": remote_index_recv_channel_out = " <<
+               this->remote_index_recv_channel_out
+                       << "\n"; */
             // Then send from out
             transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
                                   this->out->recv_channel[this->remote_index_recv_channel_out]);
         }
-        std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
+      //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
     }
 
     int id;
@@ -688,6 +689,11 @@ create_horizontal(int hx,
         right->local_index_send_channel_out = center->remote_index_recv_channel_in_second;
 
         center->local_index_send_channel_in_second = right->remote_index_recv_channel_out;
+
+        center->recv_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
+        center->send_channel[center->local_index_send_channel_in_second] =
+            std::make_shared<FixedSizeQueue<CoordinatedOperon>>(center->in_bandwidth);
 
         right_coverage_top_left = right->coverage_top_left;
         right_coverage_bottom_right = right->coverage_bottom_right;
@@ -1179,14 +1185,14 @@ main(int argc, char* argv[])
 
     print_details_of_an_htree_node(htree_all_nodes, 2);
 
-    print_details_of_an_htree_node(htree_all_nodes, 5);
+    print_details_of_an_htree_node(htree_all_nodes, 6);
 
     std::cout << std::endl;
     cout << "Testing Routing: " << endl;
     std::cout << std::endl;
 
     // Insert seed Operon from sink cell to an end node cell
-    Coordinates cc(15, 3); // Final destination CC
+    Coordinates cc(3, 21); // Final destination CC
     Operon operon(101, 42);
     CoordinatedOperon seed_operon(cc, operon);
 
@@ -1209,7 +1215,7 @@ main(int argc, char* argv[])
             htree_all_nodes[i]->run_a_communication_cylce();
         }
 
-        std::cout << "is_htree_node_active # " << total_cycles << "\n";
+        // std::cout << "is_htree_node_active # " << total_cycles << "\n";
         for (int i = 0; i < htree_all_nodes.size(); i++) {
             global_active_htree |= htree_all_nodes[i]->is_htree_node_active();
         }
