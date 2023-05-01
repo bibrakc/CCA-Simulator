@@ -216,7 +216,8 @@ struct HtreeNode
             // Put this back since it was not sent in this cycle due to the send_channel
             // being full
             recv->push(operon);
-            std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size() << "\n";
+            std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size()
+                      << " current_send_channel.size = " << current_send_channel->size() << "\n";
         }
     }
 
@@ -269,8 +270,8 @@ struct HtreeNode
             if (this->is_end_htree_node()) {
                 // Does the route needs to go thought the sink channel?
                 if (this->is_coordinate_in_my_range(destination_cc_coorinates)) {
-                    std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                              << " to sink cell\n";
+                    /*  std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                               << " to sink cell\n"; */
 
                     Operon simple_operon = operon.second;
                     if (!this->send_channel_to_sink_cell->push(simple_operon)) {
@@ -285,9 +286,9 @@ struct HtreeNode
                 } else {
 
                     transfer(recv, send[this->local_index_send_channel_out], operon);
-                    std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                              << " to out | this->local_index_send_channel_out = "
-                              << this->local_index_send_channel_out << "\n";
+                    /*     std::cout << this->id << ":\tSend " << destination_cc_coorinates
+                                  << " to out | this->local_index_send_channel_out = "
+                                  << this->local_index_send_channel_out << "\n"; */
                 }
                 // Check if it can go to `in_first`?
             } else if (is_coordinate_in_a_particular_range(this->in_first->coverage_top_left,
@@ -297,21 +298,16 @@ struct HtreeNode
                 // Send to in_first
 
                 transfer(recv, send[this->local_index_send_channel_in_first], operon);
-                std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                          << " to in_first returned from transder\n";
 
             } else if (is_coordinate_in_a_particular_range(this->in_second->coverage_top_left,
                                                            this->in_second->coverage_bottom_right,
                                                            destination_cc_coorinates)) {
 
                 // Send to in_second
-                std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                          << " to in_second\n";
                 transfer(recv, send[this->local_index_send_channel_in_second], operon);
             } else {
 
                 // Send to out
-                std::cout << this->id << ":\tSend " << destination_cc_coorinates << " to out\n";
                 transfer(recv, send[this->local_index_send_channel_out], operon);
             }
         }
@@ -385,15 +381,10 @@ struct HtreeNode
                 this->in_second->recv_channel[this->remote_index_recv_channel_in_second]);
         }
 
-        if (this->id != 30) {
-            /*  std::cout << this->id
-                       << ": remote_index_recv_channel_out = " <<
-               this->remote_index_recv_channel_out
-                       << "\n"; */
-            // Then send from out
-            transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
-                                  this->out->recv_channel[this->remote_index_recv_channel_out]);
-        }
+        // Then send from out
+        transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
+                              this->out->recv_channel[this->remote_index_recv_channel_out]);
+
         //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
     }
 
@@ -600,12 +591,9 @@ create_horizontal(int hx,
     // Set the bandwidth
     if (depth == 0) {
         // TODO: Later instead of hardcoding `4` use the shape of the sink cell to determine
-        // the value
+        // the value. Or some other initial thickness of the link
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
-    } else if (depth == 1) {
-        out_bandwidth_value = 8;
-        in_bandwidth_value = 4;
     } else {
         out_bandwidth_value = right->out_bandwidth * 2;
         in_bandwidth_value = right->out_bandwidth;
@@ -1040,7 +1028,7 @@ print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_al
                                u_int32_t id)
 {
 
-    std::cout << "Htree Node: " << id << "\n";
+    std::cout << "Htree Node: " << htree_all_nodes[id]->id << " vector index = " << id << "\n";
     if (htree_all_nodes[id]->in_first) {
         std::cout << "\tin_first: " << htree_all_nodes[id]->in_first->id
                   << ", remote relationship: "
@@ -1178,24 +1166,58 @@ main(int argc, char* argv[])
 
     print_details_of_an_htree_node(htree_all_nodes, 0);
 
-    print_details_of_an_htree_node(htree_all_nodes, 1);
+    // print_details_of_an_htree_node(htree_all_nodes, 1);
 
+    /*
     print_details_of_an_htree_node(htree_all_nodes, 2);
 
-    print_details_of_an_htree_node(htree_all_nodes, 6);
+        print_details_of_an_htree_node(htree_all_nodes, 6);
 
-    print_details_of_an_htree_node(htree_all_nodes, 14);
+        print_details_of_an_htree_node(htree_all_nodes, 14);
+
+        print_details_of_an_htree_node(htree_all_nodes, 29);
+
+        print_details_of_an_htree_node(htree_all_nodes, 30); 
+        */
+
+    // Merge two halves of the Htree and remove the root
+    std::shared_ptr<HtreeNode> root_in_first_temp = root->in_first;
+    root_in_first_temp->out = root->in_second;
+    root->in_second->out = root->in_first;
+
+    print_details_of_an_htree_node(htree_all_nodes, root_in_first_temp->id);
+
+    /*     print_details_of_an_htree_node(htree_all_nodes, 14);
+        print_details_of_an_htree_node(htree_all_nodes, 29); */
 
     std::cout << std::endl;
     cout << "Testing Routing: " << endl;
     std::cout << std::endl;
 
     // Insert seed Operon from sink cell to an end node cell
-    Coordinates cc(34, 21); // Final destination CC
+    Coordinates cc(60, 21); // Final destination CC
     Operon operon(101, 42);
     CoordinatedOperon seed_operon(cc, operon);
 
     htree_all_nodes[0]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[0]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[1]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[3]->recv_channel_from_sink_cell->push(seed_operon);
+
+    htree_all_nodes[4]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[4]->recv_channel_from_sink_cell->push(seed_operon);
+
+    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
+    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
+
+    htree_all_nodes[26]->recv_channel_from_sink_cell->push(seed_operon);
+
+    Coordinates cc_zero(0, 0); // Final destination CC
+    Operon operon_zero(400, 42);
+    CoordinatedOperon seed_operon_zero(cc_zero, operon_zero);
+    htree_all_nodes[26]->recv_channel_from_sink_cell->push(seed_operon_zero);
 
     // Run simulation
     u_int32_t total_cycles = 0;
