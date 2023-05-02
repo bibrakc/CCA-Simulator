@@ -714,17 +714,17 @@ HtreeNetwork::construct_htree_network()
     }
 
     // Print the vector elements
-    std::cout << "All Possible Rows" << std::endl;
-    for (int i = 0; i < all_possible_rows.size(); ++i) {
+    /* std::cout << "All Possible Rows" << std::endl;
+    for (u_int32_t i = 0; i < all_possible_rows.size(); ++i) {
         std::cout << all_possible_rows[i] << " ";
     }
     std::cout << std::endl;
 
     std::cout << "All Possible Cols" << std::endl;
-    for (int i = 0; i < all_possible_cols.size(); ++i) {
+    for (u_int32_t i = 0; i < all_possible_cols.size(); ++i) {
         std::cout << all_possible_cols[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 
     root = create_htree(this->hx, this->hy, this->hdepth, all_possible_rows, all_possible_cols);
     std::cout << "root index = " << root->id << "\n";

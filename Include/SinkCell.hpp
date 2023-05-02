@@ -101,13 +101,12 @@ class SinkCell : public Cell
         this->hy = hy_in;
         this->hdepth = hdepth_in;
 
-        this->cooridates =
-            Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
+        this->cooridates = Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
 
         // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();
 
-        for (int i = 0; i < this->number_of_neighbors; i++) {
+        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
             // Channels/Links per neighbor in the 2D mesh
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);

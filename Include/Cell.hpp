@@ -45,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <stdlib.h>
 
-
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
 // Type of the Cell: ComputeCell or HtreeNode
@@ -223,12 +222,10 @@ class Cell
 
     static Coordinates cc_id_to_cooridinate(u_int32_t cc_id,
                                             computeCellShape shape,
-                                            u_int32_t dim_x,
                                             u_int32_t dim_y);
 
     static u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate,
                                           computeCellShape shape_,
-                                          u_int32_t dim_x,
                                           u_int32_t dim_y);
 
     inline bool cc_exists(const SignedCoordinates cc_coordinate);

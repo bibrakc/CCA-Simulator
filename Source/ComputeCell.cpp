@@ -50,7 +50,7 @@ print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
     std::cout << "Vertex ID: " << vertex->id << ", Addr: " << vertex_addr
               << " sssp_distance: " << vertex->sssp_distance << "\n";
 
-    for (int i = 0; i < vertex->number_of_edges; i++) {
+    for (u_int32_t i = 0; i < vertex->number_of_edges; i++) {
         std::cout << "\t\t[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight
                   << "} ]";
     }
@@ -169,7 +169,7 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates dst_cc_coordinates =
-            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_x, this->dim_y);
+            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         if constexpr (debug_code) {
             std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
@@ -235,7 +235,7 @@ ComputeCell::prepare_a_cycle()
 
     // Move the operon from previous cycle recv channel to thier destination: action queue or send
     // channel of a neighbor
-    for (int i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
+    for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
         if (this->recv_channel_per_neighbor[i]) {
             Operon operon_ = this->recv_channel_per_neighbor[i].value();
             u_int32_t dst_cc_id = operon_.first;
@@ -358,7 +358,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
     if (this->shape == computeCellShape::square) {
         int receiving_direction[4] = { 2, 3, 0, 1 };
 
-        for (int i = 0; i < this->send_channel_per_neighbor.size(); i++) {
+        for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
             if (this->send_channel_per_neighbor[i]) { // is not std::nullopt
 
@@ -417,7 +417,7 @@ ComputeCell::is_compute_cell_active()
 {
     bool send_channels = false;
     bool recv_channels = false;
-    for (int i = 0; i < this->number_of_neighbors; i++) {
+    for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
         if (this->send_channel_per_neighbor[i]) {
             send_channels = true;
             break;

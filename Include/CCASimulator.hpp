@@ -118,10 +118,7 @@ class CCASimulator
            << "\n";
     }
 
-    inline Coordinates get_compute_cell_coordinates(u_int32_t cc_id,
-                                                    computeCellShape shape_of_compute_cells,
-                                                    u_int32_t dim_x,
-                                                    u_int32_t dim_y);
+    inline Coordinates get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y);
 
     Coordinates cc_id_to_cooridinate(u_int32_t cc_id);
 

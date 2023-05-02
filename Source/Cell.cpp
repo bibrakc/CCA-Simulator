@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
-
 // Utility function to convert type of pair
 template<typename To, typename From>
 inline std::pair<To, To>
@@ -65,8 +64,8 @@ Cell::add_neighbor_compute_cells()
         if (this->cc_exists(left_neighbor)) {
             auto left_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(left_neighbor);
 
-            auto left_neighbor_id = Cell::cc_cooridinate_to_id(
-                left_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
+            auto left_neighbor_id =
+                Cell::cc_cooridinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
@@ -80,8 +79,8 @@ Cell::add_neighbor_compute_cells()
         if (this->cc_exists(up_neighbor)) {
             auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
 
-            auto up_neighbor_id = Cell::cc_cooridinate_to_id(
-                up_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
+            auto up_neighbor_id =
+                Cell::cc_cooridinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
@@ -94,8 +93,8 @@ Cell::add_neighbor_compute_cells()
         if (this->cc_exists(right_neighbor)) {
             auto right_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(right_neighbor);
 
-            auto right_neighbor_id = Cell::cc_cooridinate_to_id(
-                right_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
+            auto right_neighbor_id =
+                Cell::cc_cooridinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
@@ -107,8 +106,8 @@ Cell::add_neighbor_compute_cells()
         if (this->cc_exists(down_neighbor)) {
             auto down_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
-            auto down_neighbor_id = Cell::cc_cooridinate_to_id(
-                down_neighbor_unsigned, this->shape, this->dim_x, this->dim_y);
+            auto down_neighbor_id =
+                Cell::cc_cooridinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
@@ -132,11 +131,12 @@ inline bool
 Cell::cc_exists(const SignedCoordinates cc_coordinate)
 {
     auto [cc_coordinate_x, cc_coordinate_y] = cc_coordinate;
+    int zero = 0;
     if (this->shape == computeCellShape::square) {
 
         // If invalid
-        if ((cc_coordinate_x < 0) || (cc_coordinate_x >= this->dim_y) || (cc_coordinate_y < 0) ||
-            (cc_coordinate_y >= this->dim_x)) {
+        if ((cc_coordinate_x < zero) || (cc_coordinate_x >= static_cast<int>(this->dim_y)) ||
+            (cc_coordinate_y < zero) || (cc_coordinate_y >= static_cast<int>(this->dim_x))) {
             return false;
         } else {
             return true;
@@ -241,10 +241,7 @@ Cell::get_number_of_neighbors(computeCellShape shape_in)
 }
 
 Coordinates
-Cell::cc_id_to_cooridinate(u_int32_t cc_id,
-                           computeCellShape shape_,
-                           u_int32_t dim_x,
-                           u_int32_t dim_y)
+Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t dim_y)
 {
 
     if (shape_ == computeCellShape::square) {
@@ -256,10 +253,7 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id,
 }
 
 u_int32_t
-Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
-                           computeCellShape shape_,
-                           u_int32_t dim_x,
-                           u_int32_t dim_y)
+Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, u_int32_t dim_y)
 {
 
     if (shape_ == computeCellShape::square) {

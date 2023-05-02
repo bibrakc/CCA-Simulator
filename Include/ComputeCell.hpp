@@ -147,8 +147,7 @@ class ComputeCell : public Cell
         this->hy = hy_in;
         this->hdepth = hdepth_in;
 
-        this->cooridates =
-            ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_x, this->dim_y);
+        this->cooridates = ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
 
         this->sink_cell = this->get_cc_htree_sink_cell();
 
@@ -161,7 +160,7 @@ class ComputeCell : public Cell
         this->add_neighbor_compute_cells();
 
         this->staging_operon_from_logic = std::nullopt;
-        for (int i = 0; i < this->number_of_neighbors; i++) {
+        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
         }

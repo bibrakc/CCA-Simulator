@@ -65,19 +65,17 @@ For a CCA chip of 4x4 with square shaped compute cells
 (0,3)----(1,3)----(2,3)----(3,3)
 */
 inline Coordinates
-CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
-                                           computeCellShape shape_of_compute_cells,
-                                           u_int32_t dim_x,
-                                           u_int32_t dim_y)
+CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y)
 {
+    // Note: Later when new shapes are added this function night need to be changed to decide based
+    // on the cell shape and chip dimensions
     return Coordinates(cc_id % dim_y, cc_id / dim_y);
 }
 
 Coordinates
 CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
 {
-    return ComputeCell::cc_id_to_cooridinate(
-        cc_id, this->shape_of_compute_cells, this->dim_x, this->dim_y);
+    return ComputeCell::cc_id_to_cooridinate(cc_id, this->shape_of_compute_cells, this->dim_y);
 }
 
 u_int32_t
@@ -85,7 +83,7 @@ CCASimulator::cc_cooridinate_to_id(Coordinates cc_cooridinate)
 {
 
     return ComputeCell::cc_cooridinate_to_id(
-        cc_cooridinate, this->shape_of_compute_cells, this->dim_x, this->dim_y);
+        cc_cooridinate, this->shape_of_compute_cells, this->dim_y);
 }
 
 // Create the chip of type square cells with Htree. It includes creating the cells and initializing
@@ -239,51 +237,51 @@ CCASimulator::run_simulation()
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
 // previous cycle)
 #pragma omp parallel for
-        for (int i = 0; i < this->CCA_chip.size(); i++) {
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle();
         }
 
 // Prepare communication cycle
 #pragma omp parallel for
-        for (int i = 0; i < this->CCA_chip.size(); i++) {
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle();
         }
 
         // std::cout << "prepare_communication_cycle # " << total_cycles << "\n";
         if (this->htree_network.hdepth != 0) {
-            for (int i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
+            for (u_int32_t i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
                 this->htree_network.htree_all_nodes[i]->prepare_communication_cycle();
             }
         }
 
 // Run communication cycle
 #pragma omp parallel for
-        for (int i = 0; i < this->CCA_chip.size(); i++) {
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
 
         if (this->htree_network.hdepth != 0) {
             // std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
-            for (int i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
+            for (u_int32_t i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
                 this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
             }
         }
 
 // Check for termination
 #pragma omp parallel for reduction(| : global_active_cc_local)
-        for (int i = 0; i < this->CCA_chip.size(); i++) {
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
         }
 
         if (this->htree_network.hdepth != 0) {
-            for (int i = 0; i < htree_network.htree_all_nodes.size(); i++) {
+            for (u_int32_t i = 0; i < htree_network.htree_all_nodes.size(); i++) {
                 global_active_htree |= htree_network.htree_all_nodes[i]->is_htree_node_active();
             }
         }
         total_cycles++;
 
         is_system_active = global_active_cc_local || global_active_htree;
-        //is_system_active = global_active_cc_local;
+        // is_system_active = global_active_cc_local;
     }
     this->global_active_cc = global_active_cc_local;
 }

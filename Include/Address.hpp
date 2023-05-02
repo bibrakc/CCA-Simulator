@@ -55,14 +55,6 @@ struct Address
         this->addr = -1;
     }
 
-    // Copy constructor
-    Address(const Address& addr_in)
-    {
-
-        this->cc_id = addr_in.cc_id;
-        this->addr = addr_in.addr;
-    }
-
     Address(int id, int address_in)
     {
         this->cc_id = id;
