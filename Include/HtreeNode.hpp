@@ -33,11 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HTREE_NODE_HPP
 #define HTREE_NODE_HPP
 
-#include "Cell.hpp" // For Coordinates, really might not be needed
 #include "Operon.hpp"
+#include "SinkCell.hpp"
 #include "types.hpp"
 
 #include <memory>
+#include <optional>
 
 // H-Tree Node
 struct HtreeNode
@@ -99,7 +100,7 @@ struct HtreeNode
     Coordinates coverage_bottom_right;
 
     // ID of the sink cell that this HtreeNode connects to. Only if it is an end htree node.
-    std::optional<u_int32_t> sink_cell_connector;
+    std::optional<std::shared_ptr<SinkCell>> sink_cell_connector;
 
     // Only to be used for end htree nodes that connect with the CCA chip through sink cells
     std::shared_ptr<FixedSizeQueue<Operon>> send_channel_to_sink_cell;

@@ -121,7 +121,7 @@ CCASimulator::create_square_cell_htree_chip()
 
                 // Create the sink cells where the chip connects to the underlying
                 // second layer network (for example the Htree)
-                this->CCA_chip.push_back(
+                std::shared_ptr<SinkCell> sink_cell =
                     std::make_shared<SinkCell>(cc_id,
                                                CellType::sink_cell,
                                                htree_node_address_entry->second,
@@ -130,7 +130,12 @@ CCASimulator::create_square_cell_htree_chip()
                                                this->dim_y,
                                                this->hx,
                                                this->hy,
-                                               this->hdepth));
+                                               this->hdepth);
+                this->CCA_chip.push_back(sink_cell);
+
+                // Connect the underlying Htree end node to this sink cell
+                htree_node_address_entry->second->sink_cell_connector = sink_cell;
+
                 next_col_sink_cells += this->hy;
 
             } else {
