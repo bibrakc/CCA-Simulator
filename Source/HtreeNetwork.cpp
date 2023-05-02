@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 
-#include "common_methods.hpp"
 #include "operators.hpp"
 #include "types.hpp"
 
@@ -105,6 +104,33 @@ union_coverage_ranges(const Coordinates& c1,
                       const Coordinates& c4)
 {
     return std::pair<Coordinates, Coordinates>(find_min(c1, c2, c3, c4), find_max(c1, c2, c3, c4));
+}
+
+u_int32_t
+find_closest_value(const std::vector<u_int32_t>& values, u_int32_t point)
+{
+    int left = 0;
+    int right = values.size() - 1;
+    u_int32_t closest = values[0];
+    int point_signed_integer = static_cast<int>(point);
+
+    while (left <= right) {
+        int mid = (left + right) / 2;
+
+        int mid_value_signed_integer = static_cast<int>(values[mid]);
+
+        if (abs(mid_value_signed_integer - point_signed_integer) <
+            abs(static_cast<int>(closest) - point_signed_integer)) {
+            closest = values[mid];
+        }
+
+        if (values[mid] > point) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return closest;
 }
 
 std::shared_ptr<HtreeNode>
@@ -661,6 +687,8 @@ HtreeNetwork::construct_htree_network()
     u_int32_t range_rows = total_rows_cols_with_htree_nodes * this->hx;
     u_int32_t range_cols = total_rows_cols_with_htree_nodes * this->hy;
 
+    // All possible coordiantes per row and cols. Useful to find the exact end node using the
+    // find_closest_value() method
     std::vector<u_int32_t> all_possible_rows;
     std::vector<u_int32_t> all_possible_cols;
 
@@ -674,13 +702,13 @@ HtreeNetwork::construct_htree_network()
 
     // Print the vector elements
     /* std::cout << "All Possible Rows" << std::endl;
-    for (u_int32_t i = 0; i < all_possible_rows.size(); ++i) {
+    for (u_int32_t i = 0; i < this->all_possible_rows.size(); ++i) {
         std::cout << all_possible_rows[i] << " ";
     }
     std::cout << std::endl;
 
     std::cout << "All Possible Cols" << std::endl;
-    for (u_int32_t i = 0; i < all_possible_cols.size(); ++i) {
+    for (u_int32_t i = 0; i < this->all_possible_cols.size(); ++i) {
         std::cout << all_possible_cols[i] << " ";
     }
     std::cout << std::endl; */

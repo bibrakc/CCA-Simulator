@@ -150,6 +150,10 @@ class ComputeCell : public Cell
         this->cooridates = ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
 
         this->sink_cell = this->get_cc_htree_sink_cell();
+        if (this->sink_cell) {
+            std::cout << this->id << ": cell id with coori: " << this->cooridates
+                      << " has sink --> " << this->sink_cell.value() << "\n";
+        }
 
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);

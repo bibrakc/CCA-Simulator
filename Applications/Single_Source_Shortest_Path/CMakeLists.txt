@@ -44,7 +44,6 @@ set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
 add_library(CCACommons
-            ${SourceDirectory}/common_methods.cpp
             ${SourceDirectory}/Operon.cpp
             ${SourceDirectory}/operators.cpp
             ${SourceDirectory}/types.cpp
