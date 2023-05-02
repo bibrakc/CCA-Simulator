@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
+#include "HtreeNework.hpp"
+#include "HtreeNode.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
 
@@ -46,6 +48,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <queue>
 #include <stdlib.h>
+
+// Used for `pow` function
+#include <cmath>
 
 typedef unsigned long u_long;
 
@@ -72,6 +77,9 @@ class CCASimulator
     bool global_active_cc;
     u_long total_cycles;
 
+    // Seconds layer network
+    HtreeNetwork htree_network;
+
     CCASimulator(computeCellShape shape_in,
                  u_int32_t dim_x_in,
                  u_int32_t dim_y_in,
@@ -92,6 +100,7 @@ class CCASimulator
         this->global_active_cc = false;
         this->total_cycles = 0;
         this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
+
         this->create_the_chip();
     }
 
@@ -108,11 +117,10 @@ class CCASimulator
            << "\n";
     }
 
-    inline Coordinates get_compute_cell_coordinates(
-        u_int32_t cc_id,
-        computeCellShape shape_of_compute_cells,
-        u_int32_t dim_x,
-        u_int32_t dim_y);
+    inline Coordinates get_compute_cell_coordinates(u_int32_t cc_id,
+                                                    computeCellShape shape_of_compute_cells,
+                                                    u_int32_t dim_x,
+                                                    u_int32_t dim_y);
 
     Coordinates cc_id_to_cooridinate(u_int32_t cc_id);
 

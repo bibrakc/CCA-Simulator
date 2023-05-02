@@ -35,13 +35,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
+#include "HtreeNode.hpp"
 #include "Operon.hpp"
 #include "SinkCell.hpp"
 #include "Task.hpp"
 
 #include "memory_management.hpp"
 
+#include <cmath>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
 #include <stdlib.h>
+#include <vector>
 
 // Chip's coordinates are from top-left....
 /*
@@ -63,8 +70,6 @@ CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id,
                                            u_int32_t dim_x,
                                            u_int32_t dim_y)
 {
-    /* std::cout << "cc_id: " << cc_id << " dim_x: " << dim_x << " dim_y: " << dim_y << " ---> ("
-              << cc_id % dim_y << ", " << cc_id / dim_y << ")\n"; */
     return Coordinates(cc_id % dim_y, cc_id / dim_y);
 }
 
@@ -219,11 +224,17 @@ CCASimulator::run_simulation()
     // TODO: later we can remove this and implement the termination detection itself. But for
     // now this works.
     this->total_cycles = 0;
-    bool global_active_cc_local = true;
 
-    while (global_active_cc_local) {
+    bool global_active_cc_local = true;
+    bool global_active_htree = true;
+
+    bool is_system_active = true;
+
+    while (is_system_active) {
 
         global_active_cc_local = false;
+        global_active_htree = false;
+        is_system_active = false;
 
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
 // previous cycle)
@@ -238,17 +249,34 @@ CCASimulator::run_simulation()
             this->CCA_chip[i]->prepare_a_communication_cycle();
         }
 
+        // std::cout << "prepare_communication_cycle # " << total_cycles << "\n";
+        for (int i = 0; i < this->htree_all_nodes.size(); i++) {
+            this->htree_all_nodes[i]->prepare_communication_cycle();
+        }
+
 // Run communication cycle
 #pragma omp parallel for
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
+
+        // std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
+        for (int i = 0; i < this->htree_all_nodes.size(); i++) {
+            this->htree_all_nodes[i]->run_a_communication_cylce();
+        }
+
 // Check for termination
 #pragma omp parallel for reduction(| : global_active_cc_local)
         for (int i = 0; i < this->CCA_chip.size(); i++) {
             global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
         }
+
+        for (int i = 0; i < htree_all_nodes.size(); i++) {
+            global_active_htree |= htree_all_nodes[i]->is_htree_node_active();
+        }
         total_cycles++;
+
+        is_system_active = global_active_cc_local || global_active_htree;
     }
     this->global_active_cc = global_active_cc_local;
 }

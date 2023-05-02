@@ -59,7 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static u_int32_t test_vertex;
 
-// TODO: Curretly this SSSPAction class has nothing different than its base class Action. See if
+// TODO: Currently this SSSPAction class has nothing different than its base class Action. See if
 // this inheritence makes sense later when the project matures.
 class SSSPAction : public Action
 {

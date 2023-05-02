@@ -30,20 +30,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef OPERON_HPP
-#define OPERON_HPP
+#ifndef HTREE_NETWORK_HPP
+#define HTREE_NETWORK_HPP
 
-#include "Action.hpp"
+#include "HtreeNode.hpp"
 
 #include "types.hpp"
 
-#include <utility>
+#include <cmath>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
+#include <stdlib.h>
+#include <vector>
 
-// cc_id, Action
-typedef std::pair<u_int32_t, Action> Operon;
+class HtreeNework
+{
+  public:
+    HtreeNework(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in)
+        : hx(hx_in)
+        , hy(hy_in)
+        , hdepth(hdepth_in)
+    {
+        this->construct_htree_network();
+    }
 
-// For Htree routing. At the end node of Htree that connects to a sink cell take the Coordinates out
-// and send the simple Operon to the CCA chip though the sink cell
-typedef std::pair<Coordinates, Operon> CoordinatedOperon;
+    void construct_htree_network();
+ 
+    // Members
 
-#endif // OPERON_HPP
+    u_int32_t hx, hy, hdepth;
+
+    std::shared_ptr<HtreeNode> root;
+
+    std::map<Coordinates, std::shared_ptr<HtreeNode>> htree_end_nodes;
+    std::vector<std::shared_ptr<HtreeNode>> htree_all_nodes;
+};
+
+#endif // HTREE_NETWORK_HPP

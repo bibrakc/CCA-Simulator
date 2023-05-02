@@ -38,17 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Task.hpp"
 
 #include "memory_management.hpp"
+#include "types.hpp"
 
 #include <map>
 #include <optional>
 #include <queue>
 #include <stdlib.h>
 
-typedef std::pair<u_int32_t, u_int32_t> Coordinates;
-
-// Overload printing for Coordinates
-std::ostream&
-operator<<(std::ostream& os, const Coordinates& coord);
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 

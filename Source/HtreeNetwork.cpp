@@ -1,20 +1,48 @@
+/*
+BSD 3-Clause License
+
+Copyright (c) 2023, Bibrak Qamar
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#include "HtreeNetwork.hpp"
+#include "HtreeNode.hpp"
+
+#include "types.hpp"
+
+#include "utility"
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
-#include <queue>
+#include <stdlib.h>
 #include <vector>
-
-using namespace std;
-
-typedef std::pair<u_int32_t, u_int32_t> Coordinates;
-
-// CC Id and numerical payload instead of action for development
-typedef std::pair<u_int32_t, u_int32_t> Operon;
-
-// For Htree routing. Later take the Coordinates out and send to the CCA chip though the sink cell
-typedef std::pair<Coordinates, Operon> CoordinatedOperon;
 
 Coordinates
 findMin(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
@@ -77,431 +105,21 @@ union_coverage_ranges(const Coordinates& c1,
     return std::pair<Coordinates, Coordinates>(findMin(c1, c2, c3, c4), findMax(c1, c2, c3, c4));
 }
 
-// Overload printing for Coordinates
-std::ostream&
-operator<<(std::ostream& os, const Coordinates coordinates)
-{
-    os << "(" << coordinates.first << ", " << coordinates.second << ")";
-    return os;
-}
-
-// Fixed size queue to be used for storing Operons. The fixed queue size is the bandwidth at that
-// HtreeNode
-template<typename T>
-class FixedSizeQueue
-{
-  private:
-    std::queue<T> underlying_queue;
-    u_int32_t size_max;
-
-  public:
-    FixedSizeQueue(u_int32_t size_max_in)
-        : size_max(size_max_in)
-    {
-    }
-
-    bool push(const T& value)
-    {
-        // Not able to enqueue. Return false
-        if (underlying_queue.size() == this->size_max) {
-            return false;
-        }
-        this->underlying_queue.push(value);
-        return true;
-    }
-
-    // Get from front FIFO
-    T front() const { return underlying_queue.front(); }
-
-    // Pop/Dequeue
-    void pop() { underlying_queue.pop(); }
-
-    // Return the current size of the queue
-    u_int32_t size() const { return underlying_queue.size(); }
-
-    // Return the max size of the queue
-    u_int32_t queue_size_max() const { return this->size_max; }
-};
-
-// TODO: see if we keep this globally here or use the HtreeNode function?
-bool
-is_coordinate_in_a_particular_range(const Coordinates start,
-                                    const Coordinates end,
-                                    const Coordinates point)
-{
-    // Check if the point is within the range
-    return ((point.first >= start.first) && (point.first <= end.first) &&
-            (point.second >= start.second) && (point.second <= end.second));
-}
-
-// H-Tree Node
-struct HtreeNode
-{
-
-    bool put_operon_from_sink_cell(const CoordinatedOperon operon)
-    {
-        return this->recv_channel_from_sink_cell->push(operon);
-    }
-
-    /*     bool put_operon_from_within_htree_node(const CoordinatedOperon operon,
-                                               u_int32_t relationship_of_sender)
-        {
-            std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv_channel_to_use;
-            if (this->recv_channel[relationship_of_sender]) {
-                recv_channel_to_use = this->recv_channel[relationship_of_sender].value();
-            } else {
-                std::cerr << "Bug! Using a recv_channel that doesn't exist\n";
-                exit(0);
-            }
-            return recv_channel_to_use->push(operon);
-        } */
-
-    bool is_coordinate_in_my_range(const Coordinates point)
-    {
-        // Check if the point is within the range
-        return ((point.first >= this->coverage_top_left.first) &&
-                (point.first <= this->coverage_bottom_right.first) &&
-                (point.second >= this->coverage_top_left.second) &&
-                (point.second <= this->coverage_bottom_right.second));
-    }
-
-    bool is_end_htree_node() { return (!this->in_first && !this->in_second); }
-
-    bool is_htree_node_active()
-    {
-        bool send_channels_active = false;
-        bool recv_channels_active = false;
-        for (int i = 0; i < 4; i++) {
-            if (this->send_channel[i]) {
-                if (this->send_channel[i].value()->size() != 0) {
-                    send_channels_active = true;
-                    break;
-                }
-            }
-            if (this->recv_channel[i]) {
-                if (this->recv_channel[i].value()->size() != 0) {
-                    recv_channels_active = true;
-                    break;
-                }
-            }
-        }
-
-        bool send_sink_active = false;
-        bool recv_sink_active = false;
-        if (this->is_end_htree_node()) {
-            if (this->send_channel_to_sink_cell->size() != 0) {
-                send_sink_active = true;
-            }
-            if (this->recv_channel_from_sink_cell->size() != 0) {
-                recv_sink_active = true;
-            }
-        }
-
-        return (send_channels_active || recv_channels_active || send_sink_active ||
-                recv_sink_active);
-    }
-
-    void transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
-                  std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
-                  CoordinatedOperon operon)
-    {
-        if (send == std::nullopt) {
-            std::cerr << this->id << ": Bug! transfer: send_channel cannot be null\n";
-            exit(0);
-        }
-        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> current_send_channel = send.value();
-
-        if (!current_send_channel->push(operon)) {
-
-            // Put this back since it was not sent in this cycle due to the send_channel
-            // being full
-            recv->push(operon);
-            std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size()
-                      << " current_send_channel.size = " << current_send_channel->size() << "\n";
-        }
-    }
-
-    void transfer_send_to_recv(
-        std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
-        std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv)
-    {
-
-        if (send == std::nullopt) {
-            std::cerr << this->id << ": Bug! transfer_send_to_recv: send_channel cannot be null\n";
-            exit(0);
-        }
-        if (recv == std::nullopt) {
-            std::cerr << this->id << ": Bug! transfer_send_to_recv: recv_channel cannot be null\n";
-            exit(0);
-        }
-
-        while (send.value()->size()) {
-
-            CoordinatedOperon operon = send.value()->front();
-            if (recv.value()->push(operon)) {
-                send.value()->pop();
-            } else {
-                // recv is full
-                break;
-            }
-        }
-    }
-
-    void shift_from_a_single_recv_channel_to_send_channels(
-        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
-        std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send[])
-    {
-
-        // Pop all operons into a vector to avoid deadlock on a send_channel if it is full.
-        // In case a send_channel is full then just push back that operon into the recv channel
-        std::vector<CoordinatedOperon> recv_operons;
-        while (recv->size()) {
-            recv_operons.push_back(recv->front());
-            recv->pop();
-        }
-
-        for (CoordinatedOperon operon : recv_operons) {
-
-            Coordinates destination_cc_coorinates = operon.first;
-
-            // Find route.
-
-            // First check if this is the end htree node
-            if (this->is_end_htree_node()) {
-                // Does the route needs to go thought the sink channel?
-                if (this->is_coordinate_in_my_range(destination_cc_coorinates)) {
-                    /*  std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                               << " to sink cell\n"; */
-
-                    Operon simple_operon = operon.second;
-                    if (!this->send_channel_to_sink_cell->push(simple_operon)) {
-
-                        // Put this back since it was not sent in this cycle due to the send_channel
-                        // being full
-                        recv->push(operon);
-                        std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size()
-                                  << "\n";
-                    }
-
-                } else {
-
-                    transfer(recv, send[this->local_index_send_channel_out], operon);
-                    /*     std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                                  << " to out | this->local_index_send_channel_out = "
-                                  << this->local_index_send_channel_out << "\n"; */
-                }
-                // Check if it can go to `in_first`?
-            } else if (is_coordinate_in_a_particular_range(this->in_first->coverage_top_left,
-                                                           this->in_first->coverage_bottom_right,
-                                                           destination_cc_coorinates)) {
-
-                // Send to in_first
-
-                transfer(recv, send[this->local_index_send_channel_in_first], operon);
-
-            } else if (is_coordinate_in_a_particular_range(this->in_second->coverage_top_left,
-                                                           this->in_second->coverage_bottom_right,
-                                                           destination_cc_coorinates)) {
-
-                // Send to in_second
-                transfer(recv, send[this->local_index_send_channel_in_second], operon);
-            } else {
-
-                // Send to out
-                transfer(recv, send[this->local_index_send_channel_out], operon);
-            }
-        }
-    }
-
-    void prepare_communication_cycle()
-    {
-        //  std::cout << this->id << ": in prepare_communication_cycle()\n";
-        if (!this->is_htree_node_active()) {
-            return;
-        }
-        // std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
-        // Shift from recv_channel queues to send_channel queues
-
-        // First recv from sink cell
-        if (this->is_end_htree_node()) {
-            shift_from_a_single_recv_channel_to_send_channels(this->recv_channel_from_sink_cell,
-                                                              this->send_channel);
-        }
-
-        // Then from in and out recv channels
-        u_int32_t recv_channel_index = this->current_recv_channel_to_start_a_cycle;
-        for (int i = 0; i < 4; i++) {
-
-            if (this->recv_channel[recv_channel_index] != std::nullopt) {
-                shift_from_a_single_recv_channel_to_send_channels(
-                    this->recv_channel[recv_channel_index].value(), this->send_channel);
-            }
-
-            recv_channel_index = (recv_channel_index + 1) % 4;
-        }
-
-        this->current_recv_channel_to_start_a_cycle =
-            (this->current_recv_channel_to_start_a_cycle + 1) % 4;
-
-        // std::cout << this->id << ":\tleaving prepare_communication_cycle()\n";
-    }
-
-    void run_a_communication_cylce()
-    {
-        //   std::cout << this->id << ": in run_a_communication_cylce\n";
-        if (!this->is_htree_node_active()) {
-            return;
-        }
-        // std::cout << this->id << ":\t starting run_a_communication_cylce\n";
-        // Send from `send_*` queues to remote `recv_*` queues
-
-        // First send from end node to sink cell
-        if (this->is_end_htree_node()) {
-
-            while (this->send_channel_to_sink_cell->size()) {
-                Operon operon = this->send_channel_to_sink_cell->front();
-                std::cout << this->id << ": Operon with cc id: " << operon.first
-                          << " will be sent to sink cell depending on its recv queue\n";
-                // TODO: implements tihs connection to the CCA chip later
-                // use a vector as is being used in
-                // shift_from_a_single_recv_channel_to_send_channels to avoid deadlock
-                this->send_channel_to_sink_cell->pop();
-            }
-        }
-
-        if (!this->is_end_htree_node()) { // End nodes dont have in_first and in_second
-            // Then send from in_first
-            transfer_send_to_recv(
-                this->send_channel[this->local_index_send_channel_in_first],
-                this->in_first->recv_channel[this->remote_index_recv_channel_in_first]);
-
-            // Then send from in_second
-            transfer_send_to_recv(
-                this->send_channel[this->local_index_send_channel_in_second],
-                this->in_second->recv_channel[this->remote_index_recv_channel_in_second]);
-        }
-
-        // Then send from out
-        transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
-                              this->out->recv_channel[this->remote_index_recv_channel_out]);
-
-        //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
-    }
-
-    int id;
-    Coordinates cooridinates;
-
-    std::shared_ptr<HtreeNode> in_first;  // up or left
-    std::shared_ptr<HtreeNode> in_second; // down or right
-    std::shared_ptr<HtreeNode> out;       // outside of this htree
-
-    // How to know if this node is up, down, left, or right of its neighbor node?
-    // The neighbor node itself will set this to either 0, 1, 2 or 3.
-    // 0: I am your left neighbor, which means that when you output operons to me please put
-    // in my `recv_in_channel[0]`.
-    // 1: Likewie this is up, meaning out in my `recv_in_channel[1]`
-    // 2: right `recv_in_channel[2]`
-    // 3: down `recv_in_channel[3]`
-    u_int32_t remote_index_recv_channel_out;
-
-    u_int32_t remote_index_recv_channel_in_first;
-    u_int32_t remote_index_recv_channel_in_second;
-
-    u_int32_t local_index_send_channel_out;
-
-    u_int32_t local_index_send_channel_in_first;
-    u_int32_t local_index_send_channel_in_second;
-
-    int in_bandwidth;  // Number of channels per in lane
-    int out_bandwidth; // Number of channels per out lane
-
-    Coordinates coverage_top_left;
-    Coordinates coverage_bottom_right;
-
-    // ID of the sink cell that this HtreeNode connects to. Only if it is an end htree node.
-    std::optional<u_int32_t> sink_cell_connector;
-
-    // Only to be used for end htree nodes that connect with the CCA chip through sink cells
-    std::shared_ptr<FixedSizeQueue<Operon>> send_channel_to_sink_cell;
-    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv_channel_from_sink_cell;
-
-    std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send_channel[4];
-    std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv_channel[4];
-
-    // This is used to be fair in routing. When we start a communication cycle from the same
-    // recv_channel what will happen is that that channel will get priority in sending its operons
-    // at expense of thoer channels/neighbors. We want to start every cycle with a different
-    // starting recv_channel and then alternate between them. This will provide fairness and not
-    // cause congestion at any one link.
-    u_int32_t current_recv_channel_to_start_a_cycle{};
-
-    HtreeNode(int index, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
-    {
-        this->id = index;
-        this->cooridinates.first = x;
-        this->cooridinates.second = y;
-
-        this->in_first = nullptr;
-        this->in_second = nullptr;
-        this->out = nullptr;
-
-        this->in_bandwidth = in_bandhwidth_in;
-        this->out_bandwidth = out_bandhwidth_in;
-
-        // Later for each end node htree node that connects with a sink cell in the CCA chip these
-        // will be assigned their proper values
-        this->sink_cell_connector = std::nullopt;
-
-        this->send_channel_to_sink_cell = nullptr;
-        this->recv_channel_from_sink_cell = nullptr;
-
-        // This means that it is an end htree node that is connected to a sink cell in the CCA chip
-        if (in_bandhwidth_in == 0) {
-
-            // End node has 4 links to the square type shape sink cell
-            this->send_channel_to_sink_cell =
-                std::make_shared<FixedSizeQueue<Operon>>(out_bandhwidth_in);
-            this->recv_channel_from_sink_cell =
-                std::make_shared<FixedSizeQueue<CoordinatedOperon>>(out_bandhwidth_in);
-        }
-
-        for (int i = 0; i < 4; i++) {
-            this->recv_channel[i] = std::nullopt;
-            this->send_channel[i] = std::nullopt;
-        }
-
-        // Start from 0th and then alternate by % 4
-        this->current_recv_channel_to_start_a_cycle = 0;
-    }
-};
-
-// Overload printing for HtreeNode
-std::ostream&
-operator<<(std::ostream& os, const HtreeNode* node)
-{
-
-    if (node->in_first == nullptr && node->in_second == nullptr) {
-        os << "[" << node->id << " -> " << node->cooridinates
-           << " {Coverage 1: " << node->coverage_top_left
-           << ", Coverage 2: " << node->coverage_bottom_right << "}]\n";
-    } else {
-        os << node->id << " {Coverage 1: " << node->coverage_top_left
-           << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
-    }
-    return os;
-}
-
-int
-findClosestValue(const std::vector<int>& values, int point)
+u_int32_t
+findClosestValue(const std::vector<u_int32_t>& values, u_int32_t point)
 {
     int left = 0;
     int right = values.size() - 1;
-    int closest = values[0];
+    u_int32_t closest = values[0];
+    int point_signed_integer = static_cast<int>(point);
 
     while (left <= right) {
         int mid = (left + right) / 2;
 
-        if (abs(values[mid] - point) < abs(closest - point)) {
+        int mid_value_signed_integer = static_cast<int>(values[mid]);
+
+        if (abs(mid_value_signed_integer - point_signed_integer) <
+            abs(static_cast<int>(closest) - point_signed_integer)) {
             closest = values[mid];
         }
 
@@ -517,8 +135,8 @@ findClosestValue(const std::vector<int>& values, int point)
 std::shared_ptr<HtreeNode>
 create_vertical(int hx,
                 int hy,
-                const std::vector<int>& all_possible_rows,
-                const std::vector<int>& all_possible_cols,
+                const std::vector<u_int32_t>& all_possible_rows,
+                const std::vector<u_int32_t>& all_possible_cols,
                 int initial_row,
                 int initial_col,
                 int hx_factor,
@@ -528,13 +146,13 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
-                int& index);
+                u_int32_t& index);
 
 std::shared_ptr<HtreeNode>
 create_horizontal(int hx,
                   int hy,
-                  const std::vector<int>& all_possible_rows,
-                  const std::vector<int>& all_possible_cols,
+                  const std::vector<u_int32_t>& all_possible_rows,
+                  const std::vector<u_int32_t>& all_possible_cols,
                   int initial_row,
                   int initial_col,
                   int hx_factor,
@@ -544,7 +162,7 @@ create_horizontal(int hx,
                   Coordinates coverage_top_left_in,
                   Coordinates coverage_bottom_right_in,
                   int depth,
-                  int& index)
+                  u_int32_t& index)
 {
 
     if (depth < 0) {
@@ -657,8 +275,8 @@ create_horizontal(int hx,
     // Work on right
     center->in_second = right;
 
-    // For the center its `in_second` is right, therefore from the `in_second` point of view it is
-    // 0. `center` will put in recv_channel[0] of right
+    // For the center its `in_second` is right, therefore from the `in_second` point of view it
+    // is 0. `center` will put in recv_channel[0] of right
     center->remote_index_recv_channel_in_second = 0;
 
     Coordinates right_coverage_top_left;
@@ -702,8 +320,8 @@ create_horizontal(int hx,
 std::shared_ptr<HtreeNode>
 create_vertical(int hx,
                 int hy,
-                const std::vector<int>& all_possible_rows,
-                const std::vector<int>& all_possible_cols,
+                const std::vector<u_int32_t>& all_possible_rows,
+                const std::vector<u_int32_t>& all_possible_cols,
                 int initial_row,
                 int initial_col,
                 int hx_factor,
@@ -713,7 +331,7 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
-                int& index)
+                u_int32_t& index)
 {
 
     if (depth < 0) {
@@ -797,8 +415,8 @@ create_vertical(int hx,
     // Work on the down
     center->in_second = down;
 
-    // For the center its `in_second` is down, therefore from the `in_second` point of view it is 1.
-    // `center` will put in recv_channel[1] of down
+    // For the center its `in_second` is down, therefore from the `in_second` point of view it
+    // is 1. `center` will put in recv_channel[1] of down
     center->remote_index_recv_channel_in_second = 1;
     Coordinates down_coverage_top_left;
     Coordinates down_coverage_bottom_right;
@@ -854,25 +472,26 @@ get_htree_dims(int dim, int depth)
 }
 
 std::shared_ptr<HtreeNode>
-create_htree(int hx,
-             int hy,
-             int depth,
-             const std::vector<int>& all_possible_rows,
-             const std::vector<int>& all_possible_cols)
+create_htree(u_int32_t hx,
+             u_int32_t hy,
+             u_int32_t depth,
+             const std::vector<u_int32_t>& all_possible_rows,
+             const std::vector<u_int32_t>& all_possible_cols)
 {
     if (depth == 0) {
         return nullptr;
     }
     // Create two verticals and join them
-    int index = 0;
-    int dim_x = get_htree_dims(hx, depth);
-    int dim_y = get_htree_dims(hy, depth);
+    u_int32_t index = 0;
+    u_int32_t dim_x = get_htree_dims(hx, depth);
+    u_int32_t dim_y = get_htree_dims(hy, depth);
 
-    int chip_center_x = (dim_x / 2); // row
-    int chip_center_y = (dim_y / 2); // col
+    u_int32_t chip_center_x = (dim_x / 2); // row
+    u_int32_t chip_center_y = (dim_y / 2); // col
 
-    cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
-    cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y << ")\n";
+    std::cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
+    std::cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y
+              << ")\n";
 
     int left_sub_htree_initial_row = chip_center_x;
     int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
@@ -953,8 +572,8 @@ create_htree(int hx,
     // Work on right
     center->in_second = right;
 
-    // TODO: delete this as center will be delted and left and right parts of the base Htree will be
-    // combined together
+    // TODO: delete this as center will be delted and left and right parts of the base Htree
+    // will be combined together
     center->remote_index_recv_channel_in_second = 0;
     if (right) {
         right->out = center;
@@ -991,7 +610,7 @@ print_htree(std::shared_ptr<HtreeNode>& root)
         print_htree(root->in_first);
         print_htree(root->in_second);
 
-        cout << root;
+        std::cout << root;
     }
 }
 void
@@ -1021,7 +640,6 @@ populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<HtreeNode
         }
     }
 }
-
 
 void
 print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_all_nodes,
@@ -1053,36 +671,42 @@ print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_al
     }
 }
 
-int
-main(int argc, char* argv[])
+// Overload printing for HtreeNode
+std::ostream&
+operator<<(std::ostream& os, const HtreeNode* node)
 {
-    if (argc < 4) {
-        std::cout << "Usage: ./Htree_Creator.out <hx> <hy> <depth>" << std::endl;
-        return 1;
+
+    if (node->in_first == nullptr && node->in_second == nullptr) {
+        os << "[" << node->id << " -> " << node->cooridinates
+           << " {Coverage 1: " << node->coverage_top_left
+           << ", Coverage 2: " << node->coverage_bottom_right << "}]\n";
+    } else {
+        os << node->id << " {Coverage 1: " << node->coverage_top_left
+           << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
     }
+    return os;
+}
 
-    int hx = std::atoi(argv[1]);
-    int hy = std::atoi(argv[2]);
-    int depth = std::atoi(argv[3]);
+void
+HtreeNework::construct_htree_network()
+{
 
-    std::cout << "hx: " << hx << " hy: " << hy << " depth: " << depth << std::endl;
+    u_int32_t total_rows_cols_with_htree_nodes = static_cast<u_int32_t>(pow(2, this->hdepth));
 
-    std::vector<int> all_possible_rows;
-    std::vector<int> all_possible_cols;
+    u_int32_t first_row = std::ceil(this->hx / 2.0);
+    u_int32_t first_col = std::ceil(this->hy / 2.0);
 
-    int total_rows_cols_with_htree_nodes = static_cast<int>(pow(2, depth));
+    u_int32_t range_rows = total_rows_cols_with_htree_nodes * this->hx;
+    u_int32_t range_cols = total_rows_cols_with_htree_nodes * this->hy;
 
-    int first_row = std::ceil(hx / 2.0);
-    int first_col = std::ceil(hy / 2.0);
+    std::vector<u_int32_t> all_possible_rows;
+    std::vector<u_int32_t> all_possible_cols;
 
-    int range_rows = total_rows_cols_with_htree_nodes * hx;
-    int range_cols = total_rows_cols_with_htree_nodes * hy;
-
-    for (int i = first_row; i < range_rows; i += hx) {
+    for (u_int32_t i = first_row; i < range_rows; i += this->hx) {
         all_possible_rows.push_back(i);
     }
 
-    for (int i = first_col; i < range_cols; i += hy) {
+    for (u_int32_t i = first_col; i < range_cols; i += this->hy) {
         all_possible_cols.push_back(i);
     }
 
@@ -1099,122 +723,42 @@ main(int argc, char* argv[])
     }
     std::cout << std::endl;
 
-    std::shared_ptr<HtreeNode> root = nullptr;
-
-    // Insert nodes into the binary tree
-    root = create_htree(hx, hy, depth, all_possible_rows, all_possible_cols);
-
-    cout << "root index = " << root->id << "\n";
+    root = create_htree(this->hx, this->hy, this->hdepth, all_possible_rows, all_possible_cols);
+    std::cout << "root index = " << root->id << "\n";
 
     // Print the tree using traversal
     /*     cout << "Traversal:\n";
         print_htree(root);
         cout << endl; */
 
-    std::map<Coordinates, std::shared_ptr<HtreeNode>> htree_end_nodes;
-    populate_coorodinates_to_ptr_map(htree_end_nodes, root);
+    populate_coorodinates_to_ptr_map(this->htree_end_nodes, root);
 
-    /*
-    cout << "Printing the map: " << endl;
-    // Print the map elements
-    for (const auto& entry : htree_end_nodes) {
-         std::cout << entry.first << ": " << entry.second;
-    }
-
+    /*     std::cout << "Printing the map: " << std::endl;
+        // Print the map elements
+        for (const auto& entry : this->htree_end_nodes) {
+            std::cout << entry.first << ": ";
+            std::cout << entry.second;
+        }
+     */
     std::cout << std::endl;
-    */
 
-    std::vector<std::shared_ptr<HtreeNode>> htree_all_nodes;
-    populate_id_to_ptr_vector(htree_all_nodes, root);
+    populate_id_to_ptr_vector(this->htree_all_nodes, root);
 
-    /*
-    cout << "Printing the vector of all htree nodes: " << endl;
-    // Print the vector elements
-    for (const auto& htree_node : htree_all_nodes) {
-        std::cout << htree_node;
-    }
-    std::cout << std::endl;
-    */
+    /*     std::cout << "Printing the vector of all htree nodes: " << std::endl;
+        // Print the vector elements
+        for (const auto& htree_node : this->htree_all_nodes) {
+            std::cout << htree_node;
+        }
+        std::cout << std::endl; */
 
-    print_details_of_an_htree_node(htree_all_nodes, 0);
-
-    // print_details_of_an_htree_node(htree_all_nodes, 1);
-
-    /*
-    print_details_of_an_htree_node(htree_all_nodes, 2);
-
-        print_details_of_an_htree_node(htree_all_nodes, 6);
-
-        print_details_of_an_htree_node(htree_all_nodes, 14);
-
-        print_details_of_an_htree_node(htree_all_nodes, 29);
-
-        print_details_of_an_htree_node(htree_all_nodes, 30);
-        */
+    // Remove the root
+    this->htree_all_nodes.pop_back();
 
     // Merge two halves of the Htree and remove the root
     std::shared_ptr<HtreeNode> root_in_first_temp = root->in_first;
     root_in_first_temp->out = root->in_second;
     root->in_second->out = root->in_first;
 
-    print_details_of_an_htree_node(htree_all_nodes, root_in_first_temp->id);
-
-    /*     print_details_of_an_htree_node(htree_all_nodes, 14);
-        print_details_of_an_htree_node(htree_all_nodes, 29); */
-
-    std::cout << std::endl;
-    cout << "Testing Routing: " << endl;
-    std::cout << std::endl;
-
-    // Insert seed Operon from sink cell to an end node cell
-    Coordinates cc(60, 21); // Final destination CC
-    Operon operon(101, 42);
-    CoordinatedOperon seed_operon(cc, operon);
-
-    htree_all_nodes[0]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[0]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[1]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[3]->recv_channel_from_sink_cell->push(seed_operon);
-
-    htree_all_nodes[4]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[4]->recv_channel_from_sink_cell->push(seed_operon);
-
-    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
-    htree_all_nodes[7]->recv_channel_from_sink_cell->push(seed_operon);
-
-    htree_all_nodes[26]->recv_channel_from_sink_cell->push(seed_operon);
-
-    Coordinates cc_zero(0, 0); // Final destination CC
-    Operon operon_zero(400, 42);
-    CoordinatedOperon seed_operon_zero(cc_zero, operon_zero);
-    htree_all_nodes[26]->recv_channel_from_sink_cell->push(seed_operon_zero);
-
-    // Run simulation
-    u_int32_t total_cycles = 0;
-    bool global_active_htree = true;
-
-    while (global_active_htree) {
-        global_active_htree = false;
-
-        std::cout << "prepare_communication_cycle # " << total_cycles << "\n";
-        for (int i = 0; i < htree_all_nodes.size(); i++) {
-            htree_all_nodes[i]->prepare_communication_cycle();
-        }
-
-        std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
-        for (int i = 0; i < htree_all_nodes.size(); i++) {
-            htree_all_nodes[i]->run_a_communication_cylce();
-        }
-
-        // std::cout << "is_htree_node_active # " << total_cycles << "\n";
-        for (int i = 0; i < htree_all_nodes.size(); i++) {
-            global_active_htree |= htree_all_nodes[i]->is_htree_node_active();
-        }
-        total_cycles++;
-        std::cout << std::endl;
-    }
-
-    return 0;
+    print_details_of_an_htree_node(this->htree_all_nodes, 0);
+    print_details_of_an_htree_node(this->htree_all_nodes, root_in_first_temp->id);
 }

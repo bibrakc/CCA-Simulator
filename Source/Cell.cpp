@@ -32,13 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
-// Overload printing for Coordinates
-std::ostream&
-operator<<(std::ostream& os, const Coordinates& coord)
-{
-    os << "(" << coord.first << ", " << coord.second << ")";
-    return os;
-}
 
 // Utility function to convert type of pair
 template<typename To, typename From>

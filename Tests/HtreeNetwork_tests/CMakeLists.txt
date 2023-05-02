@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name SSSP_CCASimulator)
+set(executable_name HtreeNetwork_test)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -39,30 +39,24 @@ add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
-add_library(CCASim
-            ${SourceDirectory}/memory_management.cpp
-            ${SourceDirectory}/Cell.cpp
-            ${SourceDirectory}/ComputeCell.cpp
-            ${SourceDirectory}/SinkCell.cpp
-            ${SourceDirectory}/Enums.cpp
+add_library(Htree_Nework
             ${SourceDirectory}/HtreeNode.cpp
+            ${SourceDirectory}/HtreeNetwork.cpp
             ${SourceDirectory}/Operon.cpp
-            ${SourceDirectory}/CCASimulator.cpp
-            #Task.cpp
+            ${SourceDirectory}/types.cpp
             )
 
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
-target_include_directories(CCASim PUBLIC 
+target_include_directories(Htree_Nework PUBLIC 
                            ${IncludeDirectory}
-                           ${IncludeDirectory}/Datastructure
                            ${UtilitiesDirectory})
 
-target_link_libraries(CCASim PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(Htree_Nework PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_sssp.cpp)
+add_executable(${executable_name} htree_test.cpp)
 
-set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASim)
+set_source_files_properties(htree_test.cpp PROPERTIES LANGUAGE CXX)
+target_link_libraries(${executable_name} PRIVATE Htree_Nework)
