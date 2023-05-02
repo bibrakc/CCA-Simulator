@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Task.hpp"
 
 #include "memory_management.hpp"
+#include "operators.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -104,8 +105,19 @@ CCASimulator::create_square_cell_htree_chip()
             // Insert the sink cell
             if ((next_row_sink_cells == i) && (next_col_sink_cells == j)) {
 
-                // std::cout << "SinkCell: (" << next_col_sink_cells << "," << next_row_sink_cells
-                // << ")\n";
+                Coordinates sink_cell_cooridnates =
+                    Coordinates(next_col_sink_cells, next_row_sink_cells);
+               
+               // std::cout << "SinkCell: " << sink_cell_cooridnates << "\n";
+
+                auto htree_node_address_entry =
+                    this->htree_network.htree_end_nodes.find(sink_cell_cooridnates);
+
+                if (htree_node_address_entry == this->htree_network.htree_end_nodes.end()) {
+                    // Key does not exist in the map
+                    std::cout << "Bug! SinkCell not found" << std::endl;
+                    exit(0);
+                }
 
                 // Create the sink cells where the chip connects to the underlying
                 // second layer network (for example the Htree)
@@ -183,7 +195,6 @@ CCASimulator::create_the_chip()
         if (this->hdepth == 0) {
             this->create_square_cell_mesh_only_chip();
         } else {
-
             this->create_square_cell_htree_chip();
         }
     } else {

@@ -82,21 +82,6 @@ struct HtreeNode
 {
 
     std::ostream& operator<<(std::ostream& os);
-    /* // Overload printing for HtreeNode
-    std::ostream&
-    operator<<(std::ostream& os, const HtreeNode* node)
-    {
-
-        if (node->in_first == nullptr && node->in_second == nullptr) {
-            os << "[" << node->id << " -> " << node->cooridinates
-               << " {Coverage 1: " << node->coverage_top_left
-               << ", Coverage 2: " << node->coverage_bottom_right << "}]\n";
-        } else {
-            os << node->id << " {Coverage 1: " << node->coverage_top_left
-               << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
-        }
-        return os;
-    } */
 
     bool put_operon_from_sink_cell(const CoordinatedOperon operon);
     bool is_coordinate_in_my_range(const Coordinates point);

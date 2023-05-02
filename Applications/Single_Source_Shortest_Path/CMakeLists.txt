@@ -45,6 +45,7 @@ set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
 add_library(CCACommons
             ${SourceDirectory}/Operon.cpp
+            ${SourceDirectory}/operators.cpp
             ${SourceDirectory}/types.cpp
             )
 
@@ -83,7 +84,7 @@ target_include_directories(CCASimulator PUBLIC
                            
 target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra)
 
-target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX CCACommons)
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)

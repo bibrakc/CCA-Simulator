@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 
+#include "operators.hpp"
 #include "types.hpp"
 
 #include "utility"
@@ -671,22 +672,6 @@ print_details_of_an_htree_node(std::vector<std::shared_ptr<HtreeNode>>& htree_al
     }
 }
 
-// Overload printing for HtreeNode
-std::ostream&
-operator<<(std::ostream& os, const HtreeNode* node)
-{
-
-    if (node->in_first == nullptr && node->in_second == nullptr) {
-        os << "[" << node->id << " -> " << node->cooridinates
-           << " {Coverage 1: " << node->coverage_top_left
-           << ", Coverage 2: " << node->coverage_bottom_right << "}]\n";
-    } else {
-        os << node->id << " {Coverage 1: " << node->coverage_top_left
-           << ", Coverage 2: " << node->coverage_bottom_right << "}\n";
-    }
-    return os;
-}
-
 void
 HtreeNetwork::construct_htree_network()
 {
@@ -735,16 +720,16 @@ HtreeNetwork::construct_htree_network()
         cout << endl; */
 
     populate_coorodinates_to_ptr_map(this->htree_end_nodes, root);
-
-    /*     std::cout << "Printing the map: " << std::endl;
+    /*
+        std::cout << "Printing the map: " << std::endl;
         // Print the map elements
         for (const auto& entry : this->htree_end_nodes) {
             std::cout << entry.first << ": ";
             std::cout << entry.second;
         }
-     */
-    std::cout << std::endl;
 
+        std::cout << std::endl;
+     */
     populate_id_to_ptr_vector(this->htree_all_nodes, root);
 
     /*     std::cout << "Printing the vector of all htree nodes: " << std::endl;

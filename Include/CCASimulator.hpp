@@ -124,8 +124,6 @@ class CCASimulator
 
     u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate);
 
-    void add_neighbor_compute_cells(std::shared_ptr<ComputeCell> cc);
-
     // The main chip creation function
     void create_the_chip();
 
