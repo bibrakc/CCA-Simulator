@@ -45,19 +45,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <vector>
 
-class HtreeNework
+class HtreeNetwork
 {
   public:
-    HtreeNework(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in)
+    HtreeNetwork(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in)
         : hx(hx_in)
         , hy(hy_in)
         , hdepth(hdepth_in)
     {
+        std::cout << "HtreeNework constructor called\n";
         this->construct_htree_network();
     }
 
     void construct_htree_network();
- 
+
     // Members
 
     u_int32_t hx, hy, hdepth;

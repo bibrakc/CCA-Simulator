@@ -250,8 +250,10 @@ CCASimulator::run_simulation()
         }
 
         // std::cout << "prepare_communication_cycle # " << total_cycles << "\n";
-        for (int i = 0; i < this->htree_all_nodes.size(); i++) {
-            this->htree_all_nodes[i]->prepare_communication_cycle();
+        if (this->htree_network.hdepth != 0) {
+            for (int i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
+                this->htree_network.htree_all_nodes[i]->prepare_communication_cycle();
+            }
         }
 
 // Run communication cycle
@@ -260,9 +262,11 @@ CCASimulator::run_simulation()
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
 
-        // std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
-        for (int i = 0; i < this->htree_all_nodes.size(); i++) {
-            this->htree_all_nodes[i]->run_a_communication_cylce();
+        if (this->htree_network.hdepth != 0) {
+            // std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
+            for (int i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
+                this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
+            }
         }
 
 // Check for termination
@@ -271,12 +275,15 @@ CCASimulator::run_simulation()
             global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
         }
 
-        for (int i = 0; i < htree_all_nodes.size(); i++) {
-            global_active_htree |= htree_all_nodes[i]->is_htree_node_active();
+        if (this->htree_network.hdepth != 0) {
+            for (int i = 0; i < htree_network.htree_all_nodes.size(); i++) {
+                global_active_htree |= htree_network.htree_all_nodes[i]->is_htree_node_active();
+            }
         }
         total_cycles++;
 
         is_system_active = global_active_cc_local || global_active_htree;
+        //is_system_active = global_active_cc_local;
     }
     this->global_active_cc = global_active_cc_local;
 }

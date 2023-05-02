@@ -268,7 +268,7 @@ class Graph
     void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
         if (!vertex.insert_edge(dst_vertex_id, weight)) {
-            std::cerr << "Error! add_edge() Edge (" << vertex.id << ". " << dst_vertex_id
+            std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
                       << ") cannot be inserted\n";
             exit(0);
         }
@@ -516,6 +516,9 @@ main(int argc, char** argv)
     std::string output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
     std::ofstream output_file(output_file_path);
+    if (!output_file) {
+        std::cerr << "Error! Output file not created\n";
+    }
 
     // Output CCA Chip details
     cca_square_simulator.generate_label(output_file);

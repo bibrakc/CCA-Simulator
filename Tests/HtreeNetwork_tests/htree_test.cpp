@@ -36,7 +36,7 @@ main(int argc, char* argv[])
 
     std::cout << "hx: " << hx << " hy: " << hy << " depth: " << depth << std::endl;
 
-    HtreeNework test_htree_network(hx, hy, depth);
+    HtreeNetwork test_htree_network(hx, hy, depth);
 
     std::cout << std::endl;
     cout << "Testing Routing: " << endl;

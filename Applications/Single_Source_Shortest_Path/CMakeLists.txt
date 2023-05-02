@@ -39,30 +39,55 @@ add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
-add_library(CCASim
-            ${SourceDirectory}/memory_management.cpp
-            ${SourceDirectory}/Cell.cpp
-            ${SourceDirectory}/ComputeCell.cpp
-            ${SourceDirectory}/SinkCell.cpp
-            ${SourceDirectory}/Enums.cpp
-            ${SourceDirectory}/HtreeNode.cpp
-            ${SourceDirectory}/Operon.cpp
-            ${SourceDirectory}/CCASimulator.cpp
-            #Task.cpp
-            )
 
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
-target_include_directories(CCASim PUBLIC 
+add_library(CCACommons
+            ${SourceDirectory}/Operon.cpp
+            ${SourceDirectory}/types.cpp
+            )
+
+target_include_directories(CCACommons PUBLIC 
+            ${IncludeDirectory})
+
+
+add_library(HtreeNework
+            ${SourceDirectory}/HtreeNode.cpp
+            ${SourceDirectory}/HtreeNetwork.cpp
+            )
+
+target_include_directories(HtreeNework PUBLIC 
+            ${IncludeDirectory}
+            )
+
+target_link_libraries(HtreeNework PUBLIC CCACommons)
+
+add_library(CCASimulator
+            ${SourceDirectory}/Cell.cpp
+            ${SourceDirectory}/CCASimulator.cpp
+            ${SourceDirectory}/ComputeCell.cpp
+            ${SourceDirectory}/Enums.cpp
+            ${SourceDirectory}/HtreeNode.cpp
+            ${SourceDirectory}/HtreeNetwork.cpp
+            ${SourceDirectory}/memory_management.cpp
+            ${SourceDirectory}/SinkCell.cpp
+            )
+
+
+target_include_directories(CCASimulator PUBLIC 
                            ${IncludeDirectory}
                            ${IncludeDirectory}/Datastructure
-                           ${UtilitiesDirectory})
+                           )
 
-target_link_libraries(CCASim PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
 
+target_include_directories(${executable_name} PUBLIC 
+                           ${UtilitiesDirectory}
+                           )
+
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASim)
+target_link_libraries(${executable_name} PRIVATE CCASimulator HtreeNework)

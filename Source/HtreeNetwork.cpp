@@ -688,8 +688,11 @@ operator<<(std::ostream& os, const HtreeNode* node)
 }
 
 void
-HtreeNework::construct_htree_network()
+HtreeNetwork::construct_htree_network()
 {
+    if (this->hdepth == 0) {
+        return;
+    }
 
     u_int32_t total_rows_cols_with_htree_nodes = static_cast<u_int32_t>(pow(2, this->hdepth));
 

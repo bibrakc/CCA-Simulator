@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
-#include "HtreeNework.hpp"
+#include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
@@ -96,6 +96,7 @@ class CCASimulator
         , hdepth(hdepth_in)
         , total_compute_cells(total_compute_cells_in)
         , memory_per_cc(memory_per_cc_in)
+        , htree_network(hx_in, hy_in, hdepth_in)
     {
         this->global_active_cc = false;
         this->total_cycles = 0;
