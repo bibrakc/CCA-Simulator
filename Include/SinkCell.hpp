@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SINK_CELL_HPP
 
 #include "Cell.hpp"
+#include "HtreeNode.hpp"
 
 #include <iostream>
 #include <stdlib.h>
@@ -65,32 +66,35 @@ class SinkCell : public Cell
 
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
-    u_int32_t connecting_htree_node_id;
+    std::shared_ptr<HtreeNode> connecting_htree_node;
 
     // Send channel/link toward the second layer Htree. The width of this channel is based on the
     // shape of the Cells. For an square it is 4, meaning 4 Operons can be sent in a single cycle.
-    std::vector<std::optional<Operon>> send_channel_to_htree_node;
+    FixedSizeQueue<CoordinatedOperon> send_channel_to_htree_node;
 
     // Same as the base class `Cell` this is needed to satisty simulation. Read the comment for
     // `recv_channel_per_neighbor` in the base class `Cell`
-    std::vector<std::optional<Operon>> recv_channel_to_htree_node;
+    FixedSizeQueue<Operon> recv_channel_to_htree_node;
 
     // Constructor
     SinkCell(u_int32_t id_in,
              CellType type_in,
-             u_int32_t connecting_htree_node_id_in,
+             std::shared_ptr<HtreeNode> connecting_htree_node_in,
              computeCellShape shape_in,
              u_int32_t dim_x_in,
              u_int32_t dim_y_in,
              u_int32_t hx_in,
              u_int32_t hy_in,
              u_int32_t hdepth_in)
+        : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
+        , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
     {
         this->id = id_in;
         this->type = type_in;
         this->statistics.type = this->type;
 
-        this->connecting_htree_node_id = connecting_htree_node_id_in;
+        this->connecting_htree_node = connecting_htree_node_in;
+
         this->shape = shape_in;
         this->number_of_neighbors = Cell::get_number_of_neighbors(this->shape);
 
@@ -111,9 +115,9 @@ class SinkCell : public Cell
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
 
-            // Channels/Links to the secondary network Htree node
-            this->send_channel_to_htree_node.push_back(std::nullopt);
-            this->recv_channel_to_htree_node.push_back(std::nullopt);
+            /*          // Channels/Links to the secondary network Htree node
+                     this->send_channel_to_htree_node.push_back(std::nullopt);
+                     this->recv_channel_to_htree_node.push_back(std::nullopt); */
         }
     }
 };

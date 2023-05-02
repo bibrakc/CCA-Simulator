@@ -33,10 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-#include <utility>
 #include <ostream>
+#include <queue>
 #include <stdlib.h>
-
+#include <utility>
 
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
@@ -44,4 +44,41 @@ typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 std::ostream&
 operator<<(std::ostream& os, const Coordinates& coord);
 
+// Fixed size queue to be used for storing Operons. The fixed queue size is the bandwidth at that
+// HtreeNode
+template<typename T>
+class FixedSizeQueue
+{
+  private:
+    std::queue<T> underlying_queue;
+    u_int32_t size_max;
+
+  public:
+    FixedSizeQueue(u_int32_t size_max_in)
+        : size_max(size_max_in)
+    {
+    }
+
+    bool push(const T& value)
+    {
+        // Not able to enqueue. Return false
+        if (underlying_queue.size() == this->size_max) {
+            return false;
+        }
+        this->underlying_queue.push(value);
+        return true;
+    }
+
+    // Get from front FIFO
+    T front() const { return underlying_queue.front(); }
+
+    // Pop/Dequeue
+    void pop() { underlying_queue.pop(); }
+
+    // Return the current size of the queue
+    u_int32_t size() const { return underlying_queue.size(); }
+
+    // Return the max size of the queue
+    u_int32_t queue_size_max() const { return this->size_max; }
+};
 #endif // TYPES_HPP

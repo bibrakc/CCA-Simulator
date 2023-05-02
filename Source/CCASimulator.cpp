@@ -107,8 +107,8 @@ CCASimulator::create_square_cell_htree_chip()
 
                 Coordinates sink_cell_cooridnates =
                     Coordinates(next_col_sink_cells, next_row_sink_cells);
-               
-               // std::cout << "SinkCell: " << sink_cell_cooridnates << "\n";
+
+                // std::cout << "SinkCell: " << sink_cell_cooridnates << "\n";
 
                 auto htree_node_address_entry =
                     this->htree_network.htree_end_nodes.find(sink_cell_cooridnates);
@@ -121,15 +121,16 @@ CCASimulator::create_square_cell_htree_chip()
 
                 // Create the sink cells where the chip connects to the underlying
                 // second layer network (for example the Htree)
-                this->CCA_chip.push_back(std::make_shared<SinkCell>(cc_id,
-                                                                    CellType::sink_cell,
-                                                                    0, // id of the connecting node
-                                                                    shape_of_compute_cells,
-                                                                    this->dim_x,
-                                                                    this->dim_y,
-                                                                    this->hx,
-                                                                    this->hy,
-                                                                    this->hdepth));
+                this->CCA_chip.push_back(
+                    std::make_shared<SinkCell>(cc_id,
+                                               CellType::sink_cell,
+                                               htree_node_address_entry->second,
+                                               shape_of_compute_cells,
+                                               this->dim_x,
+                                               this->dim_y,
+                                               this->hx,
+                                               this->hy,
+                                               this->hdepth));
                 next_col_sink_cells += this->hy;
 
             } else {

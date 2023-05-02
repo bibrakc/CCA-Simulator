@@ -94,4 +94,4 @@ target_include_directories(${executable_name} PUBLIC
                            )
 
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASimulator HtreeNework)
+target_link_libraries(${executable_name} PRIVATE CCASimulator HtreeNework CCACommons)

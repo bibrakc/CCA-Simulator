@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-
 #include "types.hpp"
 
 // Overload printing for Coordinates
@@ -40,4 +39,3 @@ operator<<(std::ostream& os, const Coordinates& coord)
     os << "(" << coord.first << ", " << coord.second << ")";
     return os;
 }
-
