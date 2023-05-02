@@ -68,8 +68,6 @@ add_library(CCASimulator
             ${SourceDirectory}/CCASimulator.cpp
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/Enums.cpp
-            ${SourceDirectory}/HtreeNode.cpp
-            ${SourceDirectory}/HtreeNetwork.cpp
             ${SourceDirectory}/memory_management.cpp
             ${SourceDirectory}/SinkCell.cpp
             )
