@@ -33,20 +33,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 
+#include "common_methods.hpp"
 #include "operators.hpp"
 #include "types.hpp"
 
-#include "utility"
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
 #include <stdlib.h>
+#include <utility>
 #include <vector>
 
 Coordinates
-findMin(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
 {
     Coordinates coordinates_min;
     coordinates_min.first = c1.first;
@@ -72,7 +73,7 @@ findMin(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, con
 }
 
 Coordinates
-findMax(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
 {
     Coordinates coordinates_max;
     coordinates_max.first = c1.first;
@@ -103,34 +104,7 @@ union_coverage_ranges(const Coordinates& c1,
                       const Coordinates& c3,
                       const Coordinates& c4)
 {
-    return std::pair<Coordinates, Coordinates>(findMin(c1, c2, c3, c4), findMax(c1, c2, c3, c4));
-}
-
-u_int32_t
-findClosestValue(const std::vector<u_int32_t>& values, u_int32_t point)
-{
-    int left = 0;
-    int right = values.size() - 1;
-    u_int32_t closest = values[0];
-    int point_signed_integer = static_cast<int>(point);
-
-    while (left <= right) {
-        int mid = (left + right) / 2;
-
-        int mid_value_signed_integer = static_cast<int>(values[mid]);
-
-        if (abs(mid_value_signed_integer - point_signed_integer) <
-            abs(static_cast<int>(closest) - point_signed_integer)) {
-            closest = values[mid];
-        }
-
-        if (values[mid] > point) {
-            right = mid - 1;
-        } else {
-            left = mid + 1;
-        }
-    }
-    return closest;
+    return std::pair<Coordinates, Coordinates>(find_min(c1, c2, c3, c4), find_max(c1, c2, c3, c4));
 }
 
 std::shared_ptr<HtreeNode>
@@ -222,8 +196,8 @@ create_horizontal(int hx,
     if (depth == 0) {
         center = std::make_shared<HtreeNode>(
             index,
-            findClosestValue(all_possible_cols, current_col) - 1, // -1 for C zero-based index
-            findClosestValue(all_possible_rows, current_row) - 1, // -1 for C zero-based index
+            find_closest_value(all_possible_cols, current_col) - 1, // -1 for C zero-based index
+            find_closest_value(all_possible_rows, current_row) - 1, // -1 for C zero-based index
             in_bandwidth_value,
             out_bandwidth_value);
 

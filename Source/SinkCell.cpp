@@ -80,7 +80,7 @@ void
 SinkCell::prepare_a_cycle()
 {
 
-    // Move the operon from previous cycle recv channel to thier destination: action queue or send
+    // Move the operon from previous cycle recv channel to their destination: action queue or send
     // channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
         if (this->recv_channel_per_neighbor[i]) {
@@ -92,7 +92,11 @@ SinkCell::prepare_a_cycle()
                 std::cerr << "Bug! An SinkCell cannot invoke an action\n";
                 exit(0);
             } else {
-                // It means the operon needs to be sent/passed to some neighbor
+                // It means the operon needs to be sent/passed to some neighbor. Find whether it
+                // needs to be sent in the mesh network or second layer/htree network?
+
+                
+
                 u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
 
                 if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
@@ -131,7 +135,7 @@ SinkCell::run_a_computation_cycle()
 void
 SinkCell::prepare_a_communication_cycle()
 {
-    // Htree has not Action creation from logic and therefore this function will be empty
+    // Htree has no Action creation from logic and therefore this function will be empty
 }
 
 void
@@ -211,6 +215,7 @@ SinkCell::is_compute_cell_active()
             break;
         }
     }
-    // TODO: Add the 2nd layer network here
-    return (send_channels || recv_channels);
+
+    return (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
+            this->recv_channel_to_htree_node.size());
 }
