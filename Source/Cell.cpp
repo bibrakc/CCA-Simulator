@@ -266,3 +266,24 @@ Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, 
     std::cerr << Cell::get_compute_cell_shape_name(shape_) << " not supported!\n";
     exit(0);
 }
+
+bool
+Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
+{
+    if (this->shape == computeCellShape::square) {
+        auto [src_row, src_col] = this->cooridates;
+        auto [dst_row, dst_col] = dst_cc_cooridinate;
+
+        // TODO: later make this distance customizable, either that compile time or runtime
+        if (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) < this->hy) {
+            return true;
+        } else if (abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) < this->hx) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    // Shape not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
+    exit(0);
+}

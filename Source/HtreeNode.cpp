@@ -37,8 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <utility>
 
-
- // Overload printing for HtreeNode
+// Overload printing for HtreeNode
 std::ostream&
 HtreeNode::operator<<(std::ostream& os)
 {
@@ -52,7 +51,7 @@ HtreeNode::operator<<(std::ostream& os)
            << ", Coverage 2: " << this->coverage_bottom_right << "}\n";
     }
     return os;
-} 
+}
 
 // TODO: see if we keep this globally here or use the HtreeNode function?
 bool
@@ -110,6 +109,13 @@ HtreeNode::is_htree_node_active()
     bool send_sink_active = false;
     bool recv_sink_active = false;
     if (this->is_end_htree_node()) {
+
+        /*         std::cout << this->cooridinates << ": HtreeNode send_channel_to_sink_cell size:
+           \t"
+                          << this->send_channel_to_sink_cell->size()
+                          << " recv_channel_from_sink_cell size: "
+                          << this->recv_channel_from_sink_cell->size() << "\n"; */
+
         if (this->send_channel_to_sink_cell->size() != 0) {
             send_sink_active = true;
         }
@@ -130,6 +136,9 @@ HtreeNode::transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
         std::cerr << this->id << ": Bug! transfer: send_channel cannot be null\n";
         exit(0);
     }
+
+    // std::cout << this->cooridinates << ": HtreeNode transfer\n";
+
     std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> current_send_channel = send.value();
 
     if (!current_send_channel->push(operon)) {
@@ -137,8 +146,10 @@ HtreeNode::transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
         // Put this back since it was not sent in this cycle due to the send_channel
         // being full
         recv->push(operon);
-        std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size()
-                  << " current_send_channel.size = " << current_send_channel->size() << "\n";
+        std::cout << this->cooridinates
+                  << ": HtreeNode \tpush() back, recv->size(): " << recv->size()
+                  << "this->send_channel_to_sink_cell->size: " << current_send_channel->size()
+                  << "\n";
     }
 }
 
@@ -147,6 +158,7 @@ HtreeNode::transfer_send_to_recv(
     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv)
 {
+    // std::cout << this->cooridinates << ": HtreeNode transfer_send_to_recv\n";
 
     if (send == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer_send_to_recv: send_channel cannot be null\n";
@@ -202,12 +214,14 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
                     // Put this back since it was not sent in this cycle due to the send_channel
                     // being full
                     recv->push(operon);
-                    std::cout << this->id << ":\trecv->push(), recv->size(): " << recv->size()
-                              << "\n";
+                    std::cout << this->cooridinates
+                              << ": HtreeNode \tpush() back, recv->size(): " << recv->size()
+                              << "this->send_channel_to_sink_cell->size: "
+                              << this->send_channel_to_sink_cell->size() << "\n";
                 }
 
             } else {
-
+                // Send the operon out from this end node
                 transfer(recv, send[this->local_index_send_channel_out], operon);
                 /*     std::cout << this->id << ":\tSend " << destination_cc_coorinates
                               << " to out | this->local_index_send_channel_out = "
@@ -240,9 +254,24 @@ void
 HtreeNode::prepare_communication_cycle()
 {
     //  std::cout << this->id << ": in prepare_communication_cycle()\n";
-    if (!this->is_htree_node_active()) {
+
+    if(!this->is_htree_node_active()){
         return;
     }
+
+    if (this->is_end_htree_node()) {
+        std::cout << this->cooridinates
+                  << ": HtreeNode \tStarting prepare_communication_cycle()\t "
+                     "recv_channel_from_sink_cell->size "
+                  << this->recv_channel_from_sink_cell->size()
+                  << "\t this->send_channel_to_sink_cell->size "
+                  << this->send_channel_to_sink_cell->size() << "\n";
+    } else {
+        std::cout << this->cooridinates << ": HtreeNode \t starting prepare_communication_cycle\n";
+    }
+
+
+    // std::cout << this->cooridinates << ": HtreeNode \tStarting prepare_communication_cycle()\n";
     // std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
     // Shift from recv_channel queues to send_channel queues
 
@@ -274,23 +303,42 @@ void
 HtreeNode::run_a_communication_cylce()
 {
     //   std::cout << this->id << ": in run_a_communication_cylce\n";
-    if (!this->is_htree_node_active()) {
-        return;
-    }
-    // std::cout << this->id << ":\t starting run_a_communication_cylce\n";
+
+ 
+    if (this->is_end_htree_node()) {
+        std::cout << this->cooridinates
+                  << ": HtreeNode \tStarting run_a_communication_cylce()\t "
+                     "recv_channel_from_sink_cell->size "
+                  << this->recv_channel_from_sink_cell->size()
+                  << "\t this->send_channel_to_sink_cell->size "
+                  << this->send_channel_to_sink_cell->size() << "\n";
+    } else {
+        std::cout << this->cooridinates << ": HtreeNode \t starting run_a_communication_cylce\n";
+    } 
+
     // Send from `send_*` queues to remote `recv_*` queues
 
     // First send from end node to sink cell
     if (this->is_end_htree_node()) {
 
+        // Pop all operons into a vector to avoid deadlock on the recv_channel at the remote
+        // destination if it is full. In case a recv_channel is full then just push back that operon
+        // into the send channel
+        std::vector<Operon> send_operons;
         while (this->send_channel_to_sink_cell->size()) {
-            Operon operon = this->send_channel_to_sink_cell->front();
-            std::cout << this->id << ": Operon with cc id: " << operon.first
-                      << " will be sent to sink cell depending on its recv queue\n";
-            // TODO: implements tihs connection to the CCA chip later
-            // use a vector as is being used in
-            // shift_from_a_single_recv_channel_to_send_channels to avoid deadlock
+            send_operons.push_back(this->send_channel_to_sink_cell->front());
             this->send_channel_to_sink_cell->pop();
+        }
+
+        for (Operon operon : send_operons) {
+            /*             std::cout << this->id << ": Operon with cc id: " << operon.first
+                                  << " will be sent to sink cell depending on its recv queue\n"; */
+
+            if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
+                // Put this back since it was not sent in this cycle due to the
+                // recv_channel_to_htree_node being full
+                this->send_channel_to_sink_cell->push(operon);
+            }
         }
     }
 

@@ -202,6 +202,10 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 void
 ComputeCell::prepare_a_cycle()
 {
+    if(!this->is_compute_cell_active()){
+        return;
+    }
+
     // Move the operon from previous cycle (that was not able to be sent due to congestion) to the
     // send link of the network
     if (this->staging_operon_from_logic) {
@@ -216,10 +220,22 @@ ComputeCell::prepare_a_cycle()
             this->staging_operon_from_logic = std::nullopt;
         } else {
 
+            Coordinates dst_cc_coordinates =
+                Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+            u_int32_t routing_cell_id = dst_cc_id;
+
+            if (!this->check_cut_off_distance(dst_cc_coordinates)) {
+                if (this->sink_cell) {
+                    routing_cell_id = Cell::cc_cooridinate_to_id(
+                        this->sink_cell.value(), this->shape, this->dim_y);
+                }
+            }
+
             // Based on the routing algorithm and the shape of CCs it will return which neighbor to
             // pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-            u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
+            u_int32_t channel_to_send = this->get_route_towards_cc_id(routing_cell_id);
 
             if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
 
@@ -233,11 +249,14 @@ ComputeCell::prepare_a_cycle()
         }
     }
 
+    // Used for fairness. So that the channels don't get priority over others based on iterator
+    u_int32_t recv_channel_index = this->current_recv_channel_to_start_a_cycle;
+
     // Move the operon from previous cycle recv channel to thier destination: action queue or send
     // channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        if (this->recv_channel_per_neighbor[i]) {
-            Operon operon_ = this->recv_channel_per_neighbor[i].value();
+        if (this->recv_channel_per_neighbor[recv_channel_index]) {
+            Operon operon_ = this->recv_channel_per_neighbor[recv_channel_index].value();
             u_int32_t dst_cc_id = operon_.first;
 
             // Check if this operon is destined for this compute cell
@@ -245,7 +264,7 @@ ComputeCell::prepare_a_cycle()
                 // this->action_queue.push(std::make_shared<Action>(operon_.second));
                 this->insert_action(operon_.second);
                 // Flush the channel buffer
-                this->recv_channel_per_neighbor[i] = std::nullopt;
+                this->recv_channel_per_neighbor[recv_channel_index] = std::nullopt;
             } else {
                 // It means the operon needs to be sent/passed to some neighbor
                 u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
@@ -254,14 +273,20 @@ ComputeCell::prepare_a_cycle()
                     // Prepare the send channel
                     this->send_channel_per_neighbor[channel_to_send] = operon_;
                     // Flush the channel buffer
-                    this->recv_channel_per_neighbor[i] = std::nullopt;
+                    this->recv_channel_per_neighbor[recv_channel_index] = std::nullopt;
                 } else {
                     // Increament the stall counter for send/recv
                     this->statistics.stall_network_on_send++;
                 }
             }
         }
+
+        recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
     }
+
+    // Update the index of the starting channel for the next cycle
+     this->current_recv_channel_to_start_a_cycle =
+        (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors; 
 }
 
 void

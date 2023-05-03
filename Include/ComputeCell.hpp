@@ -150,7 +150,7 @@ class ComputeCell : public Cell
         this->cooridates = ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
 
         this->sink_cell = this->get_cc_htree_sink_cell();
- 
+
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
@@ -164,6 +164,9 @@ class ComputeCell : public Cell
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
         }
+        // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
+        // type for example)
+        this->current_recv_channel_to_start_a_cycle = 0;
     }
 
   private:

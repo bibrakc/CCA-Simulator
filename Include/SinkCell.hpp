@@ -34,10 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SINK_CELL_HPP
 
 #include "Cell.hpp"
-#include "HtreeNode.hpp"
 
 #include <iostream>
+#include <memory>
 #include <stdlib.h>
+
+// Forward declaring to solve the circular dependency.
+struct HtreeNode;
 
 class SinkCell : public Cell
 {
@@ -114,10 +117,6 @@ class SinkCell : public Cell
             // Channels/Links per neighbor in the 2D mesh
             this->send_channel_per_neighbor.push_back(std::nullopt);
             this->recv_channel_per_neighbor.push_back(std::nullopt);
-
-            /*          // Channels/Links to the secondary network Htree node
-                     this->send_channel_to_htree_node.push_back(std::nullopt);
-                     this->recv_channel_to_htree_node.push_back(std::nullopt); */
         }
     }
 };

@@ -212,6 +212,13 @@ class Cell
     // Performance measurements and counters
     ComputeCellStatistics statistics;
 
+    // This is used to be fair in routing. When we start a communication cycle from the same
+    // recv_channel what will happen is that that channel will get priority in sending its operons
+    // at expense of thoer channels/neighbors. We want to start every cycle with a different
+    // starting recv_channel and then alternate between them. This will provide fairness and not
+    // cause congestion at any one link.
+    u_int32_t current_recv_channel_to_start_a_cycle{};
+
     static std::string get_cell_type_name(CellType type);
 
     static std::string get_compute_cell_shape_name(computeCellShape shape);
@@ -229,6 +236,8 @@ class Cell
                                           u_int32_t dim_y);
 
     inline bool cc_exists(const SignedCoordinates cc_coordinate);
+
+    bool check_cut_off_distance(Coordinates dst_cc_cooridinate);
 
     void add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
 

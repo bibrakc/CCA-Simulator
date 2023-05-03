@@ -278,7 +278,8 @@ CCASimulator::run_simulation()
         }
 
         if (this->htree_network.hdepth != 0) {
-            // std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
+// std::cout << "run_a_communication_cylce # " << total_cycles << "\n";
+#pragma omp parallel for
             for (u_int32_t i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
                 this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
             }
@@ -291,6 +292,7 @@ CCASimulator::run_simulation()
         }
 
         if (this->htree_network.hdepth != 0) {
+#pragma omp parallel for reduction(| : global_active_htree)
             for (u_int32_t i = 0; i < htree_network.htree_all_nodes.size(); i++) {
                 global_active_htree |= htree_network.htree_all_nodes[i]->is_htree_node_active();
             }
