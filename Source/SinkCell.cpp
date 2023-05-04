@@ -77,49 +77,76 @@ SinkCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
+std::pair<u_int32_t, u_int32_t>
+return_asymetric_neighbors(u_int32_t channel_to_send)
+{
+    switch (channel_to_send) {
+        case (0):
+            return std::make_pair<u_int32_t, u_int32_t>(1, 3);
+            break;
+        case (1):
+            return std::make_pair<u_int32_t, u_int32_t>(0, 2);
+            break;
+        case (2):
+            return std::make_pair<u_int32_t, u_int32_t>(1, 3);
+            break;
+        case (3):
+            return std::make_pair<u_int32_t, u_int32_t>(0, 2);
+            break;
+        default:
+            std::pair<u_int32_t, u_int32_t> same_channel(channel_to_send, channel_to_send);
+            return same_channel;
+            break;
+    }
+}
+
 // TODO: Implement fairness in sending. Use some counter on the iterator that starts with a
 // different channel every iteration
 void
 SinkCell::prepare_a_cycle()
 {
 
-    // Prepare the operons recieved from the htree end node
-
-    // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In case a
-    // send_channel is full then just push back that operon into the recv channel
-    std::vector<Operon> recv_operons;
-    while (this->recv_channel_to_htree_node.size()) {
-        recv_operons.push_back(this->recv_channel_to_htree_node.front());
-        this->recv_channel_to_htree_node.pop();
+    if (!this->is_compute_cell_active()) {
+        return;
     }
 
-    for (Operon operon : recv_operons) {
-        /*         std::cout << this->id << ": Operon with cc id: " << operon.first
-                          << " will be sent to sink cell depending on its recv queue\n"; */
-        u_int32_t dst_cc_id = operon.first;
+    //////
+    /*
+        std::cout << this->id << ": SinkCell " << this->cooridates << "  prepare_a_cycle : " <<
+       *this
+                  << "\n"; */
 
-        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+    /*          std::vector<Operon> temp_recv;
+            std::vector<CoordinatedOperon> temp_send;
 
-        if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
-            // Prepare the send channel
-            this->send_channel_per_neighbor[channel_to_send] = operon;
-            std::cout << this->id << ": SinkCell " << this->cooridates
-                      << "  Sent to mesh! dst_cc_id: " << dst_cc_id << " coord: "
-                      << Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y) << "\n";
+            while (this->recv_channel_to_htree_node.size() != 0) {
+                temp_recv.push_back(this->recv_channel_to_htree_node.front());
+                this->recv_channel_to_htree_node.pop();
+            }
 
-        } else {
-            // Put this back since it was not sent in this cycle due to the
-            // recv_channel_to_htree_node being full
-            this->recv_channel_to_htree_node.push(operon);
-            /*          std::cout << this->id
-                               << ": SinkCell  recv_channel_to_htree_node.push dst_cc_id: " <<
-               dst_cc_id
-                               << "\n"; */
+            while (this->send_channel_to_htree_node.size() != 0) {
+                temp_send.push_back(this->send_channel_to_htree_node.front());
+                this->send_channel_to_htree_node.pop();
+            }
 
-            // Increament the stall counter for send/recv
-            this->statistics.stall_network_on_send++;
-        }
-    }
+            std::cout << "\n\t recv_channel sink hole: ";
+            for (auto operon : temp_recv) {
+                std::cout << "[" << operon.first << ", "
+                          << Cell::cc_id_to_cooridinate(operon.first, this->shape, this->dim_y) <<
+       "] "; this->recv_channel_to_htree_node.push(operon);
+            }
+            std::cout << "\n";
+            std::cout << "\n\t send_channel sink hole: ";
+            for (auto operon : temp_send) {
+                std::cout << "[" << operon.second.first << ", "
+                          << Cell::cc_id_to_cooridinate(operon.second.first, this->shape,
+       this->dim_y)
+                          << "] ";
+                this->send_channel_to_htree_node.push(operon);
+            }
+            std::cout << "\n";  */
+
+    /////
 
     // Move the operon from previous cycle recv channel to their destination: action queue or send
     // channel of a neighbor
@@ -149,13 +176,13 @@ SinkCell::prepare_a_cycle()
                     // Flush the channel buffer
                     this->recv_channel_per_neighbor[i] = std::nullopt;
                 } else {
+
                     // Increament the stall counter for send/recv
                     this->statistics.stall_network_on_send++;
                 }
 
             } else {
                 // Send to the second layer Htree network using the sink hole
-
                 // First form a CooridiantedOperon to send
                 CoordinatedOperon coordinated_operon(dst_cc_coordinates, operon_);
 
@@ -170,11 +197,72 @@ SinkCell::prepare_a_cycle()
             }
         }
     }
+
+    // Prepare the operons recieved from the htree end node
+
+    // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In case a
+    // send_channel is full:
+    // 1: then just push back that recv_operons vector
+    // 2: Check if any of the remaining operons from the recv_operons can be sent to an asymetric
+    // neighbor? 3: Finally push the remaining operons into the recv channel where they came from
+    std::vector<Operon> recv_operons;
+    /*     std::cout << this->id << ": SinkCell " << this->cooridates
+                  << "  \tStart this->recv_channel_to_htree_node.size() = "
+                  << this->recv_channel_to_htree_node.size() << "\n"; */
+
+    while (this->recv_channel_to_htree_node.size()) {
+        recv_operons.push_back(this->recv_channel_to_htree_node.front());
+        this->recv_channel_to_htree_node.pop();
+    }
+    std::vector<Operon> left_over_operons;
+    for (Operon operon : recv_operons) {
+
+        u_int32_t dst_cc_id = operon.first;
+
+        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+
+        if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
+            // Prepare the send channel
+            this->send_channel_per_neighbor[channel_to_send] = operon;
+
+        } else {
+            // Put this back since it was not sent in this cycle due to the
+            // recv_channel_to_htree_node being full
+            left_over_operons.push_back(operon);
+            // this->recv_channel_to_htree_node.push(operon);
+
+            // Increament the stall counter for send/recv
+            this->statistics.stall_network_on_send++;
+        }
+    }
+
+    for (Operon operon : left_over_operons) {
+        u_int32_t dst_cc_id = operon.first;
+
+        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+        auto [channel_one, channel_two] = return_asymetric_neighbors(channel_to_send);
+
+        if (this->send_channel_per_neighbor[channel_one] == std::nullopt) {
+            // Prepare the send channel
+            this->send_channel_per_neighbor[channel_one] = operon;
+
+        } else if (this->send_channel_per_neighbor[channel_two] == std::nullopt) {
+            // Prepare the send channel
+            this->send_channel_per_neighbor[channel_two] = operon;
+
+        } else {
+            this->recv_channel_to_htree_node.push(operon);
+        }
+    }
 }
 
 void
 SinkCell::run_a_computation_cycle()
 {
+    if (!this->is_compute_cell_active()) {
+        return;
+    }
+
     // Initialize the counter for measuring resource usage and starvation. Start with all then
     // decreament as they are active. Later use that to find the percent active status for this
     // cycle. If nothing was decreamented it means that this cycle was totally inactive with the CC
@@ -200,8 +288,65 @@ SinkCell::prepare_a_communication_cycle()
 void
 SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
+
+    if (!this->is_compute_cell_active()) {
+        return;
+    }
+
+    /*     std::cout << this->id << ": SinkCell " << this->cooridates
+                  << "  run_a_communication_cycle : " << *this << "\n";
+     */
+    /*     std::vector<Operon> temp_recv;
+        std::vector<CoordinatedOperon> temp_send;
+
+        while (this->recv_channel_to_htree_node.size() != 0) {
+            temp_recv.push_back(this->recv_channel_to_htree_node.front());
+            this->recv_channel_to_htree_node.pop();
+        }
+
+        while (this->send_channel_to_htree_node.size() != 0) {
+            temp_send.push_back(this->send_channel_to_htree_node.front());
+            this->send_channel_to_htree_node.pop();
+        }
+
+        std::cout << "\n\t recv_channel sink hole: ";
+        for (auto operon : temp_recv) {
+            std::cout << "[" << operon.first << ", "
+                      << Cell::cc_id_to_cooridinate(operon.first, this->shape, this->dim_y) << "] ";
+            this->recv_channel_to_htree_node.push(operon);
+        }
+        std::cout << "\n";
+        std::cout << "\n\t send_channel sink hole: ";
+        for (auto operon : temp_send) {
+            std::cout << "[" << operon.second.first << ", "
+                      << Cell::cc_id_to_cooridinate(operon.second.first, this->shape, this->dim_y)
+                      << "] ";
+            this->send_channel_to_htree_node.push(operon);
+        }
+        std::cout << "\n"; */
+
     // For shape square
     if (this->shape == computeCellShape::square) {
+
+        // Send from send sink channel to the recv channel of the underlying htree end node
+        while (this->send_channel_to_htree_node.size()) {
+
+            CoordinatedOperon operon = this->send_channel_to_htree_node.front();
+
+            if (this->connecting_htree_node->recv_channel_from_sink_cell->push(operon)) {
+                this->send_channel_to_htree_node.pop();
+            } else {
+       /*          std::cout << this->id << ": SinkCell " << this->cooridates
+                          << "  run_a_communication_cycle skipping transfer as  : " << *this
+                          << "\n remote this->connecting_htree_node->recv_channel_from_sink_cell: "
+                          << this->connecting_htree_node->recv_channel_from_sink_cell->size()
+                          << "\n"; */
+
+                // recv is full at the end node of the htree
+                break;
+            }
+        }
+
         int receiving_direction[4] = { 2, 3, 0, 1 };
 
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
@@ -234,19 +379,6 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     this->statistics.stall_network_on_recv++;
                     // increament the stall counter for send/recv
                 }
-            }
-        }
-
-        // Send from send sink channel to the recv channel of the underlying htree end node
-        while (this->send_channel_to_htree_node.size()) {
-
-            CoordinatedOperon operon = this->send_channel_to_htree_node.front();
-
-            if (this->connecting_htree_node->recv_channel_from_sink_cell->push(operon)) {
-                this->send_channel_to_htree_node.pop();
-            } else {
-                // recv is full at the end node of the htree
-                break;
             }
         }
     }

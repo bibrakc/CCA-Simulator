@@ -110,12 +110,6 @@ HtreeNode::is_htree_node_active()
     bool recv_sink_active = false;
     if (this->is_end_htree_node()) {
 
-        /*         std::cout << this->cooridinates << ": HtreeNode send_channel_to_sink_cell size:
-           \t"
-                          << this->send_channel_to_sink_cell->size()
-                          << " recv_channel_from_sink_cell size: "
-                          << this->recv_channel_from_sink_cell->size() << "\n"; */
-
         if (this->send_channel_to_sink_cell->size() != 0) {
             send_sink_active = true;
         }
@@ -146,10 +140,6 @@ HtreeNode::transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
         // Put this back since it was not sent in this cycle due to the send_channel
         // being full
         recv->push(operon);
-        std::cout << this->cooridinates
-                  << ": HtreeNode \tpush() back, recv->size(): " << recv->size()
-                  << "this->send_channel_to_sink_cell->size: " << current_send_channel->size()
-                  << "\n";
     }
 }
 
@@ -205,8 +195,6 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
         if (this->is_end_htree_node()) {
             // Does the route needs to go thought the sink channel?
             if (this->is_coordinate_in_my_range(destination_cc_coorinates)) {
-                /*  std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                           << " to sink cell\n"; */
 
                 Operon simple_operon = operon.second;
                 if (!this->send_channel_to_sink_cell->push(simple_operon)) {
@@ -214,18 +202,11 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
                     // Put this back since it was not sent in this cycle due to the send_channel
                     // being full
                     recv->push(operon);
-                    std::cout << this->cooridinates
-                              << ": HtreeNode \tpush() back, recv->size(): " << recv->size()
-                              << "this->send_channel_to_sink_cell->size: "
-                              << this->send_channel_to_sink_cell->size() << "\n";
                 }
 
             } else {
                 // Send the operon out from this end node
                 transfer(recv, send[this->local_index_send_channel_out], operon);
-                /*     std::cout << this->id << ":\tSend " << destination_cc_coorinates
-                              << " to out | this->local_index_send_channel_out = "
-                              << this->local_index_send_channel_out << "\n"; */
             }
             // Check if it can go to `in_first`?
         } else if (is_coordinate_in_a_particular_range(this->in_first->coverage_top_left,
@@ -253,26 +234,11 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
 void
 HtreeNode::prepare_communication_cycle()
 {
-    //  std::cout << this->id << ": in prepare_communication_cycle()\n";
 
-    if(!this->is_htree_node_active()){
+    if (!this->is_htree_node_active()) {
         return;
     }
 
-    if (this->is_end_htree_node()) {
-        std::cout << this->cooridinates
-                  << ": HtreeNode \tStarting prepare_communication_cycle()\t "
-                     "recv_channel_from_sink_cell->size "
-                  << this->recv_channel_from_sink_cell->size()
-                  << "\t this->send_channel_to_sink_cell->size "
-                  << this->send_channel_to_sink_cell->size() << "\n";
-    } else {
-        std::cout << this->cooridinates << ": HtreeNode \t starting prepare_communication_cycle\n";
-    }
-
-
-    // std::cout << this->cooridinates << ": HtreeNode \tStarting prepare_communication_cycle()\n";
-    // std::cout << this->id << ":\tStarting prepare_communication_cycle()\n";
     // Shift from recv_channel queues to send_channel queues
 
     // First recv from sink cell
@@ -295,26 +261,15 @@ HtreeNode::prepare_communication_cycle()
 
     this->current_recv_channel_to_start_a_cycle =
         (this->current_recv_channel_to_start_a_cycle + 1) % 4;
-
-    // std::cout << this->id << ":\tleaving prepare_communication_cycle()\n";
 }
 
 void
 HtreeNode::run_a_communication_cylce()
 {
     //   std::cout << this->id << ": in run_a_communication_cylce\n";
-
- 
-    if (this->is_end_htree_node()) {
-        std::cout << this->cooridinates
-                  << ": HtreeNode \tStarting run_a_communication_cylce()\t "
-                     "recv_channel_from_sink_cell->size "
-                  << this->recv_channel_from_sink_cell->size()
-                  << "\t this->send_channel_to_sink_cell->size "
-                  << this->send_channel_to_sink_cell->size() << "\n";
-    } else {
-        std::cout << this->cooridinates << ": HtreeNode \t starting run_a_communication_cylce\n";
-    } 
+    if (!this->is_htree_node_active()) {
+        return;
+    }
 
     // Send from `send_*` queues to remote `recv_*` queues
 
@@ -331,8 +286,11 @@ HtreeNode::run_a_communication_cylce()
         }
 
         for (Operon operon : send_operons) {
-            /*             std::cout << this->id << ": Operon with cc id: " << operon.first
-                                  << " will be sent to sink cell depending on its recv queue\n"; */
+            /*             std::cout
+                            << this->id << ": Operon with cc id: " << operon.first
+                            << " will be sent to sink cell depending on its recv queue  coord of
+               sink cell "
+                            << this->sink_cell_connector.value()->cooridates << "\n"; */
 
             if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
                 // Put this back since it was not sent in this cycle due to the
@@ -357,6 +315,4 @@ HtreeNode::run_a_communication_cylce()
     // Then send from out
     transfer_send_to_recv(this->send_channel[this->local_index_send_channel_out],
                           this->out->recv_channel[this->remote_index_recv_channel_out]);
-
-    //  std::cout << this->id << ":\t leaving run_a_communication_cylce\n";
 }
