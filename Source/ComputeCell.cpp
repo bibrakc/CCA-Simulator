@@ -164,6 +164,13 @@ ComputeCell::execute_action()
 u_int32_t
 ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 {
+    return get_west_first_route_towards_cc_id(dst_cc_id);
+}
+
+// This has deadlocks
+u_int32_t
+ComputeCell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
+{
 
     // Algorithm == dimensional routing
     if (this->shape == computeCellShape::square) {
@@ -201,6 +208,57 @@ ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
+u_int32_t
+ComputeCell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == dimensional routing
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        // West first routing restricts turns to the west side. Take west/left first if needed
+
+        // std::cout << "SinkCell: Routing from:" << this->cooridates << " --> " <<
+        // dst_cc_coordinates;
+
+        if (this->cooridates.first > dst_cc_coordinates.first) {
+            return 0; // Clockwise 0 = left
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second > dst_cc_coordinates.second)) {
+
+            // send up or right
+            // based on availablity send there. Right now just send to up
+            return 1;
+
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second < dst_cc_coordinates.second)) {
+
+            // send down or right
+            // based on availablity send there. Right now just send to down
+            return 3;
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            return 2;
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            // send to down
+            return 3;
+        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+            // send to up
+            return 1;
+        }
+
+        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                  << " Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
 void
 ComputeCell::prepare_a_cycle()
 {
@@ -211,8 +269,8 @@ ComputeCell::prepare_a_cycle()
     /*     std::cout << this->id << ": Compute Cell " << this->cooridates
                   << "  prepare_a_cycle : " << *this << "\n"; */
 
-    // Move the operon from previous cycle (that was not able to be sent due to congestion) to the
-    // send link of the network
+    // Move the operon from previous cycle (that was not able to be sent due to congestion) to
+    // the send link of the network
     if (this->staging_operon_from_logic) {
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first;
@@ -237,15 +295,13 @@ ComputeCell::prepare_a_cycle()
                 }
             }
 
-            // Based on the routing algorithm and the shape of CCs it will return which neighbor to
-            // pass this operon to. The returned value is the index [0...number of neighbors)
+            // Based on the routing algorithm and the shape of CCs it will return which neighbor
+            // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
             u_int32_t channel_to_send = this->get_route_towards_cc_id(routing_cell_id);
 
-            if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
-
-                // Prepare the send channel
-                this->send_channel_per_neighbor[channel_to_send] = this->staging_operon_from_logic;
+            if (this->send_channel_per_neighbor[channel_to_send].push(
+                    this->staging_operon_from_logic.value())) {
                 // Empty the staging buffer
                 this->staging_operon_from_logic = std::nullopt;
             } else {
@@ -255,56 +311,69 @@ ComputeCell::prepare_a_cycle()
     }
 
     // Used for fairness. So that the channels don't get priority over others based on iterator
-    u_int32_t recv_channel_index = this->current_recv_channel_to_start_a_cycle;
+    // u_int32_t recv_channel_index = 0; // this->current_recv_channel_to_start_a_cycle;
 
-    // Move the operon from previous cycle recv channel to thier destination: action queue or send
-    // channel of a neighbor
+    // Move the operon from previous cycle recv channel to thier destination: action queue or
+    // send channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        if (this->recv_channel_per_neighbor[recv_channel_index]) {
-            Operon operon_ = this->recv_channel_per_neighbor[recv_channel_index].value();
-            u_int32_t dst_cc_id = operon_.first;
+        if (this->recv_channel_per_neighbor[i].size()) {
 
-            // Check if this operon is destined for this compute cell
-            if (this->id == dst_cc_id) {
-                // this->action_queue.push(std::make_shared<Action>(operon_.second));
-                this->insert_action(operon_.second);
-                // Flush the channel buffer
-                this->recv_channel_per_neighbor[recv_channel_index] = std::nullopt;
-            } else {
+            /*        std::cout << "CC : " << this->cooridates << " recv_channel_per_neighbor[" << i
+                             << "].size(): " << this->recv_channel_per_neighbor[i].size() << "\n";
+             */
 
-                Coordinates dst_cc_coordinates =
-                    Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            std::vector<Operon> recv_operons;
+            while (this->recv_channel_per_neighbor[i].size()) {
+                recv_operons.push_back(this->recv_channel_per_neighbor[i].front());
+                this->recv_channel_per_neighbor[i].pop();
+            }
 
-                u_int32_t routing_cell_id = dst_cc_id;
+            std::vector<Operon> left_over_operons;
+            for (Operon operon : recv_operons) {
 
-                if (!this->check_cut_off_distance(dst_cc_coordinates)) {
-                    if (this->sink_cell) {
-                        routing_cell_id = Cell::cc_cooridinate_to_id(
-                            this->sink_cell.value(), this->shape, this->dim_y);
+                u_int32_t dst_cc_id = operon.first;
+
+                // Check if this operon is destined for this compute cell
+                if (this->id == dst_cc_id) {
+                    // this->action_queue.push(std::make_shared<Action>(operon_.second));
+                    this->insert_action(operon.second);
+                } else {
+
+                    Coordinates dst_cc_coordinates =
+                        Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+                    u_int32_t routing_cell_id = dst_cc_id;
+
+                    if (!this->check_cut_off_distance(dst_cc_coordinates)) {
+                        if (this->sink_cell) {
+                            routing_cell_id = Cell::cc_cooridinate_to_id(
+                                this->sink_cell.value(), this->shape, this->dim_y);
+                        }
+                    }
+
+                    // It means the operon needs to be sent/passed to some neighbor
+                    u_int32_t channel_to_send = get_route_towards_cc_id(routing_cell_id);
+
+                    if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+
+                        // Increament the stall counter for send/recv
+                        this->statistics.stall_network_on_send++;
+                        left_over_operons.push_back(operon);
                     }
                 }
-
-                // It means the operon needs to be sent/passed to some neighbor
-                u_int32_t channel_to_send = get_route_towards_cc_id(routing_cell_id);
-
-                if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
-                    // Prepare the send channel
-                    this->send_channel_per_neighbor[channel_to_send] = operon_;
-                    // Flush the channel buffer
-                    this->recv_channel_per_neighbor[recv_channel_index] = std::nullopt;
-                } else {
-                    // Increament the stall counter for send/recv
-                    this->statistics.stall_network_on_send++;
-                }
             }
+
+            for (Operon operon : left_over_operons) {
+                this->recv_channel_per_neighbor[i].push(operon);
+            }
+
+            //  recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
         }
 
-        recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
+        // Update the index of the starting channel for the next cycle
+        this->current_recv_channel_to_start_a_cycle =
+            (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors;
     }
-
-    // Update the index of the starting channel for the next cycle
-    this->current_recv_channel_to_start_a_cycle =
-        (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors;
 }
 
 void
@@ -321,13 +390,13 @@ ComputeCell::run_a_computation_cycle()
 
     // Initialize the counter for measuring resource usage and starvation. Start with all then
     // decreament as they are active. Later use that to find the percent active status for this
-    // cycle. If nothing was decreamented it means that this cycle was totally inactive with the CC
-    // starving.
+    // cycle. If nothing was decreamented it means that this cycle was totally inactive with the
+    // CC starving. TODO: These counters are not reliable anymore. Need to rethink all of this....
     this->statistics.cycle_resource_use_counter =
         ComputeCell::get_number_of_neighbors(this->shape) + 1; // +1 for logic
 
-    // Apply the network operations from the previous cycle and prepare this cycle for computation
-    // and communication
+    // Apply the network operations from the previous cycle and prepare this cycle for
+    // computation and communication
     this->prepare_a_cycle();
 
     // Perform execution of work. Exectute a task if the task_queue is not empty
@@ -360,8 +429,9 @@ ComputeCell::run_a_computation_cycle()
     }
 }
 
-// This act as synchronization and needs to be called before the actual communication cycle so as to
-// not cause race conditions on the communicaton buffer. It also applies to the ... TODO fix comment
+// This act as synchronization and needs to be called before the actual communication cycle so
+// as to not cause race conditions on the communicaton buffer. It also applies to the ... TODO
+// fix comment
 void
 ComputeCell::prepare_a_communication_cycle()
 {
@@ -397,22 +467,17 @@ ComputeCell::prepare_a_communication_cycle()
                 }
             }
 
-            // Based on the routing algorithm and the shape of CCs it will return which neighbor to
-            // pass this operon to. The returned value is the index [0...number of neighbors)
+            // Based on the routing algorithm and the shape of CCs it will return which neighbor
+            // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-
-            // std::cout << "cc id: " << this->id << " dst_cc_id: " << dst_cc_id <<
-            // "prepare_a_communication_cycle: staging_operon_from_logic get_route_towards_cc_id\n";
             u_int32_t channel_to_send = get_route_towards_cc_id(routing_cell_id);
 
-            if (this->send_channel_per_neighbor[channel_to_send] == std::nullopt) {
-                // Prepare the send channel
-                this->send_channel_per_neighbor[channel_to_send] = this->staging_operon_from_logic;
+            if (this->send_channel_per_neighbor[channel_to_send].push(
+                    this->staging_operon_from_logic.value())) {
                 // Empty the staging buffer
                 this->staging_operon_from_logic = std::nullopt;
             } else {
                 this->statistics.stall_logic_on_network++;
-                // increase the stall counter
             }
         }
     }
@@ -425,47 +490,61 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
         return;
     }
 
-    /*      std::cout << this->id << ": Compute Cell " << this->cooridates
-                  << "  run_a_communication_cycle : " << *this << "\n";  */
     // For shape square
     if (this->shape == computeCellShape::square) {
         int receiving_direction[4] = { 2, 3, 0, 1 };
 
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
-            if (this->send_channel_per_neighbor[i]) { // is not std::nullopt
+            if (this->send_channel_per_neighbor[i].size()) {
+                /*  std::cout << "CC : " << this->cooridates << " send_channel_per_neighbor[" << i
+                           << "].size(): " << this->send_channel_per_neighbor[i].size() << "\n"; */
 
-                // Update the cycle_resource_use_counter
-                this->statistics.cycle_resource_use_counter--;
+                std::vector<Operon> send_operons;
+                while (this->send_channel_per_neighbor[i].size()) {
+                    send_operons.push_back(this->send_channel_per_neighbor[i].front());
+                    this->send_channel_per_neighbor[i].pop();
+                }
 
-                Operon operon_ = this->send_channel_per_neighbor[i].value();
-                u_int32_t dst_cc_id = operon_.first;
+                std::vector<Operon> left_over_operons;
+                for (Operon operon : send_operons) {
 
-                // Check if this operon is destined for this compute cell
-                assert(this->id != dst_cc_id);
+                    // Update the cycle_resource_use_counter. TODO fix these counters lol
+                    this->statistics.cycle_resource_use_counter--;
+                    u_int32_t dst_cc_id = operon.first;
 
-                assert(this->neighbor_compute_cells[i] != std::nullopt);
+                    // Check if this operon is destined for this compute cell
+                    assert(this->id != dst_cc_id);
+                    assert(this->neighbor_compute_cells[i] != std::nullopt);
 
-                u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
-                if (CCA_chip[neighbor_id_]->recv_channel_per_neighbor[receiving_direction[i]] ==
-                    std::nullopt) {
+                    u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
+                    if (!CCA_chip[neighbor_id_]
+                             ->recv_channel_per_neighbor[receiving_direction[i]]
+                             .push(operon)) {
 
-                    CCA_chip[neighbor_id_]->recv_channel_per_neighbor[receiving_direction[i]] =
-                        operon_;
+                        /*                  std::cout << "\tCC : " << this->cooridates
+                                                   << " Not able to send to neighbor: "
+                                                   << this->neighbor_compute_cells[i].value().second
+                                                   << " neighbor recieve size: "
+                                                   << CCA_chip[neighbor_id_]
+                                                          ->recv_channel_per_neighbor[receiving_direction[i]]
+                                                          .size()
+                                                   << "\n"; */
 
-                    // Flush the channel buffer
-                    this->send_channel_per_neighbor[i] = std::nullopt;
-                } else {
-
-                    this->statistics.stall_network_on_recv++;
-                    // increament the stall counter for send/recv
+                        this->statistics.stall_network_on_recv++;
+                        // increament the stall counter for send/recv
+                        left_over_operons.push_back(operon);
+                    }
+                }
+                for (Operon operon : left_over_operons) {
+                    this->send_channel_per_neighbor[i].push(operon);
                 }
             }
         }
     }
-
-    // Since this is the end of the cycle find out how much percent of the CC was active and whether
-    // it was inactive altogether?
+    // Since this is the end of the cycle find out how much percent of the CC was active and
+    // whether it was inactive altogether? TODO: Fix all these counter. They are meaningless at this
+    // point in the developmetn
     u_int32_t number_of_resources_per_cc = ComputeCell::get_number_of_neighbors(this->shape) + 1;
     if (this->statistics.cycle_resource_use_counter == number_of_resources_per_cc) {
         this->statistics.cycles_inactive++;
@@ -483,11 +562,11 @@ ComputeCell::is_compute_cell_active()
     bool send_channels = false;
     bool recv_channels = false;
     for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-        if (this->send_channel_per_neighbor[i]) {
+        if (this->send_channel_per_neighbor[i].size()) {
             send_channels = true;
             break;
         }
-        if (this->recv_channel_per_neighbor[i]) {
+        if (this->recv_channel_per_neighbor[i].size()) {
             recv_channels = true;
             break;
         }

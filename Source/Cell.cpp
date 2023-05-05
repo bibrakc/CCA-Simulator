@@ -271,13 +271,13 @@ bool
 Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
 {
     if (this->shape == computeCellShape::square) {
-        auto [src_row, src_col] = this->cooridates;
-        auto [dst_row, dst_col] = dst_cc_cooridinate;
+        auto [src_col, src_row] = this->cooridates;
+        auto [dst_col, dst_row] = dst_cc_cooridinate;
 
-        // TODO: later make this distance customizable, either that compile time or runtime
-        if (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) < this->hy*2) {
+        // TODO: later make this distance customizable, either at compile time or runtime
+        if (abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy) {
             return true;
-        } else if (abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) < this->hx*2) {
+        } else if (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx) {
             return true;
         } else {
             return false;

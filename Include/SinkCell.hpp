@@ -66,6 +66,8 @@ class SinkCell : public Cell
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
     u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
+    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
+    u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
@@ -79,6 +81,9 @@ class SinkCell : public Cell
     // `recv_channel_per_neighbor` in the base class `Cell`
     FixedSizeQueue<Operon> recv_channel_to_htree_node;
 
+    // TODO: Temporary to see if it fixed deadlock. Later make it elegant
+    FixedSizeQueue<Operon> staging_operon_for_deadlock_avoidance;
+
     // Constructor
     SinkCell(u_int32_t id_in,
              CellType type_in,
@@ -91,6 +96,7 @@ class SinkCell : public Cell
              u_int32_t hdepth_in)
         : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
         , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
+        , staging_operon_for_deadlock_avoidance(FixedSizeQueue<Operon>(4))
     {
         this->id = id_in;
         this->type = type_in;
@@ -115,8 +121,8 @@ class SinkCell : public Cell
 
         for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
             // Channels/Links per neighbor in the 2D mesh
-            this->send_channel_per_neighbor.push_back(std::nullopt);
-            this->recv_channel_per_neighbor.push_back(std::nullopt);
+            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
+            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
         }
     }
 };

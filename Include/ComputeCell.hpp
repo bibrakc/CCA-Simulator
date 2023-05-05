@@ -97,6 +97,8 @@ class ComputeCell : public Cell
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
     u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
+    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
+    u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Sink cell nearby this compute cell. Used to route operons that are sent to far flung compute
     // cells in the CCA chip. If the network is mesh only then there is no sink cell hence the use
@@ -132,6 +134,7 @@ class ComputeCell : public Cell
                 u_int32_t hy_in,
                 u_int32_t hdepth_in,
                 u_int32_t memory_per_cc_in_bytes)
+
     {
         this->id = id_in;
         this->type = type_in;
@@ -160,9 +163,10 @@ class ComputeCell : public Cell
         this->add_neighbor_compute_cells();
 
         this->staging_operon_from_logic = std::nullopt;
+
         for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-            this->send_channel_per_neighbor.push_back(std::nullopt);
-            this->recv_channel_per_neighbor.push_back(std::nullopt);
+            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
+            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
         }
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example)

@@ -80,5 +80,8 @@ class FixedSizeQueue
 
     // Return the max size of the queue
     u_int32_t queue_size_max() const { return this->size_max; }
+
+    // Return whether there is a slot in the queue
+    bool has_room() const { return (this->underlying_queue.size() != this->size_max); }
 };
 #endif // TYPES_HPP

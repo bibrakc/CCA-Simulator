@@ -197,7 +197,8 @@ class Cell
     std::vector<std::optional<std::pair<u_int32_t, Coordinates>>> neighbor_compute_cells;
 
     // Per neighbor send channel/link
-    std::vector<std::optional<Operon>> send_channel_per_neighbor;
+    std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
+
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
     // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
@@ -207,7 +208,7 @@ class Cell
     // working set of operons and will then execute those operons in the next cycle. This move is
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
-    std::vector<std::optional<Operon>> recv_channel_per_neighbor;
+    std::vector<FixedSizeQueue<Operon>> recv_channel_per_neighbor;
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;
@@ -271,7 +272,8 @@ class Cell
                    << neighbor_coordinate.second << ")] ";
             }
         }
-        os << "\n\t recv_channel_per_neighbor: ";
+
+/*         os << "\n\t recv_channel_per_neighbor: ";
         for (auto& recv_channel_per_neighbor_ : cc.recv_channel_per_neighbor) {
             if (recv_channel_per_neighbor_ == std::nullopt) {
                 os << "[nullopt] ";
@@ -290,7 +292,7 @@ class Cell
                 os << "[" << operon.first << ", "
                    << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
             }
-        }
+        } */
         os << "\n";
         return os;
     }

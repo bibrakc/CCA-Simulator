@@ -167,7 +167,6 @@ CCASimulator::create_square_cell_htree_chip()
 void
 CCASimulator::create_square_cell_mesh_only_chip()
 {
-
     // Cannot simply openmp parallelize this. It is very atomic.
     for (u_int32_t i = 0; i < this->dim_x; i++) {
         for (u_int32_t j = 0; j < this->dim_y; j++) {
