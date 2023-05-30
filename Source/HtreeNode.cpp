@@ -294,14 +294,14 @@ HtreeNode::run_a_communication_cylce()
                 << " will be sent to sink cell depending on its recv queue. Coord of sink cell: "
                 << this->sink_cell_connector.value()->cooridates << "\n";
 
-             if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
+            if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
 
                 std::cout << this->id << ": HtreeNode. Not able to push in sinkcell recv\n";
 
                 // Put this back since it was not sent in this cycle due to the
                 // recv_channel_to_htree_node being full
                 this->send_channel_to_sink_cell->push(operon);
-            } 
+            }
         }
     }
 

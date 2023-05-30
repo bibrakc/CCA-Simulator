@@ -38,6 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <utility>
 
+// TODO: Temporary then remove this and put some runtime value from commandline 
+constexpr u_int32_t lane_width = 1;
+
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
 // Overload printing for Coordinates

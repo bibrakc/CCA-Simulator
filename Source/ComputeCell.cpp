@@ -161,6 +161,12 @@ ComputeCell::execute_action()
     std::cout << "Cannot execute action as the action_queue is empty!\n";
 }
 
+bool
+ComputeCell::recv_operon(Operon operon, u_int32_t direction_in)
+{
+    return this->recv_channel_per_neighbor[direction_in].push(operon);
+}
+
 u_int32_t
 ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
 {

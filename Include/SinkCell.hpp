@@ -61,6 +61,9 @@ class SinkCell : public Cell
     // Checks if the cell is active or not
     bool is_compute_cell_active();
 
+    // Receive an operon from a neighbor
+    bool recv_operon(Operon operon, u_int32_t direction);
+
     // Routing
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
@@ -121,8 +124,15 @@ class SinkCell : public Cell
 
         for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
             // Channels/Links per neighbor in the 2D mesh
-            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
-            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(4));
+            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
+            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
+
+            /*             // For operons that are for the sink cell (or were at some point)
+            // Not needed anymore
+                        this->send_channel_per_neighbor_for_second_layer.push_back(
+                            FixedSizeQueue<Operon>(lane_width));
+                        this->recv_channel_per_neighbor_for_second_layer.push_back(
+                            FixedSizeQueue<Operon>(lane_width)); */
         }
     }
 };

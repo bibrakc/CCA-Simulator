@@ -199,6 +199,9 @@ class Cell
     // Per neighbor send channel/link
     std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
 
+    // For operons that are for the sink cell (or were at some point)
+    // Not needed anymore TODO remove
+    /* std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor_for_second_layer; */
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
     // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
@@ -209,6 +212,9 @@ class Cell
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
     std::vector<FixedSizeQueue<Operon>> recv_channel_per_neighbor;
+
+    // For operons that are for the sink cell (or were at some point)
+    std::vector<FixedSizeQueue<Operon>> recv_channel_per_neighbor_for_second_layer;
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;
@@ -257,6 +263,9 @@ class Cell
     // Checks if the cell is active or not
     virtual bool is_compute_cell_active() = 0;
 
+    // Receive an operon from a neighbor
+    virtual bool recv_operon(Operon operon, u_int32_t direction) = 0;
+
     friend std::ostream& operator<<(std::ostream& os, const Cell& cc)
     {
         os << "CC Id: " << cc.id << ", CC Coordinates: (" << cc.cooridates.first << ", "
@@ -273,26 +282,26 @@ class Cell
             }
         }
 
-/*         os << "\n\t recv_channel_per_neighbor: ";
-        for (auto& recv_channel_per_neighbor_ : cc.recv_channel_per_neighbor) {
-            if (recv_channel_per_neighbor_ == std::nullopt) {
-                os << "[nullopt] ";
-            } else {
-                Operon operon = recv_channel_per_neighbor_.value();
-                os << "[" << operon.first << ", "
-                   << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
-            }
-        }
-        os << "\n\t send_channel_per_neighbor: ";
-        for (auto& send_channel_per_neighbor_ : cc.send_channel_per_neighbor) {
-            if (send_channel_per_neighbor_ == std::nullopt) {
-                os << "[nullopt] ";
-            } else {
-                auto operon = send_channel_per_neighbor_.value();
-                os << "[" << operon.first << ", "
-                   << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
-            }
-        } */
+        /*         os << "\n\t recv_channel_per_neighbor: ";
+                for (auto& recv_channel_per_neighbor_ : cc.recv_channel_per_neighbor) {
+                    if (recv_channel_per_neighbor_ == std::nullopt) {
+                        os << "[nullopt] ";
+                    } else {
+                        Operon operon = recv_channel_per_neighbor_.value();
+                        os << "[" << operon.first << ", "
+                           << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
+                    }
+                }
+                os << "\n\t send_channel_per_neighbor: ";
+                for (auto& send_channel_per_neighbor_ : cc.send_channel_per_neighbor) {
+                    if (send_channel_per_neighbor_ == std::nullopt) {
+                        os << "[nullopt] ";
+                    } else {
+                        auto operon = send_channel_per_neighbor_.value();
+                        os << "[" << operon.first << ", "
+                           << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
+                    }
+                } */
         os << "\n";
         return os;
     }

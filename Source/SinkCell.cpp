@@ -167,6 +167,12 @@ return_asymetric_neighbors(u_int32_t channel_to_send)
     }
 }
 
+bool
+SinkCell::recv_operon(Operon operon, u_int32_t direction_in)
+{
+    return this->recv_channel_per_neighbor[direction_in].push(operon);
+}
+
 // TODO: Implement fairness in sending. Use some counter on the iterator that starts with a
 // different channel every cycle
 void
@@ -412,10 +418,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     assert(this->neighbor_compute_cells[i] != std::nullopt);
 
                     u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
-                    if (!CCA_chip[neighbor_id_]
-                             ->recv_channel_per_neighbor[receiving_direction[i]]
-                             .push(operon)) {
-
+                    if (!CCA_chip[neighbor_id_]->recv_operon(operon, i)) {
                         this->statistics.stall_network_on_recv++;
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
