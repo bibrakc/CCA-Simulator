@@ -160,11 +160,11 @@ ComputeCell::execute_action()
     }
     std::cout << "Cannot execute action as the action_queue is empty!\n";
 }
-
+// TODO: Perhaps just move this to Cell.cpp since its the same code for all inherited classes
 bool
-ComputeCell::recv_operon(Operon operon, u_int32_t direction_in)
+ComputeCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
 {
-    return this->recv_channel_per_neighbor[direction_in].push(operon);
+    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 }
 
 u_int32_t
@@ -266,7 +266,7 @@ ComputeCell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
 }
 
 void
-ComputeCell::prepare_a_cycle()
+ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
     if (!this->is_compute_cell_active()) {
         return;
@@ -292,15 +292,23 @@ ComputeCell::prepare_a_cycle()
             Coordinates dst_cc_coordinates =
                 Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
+            // To be routed in the mesh, by default simply
             u_int32_t routing_cell_id = dst_cc_id;
 
-            if (!this->check_cut_off_distance(dst_cc_coordinates)) {
-                if (this->sink_cell) {
+            // Check if it needs to be routed via the secondary network
+            if (CCA_chip[dst_cc_id]->type != CellType::sink_cell) {
+
+                auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
+                assert(dst_compute_cell != nullptr);
+
+                // If it is not nearby AND not in the same sinkcell (Htree block) then route it in
+                // second layer netowrk
+                if (!this->check_cut_off_distance(dst_cc_coordinates) &&
+                    (this->sink_cell != dst_compute_cell->sink_cell)) {
                     routing_cell_id = Cell::cc_cooridinate_to_id(
                         this->sink_cell.value(), this->shape, this->dim_y);
                 }
             }
-
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
@@ -308,6 +316,9 @@ ComputeCell::prepare_a_cycle()
 
             if (this->send_channel_per_neighbor[channel_to_send].push(
                     this->staging_operon_from_logic.value())) {
+
+                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+
                 // Empty the staging buffer
                 this->staging_operon_from_logic = std::nullopt;
             } else {

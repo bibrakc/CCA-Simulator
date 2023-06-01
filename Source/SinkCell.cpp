@@ -168,9 +168,9 @@ return_asymetric_neighbors(u_int32_t channel_to_send)
 }
 
 bool
-SinkCell::recv_operon(Operon operon, u_int32_t direction_in)
+SinkCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
 {
-    return this->recv_channel_per_neighbor[direction_in].push(operon);
+    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 }
 
 // TODO: Implement fairness in sending. Use some counter on the iterator that starts with a
@@ -280,8 +280,7 @@ SinkCell::prepare_a_cycle()
 
         u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
 
-        if ((this->staging_operon_for_deadlock_avoidance.has_room()) &&
-            (channel_to_send == 0)) {
+        if ((this->staging_operon_for_deadlock_avoidance.has_room()) && (channel_to_send == 0)) {
             // put in the stagging buffer
             this->staging_operon_for_deadlock_avoidance.push(operon);
         } else if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
@@ -347,8 +346,7 @@ SinkCell::prepare_a_communication_cycle()
 
         u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
 
-        if ((this->staging_operon_for_deadlock_avoidance.has_room()) &&
-            (channel_to_send != 0)) {
+        if ((this->staging_operon_for_deadlock_avoidance.has_room()) && (channel_to_send != 0)) {
             // put in the stagging buffer
             this->staging_operon_for_deadlock_avoidance.push(operon);
         } else if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {

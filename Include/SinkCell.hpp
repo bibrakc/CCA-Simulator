@@ -62,7 +62,7 @@ class SinkCell : public Cell
     bool is_compute_cell_active();
 
     // Receive an operon from a neighbor
-    bool recv_operon(Operon operon, u_int32_t direction);
+    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
 
     // Routing
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
@@ -84,9 +84,6 @@ class SinkCell : public Cell
     // `recv_channel_per_neighbor` in the base class `Cell`
     FixedSizeQueue<Operon> recv_channel_to_htree_node;
 
-    // TODO: Temporary to see if it fixed deadlock. Later make it elegant
-    FixedSizeQueue<Operon> staging_operon_for_deadlock_avoidance;
-
     // Constructor
     SinkCell(u_int32_t id_in,
              CellType type_in,
@@ -99,7 +96,6 @@ class SinkCell : public Cell
              u_int32_t hdepth_in)
         : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
         , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
-        , staging_operon_for_deadlock_avoidance(FixedSizeQueue<Operon>(4))
     {
         this->id = id_in;
         this->type = type_in;
@@ -122,18 +118,22 @@ class SinkCell : public Cell
         // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();
 
-        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-            // Channels/Links per neighbor in the 2D mesh
-            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
-            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
+        this->distance_class_length = this->hx + this->hy;
 
-            /*             // For operons that are for the sink cell (or were at some point)
-            // Not needed anymore
-                        this->send_channel_per_neighbor_for_second_layer.push_back(
-                            FixedSizeQueue<Operon>(lane_width));
-                        this->recv_channel_per_neighbor_for_second_layer.push_back(
-                            FixedSizeQueue<Operon>(lane_width)); */
-        }
+        this->recv_channel_per_neighbor.resize(
+            this->number_of_neighbors,
+            std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
+                                                FixedSizeQueue<Operon>(lane_width)));
+
+        this->send_channel_per_neighbor.resize(this->number_of_neighbors,
+                                               FixedSizeQueue<Operon>(lane_width));
+        /*        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
+                   this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
+               } */
+
+        // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
+        // type for example)
+        this->current_recv_channel_to_start_a_cycle = 0;
     }
 };
 

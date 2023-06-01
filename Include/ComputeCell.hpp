@@ -87,7 +87,7 @@ class ComputeCell : public Cell
     bool is_compute_cell_active();
 
     // Receive an operon from a neighbor
-    bool recv_operon(Operon operon, u_int32_t direction);
+    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
 
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
@@ -167,17 +167,21 @@ class ComputeCell : public Cell
 
         this->staging_operon_from_logic = std::nullopt;
 
-        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-            this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
-            this->recv_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
+        this->distance_class_length = this->hx + this->hy;
 
-            // For operons that are for the sink cell (or were at some point)
-            // not needed anymore TODO remove
-            /* this->send_channel_per_neighbor_for_second_layer.push_back(
-                FixedSizeQueue<Operon>(lane_width));
-            this->recv_channel_per_neighbor_for_second_layer.push_back(
-                FixedSizeQueue<Operon>(lane_width)); */
+        this->recv_channel_per_neighbor.resize(
+            this->number_of_neighbors,
+            std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
+                                                FixedSizeQueue<Operon>(lane_width)));
+
+        this->send_channel_per_neighbor.resize(this->number_of_neighbors,
+                                               FixedSizeQueue<Operon>(lane_width));
+        /*
+        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
+                   this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
         }
+        */
+
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example)
         this->current_recv_channel_to_start_a_cycle = 0;

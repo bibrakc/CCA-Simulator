@@ -198,10 +198,7 @@ class Cell
 
     // Per neighbor send channel/link
     std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
-
-    // For operons that are for the sink cell (or were at some point)
-    // Not needed anymore TODO remove
-    /* std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor_for_second_layer; */
+    std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
     // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
@@ -211,10 +208,9 @@ class Cell
     // working set of operons and will then execute those operons in the next cycle. This move is
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
-    std::vector<FixedSizeQueue<Operon>> recv_channel_per_neighbor;
+    std::vector<std::vector<FixedSizeQueue<Operon>>> recv_channel_per_neighbor;
 
-    // For operons that are for the sink cell (or were at some point)
-    std::vector<FixedSizeQueue<Operon>> recv_channel_per_neighbor_for_second_layer;
+    u_int32_t distance_class_length;
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;
@@ -264,7 +260,7 @@ class Cell
     virtual bool is_compute_cell_active() = 0;
 
     // Receive an operon from a neighbor
-    virtual bool recv_operon(Operon operon, u_int32_t direction) = 0;
+    virtual bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class) = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const Cell& cc)
     {
