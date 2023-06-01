@@ -251,7 +251,7 @@ class Cell
     virtual void run_a_computation_cycle() = 0;
 
     // TODO: write comments
-    virtual void prepare_a_communication_cycle() = 0;
+    virtual void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
 
     // TODO: write comments
     virtual void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
