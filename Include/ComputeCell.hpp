@@ -75,7 +75,7 @@ class ComputeCell : public Cell
     void prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Execute a single cycle for this cell
-    void run_a_computation_cycle();
+    void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // TODO: write comments
     void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);

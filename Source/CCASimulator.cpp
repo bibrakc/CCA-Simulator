@@ -254,13 +254,13 @@ CCASimulator::run_simulation()
 // previous cycle)
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            this->CCA_chip[i]->run_a_computation_cycle();
+            this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip);
         }
 
 // Prepare communication cycle
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            this->CCA_chip[i]->prepare_a_communication_cycle();
+            this->CCA_chip[i]->prepare_a_communication_cycle(this->CCA_chip);
         }
 
         // std::cout << "prepare_communication_cycle # " << total_cycles << "\n";

@@ -366,7 +366,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 }
 
 void
-ComputeCell::run_a_computation_cycle()
+ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
 
     if (!this->is_compute_cell_active()) {
@@ -387,7 +387,7 @@ ComputeCell::run_a_computation_cycle()
 
     // Apply the network operations from the previous cycle and prepare this cycle for
     // computation and communication
-    this->prepare_a_cycle();
+    this->prepare_a_cycle(CCA_chip);
 
     // Perform execution of work. Exectute a task if the task_queue is not empty
     if (!this->task_queue.empty()) {
@@ -420,8 +420,9 @@ ComputeCell::run_a_computation_cycle()
 }
 
 // This act as synchronization and needs to be called before the actual communication cycle so
-// as to not cause race conditions on the communicaton buffer. It also applies to the ... TODO
-// fix comment
+// as to not cause race conditions on the communicaton buffer. It also applies to the
+// prepare_a_cycle since we want to move any staging operon from logic into the communication
+// network so as to not cause it to wait on network not more than one cycle
 void
 ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
@@ -472,6 +473,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             if (this->send_channel_per_neighbor[channel_to_send].push(
                     this->staging_operon_from_logic.value())) {
 
+                // Set to distance class 0 since this operon originates from this CC
                 this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
 
                 // Empty the staging buffer
@@ -502,6 +504,8 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                            << "].size(): " << this->send_channel_per_neighbor[i].size() << "\n";
                  */
 
+                // TODO: NOTE: the size of each channel is fixed to be `1`, therfore this leftover
+                // etc is of no use for now
                 std::vector<Operon> send_operons;
                 while (this->send_channel_per_neighbor[i].size()) {
                     send_operons.push_back(this->send_channel_per_neighbor[i].front());
@@ -520,10 +524,11 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                     assert(this->neighbor_compute_cells[i] != std::nullopt);
 
                     u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
-                    if (!CCA_chip[neighbor_id_]
-                             ->recv_channel_per_neighbor[receiving_direction[i]]
-                             .push(operon)) {
 
+                    if (!CCA_chip[neighbor_id_]->recv_operon(
+                            operon,
+                            receiving_direction[i],
+                            this->send_channel_per_neighbor_current_distance_class[i])) {
                         /*                  std::cout << "\tCC : " << this->cooridates
                                                    << " Not able to send to neighbor: "
                                                    <<
@@ -538,9 +543,9 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
                     }
-                }
-                for (Operon operon : left_over_operons) {
-                    this->send_channel_per_neighbor[i].push(operon);
+                    for (Operon operon : left_over_operons) {
+                        this->send_channel_per_neighbor[i].push(operon);
+                    }
                 }
             }
         }
@@ -569,9 +574,11 @@ ComputeCell::is_compute_cell_active()
             send_channels = true;
             break;
         }
-        if (this->recv_channel_per_neighbor[i].size()) {
-            recv_channels = true;
-            break;
+        for (u_int32_t j = 0; i < this->recv_channel_per_neighbor[i].size(); j++) {
+            if (this->recv_channel_per_neighbor[i][j].size()) {
+                recv_channels = true;
+                break;
+            }
         }
     }
     return (!this->action_queue.empty() || !this->task_queue.empty() ||

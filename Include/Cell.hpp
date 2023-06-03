@@ -248,7 +248,7 @@ class Cell
     void add_neighbor_compute_cells();
 
     // Execute a single cycle for this cell
-    virtual void run_a_computation_cycle() = 0;
+    virtual void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
 
     // TODO: write comments
     virtual void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;

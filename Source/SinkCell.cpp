@@ -183,123 +183,116 @@ SinkCell::prepare_a_cycle()
         return;
     }
 
-    // 1: Check for staging buffer
-    // get the route and put that into the send channel
-
-    while (this->staging_operon_for_deadlock_avoidance.size()) {
-
-        if (this->send_channel_per_neighbor[0].push(
-                this->staging_operon_for_deadlock_avoidance.front())) {
-            this->staging_operon_for_deadlock_avoidance.pop();
-        } else {
-            // TODO: fix these
-            this->statistics.stall_logic_on_network++;
-            break;
-        }
-    }
-
-    // 2: From the regular mesh recv channel to regular send channels
+    // From the regular mesh recv channel to regular send channels
     // Move the operon from previous cycle recv channel to their destination: action queue or
     // send channel of a neighbor
+
+    // Used for fairness. So that the channels don't get priority over others based on iterator
+    // u_int32_t recv_channel_index = 0; // this->current_recv_channel_to_start_a_cycle;
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        if (this->recv_channel_per_neighbor[i].size()) {
 
-            std::vector<Operon> recv_operons;
-            while (this->recv_channel_per_neighbor[i].size()) {
-                recv_operons.push_back(this->recv_channel_per_neighbor[i].front());
-                this->recv_channel_per_neighbor[i].pop();
-            }
+        for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
-            std::vector<Operon> left_over_operons;
-            for (Operon operon : recv_operons) {
+            if (this->recv_channel_per_neighbor[i][j].size()) {
 
-                u_int32_t dst_cc_id = operon.first;
+                std::vector<Operon> recv_operons;
+                while (this->recv_channel_per_neighbor[i].size()) {
+                    recv_operons.push_back(this->recv_channel_per_neighbor[i][j].front());
+                    this->recv_channel_per_neighbor[i][j].pop();
+                }
 
-                // Check if this operon is destined for this compute cell
-                // Bug check with assert: A SinkCell cannot invoke an action
-                assert(this->id != dst_cc_id);
+                std::vector<Operon> left_over_operons;
+                for (Operon operon : recv_operons) {
 
-                // It means the operon needs to be sent/passed to some neighbor. Find whether it
-                // needs to be sent in the mesh network or second layer/htree network?
+                    u_int32_t dst_cc_id = operon.first;
 
-                Coordinates dst_cc_coordinates =
-                    Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+                    // Check if this operon is destined for this compute cell
+                    // Bug check with assert: A SinkCell cannot invoke an action
+                    assert(this->id != dst_cc_id);
 
-                if (this->check_cut_off_distance(dst_cc_coordinates)) {
-                    // Pass it on within the mesh network since the destination is close by.
+                    // It means the operon needs to be sent/passed to some neighbor. Find whether it
+                    // needs to be sent in the mesh network or second layer/htree network?
 
-                    u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+                    Coordinates dst_cc_coordinates =
+                        Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+                    /*
+                    auto dst_compute_cell =
+                    std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
+                                    assert(dst_compute_cell != nullptr); */
 
-                    if (((i == 1) || (i == 3)) && (channel_to_send == 0)) {
-                        if (!this->staging_operon_for_deadlock_avoidance.push(operon)) {
-                            // TODO: fix counters
-                            this->statistics.stall_logic_on_network++;
+                    if (this->check_cut_off_distance(dst_cc_coordinates)) {
+                        // Pass it on within the mesh network since the destination is close by.
+
+                        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+
+                        if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+                            // Set to distance class j + 1
+                            this->send_channel_per_neighbor_current_distance_class
+                                [channel_to_send] = j + 1;
+                        } else {
+                            // Increament the stall counter for send/recv
+                            this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
                         }
-                    } else if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 
-                        // Increament the stall counter for send/recv
-                        this->statistics.stall_network_on_send++;
-                        left_over_operons.push_back(operon);
-                    }
+                    } else {
+                        // Send to the second layer Htree network using the sink hole
+                        // First form a CooridiantedOperon to send
+                        CoordinatedOperon coordinated_operon(dst_cc_coordinates, operon);
 
-                } else {
-                    // Send to the second layer Htree network using the sink hole
-                    // First form a CooridiantedOperon to send
-                    CoordinatedOperon coordinated_operon(dst_cc_coordinates, operon);
+                        if (!this->send_channel_to_htree_node.push(coordinated_operon)) {
 
-                    if (!this->send_channel_to_htree_node.push(coordinated_operon)) {
-
-                        // not sent in this cycle due to the send_channel being full
-                        // Increament the stall counter for send/recv
-                        this->statistics.stall_network_on_send++;
-                        left_over_operons.push_back(operon);
+                            // not sent in this cycle due to the send_channel being full
+                            // Increament the stall counter for send/recv
+                            this->statistics.stall_network_on_send++;
+                            left_over_operons.push_back(operon);
+                        }
                     }
                 }
-            }
-            for (Operon operon : left_over_operons) {
-                this->recv_channel_per_neighbor[i].push(operon);
+                for (Operon operon : left_over_operons) {
+                    this->recv_channel_per_neighbor[i][j].push(operon);
+                }
             }
         }
-    }
 
-    // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
-    // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
-    // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?
-    // 3: Finally push the remaining operons into the recv channel where they came from
-    std::vector<Operon> recv_operons;
-    while (this->recv_channel_to_htree_node.size()) {
-        recv_operons.push_back(this->recv_channel_to_htree_node.front());
-        this->recv_channel_to_htree_node.pop();
-    }
-
-    std::vector<Operon> left_over_operons;
-    for (Operon operon : recv_operons) {
-
-        u_int32_t dst_cc_id = operon.first;
-
-        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
-
-        if ((this->staging_operon_for_deadlock_avoidance.has_room()) && (channel_to_send == 0)) {
-            // put in the stagging buffer
-            this->staging_operon_for_deadlock_avoidance.push(operon);
-        } else if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-
-            // Put this back since it was not sent in this cycle due to the
-            // recv_channel_to_htree_node being full
-            // Increament the stall counter for send/recv
-            this->statistics.stall_network_on_send++;
-            left_over_operons.push_back(operon);
+        // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
+        // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
+        // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?
+        // 3: Finally push the remaining operons into the recv channel where they came from
+        std::vector<Operon> recv_operons;
+        while (this->recv_channel_to_htree_node.size()) {
+            recv_operons.push_back(this->recv_channel_to_htree_node.front());
+            this->recv_channel_to_htree_node.pop();
         }
-    }
 
-    for (Operon operon : left_over_operons) {
-        this->recv_channel_to_htree_node.push(operon);
+        std::vector<Operon> left_over_operons;
+        for (Operon operon : recv_operons) {
+
+            u_int32_t dst_cc_id = operon.first;
+
+            u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+
+            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+                // Set to distance class 0
+                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+            } else {
+                // Increament the stall counter for send/recv
+                this->statistics.stall_network_on_send++;
+
+                // Put this back since it was not sent in this cycle due to the
+                // send_channel_per_neighbor being full
+                left_over_operons.push_back(operon);
+            }
+        }
+
+        for (Operon operon : left_over_operons) {
+            this->recv_channel_to_htree_node.push(operon);
+        }
     }
 }
 
 void
-SinkCell::run_a_computation_cycle()
+SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
     if (!this->is_compute_cell_active()) {
         return;
@@ -320,11 +313,13 @@ SinkCell::run_a_computation_cycle()
 }
 
 // This act as synchronization and needs to be called before the actual communication cycle so
-// as to not cause race conditions on the communicaton buffer. It also applies to the ... TODO
-// fix comment
+// as to not cause race conditions on the communicaton buffer.
 void
-SinkCell::prepare_a_communication_cycle()
+SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
+    if (!this->is_compute_cell_active()) {
+        return;
+    }
 
     // Prepare the operons recieved from the htree end node and down and up CCs into the staging
     // buffer or the regular send channels of the CCA mesh
@@ -346,10 +341,7 @@ SinkCell::prepare_a_communication_cycle()
 
         u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
 
-        if ((this->staging_operon_for_deadlock_avoidance.has_room()) && (channel_to_send != 0)) {
-            // put in the stagging buffer
-            this->staging_operon_for_deadlock_avoidance.push(operon);
-        } else if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+        if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 
             // Put this back since it was not sent in this cycle due to the
             // recv_channel_to_htree_node being full
@@ -358,6 +350,9 @@ SinkCell::prepare_a_communication_cycle()
 
             // Increament the stall counter for send/recv
             this->statistics.stall_network_on_send++;
+        } else {
+            // Set to distance class 0 since this operon originates from this SinkCell
+            this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
         }
     }
 
@@ -416,7 +411,8 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     assert(this->neighbor_compute_cells[i] != std::nullopt);
 
                     u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
-                    if (!CCA_chip[neighbor_id_]->recv_operon(operon, i)) {
+                    if (!CCA_chip[neighbor_id_]->recv_operon(
+                            operon, i, 0)) { // 0 since distace is 0 from sinkcell
                         this->statistics.stall_network_on_recv++;
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
