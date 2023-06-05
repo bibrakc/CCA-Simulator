@@ -182,7 +182,9 @@ SinkCell::prepare_a_cycle()
     if (!this->is_compute_cell_active()) {
         return;
     }
-
+    /* std::cout << this->id << ": Sink Cell " << this->cooridates << "  prepare_a_cycle : " <<
+       *this
+              << "\n"; */
     // From the regular mesh recv channel to regular send channels
     // Move the operon from previous cycle recv channel to their destination: action queue or
     // send channel of a neighbor
@@ -195,8 +197,14 @@ SinkCell::prepare_a_cycle()
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
+                if (j > this->hx + this->hy) {
+                    std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
+                              << "][" << j
+                              << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
+                              << "\n";
+                }
                 std::vector<Operon> recv_operons;
-                while (this->recv_channel_per_neighbor[i].size()) {
+                while (this->recv_channel_per_neighbor[i][j].size()) {
                     recv_operons.push_back(this->recv_channel_per_neighbor[i][j].front());
                     this->recv_channel_per_neighbor[i][j].pop();
                 }
@@ -297,6 +305,9 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     if (!this->is_compute_cell_active()) {
         return;
     }
+
+    /* std::cout << this->id << ": Sink Cell " << this->cooridates
+              << "  run_a_computation_cycle : " << *this << "\n"; */
 
     // Initialize the counter for measuring resource usage and starvation. Start with all then
     // decreament as they are active. Later use that to find the percent active status for this
@@ -404,7 +415,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 
                     u_int32_t dst_cc_id = operon.first;
 
-                    // Check if this operon is destined for this compute cell. If it does then
+                    // Check if this operon is destined for this compute/sink cell. If it does then
                     // it is a bug
                     assert(this->id != dst_cc_id);
                     // The neighbor of this compute cell cannot be null
@@ -412,10 +423,13 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 
                     u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
                     if (!CCA_chip[neighbor_id_]->recv_operon(
-                            operon, i, 0)) { // 0 since distace is 0 from sinkcell
+                            operon, i, this->send_channel_per_neighbor_current_distance_class[i])) {
                         this->statistics.stall_network_on_recv++;
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
+
+                        std::cout << "SC : " << this->cooridates << " Not able to push on "
+                                  << *CCA_chip[neighbor_id_] << " i = " << i << "\n";
                     }
                 }
                 for (Operon operon : left_over_operons) {
@@ -449,12 +463,21 @@ SinkCell::is_compute_cell_active()
             send_channels = true;
             break;
         }
-        if (this->recv_channel_per_neighbor[i].size()) {
-            recv_channels = true;
-            break;
+        for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
+            if (this->recv_channel_per_neighbor[i][j].size()) {
+                /* std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
+                          << "][" << j
+                          << "].size(): " << this->recv_channel_per_neighbor[i][j].size() << "\n";
+                 */
+                recv_channels = true;
+                break;
+            }
         }
     }
-
-    return (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
-            this->recv_channel_to_htree_node.size());
+    bool temp = (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
+                 this->recv_channel_to_htree_node.size());
+    /* if (temp) {
+        std::cout << "SC : " << this->cooridates << " active = " << temp << "\n";
+    } */
+    return temp;
 }

@@ -167,7 +167,7 @@ class ComputeCell : public Cell
 
         this->staging_operon_from_logic = std::nullopt;
 
-        this->distance_class_length = this->hx + this->hy;
+        this->distance_class_length = this->hx + this->hy + 300;
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
@@ -176,6 +176,8 @@ class ComputeCell : public Cell
 
         this->send_channel_per_neighbor.resize(this->number_of_neighbors,
                                                FixedSizeQueue<Operon>(lane_width));
+
+        this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         /*
         for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
                    this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));

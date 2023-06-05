@@ -275,9 +275,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
         auto [dst_col, dst_row] = dst_cc_cooridinate;
 
         // TODO: later make this distance customizable, either at compile time or runtime
-        if (abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy) {
-            return true;
-        } else if (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx) {
+        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy/2) &&
+            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx/2)) {
             return true;
         } else {
             return false;
