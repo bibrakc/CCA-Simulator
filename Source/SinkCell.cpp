@@ -428,8 +428,8 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
 
-                        std::cout << "SC : " << this->cooridates << " Not able to push on "
-                                  << *CCA_chip[neighbor_id_] << " i = " << i << "\n";
+                        /* std::cout << "SC : " << this->cooridates << " Not able to push on "
+                                  << *CCA_chip[neighbor_id_] << " i = " << i << "\n"; */
                     }
                 }
                 for (Operon operon : left_over_operons) {
