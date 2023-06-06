@@ -423,13 +423,17 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 
                     u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
                     if (!CCA_chip[neighbor_id_]->recv_operon(
-                            operon, i, this->send_channel_per_neighbor_current_distance_class[i])) {
+                            operon,
+                            receiving_direction[i],
+                            this->send_channel_per_neighbor_current_distance_class[i])) {
                         this->statistics.stall_network_on_recv++;
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
 
-                        /* std::cout << "SC : " << this->cooridates << " Not able to push on "
-                                  << *CCA_chip[neighbor_id_] << " i = " << i << "\n"; */
+                        std::cout << "SC : " << this->cooridates << " Not able to push on "
+                                  << *CCA_chip[neighbor_id_] << " i = " << i << " distance class = "
+                                  << this->send_channel_per_neighbor_current_distance_class[i]
+                                  << "\n";
                     }
                 }
                 for (Operon operon : left_over_operons) {

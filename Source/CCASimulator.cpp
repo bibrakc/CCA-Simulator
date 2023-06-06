@@ -247,8 +247,8 @@ CCASimulator::run_simulation()
     // u_int32_t count_temp = 0;
 
     while (is_system_active) {
-        //        while (count_temp < 300) {
-        //         count_temp++;
+      //          while (count_temp < 1700) {
+     //            count_temp++;
 
         global_active_cc_local = false;
         global_active_htree = false;
