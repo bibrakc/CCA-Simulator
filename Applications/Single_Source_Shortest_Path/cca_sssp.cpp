@@ -260,7 +260,12 @@ class Graph
     {
         this->total_vertices = total_vertices_in;
 
-        this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
+        // this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
+        std::shared_ptr<SimpleVertex<u_int32_t>[]> vertices(
+            new SimpleVertex<u_int32_t>[total_vertices],
+            std::default_delete<SimpleVertex<u_int32_t>[]>());
+        this->vertices = vertices;
+        
         for (int i = 0; i < this->total_vertices; i++) {
             this->vertices[i].id = i;
             this->vertices[i].number_of_edges = 0;
