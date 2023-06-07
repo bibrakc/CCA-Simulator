@@ -466,10 +466,6 @@ SinkCell::is_compute_cell_active()
         }
         for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
             if (this->recv_channel_per_neighbor[i][j].size()) {
-                /* std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
-                          << "][" << j
-                          << "].size(): " << this->recv_channel_per_neighbor[i][j].size() << "\n";
-                 */
                 recv_channels = true;
                 break;
             }
