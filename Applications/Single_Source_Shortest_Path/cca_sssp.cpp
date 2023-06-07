@@ -443,7 +443,7 @@ main(int argc, char** argv)
             // In this case SSSP root = root_vertex
             if (vertex_.id == root_vertex) {
 
-                //std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+                // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
                 std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
                 // Set distance to 0
                 args_x[0] = 0;
@@ -559,6 +559,19 @@ main(int argc, char** argv)
 
     // Close the output file
     output_file.close();
+
+    // Write the active status animation data in a separate file
+    std::string output_file_path_animation = output_file_path + "_active_animation";
+    std::cout << "\nWriting active status animation data to output file: "
+              << output_file_path_animation << "\n";
+    std::ofstream output_file_animation(output_file_path_animation);
+    if (!output_file_animation) {
+        std::cerr << "Error! Output file not created\n";
+    }
+
+    cca_square_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
+    // Close the output file
+    output_file_animation.close();
 
     return 0;
 }

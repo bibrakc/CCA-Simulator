@@ -197,12 +197,17 @@ SinkCell::prepare_a_cycle()
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
-                if (j > this->hx + this->hy) {
-                    std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
+                /* if (j > this->hx + this->hy) {
+                     std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
                               << "][" << j
                               << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
-                              << "\n";
-                }
+                              << "\n"; 
+                              
+                } */
+                
+                // If this is greater them it is a bug
+                assert(j <= this->hx + this->hy);
+
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {
                     recv_operons.push_back(this->recv_channel_per_neighbor[i][j].front());

@@ -118,7 +118,7 @@ class SinkCell : public Cell
         // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();
 
-        this->distance_class_length = this->hx + this->hy + 300;
+        this->distance_class_length = this->hx + this->hy;
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,

@@ -285,15 +285,21 @@ CCASimulator::run_simulation()
                 this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
             }
         }
-
         // Check for termination
         u_int32_t sum_global_active_cc_local = 0;
+        // Also put the active status in the statistics to create an animation later
+        std::shared_ptr<u_int32_t[]> active_status_frame_per_cells(
+            new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
+
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             if (this->CCA_chip[i]->is_compute_cell_active()) {
                 sum_global_active_cc_local++;
+                active_status_frame_per_cells[i] = 1;
             }
         }
+        this->cca_statistics.individual_cells_active_status_per_cycle.push_back(
+            active_status_frame_per_cells);
 
         u_int32_t sum_global_active_htree = 0;
         if (this->htree_network.hdepth != 0) {

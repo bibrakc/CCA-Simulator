@@ -167,7 +167,7 @@ class ComputeCell : public Cell
 
         this->staging_operon_from_logic = std::nullopt;
 
-        this->distance_class_length = this->hx + this->hy + 300;
+        this->distance_class_length = this->hx + this->hy;
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,

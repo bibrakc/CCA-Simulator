@@ -67,6 +67,9 @@ struct ActiveStatusPerCycle
 struct CCASimulatorStatistics
 {
     std::vector<ActiveStatusPerCycle> active_status;
+
+    // Use for animation of the simulation as the cells in the CCA chip become active and inactive
+    std::vector<std::shared_ptr<u_int32_t[]>> individual_cells_active_status_per_cycle;
 };
 
 class CCASimulator
@@ -142,6 +145,32 @@ class CCASimulator
         for (int i = 0; i < this->cca_statistics.active_status.size(); i++) {
             os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"
                << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+        }
+    }
+
+    inline void output_CCA_active_status_per_cell_cycle(std::ostream& os)
+    {
+        os << "Cycles\tDim_x\tDim_y\n";
+        os << this->total_cycles << "\t" << this->dim_x << "\t" << this->dim_y << "\n";
+        os << "Active_Status_Per_Cell_Per_Cycle\n";
+        for (int i = 0; i < this->cca_statistics.individual_cells_active_status_per_cycle.size();
+             i++) {
+            std::shared_ptr<u_int32_t[]> frame =
+                this->cca_statistics.individual_cells_active_status_per_cycle[i];
+            for (int rows = 0; rows < this->dim_x; rows++) {
+                for (int cols = 0; cols < this->dim_y; cols++) {
+                    os << frame[rows * this->dim_y + cols];
+                    if (cols != this->dim_y - 1) {
+                        os << " ";
+                    }
+                }
+                if (rows != this->dim_x - 1) {
+                    os << ", ";
+                }
+            }
+            if (i != this->cca_statistics.individual_cells_active_status_per_cycle.size() - 1) {
+                os << "\n";
+            }
         }
     }
 
