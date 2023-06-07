@@ -197,14 +197,6 @@ SinkCell::prepare_a_cycle()
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
-                /* if (j > this->hx + this->hy) {
-                     std::cout << "SC : " << this->cooridates << " recv_channel_per_neighbor[" << i
-                              << "][" << j
-                              << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
-                              << "\n"; 
-                              
-                } */
-                
                 // If this is greater them it is a bug
                 assert(j <= this->hx + this->hy);
 
@@ -435,10 +427,10 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
 
-                        std::cout << "SC : " << this->cooridates << " Not able to push on "
+                        /* std::cout << "SC : " << this->cooridates << " Not able to push on "
                                   << *CCA_chip[neighbor_id_] << " i = " << i << " distance class = "
                                   << this->send_channel_per_neighbor_current_distance_class[i]
-                                  << "\n";
+                                  << "\n"; */
                     }
                 }
                 for (Operon operon : left_over_operons) {
@@ -483,10 +475,6 @@ SinkCell::is_compute_cell_active()
             }
         }
     }
-    bool temp = (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
-                 this->recv_channel_to_htree_node.size());
-    /* if (temp) {
-        std::cout << "SC : " << this->cooridates << " active = " << temp << "\n";
-    } */
-    return temp;
+    return (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
+            this->recv_channel_to_htree_node.size());
 }

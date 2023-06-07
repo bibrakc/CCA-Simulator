@@ -288,15 +288,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
-                /*
-                if (j > 20) {
-                       std::cout << "CC : " << this->cooridates << " recv_channel_per_neighbor[" <<
-                   i
-                                 << "][" << j
-                                 << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
-                                 << "\n";
-                   } */
-                   
+
                 // If this is greater them it is a bug
                 assert(j <= this->hx + this->hy);
 
@@ -591,10 +583,6 @@ ComputeCell::is_compute_cell_active()
             }
         }
     }
-    bool temp = (!this->action_queue.empty() || !this->task_queue.empty() ||
-                 (this->staging_operon_from_logic) || send_channels || recv_channels);
-    /* if (temp) {
-        std::cout << "CC : " << this->cooridates << " active = " << temp << "\n";
-    } */
-    return temp;
+    return (!this->action_queue.empty() || !this->task_queue.empty() ||
+            (this->staging_operon_from_logic) || send_channels || recv_channels);
 }
