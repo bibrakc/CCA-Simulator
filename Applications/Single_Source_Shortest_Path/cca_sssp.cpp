@@ -265,7 +265,7 @@ class Graph
             new SimpleVertex<u_int32_t>[total_vertices],
             std::default_delete<SimpleVertex<u_int32_t>[]>());
         this->vertices = vertices;
-        
+
         for (int i = 0; i < this->total_vertices; i++) {
             this->vertices[i].id = i;
             this->vertices[i].number_of_edges = 0;
@@ -443,7 +443,8 @@ main(int argc, char** argv)
             // In this case SSSP root = root_vertex
             if (vertex_.id == root_vertex) {
 
-                std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+                //std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+                std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
                 // Set distance to 0
                 args_x[0] = 0;
                 // Origin vertex from where this action came
