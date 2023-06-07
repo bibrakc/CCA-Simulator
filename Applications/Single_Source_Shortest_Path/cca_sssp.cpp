@@ -168,7 +168,8 @@ sssp_diffuse_func(ComputeCell& cc,
         }
 
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
-        std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+        // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+        std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         args_x[1] = static_cast<int>(v->id);
 
