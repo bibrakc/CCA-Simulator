@@ -131,6 +131,10 @@ ax.set_xlabel('Columns of Compute Cells')
 ax.set_ylabel('Rows of Compute Cells')
 ax.set_title('CCA Chip Activation Per Compute Cell')
 
+# Save the animation as an MP4 file
+output_filename = 'animation.mp4'
+ani.save(output_filename, writer='ffmpeg', dpi=100)
+
 """ # Save the animation as a GIF file
 output_filename = 'animation.gif'
 ani.save(output_filename, writer='pillow', dpi=70) """
