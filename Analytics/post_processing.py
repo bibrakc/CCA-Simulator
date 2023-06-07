@@ -49,10 +49,11 @@ with open(output_file, 'r') as file:
     header = file.readline()
 
     # read the next line and split it into variables
-    shape, dim_x, dim_y, cells, memory = file.readline().strip().split()
+    shape, dim_x, dim_y, hx, hy, hdepth, cells, memory = file.readline().strip().split()
 
-    # convert dim_x, dim_y, cells and memory to integers
-    dim_x, dim_y, cells, memory = map(int, [dim_x, dim_y, cells, memory])
+    # convert dim_x, dim_y, cells, and memory to integers
+    dim_x, dim_y, hx, hy, hdepth, cells, memory = map(
+        int, [dim_x, dim_y, hx, hy, hdepth, cells, memory])
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -73,38 +74,74 @@ with open(output_file, 'r') as file:
     cycles, invoked, performed, false_pred = map(
         int, [total_cycles, total_actions_invoked, total_actions_performed, total_actions_false_pred])
 
-    stats = pd.read_csv(file, header=0, engine='c', delimiter='\t')
+    # read the header line for the table and discard it
+    header = file.readline()
+
+    # read the per cycle active status data
+    active_status_per_cycle = []  # stores the active status
+    for i in range(0, cycles):  # all cycles
+        line = file.readline()
+        line = line.strip().split('\t')
+        cycle = int(line[0])
+        cells_active_percent = float(line[1])
+        htree_active_percent = float(line[2])
+        active_status_per_cycle.append(
+            (cycle, cells_active_percent, htree_active_percent))
+
+    # read the per compute cell data
+    stats = pd.read_csv(file, header=0, engine='c',
+                        delimiter='\t')
 
 # print the values to check if they were read correctly
 print(shape, dim_x, dim_y, cells, memory)
 print(graph_file, vertices, edges, root_vertex)
 print(total_cycles, total_actions_invoked,
       total_actions_performed, total_actions_false_pred)
-#print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
+# print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
 
-#print(stats.describe())
+# print(stats.describe())
 
 # Plot the histogram using Seaborn
-#sns.histplot(data=stats, x='actions_invoked', kde=True)
-#sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
-#sns.displot(data=stats, x='actions_performed_work', bins=30)
+# sns.histplot(data=stats, x='actions_invoked', kde=True)
+# sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
+# sns.displot(data=stats, x='actions_performed_work', bins=30)
 
-stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(lambda x: (x/cycles)*100)
+stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
+    lambda x: (x/cycles)*100)
 
-ax1 = sns.displot(data=stats, x='percent_cycles_inactive', kind="kde", bw_adjust=.4)
+ax1 = sns.displot(data=stats, x='percent_cycles_inactive',
+                  kind="kde", bw_adjust=.4)
 ax1.set(xlabel='Percentage of Cycles a CC was Inactive')
 
 ax = sns.displot(data=stats, x='percent_cycles_inactive', stat="probability")
 ax.set(xlabel='Percentage of Cycles a CC was Inactive')
 
-#sns.displot(data=stats, x='percent_cycles_inactive', kind="ecdf")
+# sns.displot(data=stats, x='percent_cycles_inactive', kind="ecdf")
 
-#sns.displot(data=stats, x='actions_performed_work', kind="kde", bw_adjust=.4)
-
-
-#sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
+# sns.displot(data=stats, x='actions_performed_work', kind="kde", bw_adjust=.4)
 
 
+# sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
+
+
+# Convert the list to a DataFrame
+active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
+                                'Cycle#', 'Cells_Active_Percent', 'Htree_Active_Percent'])
+
+# Create the line plot using sns.lineplot
+fig, ax = plt.subplots()
+sns.lineplot(x='Cycle#', y='Cells_Active_Percent',
+             data=active_status_df, label='Cells Active Percent', ax=ax)
+sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
+             data=active_status_df, label='Htree Active Percent', ax=ax)
+
+# Add labels and title
+ax.set_xlabel('Cycle')
+ax.set_ylabel('Percent')
+ax.set_title('Cells and Htree Active Percent by Cycle')
+
+
+# Display the plot
 plt.show()

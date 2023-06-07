@@ -247,8 +247,8 @@ CCASimulator::run_simulation()
     // u_int32_t count_temp = 0;
 
     while (is_system_active) {
-      //          while (count_temp < 1700) {
-     //            count_temp++;
+        //          while (count_temp < 1700) {
+        //            count_temp++;
 
         global_active_cc_local = false;
         global_active_htree = false;
@@ -260,26 +260,24 @@ CCASimulator::run_simulation()
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip);
         }
-        // std::cout << "DONE CCA_chip run_a_computation_cycle # " << total_cycles << "\n";
+
 // Prepare communication cycle
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle(this->CCA_chip);
         }
-        // std::cout << "DONE CCA_chip prepare_communication_cycle # " << total_cycles << "\n";
 
         if (this->htree_network.hdepth != 0) {
             for (u_int32_t i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
                 this->htree_network.htree_all_nodes[i]->prepare_communication_cycle();
             }
         }
-        // std::cout << "DONE htree_network prepare_communication_cycle # " << total_cycles << "\n";
+
 // Run communication cycle
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
-        // std::cout << "DONE CCA_chip run_a_communication_cylce # " << total_cycles << "\n";
 
         if (this->htree_network.hdepth != 0) {
 #pragma omp parallel for
@@ -287,7 +285,7 @@ CCASimulator::run_simulation()
                 this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
             }
         }
-        // std::cout << "DONE htree_network run_a_communication_cylce # " << total_cycles << "\n";
+
         // Check for termination
         u_int32_t sum_global_active_cc_local = 0;
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
@@ -296,14 +294,9 @@ CCASimulator::run_simulation()
                 sum_global_active_cc_local++;
             }
         }
-        /* #pragma omp parallel for reduction(| : global_active_cc_local)
-                for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-                    global_active_cc_local |= this->CCA_chip[i]->is_compute_cell_active();
-                } */
-        // std::cout << "BEFORE htree_network is_htree_node_active # " << total_cycles << "\n";
+
         u_int32_t sum_global_active_htree = 0;
         if (this->htree_network.hdepth != 0) {
-
 #pragma omp parallel for reduction(+ : sum_global_active_htree)
             for (u_int32_t i = 0; i < htree_network.htree_all_nodes.size(); i++) {
                 if (htree_network.htree_all_nodes[i]->is_htree_node_active()) {
@@ -312,14 +305,6 @@ CCASimulator::run_simulation()
             }
         }
 
-        /* #pragma omp parallel for reduction(| : global_active_htree)
-                    for (u_int32_t i = 0; i < htree_network.htree_all_nodes.size(); i++) {
-                        global_active_htree |=
-           htree_network.htree_all_nodes[i]->is_htree_node_active();
-                    }
-                } */
-
-        // is_system_active = global_active_cc_local || global_active_htree;
         if (sum_global_active_cc_local || sum_global_active_htree) {
             is_system_active = true;
         }
@@ -330,6 +315,8 @@ CCASimulator::run_simulation()
         std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
                   << "%, htree Active: " << percent_htree_active << "%\n";
 
+        this->cca_statistics.active_status.push_back(
+            ActiveStatusPerCycle(percent_CCs_active, percent_htree_active));
         total_cycles++;
     }
     this->global_active_cc = global_active_cc_local;

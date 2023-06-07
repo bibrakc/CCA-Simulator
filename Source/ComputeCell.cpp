@@ -218,7 +218,7 @@ u_int32_t
 ComputeCell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
 
-    // Algorithm == dimensional routing
+    // Algorithm == west first
     if (this->shape == computeCellShape::square) {
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
@@ -288,12 +288,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
-             /*    if (j > 20) {
-                    std::cout << "CC : " << this->cooridates << " recv_channel_per_neighbor[" << i
-                              << "][" << j
-                              << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
-                              << "\n";
-                } */
+                /*    if (j > 20) {
+                       std::cout << "CC : " << this->cooridates << " recv_channel_per_neighbor[" <<
+                   i
+                                 << "][" << j
+                                 << "].size(): " << this->recv_channel_per_neighbor[i][j].size()
+                                 << "\n";
+                   } */
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {

@@ -538,6 +538,9 @@ main(int argc, char** argv)
         << "\t" << simulation_statistics.actions_performed_work << "\t"
         << simulation_statistics.actions_false_on_predicate << "\n";
 
+    // Output the active status of the individual cells and htree per cycle
+    cca_square_simulator.output_CCA_active_status_per_cycle(output_file);
+
     // Output statistics for each compute cell
     simulation_statistics.generate_label(output_file);
     for (auto& cc : cca_square_simulator.CCA_chip) {

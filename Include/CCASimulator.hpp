@@ -53,6 +53,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 
 typedef unsigned long u_long;
+struct ActiveStatusPerCycle
+{
+    double cells_active_percent;
+    double htree_active_percent;
+
+    ActiveStatusPerCycle(double cells_active_percent_in, double htree_active_percent_in)
+        : cells_active_percent(cells_active_percent_in)
+        , htree_active_percent(htree_active_percent_in)
+    {
+    }
+};
+struct CCASimulatorStatistics
+{
+    std::vector<ActiveStatusPerCycle> active_status;
+};
 
 class CCASimulator
 {
@@ -79,6 +94,9 @@ class CCASimulator
 
     // Seconds layer network
     HtreeNetwork htree_network;
+
+    // To record various measurements of the system to be used for analysis
+    CCASimulatorStatistics cca_statistics;
 
     CCASimulator(computeCellShape shape_in,
                  u_int32_t dim_x_in,
@@ -116,6 +134,15 @@ class CCASimulator
            << this->dim_x << "\t" << this->dim_y << "\t" << this->hx << "\t" << this->hy << "\t"
            << this->hdepth << "\t" << this->total_compute_cells << "\t" << this->total_chip_memory
            << "\n";
+    }
+
+    inline void output_CCA_active_status_per_cycle(std::ostream& os)
+    {
+        os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
+        for (int i = 0; i < this->cca_statistics.active_status.size(); i++) {
+            os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"
+               << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+        }
     }
 
     inline Coordinates get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y);
