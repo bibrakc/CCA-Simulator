@@ -33,7 +33,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OPERON_HPP
 #define OPERON_HPP
 
+#include "Action.hpp"
+
+#include "types.hpp"
+
+#include <utility>
+
 // cc_id, Action
 typedef std::pair<u_int32_t, Action> Operon;
+
+// For Htree routing. At the end node of Htree that connects to a sink cell take the Coordinates out
+// and send the simple Operon to the CCA chip though the sink cell
+typedef std::pair<Coordinates, Operon> CoordinatedOperon;
 
 #endif // OPERON_HPP

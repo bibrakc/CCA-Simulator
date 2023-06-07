@@ -44,7 +44,7 @@ struct Edge
 };
 
 inline constexpr u_int32_t max_distance = 999999;
-inline constexpr u_int32_t edges_max = 50;
+inline constexpr u_int32_t edges_max = 60;
 template<typename Address_T>
 struct SimpleVertex
 {
@@ -52,6 +52,20 @@ struct SimpleVertex
     Edge<Address_T> edges[edges_max]{};
     u_int32_t number_of_edges{};
     u_int32_t sssp_distance;
+
+    // Insert an edge with weight
+    bool insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight)
+    {
+        if (this->number_of_edges >= edges_max)
+            return false;
+
+        this->edges[this->number_of_edges].edge = dst_vertex_addr;
+        this->edges[this->number_of_edges].weight = edge_weight;
+        this->number_of_edges++;
+
+        return true;
+    }
+
     SimpleVertex(u_int32_t id_in)
         : id(id_in)
         , number_of_edges(0)

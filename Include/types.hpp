@@ -30,22 +30,61 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TASK_HPP
-#define TASK_HPP
+#ifndef TYPES_HPP
+#define TYPES_HPP
 
-#include <functional>
+#include <ostream>
+#include <queue>
 #include <stdlib.h>
+#include <utility>
 
-enum class taskType : u_int32_t
+// TODO: Temporary then remove this and put some runtime value from commandline
+constexpr u_int32_t lane_width = 1;
+
+typedef std::pair<u_int32_t, u_int32_t> Coordinates;
+
+// Overload printing for Coordinates
+std::ostream&
+operator<<(std::ostream& os, const Coordinates& coord);
+
+// Fixed size queue to be used for storing Operons. The fixed queue size is the bandwidth at that
+// HtreeNode
+template<typename T>
+class FixedSizeQueue
 {
-    send_operon_task_type = 0,
-    taskType_count
+  private:
+    std::queue<T> underlying_queue;
+    u_int32_t size_max;
+
+  public:
+    FixedSizeQueue(u_int32_t size_max_in)
+        : size_max(size_max_in)
+    {
+    }
+
+    bool push(const T& value)
+    {
+        // Not able to enqueue. Return false
+        if (underlying_queue.size() == this->size_max) {
+            return false;
+        }
+        this->underlying_queue.push(value);
+        return true;
+    }
+
+    // Get from front FIFO
+    T front() const { return underlying_queue.front(); }
+
+    // Pop/Dequeue
+    void pop() { underlying_queue.pop(); }
+
+    // Return the current size of the queue
+    u_int32_t size() const { return underlying_queue.size(); }
+
+    // Return the max size of the queue
+    u_int32_t queue_size_max() const { return this->size_max; }
+
+    // Return whether there is a slot in the queue
+    bool has_room() const { return (this->underlying_queue.size() != this->size_max); }
 };
-
-typedef std::function<void()> Task_func;
-
-// Task: [task type, task function]
-// task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
-
-#endif // TASK_HPP
+#endif // TYPES_HPP

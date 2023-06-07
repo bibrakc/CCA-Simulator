@@ -30,22 +30,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TASK_HPP
-#define TASK_HPP
+#include "Operon.hpp"
+#include "Action.hpp"
 
-#include <functional>
-#include <stdlib.h>
+// #include <utility>
+#include <optional>
+#include <vector>
 
-enum class taskType : u_int32_t
+std::ostream&
+operator<<(std::ostream& os, const Operon& operon_)
 {
-    send_operon_task_type = 0,
-    taskType_count
-};
+    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
 
-typedef std::function<void()> Task_func;
+    os << "\n";
+    return os;
+}
 
-// Task: [task type, task function]
-// task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
+std::ostream&
+operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
+{
 
-#endif // TASK_HPP
+    for (auto& op_ : operons_) {
+        if (op_ == std::nullopt) {
+            os << "[nullopt] ";
+        } else {
+            os << op_.value();
+        }
+    }
+    os << "\n";
+    return os;
+}

@@ -30,22 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TASK_HPP
-#define TASK_HPP
+#include "types.hpp"
 
-#include <functional>
-#include <stdlib.h>
-
-enum class taskType : u_int32_t
+// Overload printing for Coordinates
+std::ostream&
+operator<<(std::ostream& os, const Coordinates& coord)
 {
-    send_operon_task_type = 0,
-    taskType_count
-};
-
-typedef std::function<void()> Task_func;
-
-// Task: [task type, task function]
-// task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
-
-#endif // TASK_HPP
+    os << "(" << coord.first << ", " << coord.second << ")";
+    return os;
+}

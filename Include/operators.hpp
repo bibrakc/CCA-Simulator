@@ -30,22 +30,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TASK_HPP
-#define TASK_HPP
+#ifndef OPERATORS_HPP
+#define OPERATORS_HPP
 
-#include <functional>
+#include "HtreeNode.hpp"
+
+#include <ostream>
 #include <stdlib.h>
 
-enum class taskType : u_int32_t
-{
-    send_operon_task_type = 0,
-    taskType_count
-};
+// Overload printing for HtreeNode
+std::ostream&
+operator<<(std::ostream& os, const HtreeNode* node);
 
-typedef std::function<void()> Task_func;
-
-// Task: [task type, task function]
-// task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
-
-#endif // TASK_HPP
+#endif // OPERATORS_HPP

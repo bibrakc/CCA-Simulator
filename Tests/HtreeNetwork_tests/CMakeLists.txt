@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name SSSP_CCASimulator)
+set(executable_name HtreeNetwork_test)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -39,59 +39,24 @@ add_definitions(-DDEBUG_CODE=${DEBUG_CODE})
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
+add_library(Htree_Nework
+            ${SourceDirectory}/HtreeNode.cpp
+            ${SourceDirectory}/HtreeNetwork.cpp
+            ${SourceDirectory}/Operon.cpp
+            ${SourceDirectory}/types.cpp
+            )
 
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
-add_library(CCACommons
-            ${SourceDirectory}/Operon.cpp
-            ${SourceDirectory}/operators.cpp
-            ${SourceDirectory}/types.cpp
-            )
-
-target_include_directories(CCACommons PUBLIC 
-            ${IncludeDirectory})
-
-#target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
-
-add_library(HtreeNework
-            ${SourceDirectory}/HtreeNode.cpp
-            ${SourceDirectory}/HtreeNetwork.cpp
-            )
-
-target_include_directories(HtreeNework PUBLIC 
-            ${IncludeDirectory}
-            )
-
-#target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
-
-target_link_libraries(HtreeNework PUBLIC CCACommons)
-
-add_library(CCASimulator
-            ${SourceDirectory}/Cell.cpp
-            ${SourceDirectory}/CCASimulator.cpp
-            ${SourceDirectory}/ComputeCell.cpp
-            ${SourceDirectory}/Enums.cpp
-            ${SourceDirectory}/memory_management.cpp
-            ${SourceDirectory}/SinkCell.cpp
-            )
-
-
-target_include_directories(CCASimulator PUBLIC 
+target_include_directories(Htree_Nework PUBLIC 
                            ${IncludeDirectory}
-                           ${IncludeDirectory}/Datastructure
-                           )
-                           
-#target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra)
+                           ${UtilitiesDirectory})
 
-target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX CCACommons)
+target_link_libraries(Htree_Nework PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_sssp.cpp)
+add_executable(${executable_name} htree_test.cpp)
 
-target_include_directories(${executable_name} PUBLIC 
-                           ${UtilitiesDirectory}
-                           )
-
-set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASimulator HtreeNework CCACommons)
+set_source_files_properties(htree_test.cpp PROPERTIES LANGUAGE CXX)
+target_link_libraries(${executable_name} PRIVATE Htree_Nework)

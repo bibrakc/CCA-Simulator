@@ -30,22 +30,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TASK_HPP
-#define TASK_HPP
+#ifndef HTREE_NETWORK_HPP
+#define HTREE_NETWORK_HPP
 
-#include <functional>
+#include "HtreeNode.hpp"
+
+#include "types.hpp"
+
+#include <cmath>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
 #include <stdlib.h>
+#include <vector>
 
-enum class taskType : u_int32_t
+class HtreeNetwork
 {
-    send_operon_task_type = 0,
-    taskType_count
+  public:
+    HtreeNetwork(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in)
+        : hx(hx_in)
+        , hy(hy_in)
+        , hdepth(hdepth_in)
+    {
+        std::cout << "HtreeNework constructor called\n";
+        this->construct_htree_network();
+    }
+
+    void construct_htree_network();
+
+    // Members
+
+    u_int32_t hx, hy, hdepth;
+
+    std::shared_ptr<HtreeNode> root;
+
+    std::map<Coordinates, std::shared_ptr<HtreeNode>> htree_end_nodes;
+    std::vector<std::shared_ptr<HtreeNode>> htree_all_nodes;
 };
 
-typedef std::function<void()> Task_func;
-
-// Task: [task type, task function]
-// task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
-
-#endif // TASK_HPP
+#endif // HTREE_NETWORK_HPP
