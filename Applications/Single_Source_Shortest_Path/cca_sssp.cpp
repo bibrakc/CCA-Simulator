@@ -46,6 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Datastructures
 #include "SimpleVertex.hpp"
 
+#include <cassert>
 #include <chrono>
 #include <iostream>
 
@@ -64,7 +65,8 @@ static u_int32_t test_vertex;
 class SSSPAction : public Action
 {
   public:
-    SSSPAction(const Address vertex_addr_in,
+    SSSPAction(const Address destination_vertex_addr_in,
+               const Address origin_vertex_addr_in,
                actionType type,
                const bool ready,
                const int nargs_in,
@@ -73,7 +75,8 @@ class SSSPAction : public Action
                eventId work_in,
                eventId diffuse_in)
     {
-        this->obj_addr = vertex_addr_in;
+        this->obj_addr = destination_vertex_addr_in;
+        this->origin_addr = origin_vertex_addr_in;
 
         this->action_type = type;
         this->is_ready = ready;
@@ -174,6 +177,7 @@ sssp_diffuse_func(ComputeCell& cc,
         args_x[1] = static_cast<int>(v->id);
 
         SSSPAction action(v->edges[i].edge,
+                          addr,
                           actionType::application_action,
                           true,
                           2,
@@ -190,11 +194,45 @@ sssp_diffuse_func(ComputeCell& cc,
     return 0;
 }
 
+// Recieved an acknowledgement message back. Decreament my deficit.
+int
+terminator_acknowledgement_func(ComputeCell& cc,
+                                const Address& addr,
+                                int nargs,
+                                const std::shared_ptr<int[]>& args)
+{
+
+    Object* obj = static_cast<Object*>(cc.get_object(addr));
+
+    assert(obj->terminator.deficit != 0);
+
+    obj->terminator.deficit--;
+    if (obj->terminator.deficit == 0) {
+        // Unset the parent and send an acknowledgement back to the parent
+
+        // Create an special acknowledgement action towards the parent in the spanning tree.
+        TerminatorAction acknowledgement_action(obj->terminator.parent.value(),
+                                                obj->terminator.my_object,
+                                                actionType::terminator_acknowledgement_action);
+
+        // Create Operon and put it in the task queue
+        Operon operon_to_send =
+            construct_operon(obj->terminator.parent.value().cc_id, acknowledgement_action);
+        cc.task_queue.push(send_operon(cc, operon_to_send));
+
+        // Unset the parent
+        obj->terminator.parent = std::nullopt;
+    }
+    return 0;
+}
+
 // Later create a register function to do these from the main. Help with using the simulator in more
 // of an API style
 std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func },
                                                    { eventId::sssp_work, sssp_work_func },
-                                                   { eventId::sssp_diffuse, sssp_diffuse_func } };
+                                                   { eventId::sssp_diffuse, sssp_diffuse_func },
+                                                   { eventId::terminator_acknowledgement,
+                                                     terminator_acknowledgement_func } };
 
 // Insert edge by `Address` type src and dst
 inline bool

@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum class actionType : u_int32_t
 {
-    internal_action = 0,
+    terminator_action = 0,
     application_action,
     actionType_count
 };
@@ -47,7 +47,7 @@ enum class actionType : u_int32_t
 class Action
 {
   public:
-    // Type of the action: application type, internal runtime work action,
+    // Type of the action: application type, internal runtime work action like terminator_action,
     // or any other
     actionType action_type;
 
@@ -64,6 +64,10 @@ class Action
 
     // Memory location of the object for which this action is destined
     Address obj_addr;
+
+    // Memory location of the object for which this action originated. Used for termination
+    // detection.
+    Address origin_addr;
 
     // Predicate
     eventId predicate;

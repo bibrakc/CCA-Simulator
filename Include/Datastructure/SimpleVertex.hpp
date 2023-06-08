@@ -75,7 +75,7 @@ struct SimpleVertex : Object
         /* std::cout << "SimpleVertex Constructor\n"; */
     }
     SimpleVertex()
-    { /*  std::cout << "SimpleVertex default Constructor\n"; */
+    { /* std::cout << "SimpleVertex default Constructor\n"; */
     }
     ~SimpleVertex()
     { /* std::cout << "SimpleVertex Destructor\n"; */

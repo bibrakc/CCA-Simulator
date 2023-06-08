@@ -127,27 +127,34 @@ ComputeCell::execute_action()
         SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)this->get_object(action.obj_addr);
         print_SimpleVertex(vertex, action.obj_addr);
 #endif
+        if (action.action_type == actionType::application_action) {
+            // if predicate
+            int predicate_resolution =
+                event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
-        // if predicate
-        int predicate_resolution =
-            event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
+            if (predicate_resolution == 1) {
+                // if work
+                event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
+                this->statistics.actions_performed_work++;
 
-        if (predicate_resolution == 1) {
-            // if work
-            event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
-            this->statistics.actions_performed_work++;
-
-            // if diffuse
-            event_handlers[action.diffuse](*this, action.obj_addr, action.nargs, action.args);
+                // if diffuse
+                event_handlers[action.diffuse](*this, action.obj_addr, action.nargs, action.args);
+            } else {
+                // This action is discarded/subsumed
+                this->statistics.actions_false_on_predicate++;
+            }
+        } else if (action.action_type == actionType::terminator_acknowledgement_action) {
+            event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0, nullptr);
         } else {
-            // This actions is discarded/subsumed
-            this->statistics.actions_false_on_predicate++;
+            std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
+            exit(0);
         }
         // Increament the counter for actions that were invoked
         this->statistics.actions_invoked++;
         return;
     }
-    std::cout << "Cannot execute action as the action_queue is empty!\n";
+    std::cerr << "Bug! Cannot execute action as the action_queue is empty! It shouldn't be here\n";
+    exit(0);
 }
 // TODO: Perhaps just move this to Cell.cpp since its the same code for all inherited classes
 bool
@@ -155,7 +162,6 @@ ComputeCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distan
 {
     return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 }
-
 
 void
 ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)

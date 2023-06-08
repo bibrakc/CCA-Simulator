@@ -51,6 +51,7 @@ enum class eventId : u_int32_t
     sssp_predicate = 0,
     sssp_work,
     sssp_diffuse,
+    terminator_acknowledgement,
     eventId_count
 };
 

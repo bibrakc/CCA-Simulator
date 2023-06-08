@@ -33,23 +33,97 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
+#include "Action.hpp"
 #include "Address.hpp"
+
+//#include <cassert>
+
+class TerminatorAction : public Action
+{
+  public:
+    TerminatorAction(const Address obj_addr_in,
+                     const Address origin_addr_in,
+                     const actionType action_type_in)
+    {
+        // This is the address to which the action will be sent
+        this->obj_addr = obj_addr_in;
+
+        // This is the type of the action, most likely:
+        // `actionType::terminator_acknowledgement_action`
+        this->action_type = action_type_in;
+
+        // Not really needed
+        this->origin_addr = origin_addr_in;
+    }
+
+    ~TerminatorAction() override {}
+};
+
+// Dijkstra–Scholten algorithm for termination detection
+struct Terminator
+{
+    u_int32_t deficit;
+    std::optional<Address> parent;
+
+    // The address of the object of which this terminator is part of.
+    // TODO: This is not really needed. Check later.
+    Address my_object;
+
+    // Recieved an action. Increament my deficit.
+    void signal(const Address origin_addr_in)
+    {
+        if (this->deficit == 0) {
+            this->parent = origin_addr_in;
+        } else {
+            // Send acknowledgement back to where the action came from
+            TerminatorAction acknowledgement_action(
+                origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
+            
+            // Put a task in the task queue of the CC
+            Actually send !
+        }
+        // The deficit is increament in diffuse
+        //this->deficit++;
+    }
+
+    // Recieved an acknowledgement message back. Decreament my deficit.
+    void acknowledgement()
+    {
+        assert(this->deficit != 0);
+
+        this->deficit--;
+        if (this->deficit == 0) {
+            // Unset the parent and send an acknowledgement back to the parent
+
+            // Create an special acknowledgement action towards the parent in the spanning tree.
+            TerminatorAction acknowledgement_action(this->parent.value(),
+                                                    this->my_object,
+                                                    actionType::terminator_acknowledgement_action);
+
+            Actually send !
+        }
+    }
+
+    Terminator()
+    {
+        /* std::cout << "Terminator Constructor\n"; */
+        this->deficit = 0;
+        this->parent = std::nullopt;
+        // this->my_object = std::nullopt;
+    }
+};
 
 struct Object
 {
-    // Termination detection
-    u_int32_t deficit{};
-    std::optional<Address> parent;
+    // Terminator
+    Terminator terminator;
 
     // Garbage collection
 
     // Type tag?
 
     Object()
-    {
-        /* std::cout << "Object Constructor\n"; */
-        this->deficit = 0;
-        this->parent = std::nullopt;
+    { /* std::cout << "Object Constructor\n"; */
     }
 };
 

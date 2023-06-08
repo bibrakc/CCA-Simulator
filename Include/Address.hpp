@@ -37,9 +37,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <stdlib.h>
 
+enum class adressType : u_int32_t
+{
+    host_address = 0,
+    cca_address,
+    adressType_count
+};
+
 struct Address
 {
   public:
+    // CCA address or Host address? Default is CCA address.
+    adressType type;
+
     // Global ID of the compute cell where the address resides
     u_int32_t cc_id;
     // The offset to the memory of the compute cell
@@ -51,14 +61,22 @@ struct Address
 
     Address()
     {
-        this->cc_id = -1;
-        this->addr = -1;
+        /* this->cc_id = -1;
+        this->addr = -1; */
     }
 
-    Address(int id, int address_in)
+    Address(const u_int32_t id, const u_int32_t address_in)
     {
         this->cc_id = id;
         this->addr = address_in;
+        this->type = adressType::cca_address;
+    }
+
+    Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
+    {
+        this->cc_id = id;
+        this->addr = address_in;
+        this->type = address_type_in;
     }
     friend std::ostream& operator<<(std::ostream& os, const Address& ad)
     {
