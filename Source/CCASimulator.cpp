@@ -239,9 +239,6 @@ CCASimulator::run_simulation()
     // now this works.
     this->total_cycles = 0;
 
-    bool global_active_cc_local = true;
-    bool global_active_htree = true;
-
     bool is_system_active = true;
 
     // u_int32_t count_temp = 0;
@@ -249,9 +246,6 @@ CCASimulator::run_simulation()
     while (is_system_active) {
         //          while (count_temp < 1700) {
         //            count_temp++;
-
-        global_active_cc_local = false;
-        global_active_htree = false;
         is_system_active = false;
 
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
@@ -325,5 +319,5 @@ CCASimulator::run_simulation()
             ActiveStatusPerCycle(percent_CCs_active, percent_htree_active));
         total_cycles++;
     }
-    this->global_active_cc = global_active_cc_local;
+    this->global_active_cc = is_system_active;
 }

@@ -32,32 +32,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ComputeCell.hpp"
 #include "Cell.hpp"
 #include "Function.hpp"
+
+#if debug_code == true
+// TODO: Later make it generic to be data structure agnostic
 #include "SimpleVertex.hpp"
+#endif
 
 // For memcpy()
 #include <cstring>
 
 #include <cassert>
-
-// TODO: move this to application
-void
-print_SimpleVertex(const ComputeCell& cc, const Address& vertex_addr)
-{
-    if (vertex_addr.cc_id != cc.id) {
-        std::cout << "Invalid addr! The vertex does not exist on this CC\n";
-        return;
-    }
-
-    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(vertex_addr);
-    std::cout << "Vertex ID: " << vertex->id << ", Addr: " << vertex_addr
-              << " sssp_distance: " << vertex->sssp_distance << "\n";
-
-    for (u_int32_t i = 0; i < vertex->number_of_edges; i++) {
-        std::cout << "\t\t[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight
-                  << "} ]";
-    }
-    std::cout << std::endl;
-}
 
 // Get the object memory location at address addr_in
 void*
@@ -135,9 +119,14 @@ ComputeCell::execute_action()
         Action action = this->action_queue.front();
         this->action_queue.pop();
 
-        if constexpr (debug_code == true) {
-            print_SimpleVertex(*this, action.obj_addr);
+#if debug_code == true
+        if (action.obj_addr.cc_id != this->id) {
+            std::cout << "Invalid addr! The vertex does not exist on this CC\n";
+            return;
         }
+        SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)this->get_object(action.obj_addr);
+        print_SimpleVertex(vertex, action.obj_addr);
+#endif
 
         // if predicate
         int predicate_resolution =
@@ -167,103 +156,6 @@ ComputeCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distan
     return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 }
 
-u_int32_t
-ComputeCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-    return get_west_first_route_towards_cc_id(dst_cc_id);
-}
-
-// This has deadlocks
-u_int32_t
-ComputeCell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-
-    // Algorithm == dimensional routing
-    if (this->shape == computeCellShape::square) {
-        // Remember for a square shaped CC there are four links to neighbors enumerated in
-        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
-
-        Coordinates dst_cc_coordinates =
-            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-
-        if constexpr (debug_code) {
-            std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
-                      << dst_cc_coordinates.first << ", " << dst_cc_coordinates.second
-                      << ") -- origin = ( " << this->cooridates.first << ", "
-                      << this->cooridates.second << ")\n";
-        }
-        // First check vertically in y axis then horizontally in x axis
-        if (this->cooridates.second > dst_cc_coordinates.second) {
-            return 1; // Clockwise 1 = up
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
-            return 3; // Clockwise 3 = down
-        } else if (this->cooridates.first > dst_cc_coordinates.first) {
-            // std::cout <<"left\n";
-            return 0; // Clockwise 0 = left
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
-            // std::cout <<"right\n";
-            return 2; // Clockwise 2 = right
-        }
-        // TODO: use Cell:: instead
-        std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
-                  << "Bug: routing not sucessful!\n";
-    }
-    // Shape or routing not supported
-    std::cerr << ComputeCell::get_compute_cell_shape_name(this->shape)
-              << " or routing not supported!\n";
-    exit(0);
-}
-
-u_int32_t
-ComputeCell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-
-    // Algorithm == west first
-    if (this->shape == computeCellShape::square) {
-        // Remember for a square shaped CC there are four links to neighbors enumerated in
-        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
-
-        Coordinates dst_cc_coordinates =
-            ComputeCell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-
-        // West first routing restricts turns to the west side. Take west/left first if needed
-
-        // std::cout << "SinkCell: Routing from:" << this->cooridates << " --> " <<
-        // dst_cc_coordinates;
-
-        if (this->cooridates.first > dst_cc_coordinates.first) {
-            return 0; // Clockwise 0 = left
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
-
-            // send up or right
-            // based on availablity send there. Right now just send to up
-            return 1;
-
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second < dst_cc_coordinates.second)) {
-
-            // send down or right
-            // based on availablity send there. Right now just send to down
-            return 3;
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
-            // send to right
-            return 2;
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
-            // send to down
-            return 3;
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
-            // send to up
-            return 1;
-        }
-
-        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
-                  << " Bug: routing not sucessful!\n";
-    }
-    // Shape or routing not supported
-    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
-}
 
 void
 ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)

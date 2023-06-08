@@ -38,111 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // For memcpy()
 #include <cstring>
 
-// Returns the route in the mesh network
-
-u_int32_t
-SinkCell::get_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-    return get_west_first_route_towards_cc_id(dst_cc_id);
-}
-
-// This has deadlocks
-u_int32_t
-SinkCell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-
-    // Algorithm == dimensional routing
-    if (this->shape == computeCellShape::square) {
-        // Remember for a square shaped CC there are four links to neighbors enumerated in
-        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
-
-        Coordinates dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-
-        if constexpr (debug_code) {
-            std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
-                      << dst_cc_coordinates.first << ", " << dst_cc_coordinates.second
-                      << ") -- origin = ( " << this->cooridates.first << ", "
-                      << this->cooridates.second << ")\n";
-        }
-        // First check vertically in y axis then horizontally in x axis
-        if (this->cooridates.second > dst_cc_coordinates.second) {
-            return 1; // Clockwise 1 = up
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
-            return 3; // Clockwise 3 = down
-        } else if (this->cooridates.first > dst_cc_coordinates.first) {
-            // std::cout <<"left\n";
-            return 0; // Clockwise 0 = left
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
-            // std::cout <<"right\n";
-            return 2; // Clockwise 2 = right
-        }
-
-        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
-                  << "Bug: routing not sucessful!\n";
-    }
-    // Shape or routing not supported
-    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
-}
-
-u_int32_t
-SinkCell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
-{
-
-    // Algorithm == dimensional routing
-    if (this->shape == computeCellShape::square) {
-        // Remember for a square shaped CC there are four links to neighbors enumerated in
-        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
-
-        Coordinates dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-
-        /*      if (this->cooridates.second != 0){
-                 //send down
-                 return 3;
-             } */
-
-        // West first routing restricts turns to the west side. Take west/left first if needed
-
-        // std::cout << "SinkCell: Routing from:" << this->cooridates << " --> " <<
-        // dst_cc_coordinates;
-        if (this->cooridates.first > dst_cc_coordinates.first) {
-            return 0; // Clockwise 0 = left
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
-            // upper right quadrant
-
-            // send up or right
-            // based on availablity send there. Right now just send to up
-            return 1;
-
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second < dst_cc_coordinates.second)) {
-
-            // lower right quadrant
-
-            // send down or right
-            // based on availablity send there. Right now just send to down
-            return 3;
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
-            // send to right
-            return 2;
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
-            // send to down
-            return 3;
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
-            // send to up
-            return 1;
-        }
-
-        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
-                  << " Bug: routing not sucessful!\n";
-    }
-    // Shape or routing not supported
-    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
-}
+// For assert
+#include <cassert>
 
 std::pair<u_int32_t, u_int32_t>
 return_asymetric_neighbors(u_int32_t channel_to_send)
@@ -228,7 +125,7 @@ SinkCell::prepare_a_cycle()
                     if (this->check_cut_off_distance(dst_cc_coordinates)) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+                        u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
                         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
                             // Set to distance class j + 1
@@ -299,6 +196,8 @@ SinkCell::prepare_a_cycle()
 void
 SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
+    //assert(CCA_chip.size() != 0);
+
     if (!this->is_compute_cell_active()) {
         return;
     }
@@ -317,7 +216,7 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     // computation and communication
     this->prepare_a_cycle();
 
-    // An SinkCell has nothing much do to here for computation
+    // A SinkCell has nothing much do to here for computation
 }
 
 // This act as synchronization and needs to be called before the actual communication cycle so
@@ -325,6 +224,8 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 void
 SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
+    //assert(CCA_chip.size() != 0);
+
     if (!this->is_compute_cell_active()) {
         return;
     }
@@ -347,7 +248,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
 
         u_int32_t dst_cc_id = operon.first;
 
-        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+        u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
         if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 

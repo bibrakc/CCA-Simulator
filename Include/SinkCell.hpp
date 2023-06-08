@@ -64,14 +64,6 @@ class SinkCell : public Cell
     // Receive an operon from a neighbor
     bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
 
-    // Routing
-    // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
-    // this operon to. The returned value is the index [0...number of neighbors) coresponding
-    // clockwise the channel id of the physical shape.
-    u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
-
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
     std::shared_ptr<HtreeNode> connecting_htree_node;

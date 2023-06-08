@@ -275,8 +275,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
         auto [dst_col, dst_row] = dst_cc_cooridinate;
 
         // TODO: later make this distance customizable, either at compile time or runtime
-        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy/2) &&
-            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx/2)) {
+        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy / 2) &&
+            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx / 2)) {
             return true;
         } else {
             return false;
@@ -284,5 +284,101 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
+    exit(0);
+}
+
+u_int32_t
+Cell::get_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+    return get_west_first_route_towards_cc_id(dst_cc_id);
+}
+
+u_int32_t
+Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == dimensional routing
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        if constexpr (debug_code) {
+            std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
+                      << dst_cc_coordinates.first << ", " << dst_cc_coordinates.second
+                      << ") -- origin = ( " << this->cooridates.first << ", "
+                      << this->cooridates.second << ")\n";
+        }
+        // First check vertically in y axis then horizontally in x axis
+        if (this->cooridates.second > dst_cc_coordinates.second) {
+            return 1; // Clockwise 1 = up
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            return 3; // Clockwise 3 = down
+        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+            // std::cout <<"left\n";
+            return 0; // Clockwise 0 = left
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // std::cout <<"right\n";
+            return 2; // Clockwise 2 = right
+        }
+        // TODO: use Cell:: instead
+        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                  << "Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+u_int32_t
+Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == west first
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        // West first routing restricts turns to the west side. Take west/left first if needed
+
+        // std::cout << "SinkCell: Routing from:" << this->cooridates << " --> " <<
+        // dst_cc_coordinates;
+
+        if (this->cooridates.first > dst_cc_coordinates.first) {
+            return 0; // Clockwise 0 = left
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second > dst_cc_coordinates.second)) {
+
+            // send up or right
+            // based on availablity send there. Right now just send to up
+            return 1;
+
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second < dst_cc_coordinates.second)) {
+
+            // send down or right
+            // based on availablity send there. Right now just send to down
+            return 3;
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            return 2;
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            // send to down
+            return 3;
+        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+            // send to up
+            return 1;
+        }
+
+        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                  << " Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
     exit(0);
 }

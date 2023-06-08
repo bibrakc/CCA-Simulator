@@ -95,14 +95,6 @@ class ComputeCell : public Cell
     // to be embarasingly parallel for openmp.
     std::optional<Operon> staging_operon_from_logic;
 
-    // Routing
-    // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
-    // this operon to. The returned value is the index [0...number of neighbors) coresponding
-    // clockwise the channel id of the physical shape.
-    u_int32_t get_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
-
     // Sink cell nearby this compute cell. Used to route operons that are sent to far flung compute
     // cells in the CCA chip. If the network is mesh only then there is no sink cell hence the use
     // of `std::optional`

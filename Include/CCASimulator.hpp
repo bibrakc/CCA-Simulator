@@ -142,7 +142,7 @@ class CCASimulator
     inline void output_CCA_active_status_per_cycle(std::ostream& os)
     {
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
-        for (int i = 0; i < this->cca_statistics.active_status.size(); i++) {
+        for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
             os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"
                << this->cca_statistics.active_status[i].htree_active_percent << "\n";
         }
@@ -153,12 +153,12 @@ class CCASimulator
         os << "Cycles\tDim_x\tDim_y\n";
         os << this->total_cycles << "\t" << this->dim_x << "\t" << this->dim_y << "\n";
         os << "Active_Status_Per_Cell_Per_Cycle\n";
-        for (int i = 0; i < this->cca_statistics.individual_cells_active_status_per_cycle.size();
+        for (size_t i = 0; i < this->cca_statistics.individual_cells_active_status_per_cycle.size();
              i++) {
             std::shared_ptr<u_int32_t[]> frame =
                 this->cca_statistics.individual_cells_active_status_per_cycle[i];
-            for (int rows = 0; rows < this->dim_x; rows++) {
-                for (int cols = 0; cols < this->dim_y; cols++) {
+            for (u_int32_t rows = 0; rows < this->dim_x; rows++) {
+                for (u_int32_t cols = 0; cols < this->dim_y; cols++) {
                     os << frame[rows * this->dim_y + cols];
                     if (cols != this->dim_y - 1) {
                         os << " ";

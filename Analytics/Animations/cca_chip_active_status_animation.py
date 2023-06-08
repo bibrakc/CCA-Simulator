@@ -108,6 +108,9 @@ def draw_h_tree(x, y, length, depth):
 
 def update(frame):
     grid.set_array(grid_data[frame])
+    # Set the title for each frame
+    ax.set_title('CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame))
+
     if frame == 1:
         draw_h_tree(x_htree, y_htree, length_htree, depth_htree)
     if frame == num_frames - 1:
@@ -117,7 +120,7 @@ def update(frame):
 
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=num_frames, interval=60)  # Increase the interval
+    fig, update, frames=num_frames, interval=24)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -129,15 +132,15 @@ ax.tick_params(length=0)
 # Label the axes and title the animation
 ax.set_xlabel('Columns of Compute Cells')
 ax.set_ylabel('Rows of Compute Cells')
-ax.set_title('CCA Chip Activation Per Compute Cell')
+#ax.set_title('CCA Chip Activation Per Compute Cell')
 
 # Save the animation as an MP4 file
 output_filename = 'animation.mp4'
-ani.save(output_filename, writer='ffmpeg', dpi=100)
+ani.save(output_filename, writer='ffmpeg', dpi=200)
 
 """ # Save the animation as a GIF file
 output_filename = 'animation.gif'
-ani.save(output_filename, writer='pillow', dpi=70) """
+ani.save(output_filename, writer='pillow', dpi=40) """
 
 # Display the plot
 plt.show()

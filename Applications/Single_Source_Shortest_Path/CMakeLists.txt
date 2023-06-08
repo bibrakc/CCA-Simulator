@@ -52,7 +52,7 @@ add_library(CCACommons
 target_include_directories(CCACommons PUBLIC 
             ${IncludeDirectory})
 
-#target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
+target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
 
 add_library(HtreeNework
             ${SourceDirectory}/HtreeNode.cpp
@@ -63,7 +63,7 @@ target_include_directories(HtreeNework PUBLIC
             ${IncludeDirectory}
             )
 
-#target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
+target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
 
 target_link_libraries(HtreeNework PUBLIC CCACommons)
 
@@ -82,7 +82,7 @@ target_include_directories(CCASimulator PUBLIC
                            ${IncludeDirectory}/Datastructure
                            )
                            
-#target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra)
+target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-parameter)
 
 target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX CCACommons)
 
