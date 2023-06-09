@@ -35,9 +35,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Action.hpp"
 #include "Address.hpp"
+#include "CCAFunctionEvents.hpp"
 #include "Cell.hpp"
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
+#include "Function.hpp"
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 #include "Operon.hpp"
@@ -97,6 +99,9 @@ class CCASimulator
 
     // Seconds layer network
     HtreeNetwork htree_network;
+
+    // Registers and manages the function events
+    FunctionEventManager function_events;
 
     // To record various measurements of the system to be used for analysis
     CCASimulatorStatistics cca_statistics;
@@ -182,6 +187,9 @@ class CCASimulator
 
     // The main chip creation function
     void create_the_chip();
+
+    // Register a function event
+    CCAFunctionEvent register_function_event(handler_func function_event_handler);
 
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,

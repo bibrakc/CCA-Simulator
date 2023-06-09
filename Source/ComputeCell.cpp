@@ -30,8 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 #include "ComputeCell.hpp"
+#include "CCAFunctionEvents.hpp"
 #include "Cell.hpp"
 #include "Function.hpp"
+#include "Object.hpp"
 
 #if debug_code == true
 // TODO: Later make it generic to be data structure agnostic
@@ -112,7 +114,7 @@ ComputeCell::insert_action(const Action& action)
 }
 
 void
-ComputeCell::execute_action()
+ComputeCell::execute_action(FunctionEventManager& function_events)
 {
 
     if (!this->action_queue.empty()) {
@@ -128,23 +130,36 @@ ComputeCell::execute_action()
         print_SimpleVertex(vertex, action.obj_addr);
 #endif
         if (action.action_type == actionType::application_action) {
+
+            Object* obj = static_cast<Object*>(this->get_object(action.obj_addr));
+            obj->terminator.signal(action.origin_addr);
+
             // if predicate
-            int predicate_resolution =
-                event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
+            int predicate_resolution = function_events.get_function_event_handler(action.predicate)(
+                *this, action.obj_addr, action.nargs, action.args);
+            // event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
             if (predicate_resolution == 1) {
-                // if work
-                event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
+                // work
+                function_events.get_function_event_handler(action.work)(
+                    *this, action.obj_addr, action.nargs, action.args);
+                // event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
                 this->statistics.actions_performed_work++;
 
-                // if diffuse
-                event_handlers[action.diffuse](*this, action.obj_addr, action.nargs, action.args);
+                // diffuse
+                function_events.get_function_event_handler(action.diffuse)(
+                    *this, action.obj_addr, action.nargs, action.args);
+                // event_handlers[action.diffuse](*this, action.obj_addr, action.nargs,
+                // action.args);
             } else {
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
-            event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0, nullptr);
+            function_events.get_acknowledgement_event_handler()(
+                *this, action.obj_addr, action.nargs, action.args);
+            // event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0,
+            // nullptr);
         } else {
             std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
             exit(0);
@@ -262,7 +277,8 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 }
 
 void
-ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                     FunctionEventManager& function_events)
 {
 
     if (!this->is_compute_cell_active()) {
@@ -309,7 +325,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
     } else if (!this->action_queue.empty()) {
         // Else execute an action if the action_queue is not empty
-        this->execute_action();
+        this->execute_action(function_events);
 
         // The logic was active. In this cycle it did predicate resolution and action work.
         this->statistics.cycle_resource_use_counter--;

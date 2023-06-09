@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Action.hpp"
 #include "Address.hpp"
 
-//#include <cassert>
+// #include <cassert>
 
 class TerminatorAction : public Action
 {
@@ -74,20 +74,19 @@ struct Terminator
     {
         if (this->deficit == 0) {
             this->parent = origin_addr_in;
+            this->deficit++;
         } else {
             // Send acknowledgement back to where the action came from
             TerminatorAction acknowledgement_action(
                 origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
-            
+
             // Put a task in the task queue of the CC
             Actually send !
         }
-        // The deficit is increament in diffuse
-        //this->deficit++;
     }
 
     // Recieved an acknowledgement message back. Decreament my deficit.
-    void acknowledgement()
+    void acknowledgement(ComputeCell& cc)
     {
         assert(this->deficit != 0);
 
@@ -95,11 +94,19 @@ struct Terminator
         if (this->deficit == 0) {
             // Unset the parent and send an acknowledgement back to the parent
 
-            // Create an special acknowledgement action towards the parent in the spanning tree.
+            // Create an special acknowledgement action towards the parent in the Dijkstra–Scholten
+            // spanning tree.
             TerminatorAction acknowledgement_action(this->parent.value(),
                                                     this->my_object,
                                                     actionType::terminator_acknowledgement_action);
 
+            // Create Operon and put it in the task queue
+            Operon operon_to_send =
+                construct_operon(this->parent.value().cc_id, acknowledgement_action);
+            cc.task_queue.push(send_operon(cc, operon_to_send));
+
+            // Unset the parent
+            this->parent = std::nullopt;
             Actually send !
         }
     }
@@ -109,6 +116,7 @@ struct Terminator
         /* std::cout << "Terminator Constructor\n"; */
         this->deficit = 0;
         this->parent = std::nullopt;
+
         // this->my_object = std::nullopt;
     }
 };

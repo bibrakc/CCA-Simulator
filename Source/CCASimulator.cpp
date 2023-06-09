@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ComputeCell.hpp"
 #include "Constants.hpp"
 #include "HtreeNode.hpp"
+#include "Object.hpp"
 #include "Operon.hpp"
 #include "SinkCell.hpp"
 #include "Task.hpp"
@@ -206,6 +207,13 @@ CCASimulator::create_the_chip()
         std::cerr << "Error! Cannot create chip of non-supported type cell shape\n";
         exit(0);
     }
+}
+
+// Register a function event
+CCAFunctionEvent
+CCASimulator::register_function_event(handler_func function_event_handler)
+{
+    return this->function_events.register_function_event(function_event_handler);
 }
 
 // Get the pointer to the object at `Address addr_in`

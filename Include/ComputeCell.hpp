@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "Cell.hpp"
 #include "Constants.hpp"
+#include "Function.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
 
@@ -68,7 +69,7 @@ class ComputeCell : public Cell
 
     void insert_action(const Action& action);
 
-    void execute_action();
+    void execute_action(FunctionEventManager& function_events);
 
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links

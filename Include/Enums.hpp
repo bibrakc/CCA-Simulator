@@ -46,13 +46,13 @@ get_underlying_enum_index(E e)
 
 // TODO: later perhaps convert this to a std::map or something so that the user can easily put
 // his/her actions at runtime, especially if this is going to be a pre-compiled library.
-enum class eventId : u_int32_t
+/* enum class eventId : u_int32_t
 {
     sssp_predicate = 0,
     sssp_work,
     sssp_diffuse,
     terminator_acknowledgement,
     eventId_count
-};
+}; */
 
 #endif // ENUMS_HPP

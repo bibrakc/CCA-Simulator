@@ -34,12 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ACTION_HPP
 
 #include "Address.hpp"
-#include "Enums.hpp"
+// #include "Enums.hpp"
+#include "Function.hpp"
+
 #include <memory>
 
 enum class actionType : u_int32_t
 {
-    terminator_action = 0,
+    terminator_acknowledgement_action = 0,
     application_action,
     actionType_count
 };
@@ -70,14 +72,14 @@ class Action
     Address origin_addr;
 
     // Predicate
-    eventId predicate;
+    CCAFunctionEvent predicate;
 
     // Work function that does some computation and may change the state
     // of the object for which this action is destined
-    eventId work;
+    CCAFunctionEvent work;
 
     // Generate actions along the edges for the diffusion
-    eventId diffuse;
+    CCAFunctionEvent diffuse;
 
     virtual ~Action()
     { /* std::cout << "Action class destructor" << std::endl;  */
