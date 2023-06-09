@@ -55,6 +55,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 
 typedef unsigned long u_long;
+
+using CCATerminator = Object;
+
 struct ActiveStatusPerCycle
 {
     double cells_active_percent;
@@ -94,6 +97,21 @@ class CCASimulator
     // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
 
+    // ID of the host. Just like Compute Cells have Id the host also has. This is useful for
+    // invoking functions on objects in the host memory. For example: The root terminator form the
+    // host.
+    u_int32_t host_id;
+
+    // The host memory
+    std::shared_ptr<char[]> host_memory;
+
+    // Memory of host in bytes. Used to store objects at host such as the root terminator provided
+    // by the user.
+    constexpr u_int32_t host_memory_size_in_bytes = 2048; // 2 KB
+    char* host_memory_raw_ptr;
+    char* host_memory_curr_ptr;
+
+    // For statistics
     bool global_active_cc;
     u_long total_cycles;
 
@@ -128,7 +146,14 @@ class CCASimulator
         this->total_cycles = 0;
         this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
 
+        this->host_id = this->dim_x * this->dim_y;
+        this->host_memory = std::make_shared<char[]>(this->host_memory_size_in_bytes);
+        this->host_memory_raw_ptr = this->host_memory.get();
+        this->host_memory_curr_ptr = this->host_memory_raw_ptr;
+
         this->create_the_chip();
+
+        assert(this->host_id == this->CCA_chip.size());
     }
 
     inline void generate_label(std::ostream& os)
@@ -190,6 +215,16 @@ class CCASimulator
 
     // Register a function event
     CCAFunctionEvent register_function_event(handler_func function_event_handler);
+
+    // Return the memory used in bytes
+    u_int32_t get_host_memory_used();
+    // In bytes
+    u_int32_t get_host_memory_curr_ptr_offset();
+    // Get memory left in bytes
+    u_int32_t host_memory_available_in_bytes();
+
+    // Create a CCATerminator object on host and return the address
+    std::optional<Address> create_terminator();
 
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,

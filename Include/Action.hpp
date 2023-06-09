@@ -67,7 +67,7 @@ class Action
     // Memory location of the object for which this action is destined
     Address obj_addr;
 
-    // Memory location of the object for which this action originated. Used for termination
+    // Memory location of the object from which this action originated. Used for termination
     // detection.
     Address origin_addr;
 

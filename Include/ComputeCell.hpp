@@ -109,6 +109,9 @@ class ComputeCell : public Cell
     char* memory_raw_ptr;
     char* memory_curr_ptr;
 
+    std::shared_ptr<char[]> host_memory;
+    u_int32_t host_id;
+
     // Actions queue of the Compute Cell
     std::queue<Action> action_queue;
 
@@ -129,7 +132,8 @@ class ComputeCell : public Cell
                 u_int32_t hx_in,
                 u_int32_t hy_in,
                 u_int32_t hdepth_in,
-                u_int32_t memory_per_cc_in_bytes)
+                u_int32_t memory_per_cc_in_bytes,
+                std::shared_ptr<char[]> host_memory_in)
 
     {
         this->id = id_in;
@@ -154,6 +158,9 @@ class ComputeCell : public Cell
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
+
+        this->host_memory = host_memory_in;
+        this->host_id = this->dim_x * this->dim_y;
 
         // Assign neighbor CCs to this CC. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();

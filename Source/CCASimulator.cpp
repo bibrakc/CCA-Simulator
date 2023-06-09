@@ -149,7 +149,8 @@ CCASimulator::create_square_cell_htree_chip()
                                                                        this->hx,
                                                                        this->hy,
                                                                        this->hdepth,
-                                                                       this->memory_per_cc));
+                                                                       this->memory_per_cc,
+                                                                       this->host_memory));
             }
             if constexpr (debug_code) {
                 std::cout << *this->CCA_chip.back().get();
@@ -183,7 +184,8 @@ CCASimulator::create_square_cell_mesh_only_chip()
                                                                    this->hx,
                                                                    this->hy,
                                                                    this->hdepth,
-                                                                   this->memory_per_cc));
+                                                                   this->memory_per_cc,
+                                                                   this->host_memory));
 
             if constexpr (debug_code) {
                 std::cout << *this->CCA_chip.back().get();
@@ -216,16 +218,62 @@ CCASimulator::register_function_event(handler_func function_event_handler)
     return this->function_events.register_function_event(function_event_handler);
 }
 
+// Return the memory used in bytes
+u_int32_t
+CCASimulator::get_host_memory_used()
+{
+    return this->host_memory_curr_ptr - this->host_memory_raw_ptr;
+}
+
+// In bytes
+u_int32_t
+CCASimulator::get_host_memory_curr_ptr_offset()
+{
+    return get_host_memory_used();
+}
+
+// Get memory left in bytes
+u_int32_t
+CCASimulator::host_memory_available_in_bytes()
+{
+    return this->host_memory_size_in_bytes - this->get_host_memory_used();
+}
+
 // Get the pointer to the object at `Address addr_in`
 void*
 CCASimulator::get_object(Address addr_in) const
 {
+
+    if (addr_in.type == adressType::host_address) {
+        return (this->host_memory.get() + addr_in.addr);
+    }
+
     // dynamic_pointer_cast to go down/across class hierarchy
     auto compute_cell = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[addr_in.cc_id]);
     if (!compute_cell) {
         std::cerr << "Bug! Invalid addr in CCASimulator::get_object\n";
     }
     return compute_cell->get_object(addr_in);
+}
+
+// Create a CCATerminator object on host and return the address
+std::optional<Address>
+CCASimulator::create_terminator()
+{
+    if (this->host_memory_available_in_bytes() < sizeof(CCATerminator)) {
+        return std::nullopt;
+    }
+
+    CCATerminator host_terminator;
+    u_int32_t obj_memory_addr_offset = get_host_memory_curr_ptr_offset();
+    Address host_terminator_addr(this->host_id, obj_memory_addr_offset, adressType::host_address);
+
+    host_terminator.terminator.my_object = host_terminator_addr;
+
+    memcpy(this->host_memory_curr_ptr, &host_terminator, sizeof(CCATerminator));
+    this->host_memory_curr_ptr += sizeof(CCATerminator);
+
+    return host_terminator_addr;
 }
 
 std::optional<Address>

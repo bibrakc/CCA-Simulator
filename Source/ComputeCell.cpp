@@ -49,6 +49,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void*
 ComputeCell::get_object(Address addr_in) const
 {
+    if (addr_in.cc_id == this->host_id) {
+        assert(addr_in.type == adressType::host_address);
+        return (this->host_memory.get() + addr_in.addr);
+    }
     return (this->memory.get() + addr_in.addr);
 }
 
@@ -73,7 +77,8 @@ ComputeCell::memory_available_in_bytes()
     return this->memory_size_in_bytes - get_memory_used();
 }
 
-// Returns the offset in memory for this newly created object
+// Returns the offset in memory for this newly created object. Also copies the object from host to
+// Compute Cell
 std::optional<Address>
 ComputeCell::create_object_in_memory(void* obj, size_t size_of_obj)
 {
@@ -132,7 +137,9 @@ ComputeCell::execute_action(FunctionEventManager& function_events)
         if (action.action_type == actionType::application_action) {
 
             Object* obj = static_cast<Object*>(this->get_object(action.obj_addr));
-            obj->terminator.signal(action.origin_addr);
+
+            // Signal that this object is active for termination detection
+            obj->terminator.signal(*this, action.origin_addr);
 
             // if predicate
             int predicate_resolution = function_events.get_function_event_handler(action.predicate)(
@@ -155,6 +162,9 @@ ComputeCell::execute_action(FunctionEventManager& function_events)
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
+
+            obj->terminator.acknowledgement(*this);
+
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
             function_events.get_acknowledgement_event_handler()(
                 *this, action.obj_addr, action.nargs, action.args);

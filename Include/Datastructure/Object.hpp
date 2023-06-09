@@ -66,27 +66,34 @@ struct Terminator
     std::optional<Address> parent;
 
     // The address of the object of which this terminator is part of.
-    // TODO: This is not really needed. Check later.
     Address my_object;
 
+    bool is_active() { return (this->deficit == 0) ? false : true; }
+
     // Recieved an action. Increament my deficit.
-    void signal(const Address origin_addr_in)
+    void signal(ComputeCell& cc, const Address origin_addr_in)
     {
-        if (this->deficit == 0) {
+        this->deficit++;
+        if (this->deficit == 1) {
             this->parent = origin_addr_in;
-            this->deficit++;
         } else {
             // Send acknowledgement back to where the action came from
             TerminatorAction acknowledgement_action(
                 origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
 
-            // Put a task in the task queue of the CC
-            Actually send !
+            // Create Operon and put it in the task queue
+            Operon operon_to_send = construct_operon(origin_addr_in.cc_id, acknowledgement_action);
+            cc.task_queue.push(send_operon(cc, operon_to_send));
         }
     }
 
+    // Only when the terminator is created at the host and is used as root terminator for an
+    // application.
+    void host_signal() { this->deficit++; }
+    void host_acknowledgementl() { this->deficit--; }
+
     // Recieved an acknowledgement message back. Decreament my deficit.
-    void acknowledgement(ComputeCell& cc)
+    void acknowledgement(ComputeCell& cc) //, const Address origin_addr_in)
     {
         assert(this->deficit != 0);
 
@@ -94,20 +101,28 @@ struct Terminator
         if (this->deficit == 0) {
             // Unset the parent and send an acknowledgement back to the parent
 
-            // Create an special acknowledgement action towards the parent in the Dijkstra–Scholten
-            // spanning tree.
-            TerminatorAction acknowledgement_action(this->parent.value(),
-                                                    this->my_object,
-                                                    actionType::terminator_acknowledgement_action);
+            if (this->parent.value().cc_id == cc.host_id) {
+                // Simple decreament the deficit at the host.
+                Object* obj = static_cast<Object*>(cc.get_object(this->parent.value().addr));
+                obj->terminator.host_acknowledgement();
+                std::cout << "Host Terminator Acknowledgement Sent!\n";
+            } else {
 
-            // Create Operon and put it in the task queue
-            Operon operon_to_send =
-                construct_operon(this->parent.value().cc_id, acknowledgement_action);
-            cc.task_queue.push(send_operon(cc, operon_to_send));
+                // Create an special acknowledgement action towards the parent in the
+                // Dijkstra–Scholten spanning tree.
+                TerminatorAction acknowledgement_action(
+                    this->parent.value(),
+                    this->my_object,
+                    actionType::terminator_acknowledgement_action);
 
-            // Unset the parent
-            this->parent = std::nullopt;
-            Actually send !
+                // Create Operon and put it in the task queue
+                Operon operon_to_send =
+                    construct_operon(this->parent.value().cc_id, acknowledgement_action);
+                cc.task_queue.push(send_operon(cc, operon_to_send));
+
+                // Unset the parent
+                this->parent = std::nullopt;
+            }
         }
     }
 

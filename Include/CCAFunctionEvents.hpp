@@ -51,7 +51,7 @@ terminator_acknowledgement_func(ComputeCell& cc,
 
     Object* obj = static_cast<Object*>(cc.get_object(addr));
 
-    obj->terminator.acknowledgement(ComputeCell & cc);
+    obj->terminator.acknowledgement(cc);
     return 0;
 }
 

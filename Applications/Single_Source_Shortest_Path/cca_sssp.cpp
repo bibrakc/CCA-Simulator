@@ -92,12 +92,6 @@ class SSSPAction : public Action
     ~SSSPAction() override {}
 };
 
-inline Operon
-construct_operon(const u_int32_t cc_id, const Action& action)
-{
-    return std::pair<u_int32_t, Action>(cc_id, action);
-}
-
 int
 sssp_predicate_func(ComputeCell& cc,
                     const Address& addr,
@@ -129,28 +123,6 @@ sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::share
     // Update distance with the new distance
     v->sssp_distance = incoming_distance;
     return 0;
-}
-// TODO: try to move such code to ComputeCell or somewhere
-inline Task
-send_operon(ComputeCell& cc, Operon operon_in)
-{
-
-    return std::pair<taskType, Task_func>(
-        taskType::send_operon_task_type, Task_func([&cc, operon_in]() {
-            if (cc.staging_operon_from_logic != std::nullopt) {
-                std::cerr
-                    << "Bug! cc: " << cc.id
-                    << " staging_operon_from_logic buffer is full! The program shouldn't have come "
-                       "to send_operon\n";
-                exit(0);
-            }
-            if constexpr (debug_code) {
-                std::cout << "Sending operon from cc: " << cc.id << " to cc: " << operon_in.first
-                          << "\n";
-            }
-
-            cc.staging_operon_from_logic = operon_in;
-        }));
 }
 
 int
@@ -185,6 +157,8 @@ sssp_diffuse_func(ComputeCell& cc,
                           eventId::sssp_predicate,
                           eventId::sssp_work,
                           eventId::sssp_diffuse);
+
+        // TODO: Hide cc and provide functions using CCASimulator
         Operon operon_to_send = construct_operon(v->edges[i].edge.cc_id, action);
         cc.task_queue.push(send_operon(cc, operon_to_send));
     }
@@ -420,6 +394,8 @@ main(int argc, char** argv)
     // tasks
     std::map<u_int32_t, Address> vertex_addresses;
 
+    Address sssp_terminator = cca_square_simulator.create_terminator();
+
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
       // and we don't want it's constructor to be called everytime.
@@ -465,6 +441,7 @@ main(int argc, char** argv)
                     std::dynamic_pointer_cast<ComputeCell>(cca_square_simulator.CCA_chip[cc_id]);
                 if (compute_cell) {
                     compute_cell->insert_action(SSSPAction(vertex_addr.value(),
+                                                           sssp_terminator,
                                                            actionType::application_action,
                                                            true,
                                                            2,
@@ -473,6 +450,14 @@ main(int argc, char** argv)
                                                            sssp_work,
                                                            sssp_diffuse));
                     compute_cell->statistics.actions_created++;
+
+                    Object* obj =
+                        static_cast<Object*>(cca_square_simulator.get_object(sssp_terminator));
+                    obj->terminator.host_signal();
+
+                } else {
+                    std::cerr << "Bug! Compute Cell not found: " << cc_id << "\n";
+                    exit(0);
                 }
             }
         }
