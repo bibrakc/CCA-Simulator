@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 #include "Constants.hpp"
 #include "Function.hpp"
+#include "Object.hpp"
 #include "Operon.hpp"
 #include "Task.hpp"
 
@@ -69,14 +70,15 @@ class ComputeCell : public Cell
 
     void insert_action(const Action& action);
 
-    void execute_action(FunctionEventManager& function_events);
+    void execute_action(void* function_events);
 
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links
     void prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Execute a single cycle for this cell
-    void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                 void* function_events);
 
     // TODO: write comments
     void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
@@ -89,6 +91,13 @@ class ComputeCell : public Cell
 
     // Receive an operon from a neighbor
     bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
+
+    // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
+    // on the `staging_operon_from_logic`
+    Task send_operon(Operon operon_in);
+
+    // Construct an Operon
+    Operon construct_operon(const u_int32_t cc_id, const Action& action);
 
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking

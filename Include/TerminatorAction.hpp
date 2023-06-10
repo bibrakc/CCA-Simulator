@@ -30,32 +30,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Operon.hpp"
+#ifndef TERMINATOR_ACTION_HPP
+#define TERMINATOR_ACTION_HPP
 
-// #include <utility>
-#include <optional>
-#include <vector>
+#include "Action.hpp"
+#include "Address.hpp"
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
+class TerminatorAction : public Action
 {
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
+  public:
+    TerminatorAction(const Address obj_addr_in,
+                     const Address origin_addr_in,
+                     const actionType action_type_in)
+    {
+        // This is the address to which the action will be sent
+        this->obj_addr = obj_addr_in;
 
-    os << "\n";
-    return os;
-}
+        // This is the type of the action, most likely:
+        // `actionType::terminator_acknowledgement_action`
+        this->action_type = action_type_in;
 
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
-{
-
-    for (auto& op_ : operons_) {
-        if (op_ == std::nullopt) {
-            os << "[nullopt] ";
-        } else {
-            os << op_.value();
-        }
+        // TODO: Not really needed. Check?
+        this->origin_addr = origin_addr_in;
     }
-    os << "\n";
-    return os;
-}
+
+    ~TerminatorAction() override {}
+};
+
+#endif // TERMINATOR_ACTION_HPP

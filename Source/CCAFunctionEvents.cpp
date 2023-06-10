@@ -30,32 +30,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Operon.hpp"
+#include "CCAFunctionEvents.hpp"
+#include "Address.hpp"
+#include "Function.hpp"
+#include "Object.hpp"
 
-// #include <utility>
-#include <optional>
+#include <cassert>
 #include <vector>
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
+handler_func
+FunctionEventManager::get_acknowledgement_event_handler()
 {
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
-
-    os << "\n";
-    return os;
+    return this->event_handlers[this->acknowledgement_event_id];
 }
 
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
+CCAFunctionEvent
+FunctionEventManager::register_function_event(handler_func function_event_handler)
 {
+    assert(this->next_available_event_id == this->event_handlers.size());
 
-    for (auto& op_ : operons_) {
-        if (op_ == std::nullopt) {
-            os << "[nullopt] ";
-        } else {
-            os << op_.value();
-        }
-    }
-    os << "\n";
-    return os;
+    CCAFunctionEvent current_function_event_id = this->next_available_event_id;
+    this->event_handlers.push_back(function_event_handler);
+    this->next_available_event_id++;
+
+    return current_function_event_id;
 }
+
+handler_func
+FunctionEventManager::get_function_event_handler(CCAFunctionEvent function_event_in)
+{
+    assert(function_event_in < this->event_handlers.size());
+
+    return this->event_handlers[function_event_in];
+}
+
+

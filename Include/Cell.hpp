@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "types.hpp"
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <queue>
 #include <stdlib.h>
@@ -248,7 +249,8 @@ class Cell
     void add_neighbor_compute_cells();
 
     // Execute a single cycle for this cell
-    virtual void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
+    virtual void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                         void* function_events) = 0;
 
     // TODO: write comments
     virtual void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;

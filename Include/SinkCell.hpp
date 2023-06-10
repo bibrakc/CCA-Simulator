@@ -50,7 +50,8 @@ class SinkCell : public Cell
     void prepare_a_cycle();
 
     // Execute a single cycle for this cell
-    void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                 void* function_events);
 
     // TODO: write comments
     void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);

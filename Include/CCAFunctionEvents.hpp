@@ -34,26 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_FUNCTION_EVENTS_HPP
 
 #include "Address.hpp"
-#include "ComputeCell.hpp"
-// #include "Enums.hpp"
 #include "Function.hpp"
-#include "Object.hpp"
+#include <vector>
 
 #include <cassert>
-
-// Recieved an acknowledgement message back. Decreament my deficit.
-int
-terminator_acknowledgement_func(ComputeCell& cc,
-                                const Address& addr,
-                                int nargs,
-                                const std::shared_ptr<int[]>& args)
-{
-
-    Object* obj = static_cast<Object*>(cc.get_object(addr));
-
-    obj->terminator.acknowledgement(cc);
-    return 0;
-}
 
 struct FunctionEventManager
 {
@@ -69,28 +53,11 @@ struct FunctionEventManager
     // Acknowledgement event id for termination detection.
     CCAFunctionEvent acknowledgement_event_id;
 
-    handler_func get_acknowledgement_event_handler()
-    {
-        return this->event_handlers[this->acknowledgement_event_id];
-    }
+    handler_func get_acknowledgement_event_handler();
 
-    CCAFunctionEvent register_function_event(handler_func function_event_handler)
-    {
-        assert(this->next_available_event_id == this->event_handlers.size());
+    CCAFunctionEvent register_function_event(handler_func function_event_handler);
 
-        CCAFunctionEvent current_function_event_id = this->next_available_event_id;
-        this->event_handlers.push_back(function_event_handler);
-        this->next_available_event_id++;
-
-        return current_function_event_id;
-    }
-
-    handler_func get_function_event_handler(CCAFunctionEvent function_event_in)
-    {
-        assert((function_event_in >= 0) && (function_event_in < this->event_handlers.size()));
-
-        return this->event_handlers[function_event_in];
-    }
+    handler_func get_function_event_handler(CCAFunctionEvent function_event_in);
 
     FunctionEventManager()
     {
@@ -100,4 +67,5 @@ struct FunctionEventManager
             this->register_function_event(terminator_acknowledgement_func);
     }
 };
+
 #endif // CCA_FUNCTION_EVENTS_HPP

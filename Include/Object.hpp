@@ -30,32 +30,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Operon.hpp"
+#ifndef OBJECT_HPP
+#define OBJECT_HPP
 
-// #include <utility>
-#include <optional>
-#include <vector>
+#include "Terminator.hpp"
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
+struct Object
 {
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
+    // Terminator
+    Terminator terminator;
 
-    os << "\n";
-    return os;
-}
+    // Garbage collection
 
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
-{
+    // Type tag?
 
-    for (auto& op_ : operons_) {
-        if (op_ == std::nullopt) {
-            os << "[nullopt] ";
-        } else {
-            os << op_.value();
-        }
+    Object()
+    { /* std::cout << "Object Constructor\n"; */
     }
-    os << "\n";
-    return os;
-}
+};
+
+#endif // OBJECT_HPP

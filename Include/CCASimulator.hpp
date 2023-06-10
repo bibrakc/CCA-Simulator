@@ -107,7 +107,7 @@ class CCASimulator
 
     // Memory of host in bytes. Used to store objects at host such as the root terminator provided
     // by the user.
-    constexpr u_int32_t host_memory_size_in_bytes = 2048; // 2 KB
+    static inline constexpr u_int32_t host_memory_size_in_bytes = 2048; // 2 KB
     char* host_memory_raw_ptr;
     char* host_memory_curr_ptr;
 

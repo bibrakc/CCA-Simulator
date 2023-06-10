@@ -45,6 +45,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
+// Recieved an acknowledgement message back. Decreament my deficit.
+int
+terminator_acknowledgement_func(ComputeCell& cc,
+                                const Address& addr,
+                                int nargs,
+                                const std::shared_ptr<int[]>& args)
+{
+
+    Object* obj = static_cast<Object*>(cc.get_object(addr));
+
+    obj->terminator.acknowledgement(cc);
+    return 0;
+}
+
 // Get the object memory location at address addr_in
 void*
 ComputeCell::get_object(Address addr_in) const
@@ -118,13 +132,61 @@ ComputeCell::insert_action(const Action& action)
     this->statistics.actions_pushed++;
 }
 
-void
-ComputeCell::execute_action(FunctionEventManager& function_events)
+// Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon on
+// the `staging_operon_from_logic`
+Task
+ComputeCell::send_operon(Operon operon_in)
 {
+
+    // Increament the deficit for termination detection if actionType !=
+    // terminator_acknowledgement_action
+    actionType action_type = operon_in.second.action_type;
+    if (action_type == actionType::application_action) {
+        Address addr = operon_in.second.origin_addr;
+        Object* obj = static_cast<Object*>(this->get_object(addr));
+        obj->terminator.deficit++;
+    }
+
+    return std::pair<taskType, Task_func>(
+        taskType::send_operon_task_type, Task_func([this, operon_in]() {
+            // Bug check
+            if (this->staging_operon_from_logic != std::nullopt) {
+                std::cerr << "Bug! cc: " << this->id
+                          << " staging_operon_from_logic buffer is full! The program shouldn't "
+                             "have come "
+                             "to send_operon\n";
+                exit(0);
+            }
+
+            // Debug prints
+            if constexpr (debug_code) {
+                std::cout << "Sending operon from cc: " << this->id << " to cc: " << operon_in.first
+                          << "\n";
+            }
+
+            // Actual work of sending
+            this->staging_operon_from_logic = operon_in;
+        }));
+}
+
+Operon
+ComputeCell::construct_operon(const u_int32_t cc_id, const Action& action)
+{
+    return std::pair<u_int32_t, Action>(cc_id, action);
+}
+
+void
+ComputeCell::execute_action(void* function_events)
+{
+    // Using `void*` becuase there is conflict in compiler with dependencies between classes
+    // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->action_queue.empty()) {
         Action action = this->action_queue.front();
         this->action_queue.pop();
+
+        FunctionEventManager* function_events_manager =
+            static_cast<FunctionEventManager*>(function_events);
 
 #if debug_code == true
         if (action.obj_addr.cc_id != this->id) {
@@ -142,19 +204,19 @@ ComputeCell::execute_action(FunctionEventManager& function_events)
             obj->terminator.signal(*this, action.origin_addr);
 
             // if predicate
-            int predicate_resolution = function_events.get_function_event_handler(action.predicate)(
-                *this, action.obj_addr, action.nargs, action.args);
+            int predicate_resolution = function_events_manager->get_function_event_handler(
+                action.predicate)(*this, action.obj_addr, action.nargs, action.args);
             // event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
             if (predicate_resolution == 1) {
                 // work
-                function_events.get_function_event_handler(action.work)(
+                function_events_manager->get_function_event_handler(action.work)(
                     *this, action.obj_addr, action.nargs, action.args);
                 // event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
                 this->statistics.actions_performed_work++;
 
                 // diffuse
-                function_events.get_function_event_handler(action.diffuse)(
+                function_events_manager->get_function_event_handler(action.diffuse)(
                     *this, action.obj_addr, action.nargs, action.args);
                 // event_handlers[action.diffuse](*this, action.obj_addr, action.nargs,
                 // action.args);
@@ -166,7 +228,7 @@ ComputeCell::execute_action(FunctionEventManager& function_events)
             obj->terminator.acknowledgement(*this);
 
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
-            function_events.get_acknowledgement_event_handler()(
+            function_events_manager->get_acknowledgement_event_handler()(
                 *this, action.obj_addr, action.nargs, action.args);
             // event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0,
             // nullptr);
@@ -288,7 +350,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
 void
 ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                     FunctionEventManager& function_events)
+                                     void* function_events)
 {
 
     if (!this->is_compute_cell_active()) {

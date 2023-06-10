@@ -58,6 +58,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
 
+// Declare the function event ids for the SSSP action functions of predicate, work, and diffuse.
+// In the main register the functions and get their ids
+CCAFunctionEvent sssp_predicate;
+CCAFunctionEvent sssp_work;
+CCAFunctionEvent sssp_diffuse;
+
 static u_int32_t test_vertex;
 
 // TODO: Currently this SSSPAction class has nothing different than its base class Action. See if
@@ -154,13 +160,13 @@ sssp_diffuse_func(ComputeCell& cc,
                           true,
                           2,
                           args_x,
-                          eventId::sssp_predicate,
-                          eventId::sssp_work,
-                          eventId::sssp_diffuse);
+                          sssp_predicate,
+                          sssp_work,
+                          sssp_diffuse);
 
         // TODO: Hide cc and provide functions using CCASimulator
-        Operon operon_to_send = construct_operon(v->edges[i].edge.cc_id, action);
-        cc.task_queue.push(send_operon(cc, operon_to_send));
+        Operon operon_to_send = cc.construct_operon(v->edges[i].edge.cc_id, action);
+        cc.task_queue.push(cc.send_operon(operon_to_send));
     }
     // These many new actions were created
     cc.statistics.actions_created += v->number_of_edges;
@@ -394,7 +400,11 @@ main(int argc, char** argv)
     // tasks
     std::map<u_int32_t, Address> vertex_addresses;
 
-    Address sssp_terminator = cca_square_simulator.create_terminator();
+    std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
+    if (!sssp_terminator) {
+        std::cerr << "Error! Memory not allocated for sssp_terminator \n";
+        exit(0);
+    }
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
     { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
@@ -441,7 +451,7 @@ main(int argc, char** argv)
                     std::dynamic_pointer_cast<ComputeCell>(cca_square_simulator.CCA_chip[cc_id]);
                 if (compute_cell) {
                     compute_cell->insert_action(SSSPAction(vertex_addr.value(),
-                                                           sssp_terminator,
+                                                           sssp_terminator.value(),
                                                            actionType::application_action,
                                                            true,
                                                            2,
@@ -451,8 +461,8 @@ main(int argc, char** argv)
                                                            sssp_diffuse));
                     compute_cell->statistics.actions_created++;
 
-                    Object* obj =
-                        static_cast<Object*>(cca_square_simulator.get_object(sssp_terminator));
+                    Object* obj = static_cast<Object*>(
+                        cca_square_simulator.get_object(sssp_terminator.value()));
                     obj->terminator.host_signal();
 
                 } else {

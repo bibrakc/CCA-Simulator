@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "operators.hpp"
 
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -308,7 +309,7 @@ CCASimulator::run_simulation()
 // previous cycle)
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip);
+            this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip, &this->function_events);
         }
 
 // Prepare communication cycle

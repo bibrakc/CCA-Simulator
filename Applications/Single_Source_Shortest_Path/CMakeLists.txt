@@ -50,7 +50,8 @@ add_library(CCACommons
             )
 
 target_include_directories(CCACommons PUBLIC 
-            ${IncludeDirectory})
+            ${IncludeDirectory}
+            ${IncludeDirectory}/Datastructure)
 
 target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
 
@@ -70,10 +71,12 @@ target_link_libraries(HtreeNework PUBLIC CCACommons)
 add_library(CCASimulator
             ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/CCASimulator.cpp
+            ${SourceDirectory}/CCAFunctionEvents.cpp
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/Enums.cpp
             ${SourceDirectory}/memory_management.cpp
             ${SourceDirectory}/SinkCell.cpp
+            ${SourceDirectory}/Terminator.cpp
             )
 
 

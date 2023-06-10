@@ -33,22 +33,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FUNCTION_HPP
 #define FUNCTION_HPP
 
-#include "Address.hpp"
-#include "ComputeCell.hpp"
-#include "Enums.hpp"
-
-#include <cassert>
-
-// TODO: Maybe later convert these too `std::function`
-//       With perhaps a std::map of the functions
-//       that way we can add new functions at runtime (if needed)
-typedef int (*handler_func)(ComputeCell& cc,
-                            const Address& addr,
-                            int nargs,
-                            const std::shared_ptr<int[]>& args);
+#include <memory>
 
 // Event Id of the function that is registered with the CCA: predicate, work, diffuse, and other
 // runtime events like termination detection.
 using CCAFunctionEvent = u_int32_t;
+
+// TODO: Maybe later convert these to `std::function`
+/* typedef int (*handler_func)(ComputeCell& cc,
+                            const Address& addr,
+                            int nargs,
+                            const std::shared_ptr<int[]>& args); */
+
+class ComputeCell;
+
+using handler_func = int (*)(ComputeCell& cc,
+                             const Address& addr,
+                             int nargs,
+                             const std::shared_ptr<int[]>& args);
+
+// Recieved an acknowledgement message back. Decreament my deficit.
+int
+terminator_acknowledgement_func(ComputeCell& cc,
+                                const Address& addr,
+                                int nargs,
+                                const std::shared_ptr<int[]>& args);
 
 #endif // FUNCTION_HPP

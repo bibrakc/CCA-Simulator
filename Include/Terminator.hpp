@@ -30,32 +30,45 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Operon.hpp"
+#ifndef TERMINATOR_HPP
+#define TERMINATOR_HPP
 
-// #include <utility>
+#include "Action.hpp"
+#include "Address.hpp"
+#include "TerminatorAction.hpp"
+
 #include <optional>
-#include <vector>
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
+// Dijkstra–Scholten algorithm for termination detection
+struct Terminator
 {
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
+    u_int32_t deficit;
+    std::optional<Address> parent;
 
-    os << "\n";
-    return os;
-}
+    // The address of the object of which this terminator is part of.
+    Address my_object;
 
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
-{
+    bool is_active();
 
-    for (auto& op_ : operons_) {
-        if (op_ == std::nullopt) {
-            os << "[nullopt] ";
-        } else {
-            os << op_.value();
-        }
+    // Recieved an action. Increament my deficit.
+    void signal(ComputeCell& cc, const Address origin_addr_in);
+
+    // Only when the terminator is created at the host and is used as root terminator for an
+    // application.
+    void host_signal();
+    void host_acknowledgement();
+
+    // Recieved an acknowledgement message back. Decreament my deficit.
+    void acknowledgement(ComputeCell& cc);
+
+    Terminator()
+    {
+        /* std::cout << "Terminator Constructor\n"; */
+        this->deficit = 0;
+        this->parent = std::nullopt;
+
+        // this->my_object = std::nullopt;
     }
-    os << "\n";
-    return os;
-}
+};
+
+#endif // TERMINATOR_HPP

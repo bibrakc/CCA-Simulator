@@ -194,9 +194,10 @@ SinkCell::prepare_a_cycle()
 }
 
 void
-SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                  void* function_events)
 {
-    //assert(CCA_chip.size() != 0);
+    // assert(CCA_chip.size() != 0);
 
     if (!this->is_compute_cell_active()) {
         return;
@@ -224,7 +225,7 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 void
 SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
-    //assert(CCA_chip.size() != 0);
+    // assert(CCA_chip.size() != 0);
 
     if (!this->is_compute_cell_active()) {
         return;
