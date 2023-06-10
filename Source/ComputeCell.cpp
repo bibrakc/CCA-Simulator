@@ -52,7 +52,6 @@ terminator_acknowledgement_func(ComputeCell& cc,
                                 int nargs,
                                 const std::shared_ptr<int[]>& args)
 {
-
     Object* obj = static_cast<Object*>(cc.get_object(addr));
 
     obj->terminator.acknowledgement(cc);
@@ -94,17 +93,23 @@ ComputeCell::memory_available_in_bytes()
 // Returns the offset in memory for this newly created object. Also copies the object from host to
 // Compute Cell
 std::optional<Address>
-ComputeCell::create_object_in_memory(void* obj, size_t size_of_obj)
+ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj)
 {
     if (this->memory_available_in_bytes() < size_of_obj) {
         return std::nullopt;
     }
 
+    Object* cca_obj = static_cast<Object*>(obj_in);
+
     u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
-    memcpy(this->memory_curr_ptr, obj, size_of_obj);
+    Address obj_addr(this->id, obj_memory_addr_offset);
+
+    cca_obj->terminator.my_object = obj_addr;
+
+    memcpy(this->memory_curr_ptr, obj_in, size_of_obj);
     this->memory_curr_ptr += size_of_obj;
 
-    return Address(this->id, obj_memory_addr_offset);
+    return obj_addr;
 }
 
 // Each compute cell has a sink cell configured such that when it has to send an operon to far flung
@@ -144,6 +149,7 @@ ComputeCell::send_operon(Operon operon_in)
     if (action_type == actionType::application_action) {
         Address addr = operon_in.second.origin_addr;
         Object* obj = static_cast<Object*>(this->get_object(addr));
+
         obj->terminator.deficit++;
     }
 
@@ -178,6 +184,7 @@ ComputeCell::construct_operon(const u_int32_t cc_id, const Action& action)
 void
 ComputeCell::execute_action(void* function_events)
 {
+
     // Using `void*` becuase there is conflict in compiler with dependencies between classes
     // TODO: later find a graceful way and then remove this `void*`
 
@@ -201,6 +208,7 @@ ComputeCell::execute_action(void* function_events)
             Object* obj = static_cast<Object*>(this->get_object(action.obj_addr));
 
             // Signal that this object is active for termination detection
+            // origin_addr is set to be parent if deficit == 0
             obj->terminator.signal(*this, action.origin_addr);
 
             // if predicate
@@ -209,6 +217,7 @@ ComputeCell::execute_action(void* function_events)
             // event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
             if (predicate_resolution == 1) {
+
                 // work
                 function_events_manager->get_function_event_handler(action.work)(
                     *this, action.obj_addr, action.nargs, action.args);
@@ -225,9 +234,15 @@ ComputeCell::execute_action(void* function_events)
                 this->statistics.actions_false_on_predicate++;
             }
 
-            obj->terminator.acknowledgement(*this);
+            if (obj->terminator.parent.value().cc_id == this->host_id) {
+                std::cout << "CC: " << this->id << " with parent = " << this->host_id
+                          << " deficit: " << obj->terminator.deficit << "\n";
+            }
+
+            // obj->terminator.acknowledgement(*this);
 
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
+
             function_events_manager->get_acknowledgement_event_handler()(
                 *this, action.obj_addr, action.nargs, action.args);
             // event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0,

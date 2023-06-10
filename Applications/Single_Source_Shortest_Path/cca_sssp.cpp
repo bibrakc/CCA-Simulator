@@ -81,6 +81,10 @@ class SSSPAction : public Action
                CCAFunctionEvent work_in,
                CCAFunctionEvent diffuse_in)
     {
+
+        /*  std::cout << "\nSSSPAction constructor: predicate_in = " << predicate_in
+                   << " work_in = " << work_in << " diffuse_in = " << diffuse_in << "\n\n"; */
+
         this->obj_addr = destination_vertex_addr_in;
         this->origin_addr = origin_vertex_addr_in;
 
@@ -90,9 +94,14 @@ class SSSPAction : public Action
         this->nargs = nargs_in;
         this->args = args_in;
 
+        // TODO: fix this bug
         this->predicate = predicate_in;
         this->work = work_in;
         this->diffuse = diffuse_in;
+
+        this->predicate = 1;
+        this->work = 2;
+        this->diffuse = 3;
     }
 
     ~SSSPAction() override {}
@@ -108,7 +117,7 @@ sssp_predicate_func(ComputeCell& cc,
     int incoming_distance = args[0];
     int origin_vertex = args[1];
 
-    if constexpr (debug_code) {
+    if constexpr (DEBUG_CODE) {
         std::cout << "vertex ID : " << v->id << " sssp_predicate | origin vertex: " << origin_vertex
                   << " | incoming_distance = " << incoming_distance
                   << " v->sssp_distance = " << v->sssp_distance << std::endl;
@@ -153,6 +162,10 @@ sssp_diffuse_func(ComputeCell& cc,
         std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         args_x[1] = static_cast<int>(v->id);
+
+        /* std::cout << "  CC: " << cc.id
+                  << " Inside sssp_diffuse_func: action.predicate = " << sssp_predicate
+                  << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n"; */
 
         SSSPAction action(v->edges[i].edge,
                           addr,
@@ -366,6 +379,9 @@ main(int argc, char** argv)
     CCAFunctionEvent sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
     CCAFunctionEvent sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
 
+    std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
+              << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
+
     // Generate or read the input data graph
     FILE* input_graph_file_handler = NULL;
 
@@ -495,7 +511,7 @@ main(int argc, char** argv)
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
-    cca_square_simulator.run_simulation();
+    cca_square_simulator.run_simulation(sssp_terminator.value());
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";

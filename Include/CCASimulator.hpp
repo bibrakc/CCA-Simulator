@@ -226,11 +226,14 @@ class CCASimulator
     // Create a CCATerminator object on host and return the address
     std::optional<Address> create_terminator();
 
+    // Check for termination of the diffusion
+    bool is_diffusion_complete(Address terminator_in);
+
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,
                                                             size_t size_of_obj);
 
-    void run_simulation();
+    void run_simulation(Address app_terminator);
 
     // Get the pointer to the object at `Address addr_in`
     void* get_object(Address addr_in) const;

@@ -276,6 +276,13 @@ CCASimulator::create_terminator()
 
     return host_terminator_addr;
 }
+bool
+CCASimulator::is_diffusion_complete(Address terminator_in)
+{
+
+    CCATerminator* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
+    return !terminator_obj->terminator.is_active();
+}
 
 std::optional<Address>
 CCASimulator::allocate_and_insert_object_on_cc(u_int32_t cc_id, void* obj, size_t size_of_obj)
@@ -290,7 +297,7 @@ CCASimulator::allocate_and_insert_object_on_cc(u_int32_t cc_id, void* obj, size_
 }
 
 void
-CCASimulator::run_simulation()
+CCASimulator::run_simulation(Address app_terminator)
 {
     // TODO: later we can remove this and implement the termination detection itself. But for
     // now this works.
@@ -298,11 +305,11 @@ CCASimulator::run_simulation()
 
     bool is_system_active = true;
 
-    // u_int32_t count_temp = 0;
+    u_int32_t count_temp = 0;
 
-    while (is_system_active) {
-        //          while (count_temp < 1700) {
-        //            count_temp++;
+    // while (is_system_active) {
+    while (count_temp < 2130) {
+        count_temp++;
         is_system_active = false;
 
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
@@ -369,8 +376,10 @@ CCASimulator::run_simulation()
                                     static_cast<double>(this->CCA_chip.size());
         double percent_htree_active = 100.0 * static_cast<double>(sum_global_active_htree) /
                                       static_cast<double>(htree_network.htree_all_nodes.size());
-        std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
-                  << "%, htree Active: " << percent_htree_active << "%\n";
+        /* std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
+                  << "%, htree Active: " << percent_htree_active
+                  << "% Diffusion Termianated? = " << this->is_diffusion_complete(app_terminator)
+                  << "\n"; */
 
         this->cca_statistics.active_status.push_back(
             ActiveStatusPerCycle(percent_CCs_active, percent_htree_active));

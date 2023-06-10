@@ -87,7 +87,8 @@ void
 print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: " << vertex_addr
-              << " sssp_distance: " << vertex->sssp_distance << "\n";
+              << " sssp_distance: " << vertex->sssp_distance
+              << " deficit: " << vertex->terminator.deficit << "\n";
 
     for (u_int32_t i = 0; i < vertex->number_of_edges; i++) {
         std::cout << "\t\t[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight
