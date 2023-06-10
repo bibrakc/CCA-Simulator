@@ -227,7 +227,7 @@ class CCASimulator
     std::optional<Address> create_terminator();
 
     // Check for termination of the diffusion
-    bool is_diffusion_complete(Address terminator_in);
+    bool is_diffusion_active(Address terminator_in);
 
     std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
                                                             void* obj,

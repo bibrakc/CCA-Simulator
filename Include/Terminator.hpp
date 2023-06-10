@@ -53,6 +53,9 @@ struct Terminator
     // Recieved an action. Increament my deficit.
     void signal(ComputeCell& cc, const Address origin_addr_in);
 
+    // Make the object (vertex) inactive
+    void unsignal(ComputeCell& cc);
+
     // Only when the terminator is created at the host and is used as root terminator for an
     // application.
     void host_signal();

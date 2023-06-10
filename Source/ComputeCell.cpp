@@ -234,12 +234,12 @@ ComputeCell::execute_action(void* function_events)
                 this->statistics.actions_false_on_predicate++;
             }
 
-            if (obj->terminator.parent.value().cc_id == this->host_id) {
-                std::cout << "CC: " << this->id << " with parent = " << this->host_id
-                          << " deficit: " << obj->terminator.deficit << "\n";
-            }
+            /*   if (obj->terminator.parent.value().cc_id == this->host_id) {
+                  std::cout << "CC: " << this->id << " with parent = " << this->host_id
+                            << " deficit: " << obj->terminator.deficit << "\n";
+              } */
 
-            // obj->terminator.acknowledgement(*this);
+            obj->terminator.unsignal(*this);
 
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
