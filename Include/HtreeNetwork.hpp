@@ -48,10 +48,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class HtreeNetwork
 {
   public:
-    HtreeNetwork(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in)
+    HtreeNetwork(u_int32_t hx_in, u_int32_t hy_in, u_int32_t hdepth_in, u_int32_t bandwidth_max_in)
         : hx(hx_in)
         , hy(hy_in)
         , hdepth(hdepth_in)
+        , bandwidth_max(bandwidth_max_in)
     {
         std::cout << "HtreeNework constructor called\n";
         this->construct_htree_network();
@@ -62,6 +63,8 @@ class HtreeNetwork
     // Members
 
     u_int32_t hx, hy, hdepth;
+
+    u_int32_t bandwidth_max;
 
     std::shared_ptr<HtreeNode> root;
 

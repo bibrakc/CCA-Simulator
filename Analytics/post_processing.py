@@ -109,7 +109,7 @@ print(total_cycles, total_actions_invoked,
 # sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
 # sns.displot(data=stats, x='actions_performed_work', bins=30)
 
-stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
+""" stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
     lambda x: (x/cycles)*100)
 
 ax1 = sns.displot(data=stats, x='percent_cycles_inactive',
@@ -117,7 +117,7 @@ ax1 = sns.displot(data=stats, x='percent_cycles_inactive',
 ax1.set(xlabel='Percentage of Cycles a CC was Inactive')
 
 ax = sns.displot(data=stats, x='percent_cycles_inactive', stat="probability")
-ax.set(xlabel='Percentage of Cycles a CC was Inactive')
+ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
 
 # sns.displot(data=stats, x='percent_cycles_inactive', kind="ecdf")
 

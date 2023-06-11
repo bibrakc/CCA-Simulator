@@ -88,6 +88,10 @@ class CCASimulator
     // Dimensions and depth of the Htree. Here hx and hy are the dimensions of the block of cells
     // covered by a single end node of the Htree.
     u_int32_t hx, hy, hdepth;
+    // Max possible lanes in the htree joints
+    u_int32_t hbandwidth_max;
+
+    // Total CCA Cells (including Sink Cells)
     u_int32_t total_compute_cells;
 
     // Memory per compute cell and the total combined memory of this CCA chip
@@ -130,6 +134,7 @@ class CCASimulator
                  u_int32_t hx_in,
                  u_int32_t hy_in,
                  u_int32_t hdepth_in,
+                 u_int32_t hbandwidth_max_in,
                  u_int32_t total_compute_cells_in,
                  u_int32_t memory_per_cc_in)
         : shape_of_compute_cells(shape_in)
@@ -138,9 +143,10 @@ class CCASimulator
         , hx(hx_in)
         , hy(hy_in)
         , hdepth(hdepth_in)
+        , hbandwidth_max(hbandwidth_max_in)
         , total_compute_cells(total_compute_cells_in)
         , memory_per_cc(memory_per_cc_in)
-        , htree_network(hx_in, hy_in, hdepth_in)
+        , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
         this->global_active_cc = false;
         this->total_cycles = 0;

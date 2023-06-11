@@ -67,7 +67,7 @@ for i, frame in enumerate(frames):
 fig, ax = plt.subplots(figsize=(8, 8))
 
 # Set the parameters for the H-tree
-x_htree = (dim_x / 2) - 16
+x_htree = (dim_x / 2) - 16.5
 y_htree = (dim_y / 2) + 15
 length_htree = min(dim_x, dim_y)
 depth_htree = 4
@@ -120,7 +120,7 @@ def update(frame):
 
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=num_frames, interval=24)  # Increase the interval
+    fig, update, frames=num_frames, interval=5)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -135,8 +135,8 @@ ax.set_ylabel('Rows of Compute Cells')
 #ax.set_title('CCA Chip Activation Per Compute Cell')
 
 # Save the animation as an MP4 file
-output_filename = 'animation.mp4'
-ani.save(output_filename, writer='ffmpeg', dpi=200)
+""" output_filename = 'animation.mp4'
+ani.save(output_filename, writer='ffmpeg', dpi=200) """
 
 """ # Save the animation as a GIF file
 output_filename = 'animation.gif'

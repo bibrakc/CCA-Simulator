@@ -231,12 +231,12 @@ configure_parser(cli::Parser& parser)
     parser.set_optional<u_int32_t>(
         "hx",
         "htree_x",
-        9,
+        3,
         "Rows of Cells that are served by a single end Htree node. hx must be an odd value");
     parser.set_optional<u_int32_t>(
         "hy",
         "htree_y",
-        17,
+        5,
         "Columns of Cells that are served by a single end Htree node. hy must be an odd value");
 
     parser.set_optional<u_int32_t>("hdepth",
@@ -245,6 +245,13 @@ configure_parser(cli::Parser& parser)
                                    "Depth of the Htree. This is the size of the Htree. \n\t0: No "
                                    "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
                                    "as it recurssively constructs more...");
+    parser.set_optional<u_int32_t>(
+        "hb",
+        "hbandwidth_max",
+        64,
+        "Max possible lanes in the htree joints. The htree is recursively constructred with end "
+        "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
+        "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 }
 
 class Graph
@@ -330,6 +337,9 @@ main(int argc, char** argv)
     // Get the depth of Htree
     u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
 
+    // Get the max bandwidth of Htree
+    u_int32_t hbandwidth_max = parser.get<u_int32_t>("hb");
+
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells;
@@ -357,6 +367,7 @@ main(int argc, char** argv)
                                       hx,
                                       hy,
                                       hdepth,
+                                      hbandwidth_max,
                                       total_compute_cells,
                                       memory_per_cc);
 
@@ -366,6 +377,7 @@ main(int argc, char** argv)
               << "\n\tDim: " << cca_square_simulator.dim_x << " x " << cca_square_simulator.dim_y
               << "\n\tHtree End Node Coverage Block: " << hx << " x " << hy
               << "\n\tHtree Depth: " << hdepth
+              << "\n\tHtree Possible Bandwidth Max: " << hbandwidth_max
               << "\n\tTotal Compute Cells: " << cca_square_simulator.total_compute_cells
               << "\n\tMemory Per Compute Cell: "
               << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"

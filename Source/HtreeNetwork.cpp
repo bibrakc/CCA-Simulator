@@ -45,6 +45,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
+// Increase the lane size at each recursive joint
+#define BANDWIDTH_SCALE_FACTOR 2
+
 Coordinates
 find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
 {
@@ -147,6 +150,7 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
+                u_int32_t bandwidth_max,
                 u_int32_t& index);
 
 std::shared_ptr<HtreeNode>
@@ -163,6 +167,7 @@ create_horizontal(int hx,
                   Coordinates coverage_top_left_in,
                   Coordinates coverage_bottom_right_in,
                   int depth,
+                  u_int32_t bandwidth_max,
                   u_int32_t& index)
 {
 
@@ -184,6 +189,7 @@ create_horizontal(int hx,
         Coordinates(coverage_bottom_right_in.first - coverage_bottom_right_in.first / 2,
                     coverage_bottom_right_in.second),
         depth - 1,
+        bandwidth_max,
         index);
 
     std::shared_ptr<HtreeNode> right =
@@ -201,6 +207,7 @@ create_horizontal(int hx,
                                     coverage_top_left_in.second),
                         coverage_bottom_right_in,
                         depth - 1,
+                        bandwidth_max,
                         index);
 
     u_int32_t out_bandwidth_value = 0;
@@ -214,7 +221,12 @@ create_horizontal(int hx,
         out_bandwidth_value = 4;
         in_bandwidth_value = 0;
     } else {
-        out_bandwidth_value = right->out_bandwidth * 2;
+        out_bandwidth_value = right->out_bandwidth * BANDWIDTH_SCALE_FACTOR;
+
+        if (out_bandwidth_value > bandwidth_max) {
+            out_bandwidth_value = bandwidth_max;
+        }
+
         in_bandwidth_value = right->out_bandwidth;
     }
 
@@ -332,6 +344,7 @@ create_vertical(int hx,
                 Coordinates coverage_top_left_in,
                 Coordinates coverage_bottom_right_in,
                 int depth,
+                u_int32_t bandwidth_max,
                 u_int32_t& index)
 {
 
@@ -352,6 +365,7 @@ create_vertical(int hx,
         coverage_top_left_in,
         Coordinates(coverage_bottom_right_in.first, coverage_bottom_right_in.second / 2),
         depth,
+        bandwidth_max,
         index);
 
     std::shared_ptr<HtreeNode> down = create_horizontal(
@@ -369,12 +383,18 @@ create_vertical(int hx,
                     coverage_top_left_in.second + (coverage_bottom_right_in.second / 2) + 1),
         coverage_bottom_right_in,
         depth,
+        bandwidth_max,
         index);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
 
-    out_bandwidth_value = up->out_bandwidth * 2;
+    out_bandwidth_value = up->out_bandwidth * BANDWIDTH_SCALE_FACTOR;
+
+    if (out_bandwidth_value > bandwidth_max) {
+        out_bandwidth_value = bandwidth_max;
+    }
+
     in_bandwidth_value = up->out_bandwidth;
 
     std::shared_ptr<HtreeNode> center = std::make_shared<HtreeNode>(
@@ -476,6 +496,7 @@ std::shared_ptr<HtreeNode>
 create_htree(u_int32_t hx,
              u_int32_t hy,
              u_int32_t depth,
+             u_int32_t bandwidth_max,
              const std::vector<u_int32_t>& all_possible_rows,
              const std::vector<u_int32_t>& all_possible_cols)
 {
@@ -514,6 +535,7 @@ create_htree(u_int32_t hx,
                         chip_coverage_top_left,
                         Coordinates(chip_center_y - 1, chip_coverage_bottom_right.second),
                         depth - 1,
+                        bandwidth_max,
                         index);
 
     int right_sub_htree_initial_row = chip_center_x;
@@ -533,12 +555,16 @@ create_htree(u_int32_t hx,
                         Coordinates(chip_center_y + 1, chip_coverage_top_left.second),
                         chip_coverage_bottom_right,
                         depth - 1,
+                        bandwidth_max,
                         index);
 
     u_int32_t out_bandwidth_value = 0;
     u_int32_t in_bandwidth_value = 0;
     if (right) {
-        out_bandwidth_value = right->out_bandwidth * 2;
+        out_bandwidth_value = right->out_bandwidth * BANDWIDTH_SCALE_FACTOR;
+        if (out_bandwidth_value > bandwidth_max) {
+            out_bandwidth_value = bandwidth_max;
+        }
         in_bandwidth_value = right->out_bandwidth;
     }
 
@@ -713,7 +739,12 @@ HtreeNetwork::construct_htree_network()
     }
     std::cout << std::endl; */
 
-    root = create_htree(this->hx, this->hy, this->hdepth, all_possible_rows, all_possible_cols);
+    root = create_htree(this->hx,
+                        this->hy,
+                        this->hdepth,
+                        this->bandwidth_max,
+                        all_possible_rows,
+                        all_possible_cols);
     std::cout << "root index = " << root->id << "\n";
 
     // Print the tree using traversal
