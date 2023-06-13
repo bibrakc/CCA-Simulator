@@ -97,7 +97,9 @@ class ComputeCell : public Cell
     Task send_operon(Operon operon_in);
 
     // Construct an Operon
-    Operon construct_operon(const u_int32_t cc_id, const Action& action);
+    Operon construct_operon(const u_int32_t src_cc_id,
+                            const u_int32_t dst_cc_id,
+                            const Action& action);
 
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking

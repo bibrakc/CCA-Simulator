@@ -166,8 +166,8 @@ ComputeCell::send_operon(Operon operon_in)
 
             // Debug prints
             if constexpr (debug_code) {
-                std::cout << "Sending operon from cc: " << this->id << " to cc: " << operon_in.first
-                          << "\n";
+                std::cout << "Sending operon from cc: " << this->id
+                          << " to cc: " << operon_in.first.dst_cc_id << "\n";
             }
 
             // Actual work of sending
@@ -176,9 +176,12 @@ ComputeCell::send_operon(Operon operon_in)
 }
 
 Operon
-ComputeCell::construct_operon(const u_int32_t cc_id, const Action& action)
+ComputeCell::construct_operon(const u_int32_t src_cc_id,
+                              const u_int32_t dst_cc_id,
+                              const Action& action)
 {
-    return std::pair<u_int32_t, Action>(cc_id, action);
+    return std::pair<SourceDestinationPair, Action>(SourceDestinationPair(src_cc_id, dst_cc_id),
+                                                    action);
 }
 
 void
@@ -301,7 +304,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : recv_operons) {
 
-                    u_int32_t dst_cc_id = operon.first;
+                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
@@ -315,12 +318,15 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         // To be routed in the mesh, by default simply
                         u_int32_t routing_cell_id = dst_cc_id;
 
+                        // TODO: Use assert here instead
                         // Check if it needs to be routed via the secondary network
                         if (CCA_chip[dst_cc_id]->type != CellType::sink_cell) {
 
                             auto dst_compute_cell =
                                 std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
                             assert(dst_compute_cell != nullptr);
+
+                            // Routing 1: Aggresively use the H-tree (low latency network)
 
                             // If it is not nearby AND not in the same sinkcell (Htree block) then
                             // route it in second layer netowrk
@@ -329,6 +335,17 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                 routing_cell_id = Cell::cc_cooridinate_to_id(
                                     this->sink_cell.value(), this->shape, this->dim_y);
                             }
+
+                            // Routing 1 Ends
+
+                            // Routing 2: Use the mesh network more often
+
+                            // Routing 2 Ends
+
+                            // Routing 3: Adaptive routing
+
+                            // Routing 3: Ends
+
                         } else {
                             std::cerr << "Bug! Operon can not be destined for a Sink Cell.\n";
                             exit(0);
@@ -435,7 +452,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
 
     if (this->staging_operon_from_logic) {
         Operon operon_ = this->staging_operon_from_logic.value();
-        u_int32_t dst_cc_id = operon_.first;
+        u_int32_t dst_cc_id = operon_.first.dst_cc_id;
 
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
@@ -520,7 +537,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
                     // Update the cycle_resource_use_counter. TODO fix these counters lol
                     this->statistics.cycle_resource_use_counter--;
-                    u_int32_t dst_cc_id = operon.first;
+                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     assert(this->id != dst_cc_id);

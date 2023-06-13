@@ -72,7 +72,8 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
         // TODO: put this counter in its own and separate betweek ack and nornal action
         cc.statistics.actions_created++;
         // Create Operon and put it in the task queue
-        Operon operon_to_send = cc.construct_operon(origin_addr_in.cc_id, acknowledgement_action);
+        Operon operon_to_send =
+            cc.construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
         cc.task_queue.push(cc.send_operon(operon_to_send));
     }
     /* std::cout << "\tCC: " << cc.id << " Leaving signal() deficit: " << this->deficit
@@ -112,7 +113,7 @@ Terminator::unsignal(ComputeCell& cc)
             cc.statistics.actions_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
-                cc.construct_operon(this->parent.value().cc_id, acknowledgement_action);
+                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent
@@ -171,7 +172,7 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
-                cc.construct_operon(this->parent.value().cc_id, acknowledgement_action);
+                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent
@@ -201,11 +202,11 @@ Terminator::acknowledgement(ComputeCell& cc)
                                                     this->my_object,
                                                     actionType::terminator_acknowledgement_action);
 
-            // TODO: put this counter in its own and separate betweek ack and nornal action
+            // TODO: put this counter in its own and separate between ack and nornal action
             cc.statistics.actions_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
-                cc.construct_operon(this->parent.value().cc_id, acknowledgement_action);
+                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent

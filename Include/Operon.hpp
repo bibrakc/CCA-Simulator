@@ -38,8 +38,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <utility>
 
+struct SourceDestinationPair
+{
+    u_int32_t src_cc_id;
+    u_int32_t dst_cc_id;
+
+    SourceDestinationPair(u_int32_t src_cc_id_in, u_int32_t dst_cc_id_in)
+        : src_cc_id(src_cc_id_in)
+        , dst_cc_id(dst_cc_id_in)
+    {
+    }
+};
+
 // cc_id, Action
-typedef std::pair<u_int32_t, Action> Operon;
+typedef std::pair<SourceDestinationPair, Action> Operon;
 
 // For Htree routing. At the end node of Htree that connects to a sink cell take the Coordinates out
 // and send the simple Operon to the CCA chip though the sink cell

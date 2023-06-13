@@ -106,7 +106,7 @@ SinkCell::prepare_a_cycle()
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : recv_operons) {
 
-                    u_int32_t dst_cc_id = operon.first;
+                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     // Bug check with assert: A SinkCell cannot invoke an action
@@ -170,7 +170,7 @@ SinkCell::prepare_a_cycle()
         std::vector<Operon> left_over_operons;
         for (Operon operon : recv_operons) {
 
-            u_int32_t dst_cc_id = operon.first;
+            u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
             u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
 
@@ -247,7 +247,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
     std::vector<Operon> left_over_operons;
     for (Operon operon : recv_operons) {
 
-        u_int32_t dst_cc_id = operon.first;
+        u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
         u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
@@ -312,7 +312,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : send_operons) {
 
-                    u_int32_t dst_cc_id = operon.first;
+                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute/sink cell. If it does then
                     // it is a bug

@@ -178,7 +178,7 @@ sssp_diffuse_func(ComputeCell& cc,
                           sssp_diffuse);
 
         // TODO: Hide cc and provide functions using CCASimulator
-        Operon operon_to_send = cc.construct_operon(v->edges[i].edge.cc_id, action);
+        Operon operon_to_send = cc.construct_operon(cc.id, v->edges[i].edge.cc_id, action);
         cc.task_queue.push(cc.send_operon(operon_to_send));
     }
     // These many new actions were created

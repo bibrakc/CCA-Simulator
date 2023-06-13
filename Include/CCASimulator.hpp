@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
-#include "Operon.hpp"
+//#include "Operon.hpp"
 #include "Task.hpp"
 
 #include "memory_management.hpp"

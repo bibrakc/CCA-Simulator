@@ -39,7 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 std::ostream&
 operator<<(std::ostream& os, const Operon& operon_)
 {
-    os << "Operon: cc_id " << operon_.first << ", Action target addr: " << operon_.second.obj_addr;
+    os << "Operon: Src cc_id " << operon_.first.src_cc_id << ", Dst cc_id "
+       << operon_.first.dst_cc_id << " Action target addr: " << operon_.second.obj_addr;
 
     os << "\n";
     return os;
