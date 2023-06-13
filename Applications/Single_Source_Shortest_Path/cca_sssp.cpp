@@ -419,6 +419,7 @@ main(int argc, char** argv)
         fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
         input_graph.add_edge(input_graph.vertices[vertex_from], vertex_to, weight);
     }
+    fclose(input_graph_file_handler);
 
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion.
@@ -552,7 +553,8 @@ main(int argc, char** argv)
     std::string output_file_name = "square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
                                    graph_name + "_v_" + std::to_string(total_vertices) + "_e_" +
-                                   std::to_string(total_edges);
+                                   std::to_string(total_edges) + "_hb_" +
+                                   std::to_string(hbandwidth_max);
     std::string output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
     std::ofstream output_file(output_file_path);

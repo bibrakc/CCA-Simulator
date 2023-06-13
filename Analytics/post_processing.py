@@ -50,10 +50,10 @@ with open(output_file, 'r') as file:
     header = file.readline()
 
     # read the next line and split it into variables
-    shape, dim_x, dim_y, hx, hy, hdepth, cells, memory = file.readline().strip().split()
+    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = file.readline().strip().split()
 
     # convert dim_x, dim_y, cells, and memory to integers
-    dim_x, dim_y, hx, hy, hdepth, cells, memory = map(
+    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = map(
         int, [dim_x, dim_y, hx, hy, hdepth, cells, memory])
 
     # read the header line for the table and discard it
