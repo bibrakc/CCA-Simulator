@@ -62,9 +62,6 @@ class SinkCell : public Cell
     // Checks if the cell is active or not
     bool is_compute_cell_active();
 
-    // Receive an operon from a neighbor
-    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
-
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
     std::shared_ptr<HtreeNode> connecting_htree_node;
@@ -86,9 +83,11 @@ class SinkCell : public Cell
              u_int32_t dim_y_in,
              u_int32_t hx_in,
              u_int32_t hy_in,
-             u_int32_t hdepth_in)
+             u_int32_t hdepth_in,
+             u_int32_t mesh_routing_policy_id_in)
         : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
         , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
+        
     {
         this->id = id_in;
         this->type = type_in;
@@ -110,6 +109,8 @@ class SinkCell : public Cell
 
         // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();
+
+        this->mesh_routing_policy = mesh_routing_policy_id_in;
 
         this->distance_class_length = this->hx + this->hy;
 

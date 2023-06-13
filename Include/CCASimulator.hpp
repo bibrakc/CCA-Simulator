@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
-//#include "Operon.hpp"
+#include "Routing.hpp"
 #include "Task.hpp"
 
 #include "memory_management.hpp"
@@ -101,6 +101,9 @@ class CCASimulator
     // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
 
+    // The routing policy and algorithms id for the mesh network
+    u_int32_t mesh_routing_policy_id;
+
     // ID of the host. Just like Compute Cells have Id the host also has. This is useful for
     // invoking functions on objects in the host memory. For example: The root terminator form the
     // host.
@@ -136,7 +139,8 @@ class CCASimulator
                  u_int32_t hdepth_in,
                  u_int32_t hbandwidth_max_in,
                  u_int32_t total_compute_cells_in,
-                 u_int32_t memory_per_cc_in)
+                 u_int32_t memory_per_cc_in,
+                 u_int32_t mesh_routing_policy_id_in)
         : shape_of_compute_cells(shape_in)
         , dim_x(dim_x_in)
         , dim_y(dim_y_in)
@@ -146,6 +150,7 @@ class CCASimulator
         , hbandwidth_max(hbandwidth_max_in)
         , total_compute_cells(total_compute_cells_in)
         , memory_per_cc(memory_per_cc_in)
+        , mesh_routing_policy_id(mesh_routing_policy_id_in)
         , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
         this->global_active_cc = false;

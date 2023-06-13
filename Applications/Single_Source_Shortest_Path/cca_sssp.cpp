@@ -369,7 +369,8 @@ main(int argc, char** argv)
                                       hdepth,
                                       hbandwidth_max,
                                       total_compute_cells,
-                                      memory_per_cc);
+                                      memory_per_cc,
+                                      0);
 
     std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(

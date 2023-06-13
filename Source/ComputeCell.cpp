@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 #include "Function.hpp"
 #include "Object.hpp"
+#include "Routing.hpp"
 
 #if debug_code == true
 // TODO: Later make it generic to be data structure agnostic
@@ -299,6 +300,8 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 for (Operon operon : recv_operons) {
 
                     u_int32_t dst_cc_id = operon.first.dst_cc_id;
+                    // Bug check: Make sure the destination is not a Sink Cell
+                    assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
@@ -306,44 +309,19 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         this->insert_action(operon.second);
                     } else {
 
-                        Coordinates dst_cc_coordinates =
-                            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+                        // Get the route using Routing 1
+                        u_int32_t routing_cell_id =
+                            Routing::get_next_move<ComputeCell>(CCA_chip, operon, this->id, 0);
 
-                        // To be routed in the mesh, by default simply
-                        u_int32_t routing_cell_id = dst_cc_id;
+                        // Routing 0 Ends
 
-                        // TODO: Use assert here instead
-                        // Check if it needs to be routed via the secondary network
-                        if (CCA_chip[dst_cc_id]->type != CellType::sink_cell) {
+                        // Routing 1: Use the mesh network more often
 
-                            auto dst_compute_cell =
-                                std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
-                            assert(dst_compute_cell != nullptr);
+                        // Routing 1 Ends
 
-                            // Routing 1: Aggresively use the H-tree (low latency network)
+                        // Routing 2: Adaptive routing
 
-                            // If it is not nearby AND not in the same sinkcell (Htree block) then
-                            // route it in second layer netowrk
-                            if (!this->check_cut_off_distance(dst_cc_coordinates) &&
-                                (this->sink_cell != dst_compute_cell->sink_cell)) {
-                                routing_cell_id = Cell::cc_cooridinate_to_id(
-                                    this->sink_cell.value(), this->shape, this->dim_y);
-                            }
-
-                            // Routing 1 Ends
-
-                            // Routing 2: Use the mesh network more often
-
-                            // Routing 2 Ends
-
-                            // Routing 3: Adaptive routing
-
-                            // Routing 3: Ends
-
-                        } else {
-                            std::cerr << "Bug! Operon can not be destined for a Sink Cell.\n";
-                            exit(0);
-                        }
+                        // Routing 2: Ends
 
                         // The operon needs to be sent/passed to some neighbor
                         u_int32_t channel_to_send = get_route_towards_cc_id(routing_cell_id);

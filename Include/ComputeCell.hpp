@@ -89,9 +89,6 @@ class ComputeCell : public Cell
     // Checks if the cell is active or not
     bool is_compute_cell_active();
 
-    // Receive an operon from a neighbor
-    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
-
     // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
     // on the `staging_operon_from_logic`
     Task send_operon(Operon operon_in);
@@ -144,9 +141,10 @@ class ComputeCell : public Cell
                 u_int32_t hy_in,
                 u_int32_t hdepth_in,
                 u_int32_t memory_per_cc_in_bytes,
-                std::shared_ptr<char[]> host_memory_in)
-
+                std::shared_ptr<char[]> host_memory_in,
+                u_int32_t mesh_routing_policy_id_in)
     {
+
         this->id = id_in;
         this->type = type_in;
         this->statistics.type = this->type;
@@ -177,6 +175,8 @@ class ComputeCell : public Cell
         this->add_neighbor_compute_cells();
 
         this->staging_operon_from_logic = std::nullopt;
+
+        this->mesh_routing_policy = mesh_routing_policy_id_in;
 
         this->distance_class_length = this->hx + this->hy;
 

@@ -211,6 +211,10 @@ class Cell
     // semantics/pragmatics of CCA.
     std::vector<std::vector<FixedSizeQueue<Operon>>> recv_channel_per_neighbor;
 
+    // Routing policy
+    u_int32_t mesh_routing_policy;
+
+    // For deadlock avoidance
     u_int32_t distance_class_length;
 
     // Performance measurements and counters

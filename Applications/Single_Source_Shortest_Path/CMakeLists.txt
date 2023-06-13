@@ -46,7 +46,7 @@ set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 add_library(CCACommons
             ${SourceDirectory}/Operon.cpp
             ${SourceDirectory}/operators.cpp
-            ${SourceDirectory}/types.cpp
+            ${SourceDirectory}/types.cpp       
             )
 
 target_include_directories(CCACommons PUBLIC 
@@ -75,6 +75,7 @@ add_library(CCASimulator
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/Enums.cpp
             ${SourceDirectory}/memory_management.cpp
+         #   ${SourceDirectory}/Routing.cpp           
             ${SourceDirectory}/SinkCell.cpp
             ${SourceDirectory}/Terminator.cpp
             )
@@ -87,14 +88,16 @@ target_include_directories(CCASimulator PUBLIC
                            
 target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-parameter)
 
-target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX CCACommons)
+target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)# CCACommons)
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
 
 target_include_directories(${executable_name} PUBLIC 
                            ${UtilitiesDirectory}
+                           ${IncludeDirectory}
+                           ${IncludeDirectory}/Datastructure
                            )
 
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASimulator HtreeNework CCACommons)
+target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
