@@ -127,6 +127,12 @@ Cell::add_neighbor_compute_cells()
     }
 }
 
+bool
+Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
+{
+    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
+}
+
 inline bool
 Cell::cc_exists(const SignedCoordinates cc_coordinate)
 {

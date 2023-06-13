@@ -64,12 +64,6 @@ return_asymetric_neighbors(u_int32_t channel_to_send)
     }
 }
 
-bool
-SinkCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
-{
-    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
-}
-
 // TODO: Implement fairness in sending. Use some counter on the iterator that starts with a
 // different channel every cycle
 void

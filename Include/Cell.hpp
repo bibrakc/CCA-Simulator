@@ -270,7 +270,7 @@ class Cell
     u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Receive an operon from a neighbor
-    virtual bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class) = 0;
+    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
 
     friend std::ostream& operator<<(std::ostream& os, const Cell& cc)
     {

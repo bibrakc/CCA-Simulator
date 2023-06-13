@@ -261,12 +261,6 @@ ComputeCell::execute_action(void* function_events)
     std::cerr << "Bug! Cannot execute action as the action_queue is empty! It shouldn't be here\n";
     exit(0);
 }
-// TODO: Perhaps just move this to Cell.cpp since its the same code for all inherited classes
-bool
-ComputeCell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
-{
-    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
-}
 
 void
 ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
