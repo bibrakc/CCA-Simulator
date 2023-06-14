@@ -38,19 +38,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SinkCell.hpp"
 
 #include <cassert>
+#include <optional>
 
 struct Routing
 {
   public:
     template<class SomeCellType>
-    static u_int32_t get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                   Operon& operon,
-                                   u_int32_t current_cc_id,
-                                   u_int32_t routing_algorithm_id)
+    static std::optional<u_int32_t> routing_0_aggressively_use_htree(
+        std::vector<std::shared_ptr<Cell>>& CCA_chip,
+        Operon& operon,
+        u_int32_t current_cc_id)
     {
+        // Routing 0: Aggresively use the H-tree (low latency network)
+
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
-        // To be routed in the mesh, by default simply
-        u_int32_t routing_cell_id = dst_cc_id;
 
         auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
         assert(dst_compute_cell != nullptr);
@@ -62,26 +63,56 @@ struct Routing
         Coordinates dst_cc_coordinates = Cell::cc_id_to_cooridinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        //std::cout << "get_next_move : routing id: " << routing_algorithm_id << "\n";
+        bool use_mesh_network = current_compute_cell->check_cut_off_distance(dst_cc_coordinates);
 
-        // Routing 0: Aggresively use the H-tree (low latency network)
+        // For type ComputeCell
+        if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
 
-        bool src_dst_are_on_different_sink_cells = true;
-
-        if (current_compute_cell->type == CellType::compute_cell) {
+            // By defaul assume they are on different sink cells
+            bool src_dst_are_on_different_sink_cells = true;
             src_dst_are_on_different_sink_cells =
                 (current_compute_cell->sink_cell != dst_compute_cell->sink_cell);
-        }
-        // If it is not nearby AND not in the same sinkcell (Htree block) then
-        // route it in second layer netowrk
-        if (!current_compute_cell->check_cut_off_distance(dst_cc_coordinates) &&
-            src_dst_are_on_different_sink_cells) {
-            routing_cell_id = Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
-                                                         current_compute_cell->shape,
-                                                         current_compute_cell->dim_y);
+
+            // If it is not nearby AND not in the same sinkcell (Htree block) then
+            // route it in second layer netowrk
+            if (!use_mesh_network && src_dst_are_on_different_sink_cells) {
+                return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
+                                                  current_compute_cell->shape,
+                                                  current_compute_cell->dim_y);
+            } else {
+                return dst_cc_id;
+            }
+        } else {
+            // For SinkCell
+            if (use_mesh_network) {
+                return dst_cc_id;
+            }
         }
 
-        return routing_cell_id;
+        // This means that SinkCell returns std::nullptr, which means it will send the operon  to
+        // the low latency Htree network.
+        return std::nullopt;
+    }
+
+    template<class SomeCellType>
+    static std::optional<u_int32_t> get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                                  Operon& operon,
+                                                  u_int32_t current_cc_id,
+                                                  u_int32_t routing_algorithm_id)
+    {
+        switch (routing_algorithm_id) {
+            case 0:
+                // Routing 0: Aggressively use the Htree
+                return routing_0_aggressively_use_htree<SomeCellType>(
+                    CCA_chip, operon, current_cc_id);
+                break;
+
+            default:
+                // Default is Routing 0: Aggressively use the Htree
+                return routing_0_aggressively_use_htree<SomeCellType>(
+                    CCA_chip, operon, current_cc_id);
+                break;
+        }
     }
 };
 

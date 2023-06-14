@@ -47,7 +47,7 @@ class SinkCell : public Cell
   public:
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links
-    void prepare_a_cycle();
+    void prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Execute a single cycle for this cell
     void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
@@ -87,7 +87,7 @@ class SinkCell : public Cell
              u_int32_t mesh_routing_policy_id_in)
         : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
         , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
-        
+
     {
         this->id = id_in;
         this->type = type_in;

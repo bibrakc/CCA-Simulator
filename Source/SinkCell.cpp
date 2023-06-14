@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SinkCell.hpp"
 #include "Cell.hpp"
 #include "HtreeNode.hpp"
+#include "Routing.hpp"
 
 #include <cassert>
 
@@ -67,7 +68,7 @@ return_asymetric_neighbors(u_int32_t channel_to_send)
 // TODO: Implement fairness in sending. Use some counter on the iterator that starts with a
 // different channel every cycle
 void
-SinkCell::prepare_a_cycle()
+SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
 
     if (!this->is_compute_cell_active()) {
@@ -109,17 +110,15 @@ SinkCell::prepare_a_cycle()
                     // It means the operon needs to be sent/passed to some neighbor. Find whether it
                     // needs to be sent in the mesh network or second layer/htree network?
 
-                    Coordinates dst_cc_coordinates =
-                        Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-                    /*
-                    auto dst_compute_cell =
-                    std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
-                                    assert(dst_compute_cell != nullptr); */
+                    // Get the route using Routing 0
+                    std::optional<u_int32_t> routing_cell_id =
+                        Routing::get_next_move<SinkCell>(CCA_chip, operon, this->id, 0);
 
-                    if (this->check_cut_off_distance(dst_cc_coordinates)) {
+                    if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
+                        u_int32_t channel_to_send =
+                            this->get_route_towards_cc_id(routing_cell_id.value());
 
                         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
                             // Set to distance class j + 1
@@ -132,6 +131,9 @@ SinkCell::prepare_a_cycle()
                         }
 
                     } else {
+
+                        Coordinates dst_cc_coordinates =
+                            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
                         // Send to the second layer Htree network using the sink hole
                         // First form a CooridiantedOperon to send
                         CoordinatedOperon coordinated_operon(dst_cc_coordinates, operon);
@@ -209,7 +211,7 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
 
     // Apply the network operations from the previous cycle and prepare this cycle for
     // computation and communication
-    this->prepare_a_cycle();
+    this->prepare_a_cycle(CCA_chip);
 
     // A SinkCell has nothing much do to here for computation
 }

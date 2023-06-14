@@ -309,22 +309,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         this->insert_action(operon.second);
                     } else {
 
-                        // Get the route using Routing 1
-                        u_int32_t routing_cell_id =
+                        // Get the route using Routing 0
+                        std::optional<u_int32_t> routing_cell_id =
                             Routing::get_next_move<ComputeCell>(CCA_chip, operon, this->id, 0);
 
-                        // Routing 0 Ends
-
-                        // Routing 1: Use the mesh network more often
-
-                        // Routing 1 Ends
-
-                        // Routing 2: Adaptive routing
-
-                        // Routing 2: Ends
-
                         // The operon needs to be sent/passed to some neighbor
-                        u_int32_t channel_to_send = get_route_towards_cc_id(routing_cell_id);
+                        u_int32_t channel_to_send =
+                            get_route_towards_cc_id(routing_cell_id.value());
 
                         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
                             // Set the distance class for this operon
@@ -423,8 +414,12 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                 << "  prepare_a_communication_cycle : " << *this << "\n";  */
 
     if (this->staging_operon_from_logic) {
+
         Operon operon_ = this->staging_operon_from_logic.value();
         u_int32_t dst_cc_id = operon_.first.dst_cc_id;
+
+        // Bug check: Make sure the destination is not a Sink Cell
+        assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
 
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
@@ -435,33 +430,14 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             this->staging_operon_from_logic = std::nullopt;
         } else {
 
-            Coordinates dst_cc_coordinates =
-                Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-
-            u_int32_t routing_cell_id = dst_cc_id;
-
-            // Check if it needs to be routed via the secondary network
-            if (CCA_chip[dst_cc_id]->type != CellType::sink_cell) {
-
-                auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
-                assert(dst_compute_cell != nullptr);
-
-                // If it is not nearby AND not in the same sinkcell (Htree block) then route it in
-                // second layer netowrk
-                if (!this->check_cut_off_distance(dst_cc_coordinates) &&
-                    (this->sink_cell != dst_compute_cell->sink_cell)) {
-                    routing_cell_id = Cell::cc_cooridinate_to_id(
-                        this->sink_cell.value(), this->shape, this->dim_y);
-                }
-            } else {
-                std::cerr << "Bug! Operon can not be destined for a Sink Cell.\n";
-                exit(0);
-            }
+            // Get the route using Routing 0
+            std::optional<u_int32_t> routing_cell_id =
+                Routing::get_next_move<ComputeCell>(CCA_chip, operon_, this->id, 0);
 
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-            u_int32_t channel_to_send = this->get_route_towards_cc_id(routing_cell_id);
+            u_int32_t channel_to_send = this->get_route_towards_cc_id(routing_cell_id.value());
 
             if (this->send_channel_per_neighbor[channel_to_send].push(
                     this->staging_operon_from_logic.value())) {
