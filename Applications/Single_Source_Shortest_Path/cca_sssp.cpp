@@ -245,6 +245,7 @@ configure_parser(cli::Parser& parser)
                                    "Depth of the Htree. This is the size of the Htree. \n\t0: No "
                                    "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
                                    "as it recurssively constructs more...");
+
     parser.set_optional<u_int32_t>(
         "hb",
         "hbandwidth_max",
@@ -252,6 +253,8 @@ configure_parser(cli::Parser& parser)
         "Max possible lanes in the htree joints. The htree is recursively constructred with end "
         "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
+
+    parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
 }
 
 class Graph
@@ -359,6 +362,9 @@ main(int argc, char** argv)
     // Get the memory per cc or use the default
     u_int32_t memory_per_cc = parser.get<u_int32_t>("m");
 
+    // Get the routing policy to use
+    u_int32_t routing_policy = parser.get<u_int32_t>("route");
+
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
     CCASimulator cca_square_simulator(shape_of_compute_cells,
@@ -370,7 +376,7 @@ main(int argc, char** argv)
                                       hbandwidth_max,
                                       total_compute_cells,
                                       memory_per_cc,
-                                      0);
+                                      routing_policy);
 
     std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
@@ -384,7 +390,7 @@ main(int argc, char** argv)
               << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
               << "\n\tTotal Chip Memory: "
               << cca_square_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
-              << "\n\n";
+              << "\n\tRouting Policy: " << routing_policy << "\n\n";
 
     // Register the SSSP action functions for predicate, work, and diffuse.
     CCAFunctionEvent sssp_predicate =
