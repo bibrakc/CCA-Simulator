@@ -54,7 +54,7 @@ with open(output_file, 'r') as file:
 
     # convert dim_x, dim_y, cells, and memory to integers
     dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = map(
-        int, [dim_x, dim_y, hx, hy, hdepth, cells, memory])
+        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory])
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -107,7 +107,7 @@ print(total_cycles, total_actions_invoked,
 # Plot the histogram using Seaborn
 # sns.histplot(data=stats, x='actions_invoked', kde=True)
 # sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
-# sns.displot(data=stats, x='actions_performed_work', bins=30)
+sns.displot(data=stats, x='actions_performed_work', bins=30)
 
 """ stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
     lambda x: (x/cycles)*100)
@@ -123,7 +123,6 @@ ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
 
 # sns.displot(data=stats, x='actions_performed_work', kind="kde", bw_adjust=.4)
 
-
 # sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
 
 
@@ -134,15 +133,17 @@ active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
 # Create the line plot using sns.lineplot
 fig, ax = plt.subplots()
 sns.lineplot(x='Cycle#', y='Cells_Active_Percent',
-             data=active_status_df, label='Cells Active Percent', ax=ax)
-sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
-             data=active_status_df, label='Htree Active Percent', ax=ax)
+             data=active_status_df, label='Cells Active Percent', ax=ax, color='orange')
+if hdepth != 0:
+    sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
+                 data=active_status_df, label='Htree Active Percent', ax=ax, color='blue')
 
 # Add labels and title
 ax.set_xlabel('Cycle')
 ax.set_ylabel('Percent')
-ax.set_title('Cells and Htree Active Percent by Cycle')
-
-
+if hdepth != 0:
+    ax.set_title('Percentage of Cells and Htree Active per Cycle')
+else:
+    ax.set_title('Percentage of Compute Cells Active per Cycle')
 # Display the plot
 plt.show()

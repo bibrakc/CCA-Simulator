@@ -68,12 +68,20 @@ enum class computeCellShape : u_int32_t
 
 struct ComputeCellStatistics
 {
+    // Total actions created includes both application actions and termination acknowledgement
+    // actions.
     u_int32_t actions_created{};
+
+    // Count of ack actions created.
+    u_int32_t actions_acknowledgement_created{};
+
+    // Both application actions and termination acknowledgement actions.
     u_int32_t actions_pushed{};
 
     u_int32_t actions_invoked{};
-    u_int32_t actions_performed_work{};
+    u_int32_t actions_acknowledgement_invoked{};
 
+    u_int32_t actions_performed_work{};
     // # of Actions subsumed
     u_int32_t actions_false_on_predicate{};
 
@@ -111,10 +119,11 @@ struct ComputeCellStatistics
     inline void generate_label(std::ostream& os)
     {
         os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tactions_created\tactions_"
-              "pushed\tactions_"
-              "invoked\tactions_performed_work\tactions_false_on_predicate\tstall_logic_on_"
-              "network\tstall_network_on_recv\tstall_network_on_send\tcycles_resource_"
-              "usage\tcycles_inactive\n";
+              "acknowledgement_created\tactions_"
+              "pushed\tactions_invoked\tactions_performed_work\tactions_acknoledgement_"
+              "invoked\tactions_false_on_"
+              "predicate\tstall_logic_on_network\tstall_network_on_recv\tstall_network_on_"
+              "send\tcycles_resource_usage\tcycles_inactive\n";
     }
 
     // Print all the stats in a single line
@@ -127,9 +136,11 @@ struct ComputeCellStatistics
     {
         os << "Statistics:"
            << "\n\tactions_created: " << stat.actions_created
+           << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
            << "\n\tactions_pushed: " << stat.actions_pushed
            << "\n\tactions_invoked: " << stat.actions_invoked
            << "\n\tactions_performed_work: " << stat.actions_performed_work
+           << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
            << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
            << "\n\n\tstall_logic_on_network: " << stat.stall_logic_on_network
            << "\n\tstall_network_on_recv: " << stat.stall_network_on_recv
@@ -142,9 +153,11 @@ struct ComputeCellStatistics
     ComputeCellStatistics& operator+=(const ComputeCellStatistics& rhs)
     {
         this->actions_created += rhs.actions_created;
+        this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
         this->actions_pushed += rhs.actions_pushed;
         this->actions_invoked += rhs.actions_invoked;
         this->actions_performed_work += rhs.actions_performed_work;
+        this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
 
         this->stall_logic_on_network += rhs.stall_logic_on_network;
@@ -245,6 +258,8 @@ class Cell
 
     inline bool cc_exists(const SignedCoordinates cc_coordinate);
 
+    bool should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate);
+
     bool check_cut_off_distance(Coordinates dst_cc_cooridinate);
 
     void add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
@@ -263,7 +278,7 @@ class Cell
     virtual void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
 
     // Checks if the cell is active or not
-    virtual bool is_compute_cell_active() = 0;
+    virtual u_int32_t is_compute_cell_active() = 0;
 
     // Routing
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass

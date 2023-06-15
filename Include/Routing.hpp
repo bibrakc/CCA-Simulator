@@ -49,8 +49,9 @@ struct Routing
         Operon& operon,
         u_int32_t current_cc_id)
     {
-        // Routing 0: Aggresively use the H-tree (low latency network)
+        // Routing 1: Aggresively use the mesh. This is a static routing algrithm.
 
+        // u_int32_t src_cc_id = operon.first.src_cc_id;
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
         auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
@@ -68,7 +69,7 @@ struct Routing
         // For type ComputeCell
         if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
 
-            // By defaul assume they are on different sink cells
+            // By default assume they are on different sink cells
             bool src_dst_are_on_different_sink_cells = true;
             src_dst_are_on_different_sink_cells =
                 (current_compute_cell->sink_cell != dst_compute_cell->sink_cell);
@@ -95,16 +96,72 @@ struct Routing
     }
 
     template<class SomeCellType>
+    static std::optional<u_int32_t> routing_1_use_mesh_more_often(
+        std::vector<std::shared_ptr<Cell>>& CCA_chip,
+        Operon& operon,
+        u_int32_t current_cc_id)
+    {
+        // Routing 0: Aggresively use the H-tree (low latency network)
+        u_int32_t src_cc_id = operon.first.src_cc_id;
+        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+
+        auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
+        assert(dst_compute_cell != nullptr);
+
+        std::shared_ptr<SomeCellType> current_compute_cell =
+            std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
+        assert(current_compute_cell != nullptr);
+
+        Coordinates src_cc_coordinates = Cell::cc_id_to_cooridinate(
+            src_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
+
+        Coordinates dst_cc_coordinates = Cell::cc_id_to_cooridinate(
+            dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
+
+        bool use_mesh_network =
+            current_compute_cell->should_I_use_mesh(src_cc_coordinates, dst_cc_coordinates);
+
+        if (use_mesh_network) {
+            return dst_cc_id;
+        } else {
+            /* std::cout << "CC: " << current_compute_cell->id << " Sending (" << src_cc_id << ", "
+                      << dst_cc_id << " in Mesh\n"; */
+            if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
+
+                // Route it in second layer netowrk
+                return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
+                                                  current_compute_cell->shape,
+                                                  current_compute_cell->dim_y);
+            } else {
+                // This means that SinkCell returns std::nullptr, which means it will send the
+                // operon  to the low latency Htree network.s
+                return std::nullopt;
+            }
+        }
+
+        // This means that SinkCell returns std::nullptr, which means it will send the operon to
+        // the low latency Htree network.
+        return std::nullopt;
+    }
+
+    template<class SomeCellType>
     static std::optional<u_int32_t> get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
                                                   Operon& operon,
                                                   u_int32_t current_cc_id,
                                                   u_int32_t routing_algorithm_id)
     {
+        // std::cout << "routing_algorithm_id = " << routing_algorithm_id << "\n";
+
         switch (routing_algorithm_id) {
             case 0:
-                // Routing 0: Aggressively use the Htree
+                // Routing 0: Aggressively use the Htree.
                 return routing_0_aggressively_use_htree<SomeCellType>(
                     CCA_chip, operon, current_cc_id);
+                break;
+
+            case 1:
+                // Routing 1: Aggresively use the mesh. This is a static routing algrithm.
+                return routing_1_use_mesh_more_often<SomeCellType>(CCA_chip, operon, current_cc_id);
                 break;
 
             default:

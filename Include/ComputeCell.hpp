@@ -87,7 +87,7 @@ class ComputeCell : public Cell
     void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Checks if the cell is active or not
-    bool is_compute_cell_active();
+    u_int32_t is_compute_cell_active();
 
     // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
     // on the `staging_operon_from_logic`
@@ -178,7 +178,7 @@ class ComputeCell : public Cell
 
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
-        this->distance_class_length = this->hx + this->hy;
+        this->distance_class_length = (this->hx * 15) + (this->hy * 15);
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,

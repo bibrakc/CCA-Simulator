@@ -249,8 +249,8 @@ ComputeCell::execute_action(void* function_events)
 
             function_events_manager->get_acknowledgement_event_handler()(
                 *this, action.obj_addr, action.nargs, action.args);
-            // event_handlers[eventId::terminator_acknowledgement](*this, action.obj_addr, 0,
-            // nullptr);
+
+            this->statistics.actions_acknowledgement_invoked++;
         } else {
             std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
             exit(0);
@@ -269,10 +269,11 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     if (!this->is_compute_cell_active()) {
         return;
     }
-
-    /* std::cout << this->id << ": Compute Cell " << this->cooridates
-             << "  prepare_a_cycle : " << *this << "\n";  */
-
+    /*     if (this->id == CCA_chip.size() - 1) {
+            std::cout << "CCA_chip size = " << CCA_chip.size() << ", Compute Cell: " << this->id
+                      << this->cooridates << "  prepare_a_cycle : " << *this << "\n";
+        }
+     */
     // Move the operon from previous cycle (that was not able to be sent due to congestion) to
     // the send link of the network
     this->prepare_a_communication_cycle(CCA_chip);
@@ -288,7 +289,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
                 // If this is greater them it is a bug
-                assert(j <= this->hx + this->hy);
+                assert(j <= this->distance_class_length);
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {
@@ -305,13 +306,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
-                        // this->action_queue.push(std::make_shared<Action>(operon_.second));
                         this->insert_action(operon.second);
                     } else {
 
                         // Get the route using Routing 0
                         std::optional<u_int32_t> routing_cell_id =
-                            Routing::get_next_move<ComputeCell>(CCA_chip, operon, this->id, 0);
+                            Routing::get_next_move<ComputeCell>(
+                                CCA_chip, operon, this->id, this->mesh_routing_policy);
 
                         // The operon needs to be sent/passed to some neighbor
                         u_int32_t channel_to_send =
@@ -424,15 +425,14 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
         if (this->id == dst_cc_id) {
-            // this->action_queue.push(std::make_shared<Action>(operon_.second));
             this->insert_action(operon_.second);
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
 
             // Get the route using Routing 0
-            std::optional<u_int32_t> routing_cell_id =
-                Routing::get_next_move<ComputeCell>(CCA_chip, operon_, this->id, 0);
+            std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<ComputeCell>(
+                CCA_chip, operon_, this->id, this->mesh_routing_policy);
 
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
@@ -532,9 +532,10 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 }
 
 // Checks if the compute cell is active or not
-bool
+u_int32_t
 ComputeCell::is_compute_cell_active()
 {
+
     bool send_channels = false;
     bool recv_channels = false;
     for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
@@ -549,6 +550,19 @@ ComputeCell::is_compute_cell_active()
             }
         }
     }
-    return (!this->action_queue.empty() || !this->task_queue.empty() ||
-            (this->staging_operon_from_logic) || send_channels || recv_channels);
+    bool compute_active = !this->action_queue.empty() || !this->task_queue.empty();
+    bool communication_active = (this->staging_operon_from_logic || send_channels || recv_channels);
+
+    if (compute_active && communication_active) {
+        // Both compute and communicate active
+        return 3;
+    } else if (compute_active) {
+        // Only compute active
+        return 2;
+    } else if (communication_active) {
+        // Only communication active
+        return 1;
+    }
+    // Inactive
+    return 0;
 }

@@ -54,6 +54,9 @@ class HtreeNetwork
         , hdepth(hdepth_in)
         , bandwidth_max(bandwidth_max_in)
     {
+        if (this->hdepth == 0) {
+            return;
+        }
         std::cout << "HtreeNework constructor called\n";
         this->construct_htree_network();
     }

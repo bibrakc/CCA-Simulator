@@ -160,8 +160,9 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
 {
     os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
        << "\t" << cc_cooridinates.second << "\t" << this->actions_created << "\t"
-       << this->actions_pushed << "\t" << this->actions_invoked << "\t"
-       << this->actions_performed_work << "\t" << this->actions_false_on_predicate << "\t"
+       << this->actions_acknowledgement_created << "\t" << this->actions_pushed << "\t"
+       << this->actions_invoked << "\t" << this->actions_performed_work << "\t"
+       << this->actions_acknowledgement_invoked << "\t" << this->actions_false_on_predicate << "\t"
        << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
        << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
        << this->cycles_inactive;
@@ -270,6 +271,41 @@ Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, 
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(shape_) << " not supported!\n";
+    exit(0);
+}
+
+bool
+Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate)
+{
+    if (this->shape == computeCellShape::square) {
+        auto [src_col, src_row] = src_cc_cooridinate;
+        auto [dst_col, dst_row] = dst_cc_cooridinate;
+
+        double row_ratio = 1.0;
+        if (src_row != 0) {
+            row_ratio = 1.0 * static_cast<double>(src_row) / static_cast<double>(this->dim_x);
+        }
+        double col_ratio = 1.0;
+        if (src_col != 0) {
+            col_ratio = 1.0 * static_cast<double>(src_col) / static_cast<double>(this->dim_y);
+        }
+
+        /*     std::cout << "CC: " << this->id << ", row_ratio = " << row_ratio
+                      << ", col_ratio = " << col_ratio << "\n"; */
+        // auto [crt_col, crt_row] = this->cooridates;
+
+        // TODO: later make this distance customizable, either at compile time or runtime
+        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
+             ((this->hy * 1.3) * col_ratio)) &&
+            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
+             ((this->hx * 1.3) * row_ratio))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    // Shape not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
     exit(0);
 }
 

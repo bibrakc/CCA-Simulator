@@ -313,8 +313,9 @@ CCASimulator::run_simulation(Address app_terminator)
 
     // while (is_system_active) {
     while (this->is_diffusion_active(app_terminator)) {
-        // while (count_temp < 10000) {
-        //    count_temp++;
+        //   while (count_temp < 500) {
+        //   count_temp++;
+
         is_system_active = false;
 
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
@@ -356,9 +357,9 @@ CCASimulator::run_simulation(Address app_terminator)
 
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            if (this->CCA_chip[i]->is_compute_cell_active()) {
+            active_status_frame_per_cells[i] = this->CCA_chip[i]->is_compute_cell_active();
+            if (active_status_frame_per_cells[i]) {
                 sum_global_active_cc_local++;
-                active_status_frame_per_cells[i] = 1;
             }
         }
         this->cca_statistics.individual_cells_active_status_per_cycle.push_back(

@@ -71,6 +71,8 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
 
         // TODO: put this counter in its own and separate betweek ack and nornal action
         cc.statistics.actions_created++;
+
+        cc.statistics.actions_acknowledgement_created++;
         // Create Operon and put it in the task queue
         Operon operon_to_send =
             cc.construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
@@ -111,6 +113,8 @@ Terminator::unsignal(ComputeCell& cc)
 
             // TODO: put this counter in its own and separate betweek ack and nornal action
             cc.statistics.actions_created++;
+
+            cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
@@ -170,6 +174,8 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // TODO: put this counter in its own and separate betweek ack and nornal action
             cc.statistics.actions_created++;
+
+            cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
@@ -204,6 +210,8 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // TODO: put this counter in its own and separate between ack and nornal action
             cc.statistics.actions_created++;
+
+            cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);

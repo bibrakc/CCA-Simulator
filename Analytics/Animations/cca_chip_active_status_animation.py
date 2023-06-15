@@ -33,6 +33,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import matplotlib.patches as mpatches
 
 args = sys.argv
 
@@ -64,7 +65,7 @@ for i, frame in enumerate(frames):
         grid_data[i, j] = list(map(int, row.strip().split()))
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(8, 8))
+fig, ax = plt.subplots(figsize=(10, 10))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -72,11 +73,29 @@ y_htree = (dim_y / 2) + 15
 length_htree = min(dim_x, dim_y)
 depth_htree = 4
 
-htree_draw = True
+htree_draw = False
+
+# Define the colors corresponding to each active status kind
+colors = ['black', 'green', 'yellow', 'red']
 
 # Plot the initial grid
-cmap = plt.cm.colors.ListedColormap(['black', 'red'])  # Set custom colormap
-grid = ax.imshow(grid_data[0], cmap=cmap, interpolation='nearest', alpha=0.85)
+cmap = plt.cm.colors.ListedColormap(colors)  # Set custom colormap
+grid = ax.imshow(grid_data[0], cmap=cmap, interpolation='none', alpha=0.80)
+
+# Create custom legend with color-value mappings
+legend_labels = {0: 'Inactive', 1: 'Only Computing',
+                 2: 'Only Communicating', 3: 'Fully Active'}
+legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
+                   for value, label in legend_labels.items()
+                   for i, color in enumerate(colors) if i == value]
+
+# Add the legend to the plot
+# ax.legend(handles=legend_elements, loc='upper right')
+# Add the legend outside the main figure
+# ax.legend(handles=legend_elements, bbox_to_anchor=(0.8, 1), loc="lower center")
+ax.legend(handles=legend_elements, loc='best',
+          bbox_to_anchor=(0.13, -0.525, 0.5, 0.5))
+
 
 # Recursive function to draw the H-tree
 
@@ -109,7 +128,7 @@ def draw_h_tree(x, y, length, depth):
 
 
 def update(frame):
-    grid.set_array(grid_data[frame])
+    grid.set_array(grid_data[frame+18000])
     # Set the title for each frame
     ax.set_title(
         'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame))
@@ -123,7 +142,7 @@ def update(frame):
 
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=num_frames, interval=1)  # Increase the interval
+    fig, update, frames=11234, interval=2)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))

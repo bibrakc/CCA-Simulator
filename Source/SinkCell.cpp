@@ -77,6 +77,50 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     /* std::cout << this->id << ": Sink Cell " << this->cooridates << "  prepare_a_cycle : " <<
        *this
               << "\n"; */
+
+    // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
+    // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
+    // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?
+    // (Not Implemented yet) 3: Finally push the remaining operons into the recv channel where
+    // they came from
+    std::vector<Operon> recv_operons;
+    while (this->recv_channel_to_htree_node.size()) {
+        recv_operons.push_back(this->recv_channel_to_htree_node.front());
+        this->recv_channel_to_htree_node.pop();
+    }
+
+    std::vector<Operon> left_over_operons;
+    for (Operon operon : recv_operons) {
+
+        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+
+        // Since the operon has come from the Htree change its src id to the sink cell.
+        // This is to make sure that the static routing algorithm of routing policy = 1 works
+        if (this->mesh_routing_policy == 1) {
+            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.first.src_cc_id
+                        << "\n"; */
+            operon.first.src_cc_id = this->id;
+        }
+
+        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+
+        if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+            // Set to distance class 0
+            this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+        } else {
+            // Increament the stall counter for send/recv
+            this->statistics.stall_network_on_send++;
+
+            // Put this back since it was not sent in this cycle due to the
+            // send_channel_per_neighbor being full
+            left_over_operons.push_back(operon);
+        }
+    }
+
+    for (Operon operon : left_over_operons) {
+        this->recv_channel_to_htree_node.push(operon);
+    }
+
     // From the regular mesh recv channel to regular send channels
     // Move the operon from previous cycle recv channel to their destination: action queue or
     // send channel of a neighbor
@@ -90,7 +134,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
                 // If this is greater them it is a bug
-                assert(j <= this->hx + this->hy);
+                assert(j <= this->distance_class_length);
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {
@@ -111,8 +155,8 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     // needs to be sent in the mesh network or second layer/htree network?
 
                     // Get the route using Routing 0
-                    std::optional<u_int32_t> routing_cell_id =
-                        Routing::get_next_move<SinkCell>(CCA_chip, operon, this->id, 0);
+                    std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<SinkCell>(
+                        CCA_chip, operon, this->id, this->mesh_routing_policy);
 
                     if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
@@ -151,40 +195,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     this->recv_channel_per_neighbor[i][j].push(operon);
                 }
             }
-        }
-
-        // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
-        // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
-        // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?
-        // 3: Finally push the remaining operons into the recv channel where they came from
-        std::vector<Operon> recv_operons;
-        while (this->recv_channel_to_htree_node.size()) {
-            recv_operons.push_back(this->recv_channel_to_htree_node.front());
-            this->recv_channel_to_htree_node.pop();
-        }
-
-        std::vector<Operon> left_over_operons;
-        for (Operon operon : recv_operons) {
-
-            u_int32_t dst_cc_id = operon.first.dst_cc_id;
-
-            u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
-
-            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-                // Set to distance class 0
-                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
-            } else {
-                // Increament the stall counter for send/recv
-                this->statistics.stall_network_on_send++;
-
-                // Put this back since it was not sent in this cycle due to the
-                // send_channel_per_neighbor being full
-                left_over_operons.push_back(operon);
-            }
-        }
-
-        for (Operon operon : left_over_operons) {
-            this->recv_channel_to_htree_node.push(operon);
         }
     }
 }
@@ -244,6 +254,14 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
     for (Operon operon : recv_operons) {
 
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
+
+        // Since the operon has come from the Htree change its src id to the sink cell.
+        // This is to make sure that the static routing algorithm of routing policy = 1 works
+        if (this->mesh_routing_policy == 1) {
+            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.first.src_cc_id
+                        << "\n"; */
+            operon.first.src_cc_id = this->id;
+        }
 
         u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
 
@@ -352,7 +370,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 }
 
 // Checks if the compute cell is active or not
-bool
+u_int32_t
 SinkCell::is_compute_cell_active()
 {
     bool send_channels = false;
@@ -369,6 +387,11 @@ SinkCell::is_compute_cell_active()
             }
         }
     }
-    return (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
-            this->recv_channel_to_htree_node.size());
+    if (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
+        this->recv_channel_to_htree_node.size()) {
+        // Only communication active
+        return 1;
+    }
+    // Inactive
+    return 0;
 }
