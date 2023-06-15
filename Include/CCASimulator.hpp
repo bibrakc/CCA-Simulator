@@ -158,7 +158,14 @@ class CCASimulator
         this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
 
         this->host_id = this->dim_x * this->dim_y;
-        this->host_memory = std::make_shared<char[]>(this->host_memory_size_in_bytes);
+
+        // This doesn't work with older compilers that don't have newer C++ features. Therefore
+        // using the old way of explicitly providing new and deleters. this->host_memory =
+        // std::make_shared<char[]>(this->host_memory_size_in_bytes);
+        std::shared_ptr<char[]> host_memory_ptr(new char[this->host_memory_size_in_bytes],
+                                                std::default_delete<char[]>());
+        this->host_memory = host_memory_ptr;
+
         this->host_memory_raw_ptr = this->host_memory.get();
         this->host_memory_curr_ptr = this->host_memory_raw_ptr;
 
