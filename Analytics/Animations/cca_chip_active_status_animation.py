@@ -39,6 +39,8 @@ args = sys.argv
 
 # Read input data from file
 filename = args[1]
+show_last_frames = int(args[2])
+skip_frames = int(args[3])
 
 with open(filename, 'r') as file:
     # read the header line and discard it
@@ -127,8 +129,15 @@ def draw_h_tree(x, y, length, depth):
 # Update function for animation
 
 
+# For larger simulation we want to see last frames
+if (show_last_frames != 0):
+    start_from = cycles - show_last_frames
+else:
+    start_from = 0
+
+
 def update(frame):
-    grid.set_array(grid_data[frame+18000])
+    grid.set_array(grid_data[frame+start_from])
     # Set the title for each frame
     ax.set_title(
         'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame))
@@ -140,9 +149,10 @@ def update(frame):
     return [grid]
 
 
+frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=11234, interval=2)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=2)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
