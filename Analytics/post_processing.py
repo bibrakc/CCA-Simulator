@@ -107,7 +107,7 @@ print(total_cycles, total_actions_invoked,
 # Plot the histogram using Seaborn
 # sns.histplot(data=stats, x='actions_invoked', kde=True)
 # sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
-sns.displot(data=stats, x='actions_performed_work', bins=30)
+""" sns.displot(data=stats, x='actions_performed_work', bins=30) """
 
 """ stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
     lambda x: (x/cycles)*100)
@@ -141,9 +141,13 @@ if hdepth != 0:
 # Add labels and title
 ax.set_xlabel('Cycle')
 ax.set_ylabel('Percent')
+chip_config = "Chip Dim: "+str(dim_x)+" x "+str(dim_y)
 if hdepth != 0:
-    ax.set_title('Percentage of Cells and Htree Active per Cycle')
+    ax.set_title(
+        chip_config+' Mesh + Htree, Depth: ' +
+        str(hdepth)+', Max Bandwidth: '+str(hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle')
 else:
-    ax.set_title('Percentage of Compute Cells Active per Cycle')
+    ax.set_title(
+        chip_config+' Pure Mesh Network\nPercentage of Compute Cells Active per Cycle')
 # Display the plot
 plt.show()
