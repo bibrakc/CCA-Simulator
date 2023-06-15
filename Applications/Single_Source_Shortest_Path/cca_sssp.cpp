@@ -187,12 +187,6 @@ sssp_diffuse_func(ComputeCell& cc,
     return 0;
 }
 
-// Later create a register function to do these from the main. Help with using the simulator in more
-// of an API style
-/* std::map<eventId, handler_func> event_handlers = { { eventId::sssp_predicate, sssp_predicate_func
-   }, { eventId::sssp_work, sssp_work_func }, { eventId::sssp_diffuse, sssp_diffuse_func }, {
-   eventId::terminator_acknowledgement, terminator_acknowledgement_func } }; */
-
 // Insert edge by `Address` type src and dst
 inline bool
 insert_edge_by_address(CCASimulator& cca_simulator,
@@ -342,7 +336,9 @@ main(int argc, char** argv)
 
     // Get the max bandwidth of Htree
     u_int32_t hbandwidth_max = parser.get<u_int32_t>("hb");
-
+    if (hdepth == 0) {
+        hbandwidth_max = 0;
+    }
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells;
