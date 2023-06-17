@@ -198,6 +198,9 @@ class ComputeCell : public Cell
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example)
         this->current_recv_channel_to_start_a_cycle = 0;
+
+        // Experimental
+        this->current_cycle = 0;
     }
 
   private:

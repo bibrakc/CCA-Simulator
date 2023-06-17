@@ -315,8 +315,8 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                 CCA_chip, operon, this->id, this->mesh_routing_policy);
 
                         // The operon needs to be sent/passed to some neighbor
-                        u_int32_t channel_to_send =
-                            get_route_towards_cc_id(routing_cell_id.value());
+                        u_int32_t channel_to_send = get_route_towards_cc_id(
+                            operon.first.src_cc_id, routing_cell_id.value());
 
                         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
                             // Set the distance class for this operon
@@ -437,7 +437,8 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-            u_int32_t channel_to_send = this->get_route_towards_cc_id(routing_cell_id.value());
+            u_int32_t channel_to_send =
+                this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
             if (this->send_channel_per_neighbor[channel_to_send].push(
                     this->staging_operon_from_logic.value())) {

@@ -330,9 +330,12 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
 }
 
 u_int32_t
-Cell::get_route_towards_cc_id(u_int32_t dst_cc_id)
+Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
-    return get_west_first_route_towards_cc_id(dst_cc_id);
+     //return get_west_first_route_towards_cc_id(dst_cc_id);
+    // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+     return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    //return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 }
 
 u_int32_t
@@ -419,6 +422,134 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
 
         std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                   << " Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+inline u_int32_t
+Cell::vertical_first_routing(Coordinates dst_cc_coordinates)
+{
+
+    if (this->cooridates.second > dst_cc_coordinates.second) {
+        return 1; // Clockwise 1 = up
+    } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        return 3; // Clockwise 3 = down
+    } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        // send to right
+        return 2;
+    } else if (this->cooridates.first > dst_cc_coordinates.first) {
+        // send to left
+        return 0;
+    }
+    std::cerr << "CC: " << this->id << " Routing bug\n";
+    exit(0);
+}
+
+inline u_int32_t
+Cell::horizontal_first_routing(Coordinates dst_cc_coordinates)
+{
+
+    if (this->cooridates.first > dst_cc_coordinates.first) {
+        return 0; // Clockwise 0 = left
+    } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        // send to right
+        return 2;
+    } else if (this->cooridates.second > dst_cc_coordinates.second) {
+        return 1; // Clockwise 1 = up
+    } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        return 3; // Clockwise 3 = down
+    }
+    std::cerr << "CC: " << this->id << " Routing bug\n";
+    exit(0);
+}
+
+inline bool
+row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y)
+{
+    u_int32_t center = dim_y / 2;
+    u_int32_t start_chunk = (dim_y * row) + center + 4;
+    return ((cc_id > start_chunk) && (cc_id < start_chunk + chunk_size));
+}
+
+u_int32_t
+Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+{
+
+    // Algorithm == mixed first.
+    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
+    // first (up or down).
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        Coordinates src_cc_coordinates =
+            Cell::cc_id_to_cooridinate(src_cc_id, this->shape, this->dim_y);
+
+        // .first = col, .second = row
+
+        // bool is_vertical_epoch = (this->current_cycle / 100) % 2;
+        bool is_vertical_routing_operon = src_cc_coordinates.second < this->dim_x / 2;
+
+        // Route vertically first
+        if (is_vertical_routing_operon) {
+            // std::cout << "vertical_first_routing\n";
+            return this->vertical_first_routing(dst_cc_coordinates);
+        } else {
+            // Route horizontally first
+            return this->horizontal_first_routing(dst_cc_coordinates);
+        }
+
+        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                  << " Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+u_int32_t
+Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == mixed first.
+    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
+    // first (up or down).
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        // std::cout << "vertical_first_routing\n";
+        return this->vertical_first_routing(dst_cc_coordinates);
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+u_int32_t
+Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id)
+{
+
+    // Algorithm == mixed first.
+    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
+    // first (up or down).
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        // std::cout << "vertical_first_routing\n";
+        return this->horizontal_first_routing(dst_cc_coordinates);
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";

@@ -102,7 +102,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             operon.first.src_cc_id = this->id;
         }
 
-        u_int32_t channel_to_send = get_route_towards_cc_id(dst_cc_id);
+        u_int32_t channel_to_send = get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
             // Set to distance class 0
@@ -161,8 +161,8 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        u_int32_t channel_to_send =
-                            this->get_route_towards_cc_id(routing_cell_id.value());
+                        u_int32_t channel_to_send = this->get_route_towards_cc_id(
+                            operon.first.src_cc_id, routing_cell_id.value());
 
                         if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
                             // Set to distance class j + 1
@@ -263,7 +263,8 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
             operon.first.src_cc_id = this->id;
         }
 
-        u_int32_t channel_to_send = this->get_route_towards_cc_id(dst_cc_id);
+        u_int32_t channel_to_send =
+            this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
         if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 

@@ -309,12 +309,11 @@ CCASimulator::run_simulation(Address app_terminator)
 
     bool is_system_active = true;
 
-    // u_int32_t count_temp = 0;
-
     // while (is_system_active) {
     while (this->is_diffusion_active(app_terminator)) {
-        //   while (count_temp < 500) {
-        //   count_temp++;
+        //     u_int32_t count_temp = 0;
+        //   while (count_temp < 400) {
+        //    count_temp++;
 
         is_system_active = false;
 
@@ -389,6 +388,12 @@ CCASimulator::run_simulation(Address app_terminator)
         this->cca_statistics.active_status.push_back(
             ActiveStatusPerCycle(percent_CCs_active, percent_htree_active));
         total_cycles++;
+
+// Set new cycle # for every Cell: Experimental
+#pragma omp parallel for
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
+            this->CCA_chip[i]->current_cycle++;
+        }
     }
     this->global_active_cc = is_system_active;
 }
