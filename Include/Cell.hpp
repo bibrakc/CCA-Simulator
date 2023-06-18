@@ -295,7 +295,13 @@ class Cell
 
     // Experimental
 
-    std::vector<u_int32_t> get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
+                                                               u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id,
+                                                                           u_int32_t dst_cc_id);
+    
+    std::vector<u_int32_t> get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
+                                                                       u_int32_t dst_cc_id);
 
     inline std::vector<u_int32_t> horizontal_first_routing(Coordinates dst_cc_coordinates);
     inline std::vector<u_int32_t> vertical_first_routing(Coordinates dst_cc_coordinates);

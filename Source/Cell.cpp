@@ -361,8 +361,11 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
     // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-    return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    // return get_vertical_first_route_towards_cc_id(dst_cc_id);
     // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+
+    // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
+    return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 u_int32_t
@@ -398,6 +401,117 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
         // TODO: use Cell:: instead
         std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                   << "Bug: routing not sucessful!\n";
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+std::vector<u_int32_t>
+Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+{
+
+    // Algorithm == abaptive positive only routes
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        std::vector<u_int32_t> paths;
+
+        if ((this->cooridates.first > dst_cc_coordinates.first) &&
+            (this->cooridates.second < dst_cc_coordinates.second)) {
+            paths.push_back(0); // Clockwise 0 = left
+            paths.push_back(3); // Clockwise 3 = down
+        } else if ((this->cooridates.first > dst_cc_coordinates.first) &&
+                   (this->cooridates.second > dst_cc_coordinates.second)) {
+            paths.push_back(0); // Clockwise 0 = left
+            paths.push_back(1); // Clockwise 1 = up
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second > dst_cc_coordinates.second)) {
+            // send up or right
+            paths.push_back(1);
+            paths.push_back(2);
+
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second < dst_cc_coordinates.second)) {
+            // send down or right
+            paths.push_back(3);
+            paths.push_back(2);
+        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+            paths.push_back(0); // Clockwise 0 = left
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            paths.push_back(2);
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            // send to down
+            paths.push_back(3);
+        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+            // send to up
+            paths.push_back(1);
+        }
+
+        if (paths.size() == 0) {
+            std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                      << " Bug: routing not sucessful!\n";
+        }
+
+        return paths;
+    }
+    // Shape or routing not supported
+    std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
+    exit(0);
+}
+
+std::vector<u_int32_t>
+Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+{
+
+    // Algorithm == west first adaptive
+    if (this->shape == computeCellShape::square) {
+        // Remember for a square shaped CC there are four links to neighbors enumerated in
+        // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
+
+        Coordinates dst_cc_coordinates =
+            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+
+        std::vector<u_int32_t> paths;
+
+        // West first routing restricts turns to the west side. Take west/left first if needed
+        if (this->cooridates.first > dst_cc_coordinates.first) {
+            paths.push_back(0); // Clockwise 0 = left
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second > dst_cc_coordinates.second)) {
+
+            // send up or right
+            paths.push_back(1);
+            paths.push_back(2);
+
+        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
+                   (this->cooridates.second < dst_cc_coordinates.second)) {
+
+            // send down or right
+            paths.push_back(3);
+            paths.push_back(2);
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            paths.push_back(2);
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            // send to down
+            paths.push_back(3);
+        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+            // send to up
+            paths.push_back(1);
+        }
+
+        if (paths.size() == 0) {
+            std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                      << " Bug: routing not sucessful!\n";
+        }
+
+        return paths;
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
