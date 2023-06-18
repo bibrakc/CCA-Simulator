@@ -130,7 +130,34 @@ Cell::add_neighbor_compute_cells()
 bool
 Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
 {
-    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
+    bool success = this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
+
+    if (!success) {
+        // this->recv_channel_per_neighbor[direction_in][distance_class].front().first.dst_cc_id
+        /*         std::cout << "\tCC : " << this->cooridates
+                          << " Not able to recv in distance_class: " << distance_class
+                          << " direction_in: " << direction_in;
+
+                std::cout << " contentions : (0, "
+                          << this->send_channel_per_neighbor_contention_count[0].get_max_count() <<
+           ", "
+                          << this->send_channel_per_neighbor_contention_count[0].get_count()
+                          << ") contentions : (1, "
+                          << this->send_channel_per_neighbor_contention_count[1].get_max_count() <<
+           ", "
+                          << this->send_channel_per_neighbor_contention_count[1].get_count()
+                          << ") contentions : (2, "
+                          << this->send_channel_per_neighbor_contention_count[2].get_max_count() <<
+           ", "
+                          << this->send_channel_per_neighbor_contention_count[2].get_count()
+                          << ") contentions : (3, "
+                          << this->send_channel_per_neighbor_contention_count[3].get_max_count() <<
+           ", "
+                          << this->send_channel_per_neighbor_contention_count[3].get_count() <<
+           "\n"; */
+    }
+
+    return success;
 }
 
 inline bool
@@ -329,13 +356,13 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
     exit(0);
 }
 
-u_int32_t
+std::vector<u_int32_t>
 Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
-     //return get_west_first_route_towards_cc_id(dst_cc_id);
+    // return get_west_first_route_towards_cc_id(dst_cc_id);
     // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-     return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    //return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 }
 
 u_int32_t
@@ -428,41 +455,42 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
-inline u_int32_t
+inline std::vector<u_int32_t>
 Cell::vertical_first_routing(Coordinates dst_cc_coordinates)
 {
 
+    std::vector<u_int32_t> paths;
+
     if (this->cooridates.second > dst_cc_coordinates.second) {
-        return 1; // Clockwise 1 = up
+        paths.push_back(1); // Clockwise 1 = up
     } else if (this->cooridates.second < dst_cc_coordinates.second) {
-        return 3; // Clockwise 3 = down
+        paths.push_back(3); // Clockwise 3 = down
     } else if (this->cooridates.first < dst_cc_coordinates.first) {
         // send to right
-        return 2;
+        paths.push_back(2);
     } else if (this->cooridates.first > dst_cc_coordinates.first) {
         // send to left
-        return 0;
+        paths.push_back(0);
     }
-    std::cerr << "CC: " << this->id << " Routing bug\n";
-    exit(0);
+
+    return paths;
 }
 
-inline u_int32_t
+inline std::vector<u_int32_t>
 Cell::horizontal_first_routing(Coordinates dst_cc_coordinates)
 {
-
+    std::vector<u_int32_t> paths;
     if (this->cooridates.first > dst_cc_coordinates.first) {
-        return 0; // Clockwise 0 = left
+        paths.push_back(0); // Clockwise 0 = left
     } else if (this->cooridates.first < dst_cc_coordinates.first) {
         // send to right
-        return 2;
+        paths.push_back(2);
     } else if (this->cooridates.second > dst_cc_coordinates.second) {
-        return 1; // Clockwise 1 = up
+        paths.push_back(1); // Clockwise 1 = up
     } else if (this->cooridates.second < dst_cc_coordinates.second) {
-        return 3; // Clockwise 3 = down
+        paths.push_back(3); // Clockwise 3 = down
     }
-    std::cerr << "CC: " << this->id << " Routing bug\n";
-    exit(0);
+    return paths;
 }
 
 inline bool
@@ -473,7 +501,7 @@ row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y
     return ((cc_id > start_chunk) && (cc_id < start_chunk + chunk_size));
 }
 
-u_int32_t
+std::vector<u_int32_t>
 Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
 
@@ -493,7 +521,18 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
         // .first = col, .second = row
 
         // bool is_vertical_epoch = (this->current_cycle / 100) % 2;
-        bool is_vertical_routing_operon = src_cc_coordinates.second < this->dim_x / 2;
+        bool is_vertical_routing_operon = true;
+        if (src_cc_coordinates.second % 2 == 0) {
+            if (src_cc_coordinates.first % 2 == 0) {
+                is_vertical_routing_operon = false;
+            }
+        } else {
+            if (src_cc_coordinates.first % 2 == 1) {
+                is_vertical_routing_operon = true;
+            } else {
+                is_vertical_routing_operon = false;
+            }
+        }
 
         // Route vertically first
         if (is_vertical_routing_operon) {
@@ -512,7 +551,7 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
     exit(0);
 }
 
-u_int32_t
+std::vector<u_int32_t>
 Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
 
@@ -534,7 +573,7 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
-u_int32_t
+std::vector<u_int32_t>
 Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
 

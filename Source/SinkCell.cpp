@@ -102,12 +102,23 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             operon.first.src_cc_id = this->id;
         }
 
-        u_int32_t channel_to_send = get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
+        std::vector<u_int32_t> channels_to_send =
+            this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
-        if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-            // Set to distance class 0
-            this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
-        } else {
+        bool pushed = false;
+        for (auto channel_to_send : channels_to_send) {
+            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+
+                // Set to distance class 0
+                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+
+                // Break out of the for loop. Discard other paths.
+                pushed = true;
+                break;
+            }
+        }
+
+        if (!pushed) {
             // Increament the stall counter for send/recv
             this->statistics.stall_network_on_send++;
 
@@ -161,14 +172,24 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        u_int32_t channel_to_send = this->get_route_towards_cc_id(
+                        std::vector<u_int32_t> channels_to_send = this->get_route_towards_cc_id(
                             operon.first.src_cc_id, routing_cell_id.value());
 
-                        if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-                            // Set to distance class j + 1
-                            this->send_channel_per_neighbor_current_distance_class
-                                [channel_to_send] = j + 1;
-                        } else {
+                        bool pushed = false;
+                        for (auto channel_to_send : channels_to_send) {
+                            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+
+                                // Set the distance class for this operon
+                                this->send_channel_per_neighbor_current_distance_class
+                                    [channel_to_send] = j + 1;
+
+                                // Break out of the for loop. Discard other paths.
+                                pushed = true;
+                                break;
+                            }
+                        }
+
+                        if (!pushed) {
                             // Increament the stall counter for send/recv
                             this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
@@ -263,11 +284,24 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
             operon.first.src_cc_id = this->id;
         }
 
-        u_int32_t channel_to_send =
+        std::vector<u_int32_t> channels_to_send =
             this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
-        if (!this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+        bool pushed = false;
+        for (auto channel_to_send : channels_to_send) {
+            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 
+                // Set to distance class 0 since this operon originates from this SinkCell
+                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+
+                // Break out of the for loop. Discard other paths.
+                pushed = true;
+                break;
+            }
+        }
+
+        if (!pushed) {
+            // Increament the stall counter for send/recv
             // Put this back since it was not sent in this cycle due to the
             // recv_channel_to_htree_node being full
             left_over_operons.push_back(operon);
@@ -275,9 +309,6 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
 
             // Increament the stall counter for send/recv
             this->statistics.stall_network_on_send++;
-        } else {
-            // Set to distance class 0 since this operon originates from this SinkCell
-            this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
         }
     }
 

@@ -310,10 +310,10 @@ CCASimulator::run_simulation(Address app_terminator)
     bool is_system_active = true;
 
     // while (is_system_active) {
-    while (this->is_diffusion_active(app_terminator)) {
-        //     u_int32_t count_temp = 0;
-        //   while (count_temp < 400) {
-        //    count_temp++;
+     while (this->is_diffusion_active(app_terminator)) {
+    //u_int32_t count_temp = 0;
+    //while (count_temp < 200) {
+    //    count_temp++;
 
         is_system_active = false;
 

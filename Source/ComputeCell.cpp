@@ -284,12 +284,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     // Move the operon from previous cycle recv channel to thier destination: action queue or
     // send channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
+        for (int j = this->recv_channel_per_neighbor[i].size() - 1; j >= 0; j--) {
+            // for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
                 // If this is greater them it is a bug
-                assert(j <= this->distance_class_length);
+                // assert(j <= this->distance_class_length);
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {
@@ -314,15 +315,24 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             Routing::get_next_move<ComputeCell>(
                                 CCA_chip, operon, this->id, this->mesh_routing_policy);
 
-                        // The operon needs to be sent/passed to some neighbor
-                        u_int32_t channel_to_send = get_route_towards_cc_id(
+                        std::vector<u_int32_t> channels_to_send = this->get_route_towards_cc_id(
                             operon.first.src_cc_id, routing_cell_id.value());
 
-                        if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-                            // Set the distance class for this operon
-                            this->send_channel_per_neighbor_current_distance_class
-                                [channel_to_send] = j + 1;
-                        } else {
+                        bool pushed = false;
+                        for (auto channel_to_send : channels_to_send) {
+                            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+
+                                // Set the distance class for this operon
+                                this->send_channel_per_neighbor_current_distance_class
+                                    [channel_to_send] = j + 1;
+
+                                // Break out of the for loop. Discard other paths.
+                                pushed = true;
+                                break;
+                            }
+                        }
+
+                        if (!pushed) {
                             // Increament the stall counter for send/recv
                             this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
@@ -437,19 +447,27 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-            u_int32_t channel_to_send =
+            std::vector<u_int32_t> channels_to_send =
                 this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
-            if (this->send_channel_per_neighbor[channel_to_send].push(
-                    this->staging_operon_from_logic.value())) {
+            bool pushed = false;
+            for (auto channel_to_send : channels_to_send) {
+                if (this->send_channel_per_neighbor[channel_to_send].push(
+                        this->staging_operon_from_logic.value())) {
 
-                // Set to distance class 0 since this operon originates from this CC
-                this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+                    // Set to distance class 0 since this operon originates from this CC
+                    this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
 
-                // Empty the staging buffer
-                this->staging_operon_from_logic = std::nullopt;
-            } else {
+                    // Empty the staging buffer
+                    this->staging_operon_from_logic = std::nullopt;
 
+                    // Break out of the for loop. Discard other paths.
+                    pushed = true;
+                    break;
+                }
+            }
+
+            if (!pushed) {
                 this->statistics.stall_logic_on_network++;
             }
         }
@@ -499,19 +517,25 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                             receiving_direction[i],
                             this->send_channel_per_neighbor_current_distance_class[i])) {
 
-                        /* std::cout << "\tCC : " << this->cooridates
-                                  << " Not able to send to neighbor: "
-                                  << this->neighbor_compute_cells[i].value().second
-                                  << " neighbor recieve size: "
-                                  << CCA_chip[neighbor_id_]
-                                         ->recv_channel_per_neighbor[receiving_direction[i]]
-                                         .size()
-                                  << "\n"; */
-
                         this->statistics.stall_network_on_recv++;
+
+                        this->send_channel_per_neighbor_contention_count[i].increment();
+
+                        /*  std::cout
+                             << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
+                             << this->neighbor_compute_cells[i].value().second << " i = " << i
+                             << ", contention_count: max:"
+                             << this->send_channel_per_neighbor_contention_count[i].get_max_count()
+                             << ", contention_count: current : "
+                             << this->send_channel_per_neighbor_contention_count[i].get_count()
+                             << "\n"; */
+
                         // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
+                    } else {
+                        this->send_channel_per_neighbor_contention_count[i].reset();
                     }
+
                     for (Operon operon : left_over_operons) {
                         this->send_channel_per_neighbor[i].push(operon);
                     }

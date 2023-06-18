@@ -87,4 +87,31 @@ class FixedSizeQueue
     // Return whether there is a slot in the queue
     bool has_room() const { return (this->underlying_queue.size() != this->size_max); }
 };
+
+class MaxCounter
+{
+  private:
+    u_int32_t counter;
+    u_int32_t max_counter;
+
+  public:
+    MaxCounter()
+        : counter(0)
+        , max_counter(0)
+    {
+    }
+
+    void increment()
+    {
+        this->counter++;
+        if (this->counter > this->max_counter) {
+            this->max_counter = counter;
+        }
+    }
+
+    void reset() { this->counter = 0; }
+    int get_count() const { return this->counter; }
+    int get_max_count() const { return this->max_counter; }
+};
+
 #endif // TYPES_HPP

@@ -214,6 +214,9 @@ class Cell
     std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
     std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
 
+    // Use this to detect deadlock
+    std::vector<MaxCounter> send_channel_per_neighbor_contention_count;
+
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
     // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
     // computation (or work) on that operon in the current simulation cycle. The receiving neighbor
@@ -284,18 +287,18 @@ class Cell
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
-    u_int32_t get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
     u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
     u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Experimental
 
-    u_int32_t get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
 
-    inline u_int32_t horizontal_first_routing(Coordinates dst_cc_coordinates);
-    inline u_int32_t vertical_first_routing(Coordinates dst_cc_coordinates);
+    inline std::vector<u_int32_t> horizontal_first_routing(Coordinates dst_cc_coordinates);
+    inline std::vector<u_int32_t> vertical_first_routing(Coordinates dst_cc_coordinates);
 
     u_int32_t current_cycle;
 

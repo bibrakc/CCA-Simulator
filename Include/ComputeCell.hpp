@@ -189,11 +189,12 @@ class ComputeCell : public Cell
                                                FixedSizeQueue<Operon>(lane_width));
 
         this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
-        /*
-        for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-                   this->send_channel_per_neighbor.push_back(FixedSizeQueue<Operon>(lane_width));
-        }
-        */
+        this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
+                                                                MaxCounter());
+
+        /*    for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
+               this->send_channel_per_neighbor_contention_count[i] = 0;
+           } */
 
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example)
