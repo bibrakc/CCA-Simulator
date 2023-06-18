@@ -32,6 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
+#include <algorithm>
+#include <random>
+
 // Utility function to convert type of pair
 template<typename To, typename From>
 inline std::pair<To, To>
@@ -373,12 +376,12 @@ std::vector<u_int32_t>
 Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
-    // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-    // return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    //  return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    //  return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    //  return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-    // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 u_int32_t
@@ -528,7 +531,17 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
             std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                       << " Bug: routing not sucessful!\n";
         }
+        /*
+        // Random number generator
+        std::random_device rd;
+        std::mt19937 generator(rd());
 
+        // Shuffle the paths
+        std::shuffle(paths.begin(), paths.end(), generator);
+
+        Note: Tried the randamization but it doesn't help with performance. Will come back to it
+        later.
+        */
         return paths;
     }
     // Shape or routing not supported
@@ -536,7 +549,7 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
     exit(0);
 }
 
-u_int32_t
+std::vector<u_int32_t>
 Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
 
@@ -549,38 +562,40 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         // West first routing restricts turns to the west side. Take west/left first if needed
-
-        // std::cout << "SinkCell: Routing from:" << this->cooridates << " --> " <<
-        // dst_cc_coordinates;
+        std::vector<u_int32_t> paths;
 
         if (this->cooridates.first > dst_cc_coordinates.first) {
-            return 0; // Clockwise 0 = left
+            paths.push_back(0); // Clockwise 0 = left
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second > dst_cc_coordinates.second)) {
 
             // send up or right
             // based on availablity send there. Right now just send to up
-            return 1;
+            paths.push_back(1);
 
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second < dst_cc_coordinates.second)) {
 
             // send down or right
             // based on availablity send there. Right now just send to down
-            return 3;
+            paths.push_back(3);
         } else if (this->cooridates.first < dst_cc_coordinates.first) {
             // send to right
-            return 2;
+            paths.push_back(2);
         } else if (this->cooridates.second < dst_cc_coordinates.second) {
             // send to down
-            return 3;
+            paths.push_back(3);
         } else if (this->cooridates.second > dst_cc_coordinates.second) {
             // send to up
-            return 1;
+            paths.push_back(1);
         }
 
-        std::cerr << Cell::get_compute_cell_shape_name(this->shape)
-                  << " Bug: routing not sucessful!\n";
+        if (paths.size() == 0) {
+            std::cerr << Cell::get_compute_cell_shape_name(this->shape)
+                      << " Bug: routing not sucessful!\n";
+        }
+
+        return paths;
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";

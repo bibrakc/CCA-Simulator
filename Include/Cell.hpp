@@ -99,14 +99,14 @@ struct ComputeCellStatistics
     // that case for a single square CC to be 100% active in a single cycle it needs to send 4
     // operons along all of its 4 neighbors. The logic also plays part in being active. Therefore,
     // when a CC is active working on logic that includes predicate resolution, work, and creating
-    // and sending operons it is considered to be active. In that way for the entire CC to be 100%
-    // active for a single cycle all 5 consituents need to be active. For a single cycle we count
-    // the active status of network and logic and then divide the counter by 5 to get the percent.
-    // This percent is accumulated and is later used with the total active cycles to find resource
-    // usage.
+    // and sending operons then it is considered to be active. In that way for the entire CC to be
+    // 100% active for a single cycle all 5 consituents need to be active. For a single cycle we
+    // count the active status of network and logic and then divide the counter by 5 to get the
+    // percent. This percent is accumulated and is later used with the total active cycles to find
+    // resource usage.
     // TODO: refine this methodology
     long double cycles_resource_usage{};
-    
+
     // Start this counter with 5 for the square CC and then decreament as the resources are used for
     // that cycle. This reverse way of counting will also help in distinguishing between an inactive
     // cycle and a cycle in which the CC a deadlocked/waiting.
@@ -296,7 +296,7 @@ class Cell
     // clockwise the channel id of the physical shape.
     std::vector<u_int32_t> get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
     u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
-    u_int32_t get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
+    std::vector<u_int32_t> get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id);
 
