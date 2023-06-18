@@ -102,7 +102,27 @@ print(total_cycles, total_actions_invoked,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
 
-# print(stats.describe())
+print(stats.describe())
+# ax1 = sns.displot(data=stats, x='left_send_contention_max',
+#                 kind="kde", bw_adjust=.4)
+# sns.histplot(data=stats, x='left_send_contention_total', kde=True)
+# sns.displot(data=stats, x='left_send_contention_total', bins=40)
+sns.displot(data=stats, x='left_send_contention_max', bins=40)
+# sns.displot(data=stats, x='left_send_contention_total', kind="kde", bw_adjust=.4)
+
+
+# sns.histplot(data=stats, x='up_send_contention_total', kde=True)
+# sns.displot(data=stats, x='up_send_contention_total', bins=40)
+sns.displot(data=stats, x='up_send_contention_max', bins=40)
+
+# sns.histplot(data=stats, x='right_send_contention_total', kde=True)
+# sns.displot(data=stats, x='right_send_contention_total', bins=40)
+sns.displot(data=stats, x='right_send_contention_max', bins=40)
+
+# sns.histplot(data=stats, x='down_send_contention_total', kde=True)
+# sns.displot(data=stats, x='down_send_contention_total', bins=40)
+sns.displot(data=stats, x='down_send_contention_max', bins=40)
+
 
 # Plot the histogram using Seaborn
 # sns.histplot(data=stats, x='actions_invoked', kde=True)
@@ -126,6 +146,7 @@ ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
 # sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
 
 
+""" 
 # Convert the list to a DataFrame
 active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
                                 'Cycle#', 'Cells_Active_Percent', 'Htree_Active_Percent'])
@@ -148,6 +169,8 @@ if hdepth != 0:
         str(hdepth)+', Max Bandwidth: '+str(hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle')
 else:
     ax.set_title(
-        chip_config+' Pure Mesh Network\nPercentage of Compute Cells Active per Cycle')
+        chip_config+' Pure Mesh Network\nPercentage of Compute Cells Active per Cycle') """
+
+
 # Display the plot
 plt.show()

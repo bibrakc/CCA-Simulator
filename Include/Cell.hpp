@@ -85,6 +85,8 @@ struct ComputeCellStatistics
     // # of Actions subsumed
     u_int32_t actions_false_on_predicate{};
 
+    std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
+
     // When network is busy passing other operon so the operons from logic to network get stalled
     u_int32_t stall_logic_on_network{};
     u_int32_t stall_network_on_recv{};
@@ -104,13 +106,14 @@ struct ComputeCellStatistics
     // usage.
     // TODO: refine this methodology
     long double cycles_resource_usage{};
+    
     // Start this counter with 5 for the square CC and then decreament as the resources are used for
     // that cycle. This reverse way of counting will also help in distinguishing between an inactive
     // cycle and a cycle in which the CC a deadlocked/waiting.
     u_int32_t cycle_resource_use_counter{};
 
     // # of Cycles for which this CC was not active: Starvation
-    // When `cycle_resource_use_counter = 0` then that cycle the CC was inactive
+    // When `cycle_resource_use_counter == 0` then that cycle the CC was inactive
     u_int32_t cycles_inactive{};
 
     // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
@@ -118,11 +121,15 @@ struct ComputeCellStatistics
 
     inline void generate_label(std::ostream& os)
     {
-        os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tactions_created\tactions_"
-              "acknowledgement_created\tactions_"
-              "pushed\tactions_invoked\tactions_performed_work\tactions_acknoledgement_"
-              "invoked\tactions_false_on_"
-              "predicate\tstall_logic_on_network\tstall_network_on_recv\tstall_network_on_"
+        os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y"
+              "\tactions_created\tactions_acknowledgement_created"
+              "\tactions_pushed\tactions_invoked\tactions_performed_work"
+              "\tactions_acknoledgement_invoked\tactions_false_on_predicate"
+              "\tleft_send_contention_max\tleft_send_contention_total"
+              "\tup_send_contention_max\tup_send_contention_total"
+              "\tright_send_contention_max\tright_send_contention_total"
+              "\tdown_send_contention_max\tdown_send_contention_total"
+              "\tstall_logic_on_network\tstall_network_on_recv\tstall_network_on_"
               "send\tcycles_resource_usage\tcycles_inactive\n";
     }
 
@@ -299,7 +306,7 @@ class Cell
                                                                u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id,
                                                                            u_int32_t dst_cc_id);
-    
+
     std::vector<u_int32_t> get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
                                                                        u_int32_t dst_cc_id);
 
@@ -312,6 +319,8 @@ class Cell
 
     // Receive an operon from a neighbor
     bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
+
+    void copy_cell_simulation_records_to_statistics();
 
     friend std::ostream& operator<<(std::ostream& os, const Cell& cc)
     {

@@ -189,8 +189,21 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << "\t" << cc_cooridinates.second << "\t" << this->actions_created << "\t"
        << this->actions_acknowledgement_created << "\t" << this->actions_pushed << "\t"
        << this->actions_invoked << "\t" << this->actions_performed_work << "\t"
-       << this->actions_acknowledgement_invoked << "\t" << this->actions_false_on_predicate << "\t"
-       << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
+       << this->actions_acknowledgement_invoked << "\t" << this->actions_false_on_predicate
+
+       << "\t" << this->send_channel_per_neighbor_contention_count_record[0].get_max_count() << "\t"
+       << this->send_channel_per_neighbor_contention_count_record[0].get_total_count()
+
+       << "\t" << this->send_channel_per_neighbor_contention_count_record[1].get_max_count() << "\t"
+       << this->send_channel_per_neighbor_contention_count_record[1].get_total_count()
+
+       << "\t" << this->send_channel_per_neighbor_contention_count_record[2].get_max_count() << "\t"
+       << this->send_channel_per_neighbor_contention_count_record[2].get_total_count()
+
+       << "\t" << this->send_channel_per_neighbor_contention_count_record[3].get_max_count() << "\t"
+       << this->send_channel_per_neighbor_contention_count_record[3].get_total_count()
+
+       << "\t" << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
        << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
        << this->cycles_inactive;
 }
@@ -362,10 +375,10 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
     // return get_west_first_route_towards_cc_id(dst_cc_id);
     // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
     // return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-    return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 u_int32_t
@@ -712,4 +725,11 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id)
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
     exit(0);
+}
+
+void
+Cell::copy_cell_simulation_records_to_statistics()
+{
+    this->statistics.send_channel_per_neighbor_contention_count_record =
+        this->send_channel_per_neighbor_contention_count;
 }

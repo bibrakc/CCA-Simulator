@@ -310,10 +310,10 @@ CCASimulator::run_simulation(Address app_terminator)
     bool is_system_active = true;
 
     // while (is_system_active) {
-     while (this->is_diffusion_active(app_terminator)) {
-    //u_int32_t count_temp = 0;
-    //while (count_temp < 200) {
-    //    count_temp++;
+    while (this->is_diffusion_active(app_terminator)) {
+        // u_int32_t count_temp = 0;
+        // while (count_temp < 200) {
+        //     count_temp++;
 
         is_system_active = false;
 
@@ -396,4 +396,10 @@ CCASimulator::run_simulation(Address app_terminator)
         }
     }
     this->global_active_cc = is_system_active;
+
+    // Copy any internal Cell records, counters etc to its statistics
+#pragma omp parallel for
+    for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
+        this->CCA_chip[i]->copy_cell_simulation_records_to_statistics();
+    }
 }

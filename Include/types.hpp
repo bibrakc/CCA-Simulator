@@ -93,17 +93,20 @@ class MaxCounter
   private:
     u_int32_t counter;
     u_int32_t max_counter;
+    u_int32_t total_counter;
 
   public:
     MaxCounter()
         : counter(0)
         , max_counter(0)
+        , total_counter(0)
     {
     }
 
     void increment()
     {
         this->counter++;
+        this->total_counter++;
         if (this->counter > this->max_counter) {
             this->max_counter = counter;
         }
@@ -112,6 +115,7 @@ class MaxCounter
     void reset() { this->counter = 0; }
     int get_count() const { return this->counter; }
     int get_max_count() const { return this->max_counter; }
+    int get_total_count() const { return this->total_counter; }
 };
 
 #endif // TYPES_HPP
