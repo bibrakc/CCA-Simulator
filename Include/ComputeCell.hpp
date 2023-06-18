@@ -178,7 +178,7 @@ class ComputeCell : public Cell
 
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
-        this->distance_class_length = (this->hx * 15) + (this->hy * 15);
+        this->distance_class_length = 1; //(this->hx * 15) + (this->hy * 15);
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,

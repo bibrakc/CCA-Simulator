@@ -290,7 +290,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             if (this->recv_channel_per_neighbor[i][j].size()) {
 
                 // If this is greater them it is a bug
-                // assert(j <= this->distance_class_length);
+                assert(j <= static_cast<int>(this->distance_class_length));
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[i][j].size()) {
@@ -324,7 +324,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                                 // Set the distance class for this operon
                                 this->send_channel_per_neighbor_current_distance_class
-                                    [channel_to_send] = j + 1;
+                                    [channel_to_send] = 0; // j + 1;
 
                                 // Break out of the for loop. Discard other paths.
                                 pushed = true;

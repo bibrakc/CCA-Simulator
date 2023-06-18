@@ -181,7 +181,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                                 // Set the distance class for this operon
                                 this->send_channel_per_neighbor_current_distance_class
-                                    [channel_to_send] = j + 1;
+                                    [channel_to_send] = 0; // j + 1;
 
                                 // Break out of the for loop. Discard other paths.
                                 pushed = true;
