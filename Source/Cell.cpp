@@ -410,6 +410,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
 std::vector<u_int32_t>
 Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
+    // This has deadlock :(
 
     // Algorithm == abaptive positive only routes
     if (this->shape == computeCellShape::square) {
@@ -423,20 +424,24 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int
 
         if ((this->cooridates.first > dst_cc_coordinates.first) &&
             (this->cooridates.second < dst_cc_coordinates.second)) {
+            // 3rd Coordinate
             paths.push_back(0); // Clockwise 0 = left
             paths.push_back(3); // Clockwise 3 = down
         } else if ((this->cooridates.first > dst_cc_coordinates.first) &&
                    (this->cooridates.second > dst_cc_coordinates.second)) {
+            // 1st Coordinate
             paths.push_back(0); // Clockwise 0 = left
             paths.push_back(1); // Clockwise 1 = up
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second > dst_cc_coordinates.second)) {
+            // 2nd Coordinate
             // send up or right
             paths.push_back(1);
             paths.push_back(2);
 
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second < dst_cc_coordinates.second)) {
+            // 4th Coordinate
             // send down or right
             paths.push_back(3);
             paths.push_back(2);
@@ -484,14 +489,14 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
             paths.push_back(0); // Clockwise 0 = left
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second > dst_cc_coordinates.second)) {
-
+            // 2nd Coordinate
             // send up or right
             paths.push_back(1);
             paths.push_back(2);
 
         } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
                    (this->cooridates.second < dst_cc_coordinates.second)) {
-
+            // 4th Coordinate
             // send down or right
             paths.push_back(3);
             paths.push_back(2);
