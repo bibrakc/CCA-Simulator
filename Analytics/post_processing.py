@@ -43,6 +43,8 @@ args = sys.argv
 
 output_file = args[1]
 
+routing_algorithm = args[2]
+
 # open the file in read mode
 with open(output_file, 'r') as file:
 
@@ -103,25 +105,46 @@ print(total_cycles, total_actions_invoked,
 
 
 print(stats.describe())
-# ax1 = sns.displot(data=stats, x='left_send_contention_max',
-#                 kind="kde", bw_adjust=.4)
-# sns.histplot(data=stats, x='left_send_contention_total', kde=True)
-# sns.displot(data=stats, x='left_send_contention_total', bins=40)
-sns.displot(data=stats, x='left_send_contention_max', bins=40)
-# sns.displot(data=stats, x='left_send_contention_total', kind="kde", bw_adjust=.4)
 
 
-# sns.histplot(data=stats, x='up_send_contention_total', kde=True)
-# sns.displot(data=stats, x='up_send_contention_total', bins=40)
-sns.displot(data=stats, x='up_send_contention_max', bins=40)
+# Create a figure with subplots
+fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 
-# sns.histplot(data=stats, x='right_send_contention_total', kde=True)
-# sns.displot(data=stats, x='right_send_contention_total', bins=40)
-sns.displot(data=stats, x='right_send_contention_max', bins=40)
 
-# sns.histplot(data=stats, x='down_send_contention_total', kde=True)
-# sns.displot(data=stats, x='down_send_contention_total', bins=40)
-sns.displot(data=stats, x='down_send_contention_max', bins=40)
+# Flatten the axes array to easily iterate over subplots
+axes = axes.flatten()
+
+# Plot the displot for each data in the subplots
+# for i, d in enumerate(data):
+#    sns.histplot(data=d, kde=True, ax=axes[i])
+
+bins=40
+
+sns.histplot(data=stats, x='left_send_contention_total', bins=bins, ax=axes[0])
+sns.histplot(data=stats, x='left_send_contention_max', bins=bins, ax=axes[4])
+
+sns.histplot(data=stats, x='up_send_contention_total', bins=bins, ax=axes[1])
+sns.histplot(data=stats, x='up_send_contention_max', bins=bins, ax=axes[5])
+
+sns.histplot(data=stats, x='right_send_contention_total', bins=bins, ax=axes[2])
+sns.histplot(data=stats, x='right_send_contention_max', bins=bins, ax=axes[6])
+
+sns.histplot(data=stats, x='down_send_contention_total', bins=bins, ax=axes[3])
+sns.histplot(data=stats, x='down_send_contention_max', bins=bins, ax=axes[7])
+
+
+# Set titles for each subplot
+titles = ['Left Channel Contention Total', 'Up Channel Contention Total', 'Right Channel Contention Total', 'Down Channel Contention Total',
+          'Left Channel Contention Max', 'Up Channel Contention Max', 'Right Channel Contention Max', 'Down Channel Contention Max']
+for ax, title in zip(axes, titles):
+    ax.set_title(title)
+
+# Add a main title to the figure
+plt.suptitle(routing_algorithm+'\nContention Per Channel Histograms',
+             fontsize=18, fontweight='bold')
+
+# Adjust spacing between subplots
+plt.tight_layout()
 
 
 # Plot the histogram using Seaborn
@@ -146,7 +169,6 @@ ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
 # sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
 
 
-""" 
 # Convert the list to a DataFrame
 active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
                                 'Cycle#', 'Cells_Active_Percent', 'Htree_Active_Percent'])
@@ -162,14 +184,14 @@ if hdepth != 0:
 # Add labels and title
 ax.set_xlabel('Cycle')
 ax.set_ylabel('Percent')
-chip_config = "Chip Dim: "+str(dim_x)+" x "+str(dim_y)
+chip_config = "Chip Dim: "+str(dim_x)+" x "+str(dim_y)+", "+routing_algorithm
 if hdepth != 0:
     ax.set_title(
-        chip_config+' Mesh + Htree, Depth: ' +
+        chip_config+', Mesh + Htree, Depth: ' +
         str(hdepth)+', Max Bandwidth: '+str(hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle')
 else:
     ax.set_title(
-        chip_config+' Pure Mesh Network\nPercentage of Compute Cells Active per Cycle') """
+        chip_config+', Pure Mesh Network\nPercentage of Compute Cells Active per Cycle')
 
 
 # Display the plot

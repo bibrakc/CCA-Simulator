@@ -295,7 +295,6 @@ class Cell
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
     std::vector<u_int32_t> get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
-    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id);
     std::vector<u_int32_t> get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id);
@@ -316,6 +315,9 @@ class Cell
     u_int32_t current_cycle;
 
     // Experimental Ends
+
+    // Depreciated
+    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
 
     // Receive an operon from a neighbor
     bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);

@@ -376,12 +376,13 @@ std::vector<u_int32_t>
 Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
-    //  return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-    //  return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    //  return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    // return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
+    // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-    return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 u_int32_t
@@ -531,8 +532,8 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
             std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                       << " Bug: routing not sucessful!\n";
         }
-        /*
-        // Random number generator
+
+        /* // Random number generator
         std::random_device rd;
         std::mt19937 generator(rd());
 
@@ -540,8 +541,8 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
         std::shuffle(paths.begin(), paths.end(), generator);
 
         Note: Tried the randamization but it doesn't help with performance. Will come back to it
-        later.
-        */
+        later. */
+
         return paths;
     }
     // Shape or routing not supported
@@ -698,6 +699,7 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
     exit(0);
 }
 
+// Dimension-ordered (Y-X) routing
 std::vector<u_int32_t>
 Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
@@ -720,6 +722,7 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
+// Dimension-ordered (X-Y) routing
 std::vector<u_int32_t>
 Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id)
 {
