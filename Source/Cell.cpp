@@ -324,26 +324,25 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
         auto [src_col, src_row] = src_cc_cooridinate;
         auto [dst_col, dst_row] = dst_cc_cooridinate;
 
-        double row_ratio = 1.0;
-        if (src_row != 0) {
-            row_ratio = 1.0 * static_cast<double>(src_row) / static_cast<double>(this->dim_x);
-        }
-        double col_ratio = 1.0;
-        if (src_col != 0) {
-            col_ratio = 1.0 * static_cast<double>(src_col) / static_cast<double>(this->dim_y);
-        }
-
-        /*     std::cout << "CC: " << this->id << ", row_ratio = " << row_ratio
-                      << ", col_ratio = " << col_ratio << "\n"; */
-        // auto [crt_col, crt_row] = this->cooridates;
+        double num_unit_h_in_row = std::pow(2, this->hdepth - 1);
+        num_unit_h_in_row = num_unit_h_in_row + (num_unit_h_in_row / 2);
+        u_int32_t mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
+        u_int32_t mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
 
         // TODO: later make this distance customizable, either at compile time or runtime
         if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
-             ((this->hy * 1.3) * col_ratio)) &&
+             mesh_usage_region_length_cols) &&
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
-             ((this->hx * 1.3) * row_ratio))) {
+             mesh_usage_region_length_rows)) {
             return true;
         } else {
+            /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
+                       << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
+                       << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
+                       << "\n";
+             std::cout << "CC: " << this->id << ", src: " << src_cc_cooridinate
+                       << ", dst: " << dst_cc_cooridinate << "\n"; */
+
             return false;
         }
     }
@@ -377,8 +376,8 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
     // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-    // return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
@@ -415,7 +414,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
             // std::cout <<"right\n";
             return 2; // Clockwise 2 = right
         }
-        // TODO: use Cell:: instead
+
         std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                   << "Bug: routing not sucessful!\n";
     }

@@ -75,7 +75,7 @@ struct Routing
                 (current_compute_cell->sink_cell != dst_compute_cell->sink_cell);
 
             // If it is not nearby AND not in the same sinkcell (Htree block) then
-            // route it in second layer netowrk
+            // route it in second layer network
             if (!use_mesh_network && src_dst_are_on_different_sink_cells) {
                 return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
                                                   current_compute_cell->shape,
@@ -101,12 +101,12 @@ struct Routing
         Operon& operon,
         u_int32_t current_cc_id)
     {
-        // Routing 0: Aggresively use the H-tree (low latency network)
+        // Routing 1: Try to use the mesh network more often.
         u_int32_t src_cc_id = operon.first.src_cc_id;
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
-        auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
-        assert(dst_compute_cell != nullptr);
+        /* auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
+        assert(dst_compute_cell != nullptr); */
 
         std::shared_ptr<SomeCellType> current_compute_cell =
             std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);

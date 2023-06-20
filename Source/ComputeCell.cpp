@@ -189,7 +189,8 @@ void
 ComputeCell::execute_action(void* function_events)
 {
 
-    // Using `void*` becuase there is conflict in compiler with dependencies between classes
+    // Using `void* function_events` becuase there is conflict in compiler with dependencies between
+    // classes
     // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->action_queue.empty()) {
