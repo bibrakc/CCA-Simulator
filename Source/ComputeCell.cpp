@@ -579,15 +579,32 @@ ComputeCell::is_compute_cell_active()
     bool compute_active = !this->action_queue.empty() || !this->task_queue.empty();
     bool communication_active = (this->staging_operon_from_logic || send_channels || recv_channels);
 
+    bool is_congested = false;
+    for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
+        if (congestion_count.get_count() > congestion_threshold) {
+            is_congested = true;
+            break;
+        }
+    }
+    
+
     if (compute_active && communication_active) {
         // Both compute and communicate active
-        return 3;
+        if (is_congested) {
+            return 5;
+        } else {
+            return 3;
+        }
     } else if (compute_active) {
         // Only compute active
         return 2;
     } else if (communication_active) {
         // Only communication active
-        return 1;
+        if (is_congested) {
+            return 4;
+        } else {
+            return 1;
+        }
     }
     // Inactive
     return 0;

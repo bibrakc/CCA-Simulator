@@ -422,10 +422,23 @@ SinkCell::is_compute_cell_active()
             }
         }
     }
+
+    bool is_congested = false;
+    for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
+        if (congestion_count.get_count() > congestion_threshold) {
+            is_congested = true;
+            break;
+        }
+    }
+
     if (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
         this->recv_channel_to_htree_node.size()) {
         // Only communication active
-        return 1;
+        if (is_congested) {
+            return 4;
+        } else {
+            return 1;
+        }
     }
     // Inactive
     return 0;

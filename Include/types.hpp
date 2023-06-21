@@ -113,9 +113,9 @@ class MaxCounter
     }
 
     void reset() { this->counter = 0; }
-    int get_count() const { return this->counter; }
-    int get_max_count() const { return this->max_counter; }
-    int get_total_count() const { return this->total_counter; }
+    u_int32_t get_count() const { return this->counter; }
+    u_int32_t get_max_count() const { return this->max_counter; }
+    u_int32_t get_total_count() const { return this->total_counter; }
 };
 
 #endif // TYPES_HPP

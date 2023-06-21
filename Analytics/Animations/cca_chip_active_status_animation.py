@@ -57,17 +57,33 @@ with open(filename, 'r') as file:
 
     frames = [line.strip() for line in file]
 
+# Mapping of scalar values to RGB colors
+scalar_to_rgb = {
+    0: (0, 0, 0),       # black
+    1: (0, 0, 255),     # blue
+    2: (0, 255, 0),     # green
+    3: (255, 255, 255),  # white
+    4: (255, 255, 0),   # yellow
+    5: (255, 0, 0)      # red
+}
+
+
 # Parse frames and convert to numpy arrays
 grid_size = (dim_x, dim_y)
 num_frames = len(frames)
-grid_data = np.zeros((num_frames, *grid_size))
+grid_data = np.zeros((num_frames, *grid_size, 3), dtype=np.uint8)
+
 for i, frame in enumerate(frames):
     rows = frame.split(',')
     for j, row in enumerate(rows):
-        grid_data[i, j] = list(map(int, row.strip().split()))
+        scalar_values = list(map(int, row.strip().split()))
+        for k, scalar_value in enumerate(scalar_values):
+            rgb_value = scalar_to_rgb[scalar_value]
+            grid_data[i, j, k] = rgb_value
+
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(10, 10))
+fig, ax = plt.subplots(figsize=(12, 12))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -77,16 +93,13 @@ depth_htree = 4
 
 htree_draw = False
 
-# Define the colors corresponding to each active status kind
-colors = ['black', 'green', 'yellow', 'red']
+# Display the RGB image
+grid = ax.imshow(grid_data[0], alpha=0.80)
 
-# Plot the initial grid
-cmap = plt.cm.colors.ListedColormap(colors)  # Set custom colormap
-grid = ax.imshow(grid_data[0], cmap=cmap, interpolation='none', alpha=0.80)
-
+colors = ['black', 'blue', 'green', 'white', 'yellow', 'red']
 # Create custom legend with color-value mappings
-legend_labels = {0: 'Inactive', 1: 'Only Computing',
-                 2: 'Only Communicating', 3: 'Fully Active'}
+legend_labels = {0: 'Inactive', 1: 'Only Communicating', 2: 'Only Computing',
+                 3: 'Computing & Communicating', 4: 'Congested Communicating', 5: 'Congested Computing & Communicating'}
 legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
                    for value, label in legend_labels.items()
                    for i, color in enumerate(colors) if i == value]
@@ -95,13 +108,20 @@ legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
 # ax.legend(handles=legend_elements, loc='upper right')
 # Add the legend outside the main figure
 # ax.legend(handles=legend_elements, bbox_to_anchor=(0.8, 1), loc="lower center")
-ax.legend(handles=legend_elements, loc='best',
-          bbox_to_anchor=(0.13, -0.525, 0.5, 0.5))
+# ax.legend(handles=legend_elements, bbox_to_anchor=(1.45, 1), loc='upper right')
+""" ax.legend(handles=legend_elements, loc='best',
+          bbox_to_anchor=(0.13, -0.525, 0.5, 0.5)) """
+
+
+
+from matplotlib.legend_handler import HandlerTuple
+# Place the legend above the plot
+ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
+
+
 
 
 # Recursive function to draw the H-tree
-
-
 def draw_h_tree(x, y, length, depth):
     if depth == 0:
         return
@@ -126,14 +146,14 @@ def draw_h_tree(x, y, length, depth):
     draw_h_tree(x1, y0, new_length, new_depth)  # Bottom right
     draw_h_tree(x1, y1, new_length, new_depth)  # Top right
 
-# Update function for animation
-
 
 # For larger simulation we want to see last frames
 if (show_last_frames != 0):
     start_from = cycles - show_last_frames
 else:
     start_from = 0
+
+# Update function for animation
 
 
 def update(frame):
@@ -152,7 +172,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=30)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=20)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -172,7 +192,7 @@ ani.save(output_filename, writer='ffmpeg', dpi=400) """
 
 # Save the animation as a GIF file
 """ output_filename = 'animation.gif'
-ani.save(output_filename, writer='pillow', dpi=50) """
+ani.save(output_filename, writer='pillow', dpi=120) """
 
 # Display the plot
 plt.show()

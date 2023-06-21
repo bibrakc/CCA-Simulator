@@ -48,6 +48,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
+// Threshold value after which it is considered to be congested.
+constexpr u_int32_t congestion_threshold = 5;
+
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t
 {

@@ -375,9 +375,9 @@ std::vector<u_int32_t>
 Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
-    // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
-    return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    // return get_vertical_first_route_towards_cc_id(dst_cc_id);
+    //  return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
