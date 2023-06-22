@@ -1,4 +1,4 @@
-""" 
+"""
 BSD 3-Clause License
 
 Copyright (c) 2023, Bibrak Qamar
@@ -35,6 +35,7 @@ import sys
 # For seaborn ploting
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 import pandas as pd
 import math
@@ -106,45 +107,72 @@ print(total_cycles, total_actions_invoked,
 
 print(stats.describe())
 
+chip_config = "Chip of " + \
+    str(dim_x)+" x "+str(dim_y)+" Cells, "+routing_algorithm+" Routing"
 
-# Create a figure with subplots
-fig, axes = plt.subplots(2, 4, figsize=(20, 10))
-
-
-# Flatten the axes array to easily iterate over subplots
-axes = axes.flatten()
-
-# Plot the displot for each data in the subplots
-# for i, d in enumerate(data):
-#    sns.histplot(data=d, kde=True, ax=axes[i])
-
-bins=40
-
-sns.histplot(data=stats, x='left_send_contention_total', bins=bins, ax=axes[0])
-sns.histplot(data=stats, x='left_send_contention_max', bins=bins, ax=axes[4])
-
-sns.histplot(data=stats, x='up_send_contention_total', bins=bins, ax=axes[1])
-sns.histplot(data=stats, x='up_send_contention_max', bins=bins, ax=axes[5])
-
-sns.histplot(data=stats, x='right_send_contention_total', bins=bins, ax=axes[2])
-sns.histplot(data=stats, x='right_send_contention_max', bins=bins, ax=axes[6])
-
-sns.histplot(data=stats, x='down_send_contention_total', bins=bins, ax=axes[3])
-sns.histplot(data=stats, x='down_send_contention_max', bins=bins, ax=axes[7])
+print(chip_config)
 
 
-# Set titles for each subplot
-titles = ['Left Channel Contention Total', 'Up Channel Contention Total', 'Right Channel Contention Total', 'Down Channel Contention Total',
-          'Left Channel Contention Max', 'Up Channel Contention Max', 'Right Channel Contention Max', 'Down Channel Contention Max']
-for ax, title in zip(axes, titles):
-    ax.set_title(title)
+def congestion_charts():
 
-# Add a main title to the figure
-plt.suptitle(routing_algorithm+'\nContention Per Channel Histograms',
-             fontsize=18, fontweight='bold')
+    # Create a figure with subplots
+    # fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 
-# Adjust spacing between subplots
-plt.tight_layout()
+    # Create a figure with subplots using gridspec_kw for shared boundaries
+    fig, axes = plt.subplots(2, 4, figsize=(20, 10))  # , sharey=True)
+
+    # Use GridSpec to adjust subplot spacings and add borders
+    # gs = gridspec.GridSpec(2, 4, figure=fig, hspace=0.3, wspace=0.2)
+
+    # Flatten the axes array to easily iterate over subplots
+    axes = axes.flatten()
+
+    # Plot the displot for each data in the subplots
+    # for i, d in enumerate(data):
+    #    sns.histplot(data=d, kde=True, ax=axes[i])
+
+    bins = 40
+
+    sns.histplot(data=stats, x='left_send_contention_total',
+                 bins=bins, ax=axes[0])
+    sns.histplot(data=stats, x='left_send_contention_max',
+                 bins=bins, ax=axes[4])
+
+    sns.histplot(data=stats, x='up_send_contention_total',
+                 bins=bins, ax=axes[1])
+    sns.histplot(data=stats, x='up_send_contention_max', bins=bins, ax=axes[5])
+
+    sns.histplot(data=stats, x='right_send_contention_total',
+                 bins=bins, ax=axes[2])
+    sns.histplot(data=stats, x='right_send_contention_max',
+                 bins=bins, ax=axes[6])
+
+    sns.histplot(data=stats, x='down_send_contention_total',
+                 bins=bins, ax=axes[3])
+    sns.histplot(data=stats, x='down_send_contention_max',
+                 bins=bins, ax=axes[7])
+
+    # Set titles for each subplot
+    titles = ['Left Channel Contention Total', 'Up Channel Contention Total', 'Right Channel Contention Total', 'Down Channel Contention Total',
+              'Left Channel Contention Max', 'Up Channel Contention Max', 'Right Channel Contention Max', 'Down Channel Contention Max']
+    for ax, title in zip(axes, titles):
+        ax.set_title(title, fontsize=16)
+        ax.tick_params(axis='x', labelsize=14)
+        ax.tick_params(axis='y', labelsize=14)
+        ax.set_ylabel('Count of Cells', fontsize=14)
+
+    if hdepth != 0:
+        # Add a main title to the figure
+        plt.suptitle(chip_config+'\nMesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
+            hbandwidth_max)+'\nContention Per Channel Histograms with Bins ='+str(bins),
+            fontsize=16, fontweight='bold')
+    else:
+        # Add a main title to the figure
+        plt.suptitle(chip_config+'\nPure Mesh Network\nContention Per Channel Histograms with Bins = '+str(bins),
+                     fontsize=16, fontweight='bold')
+
+    # Adjust spacing between subplots
+    plt.tight_layout()
 
 
 # Plot the histogram using Seaborn
@@ -169,30 +197,42 @@ ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
 # sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
 
 
-# Convert the list to a DataFrame
-active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
-                                'Cycle#', 'Cells_Active_Percent', 'Htree_Active_Percent'])
+def active_status_chart():
 
-# Create the line plot using sns.lineplot
-fig, ax = plt.subplots()
-sns.lineplot(x='Cycle#', y='Cells_Active_Percent',
-             data=active_status_df, label='Cells Active Percent', ax=ax, color='orange')
-if hdepth != 0:
-    sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
-                 data=active_status_df, label='Htree Active Percent', ax=ax, color='blue')
+    # Convert the list to a DataFrame
+    active_status_df = pd.DataFrame(active_status_per_cycle, columns=[
+                                    'Cycle#', 'Cells_Active_Percent', 'Htree_Active_Percent'])
 
-# Add labels and title
-ax.set_xlabel('Cycle')
-ax.set_ylabel('Percent')
-chip_config = "Chip Dim: "+str(dim_x)+" x "+str(dim_y)+", "+routing_algorithm
-if hdepth != 0:
-    ax.set_title(
-        chip_config+', Mesh + Htree, Depth: ' +
-        str(hdepth)+', Max Bandwidth: '+str(hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle')
-else:
-    ax.set_title(
-        chip_config+', Pure Mesh Network\nPercentage of Compute Cells Active per Cycle')
+    # Create the line plot using sns.lineplot
+    fig, ax = plt.subplots(figsize=(16, 10))
+    sns.lineplot(x='Cycle#', y='Cells_Active_Percent',
+                 data=active_status_df, label='Cells Active Percent', ax=ax, color='orange')
+    if hdepth != 0:
+        sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
+                     data=active_status_df, label='Htree Active Percent', ax=ax, color='blue')
 
+    # Add labels and title
+    ax.set_xlabel('Cycles', fontsize=16)
+    ax.set_ylabel('Percent of Cells Active', fontsize=16)
+    # Increase font size of x and y ticks
+    ax.tick_params(axis='x', labelsize=14)
+    ax.tick_params(axis='y', labelsize=14)
+
+    if hdepth != 0:
+        ax.set_title('Mesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
+            hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle', fontsize=16)
+    else:
+        ax.set_title(
+            'Pure Mesh Network\nPercentage of Compute Cells Active per Cycle', fontsize=16)
+
+    # Add a larger second title
+    plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
+                 str(dim_x)+' x '+str(dim_y)+' Cells, with '+routing_algorithm+' Routing', fontsize=16, fontweight='bold')
+
+
+# Main
+congestion_charts()
+# active_status_chart()
 
 # Display the plot
 plt.show()

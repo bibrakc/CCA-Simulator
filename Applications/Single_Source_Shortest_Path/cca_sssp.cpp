@@ -48,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 // std::ofstream
@@ -318,21 +319,23 @@ main(int argc, char** argv)
     // Optional output directory path
     std::string output_file_directory = parser.get<std::string>("od");
 
+    // Get the depth of Htree
+    u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
+
     // Get the rows and columbs of cells that are served by a single end Htree node. This will help
     // in construction of the CCA chip, Htree, and routing
     u_int32_t hx = parser.get<u_int32_t>("hx");
-    if (!(hx % 2)) {
-        std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-        exit(0);
-    }
     u_int32_t hy = parser.get<u_int32_t>("hy");
-    if (!(hy % 2)) {
-        std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-        exit(0);
+    if (hdepth != 0) {
+        if (!(hx % 2)) {
+            std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
+            exit(0);
+        }
+        if (!(hy % 2)) {
+            std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
+            exit(0);
+        }
     }
-
-    // Get the depth of Htree
-    u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
 
     // Get the max bandwidth of Htree
     u_int32_t hbandwidth_max = parser.get<u_int32_t>("hb");
@@ -374,6 +377,14 @@ main(int argc, char** argv)
                                       memory_per_cc,
                                       routing_policy);
 
+    double total_sink_cells = 0;
+    if (hdepth != 0) {
+        total_sink_cells = std::pow(2, hdepth);
+    }
+    total_sink_cells *= total_sink_cells;
+    double ratio =
+        (100.0 * total_sink_cells) / static_cast<double>(cca_square_simulator.total_compute_cells);
+
     std::cout << "\nCCA Chip Details:\n\tShape: "
               << ComputeCell::get_compute_cell_shape_name(
                      cca_square_simulator.shape_of_compute_cells)
@@ -381,8 +392,11 @@ main(int argc, char** argv)
               << "\n\tHtree End Node Coverage Block: " << hx << " x " << hy
               << "\n\tHtree Depth: " << hdepth
               << "\n\tHtree Possible Bandwidth Max: " << hbandwidth_max
-              << "\n\tTotal Compute Cells: " << cca_square_simulator.total_compute_cells
-              << "\n\tMemory Per Compute Cell: "
+              << "\n\tTotal Cells: " << cca_square_simulator.total_compute_cells
+              << "\n\tTotal Compute Cells: "
+              << cca_square_simulator.total_compute_cells - total_sink_cells
+              << "\n\tTotal Sink Cells: " << total_sink_cells
+              << "\n\tSink/Compute Ratio (%): " << ratio << "\n\tMemory Per Compute Cell: "
               << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
               << "\n\tTotal Chip Memory: "
               << cca_square_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"

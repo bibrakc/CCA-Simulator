@@ -586,7 +586,6 @@ ComputeCell::is_compute_cell_active()
             break;
         }
     }
-    
 
     if (compute_active && communication_active) {
         // Both compute and communicate active

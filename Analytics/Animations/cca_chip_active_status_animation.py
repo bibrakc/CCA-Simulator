@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+from matplotlib.legend_handler import HandlerTuple
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -60,7 +61,7 @@ with open(filename, 'r') as file:
 # Mapping of scalar values to RGB colors
 scalar_to_rgb = {
     0: (0, 0, 0),       # black
-    1: (0, 0, 255),     # blue
+    1: (0, 255, 255),   # blue
     2: (0, 255, 0),     # green
     3: (255, 255, 255),  # white
     4: (255, 255, 0),   # yellow
@@ -83,7 +84,7 @@ for i, frame in enumerate(frames):
 
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(12, 12))
+fig, ax = plt.subplots(figsize=(18, 10))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -96,7 +97,7 @@ htree_draw = False
 # Display the RGB image
 grid = ax.imshow(grid_data[0], alpha=0.80)
 
-colors = ['black', 'blue', 'green', 'white', 'yellow', 'red']
+colors = ['black', 'cyan', 'green', 'white', 'yellow', 'red']
 # Create custom legend with color-value mappings
 legend_labels = {0: 'Inactive', 1: 'Only Communicating', 2: 'Only Computing',
                  3: 'Computing & Communicating', 4: 'Congested Communicating', 5: 'Congested Computing & Communicating'}
@@ -113,12 +114,10 @@ legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
           bbox_to_anchor=(0.13, -0.525, 0.5, 0.5)) """
 
 
-
-from matplotlib.legend_handler import HandlerTuple
 # Place the legend above the plot
-ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
-
-
+# ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
+ax.legend(handles=legend_elements, bbox_to_anchor=(
+    1.65, 1), loc='upper right', fontsize=14)
 
 
 # Recursive function to draw the H-tree
@@ -160,7 +159,7 @@ def update(frame):
     grid.set_array(grid_data[frame+start_from])
     # Set the title for each frame
     ax.set_title(
-        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame))
+        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame+start_from), fontsize=16)
 
     if frame == 1 and htree_draw == True:
         draw_h_tree(x_htree, y_htree, length_htree, depth_htree)
@@ -182,17 +181,21 @@ ax.set_yticklabels([])
 ax.tick_params(length=0)
 
 # Label the axes and title the animation
-ax.set_xlabel('Columns of Compute Cells')
-ax.set_ylabel('Rows of Compute Cells')
-# ax.set_title('CCA Chip Activation Per Compute Cell')
+ax.set_xlabel('Columns of Compute Cells', fontsize=16)
+ax.set_ylabel('Rows of Compute Cells', fontsize=16)
+# Add a larger second title
+routing_algorithm = 'Dimension Ordered Horizontal First Routing'
+plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
+             str(dim_x)+' x '+str(dim_y)+'\n'+routing_algorithm, fontsize=20)
 
+
+output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-""" output_filename = 'animation.mp4'
-ani.save(output_filename, writer='ffmpeg', dpi=400) """
+ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=200)
 
 # Save the animation as a GIF file
-""" output_filename = 'animation.gif'
-ani.save(output_filename, writer='pillow', dpi=120) """
+""" ani.save(output_filename+'.gif', writer='pillow', dpi=120) """
+# ani.save(output_filename, writer='pillow', dpi=70, interval=50)
 
 # Display the plot
 plt.show()
