@@ -61,11 +61,17 @@ with open(filename, 'r') as file:
 # Mapping of scalar values to RGB colors
 scalar_to_rgb = {
     0: (0, 0, 0),       # black
-    1: (0, 255, 255),   # blue
+    1: (0, 255, 255),   # cyan
     2: (0, 255, 0),     # green
-    3: (255, 255, 255),  # white
-    4: (255, 255, 0),   # yellow
-    5: (255, 0, 0)      # red
+    3: (255, 255, 255), # white
+    4: (255, 255, 214), # yellow level 1
+    5: (255, 255, 163), # yellow level 2
+    6: (255, 255, 61),  # yellow level 3
+    7: (255, 255, 0),   # yellow level 4 pure
+    8: (255, 204, 214), # red level 1
+    9: (255, 153, 163), # red level 2
+    10: (255, 51, 61),  # red level 3
+    11: (255, 0, 0),    # red level 4 pure
 }
 
 
@@ -191,7 +197,7 @@ plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
 
 output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=200)
+""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=200) """
 
 # Save the animation as a GIF file
 """ ani.save(output_filename+'.gif', writer='pillow', dpi=120) """

@@ -423,23 +423,34 @@ SinkCell::is_compute_cell_active()
         }
     }
 
-    bool is_congested = false;
-    for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
-        if (congestion_count.get_count() > congestion_threshold) {
-            is_congested = true;
-            break;
-        }
-    }
+    auto [is_congested, congestion_level_addition] = this->is_congested();
+    /*
+    0: Inactive
+    1: Communication
+    2: Computation
+    3: Computation and Communication (Both)
+    4: Congestion Level 1 Communication
+    5: Congestion Level 2 Communication
+    6: Congestion Level 3 Communication
+    7: Congestion Level 4 Communication
+    8: Congestion Level 1 Both
+    9: Congestion Level 2 Both
+    10: Congestion Level 3 Both
+    11: Congestion Level 4 Both
+    */
+    constexpr u_int32_t inactive_status = 0;
+    constexpr u_int32_t communication_status = 1;
+    constexpr u_int32_t communication_congested_status = 4;
 
     if (send_channels || recv_channels || this->send_channel_to_htree_node.size() ||
         this->recv_channel_to_htree_node.size()) {
         // Only communication active
         if (is_congested) {
-            return 4;
+            return (communication_congested_status + congestion_level_addition);
         } else {
-            return 1;
+            return communication_status;
         }
     }
     // Inactive
-    return 0;
+    return inactive_status;
 }

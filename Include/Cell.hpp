@@ -49,7 +49,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
 // Threshold value after which it is considered to be congested.
-constexpr u_int32_t congestion_threshold = 5;
+constexpr u_int32_t congestion_threshold_1 = 5;
+constexpr u_int32_t congestion_threshold_2 = 15;
+constexpr u_int32_t congestion_threshold_3 = 30;
+constexpr u_int32_t congestion_threshold_4 = 60;
 
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t
@@ -292,6 +295,8 @@ class Cell
 
     // Checks if the cell is active or not
     virtual u_int32_t is_compute_cell_active() = 0;
+
+    std::pair<bool, u_int32_t> is_congested();
 
     // Routing
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
