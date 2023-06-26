@@ -177,7 +177,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=20)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=24)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -197,7 +197,7 @@ plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
 
 output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=200) """
+ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=220)
 
 # Save the animation as a GIF file
 """ ani.save(output_filename+'.gif', writer='pillow', dpi=120) """

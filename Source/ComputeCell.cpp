@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ComputeCell.hpp"
 #include "CCAFunctionEvents.hpp"
 #include "Cell.hpp"
+#include "Constants.hpp"
 #include "Function.hpp"
 #include "Object.hpp"
 #include "Routing.hpp"
@@ -190,7 +191,7 @@ ComputeCell::execute_action(void* function_events)
 {
 
     // Using `void* function_events` becuase there is conflict in compiler with dependencies between
-    // classes
+    // classes.
     // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->action_queue.empty()) {
@@ -267,6 +268,7 @@ ComputeCell::execute_action(void* function_events)
 void
 ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
+
     if (!this->is_compute_cell_active()) {
         return;
     }
@@ -360,6 +362,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                                      void* function_events)
 {
 
+    // TODO: remove this
     if (!this->is_compute_cell_active()) {
         return;
     }
@@ -393,12 +396,22 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
             this->statistics.stall_logic_on_network++;
         } else {
-            // TODO: Maybe place throttle here.
+            // Apply throttle if enabled.
+            bool was_cerently_congested = false;
+            if constexpr (throttling_switch) {
+                if (this->last_congested_cycle) {
+                    was_cerently_congested =
+                        (this->current_cycle - this->last_congested_cycle.value()) <
+                        curently_congested_threshold;
+                }
+            }
 
-            // Remove the task from the queue and execute it.
-            this->task_queue.pop();
-            // Execute the task
-            current_task.second();
+            if (!was_cerently_congested) {
+                // Remove the task from the queue and execute it.
+                this->task_queue.pop();
+                // Execute the task
+                current_task.second();
+            }
         }
         // The logic was active. In this cycle it diffused or performaned a task.
         this->statistics.cycle_resource_use_counter--;
@@ -419,10 +432,6 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 void
 ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
-    if (!this->is_compute_cell_active()) {
-        return;
-    }
-
     /*    std::cout << this->id << ": Compute Cell " << this->cooridates
                 << "  prepare_a_communication_cycle : " << *this << "\n";  */
 
@@ -556,6 +565,21 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
             (number_of_resources_per_cc - this->statistics.cycle_resource_use_counter) /
             static_cast<long double>(number_of_resources_per_cc);
     }
+}
+
+// TODO: for now both ComputeCell and SinkCell have identical code. See later if this changes
+// otherwise put this in the parent Cell class. 
+void
+ComputeCell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+{
+    // Update the last_congested_cycle if needed;
+    auto [is_congested, congestion_level_addition] = this->is_congested();
+    if (is_congested) {
+        this->last_congested_cycle = this->current_cycle;
+    }
+
+    // Update the cycle #
+    this->current_cycle++;
 }
 
 // Checks if the compute cell is active or not

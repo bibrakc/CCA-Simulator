@@ -48,11 +48,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 
-// Threshold value after which it is considered to be congested.
+// Threshold value after which it is considered to be congested. Used for creating active status
+// values for statistics and animation.
 constexpr u_int32_t congestion_threshold_1 = 5;
 constexpr u_int32_t congestion_threshold_2 = 15;
 constexpr u_int32_t congestion_threshold_3 = 30;
 constexpr u_int32_t congestion_threshold_4 = 60;
+
+// Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
+constexpr u_int32_t curently_congested_threshold = 110; // cycles
 
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t
@@ -293,10 +297,18 @@ class Cell
     // TODO: write comments
     virtual void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
 
+    virtual void essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
+
     // Checks if the cell is active or not
     virtual u_int32_t is_compute_cell_active() = 0;
 
     std::pair<bool, u_int32_t> is_congested();
+
+    u_int32_t current_cycle;
+
+    // Used to keep record of the last cycle this Cell was congested. It will be used for throttle
+    // and other purposes.
+    std::optional<u_int32_t> last_congested_cycle;
 
     // Routing
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
@@ -319,8 +331,6 @@ class Cell
 
     inline std::vector<u_int32_t> horizontal_first_routing(Coordinates dst_cc_coordinates);
     inline std::vector<u_int32_t> vertical_first_routing(Coordinates dst_cc_coordinates);
-
-    u_int32_t current_cycle;
 
     // Experimental Ends
 
