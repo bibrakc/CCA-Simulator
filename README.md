@@ -8,9 +8,18 @@ The CCA Simulator enables exploring design space of the CCA class of non-Von Neu
 ### Using CMake
 To generate the executable `SSSP_CCASimulator`:
 
-- `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D DEBUG_CODE=false` (or `DEBUG_CODE=true` for outputing debuging information)
-- `$ cmake --build build`
+> `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D DEBUG_CODE=false -D THROTTLE=true`
+
+> `$ cmake --build build`
+
+- `DEBUG_CODE=true/false`: for outputing debuging information.
+- `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
 
 ## Executing
 ### SSSP Application
-`$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0`
+
+#### Using Low-Latency Network (Htree)
+> `$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0`
+
+#### Using Pure Mesh Netowrk
+> `$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
