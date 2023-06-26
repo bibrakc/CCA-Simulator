@@ -197,7 +197,7 @@ plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
 
 output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=220)
+""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=220) """
 
 # Save the animation as a GIF file
 """ ani.save(output_filename+'.gif', writer='pillow', dpi=120) """

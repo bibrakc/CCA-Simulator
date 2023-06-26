@@ -398,7 +398,14 @@ std::vector<u_int32_t>
 Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
+
+    // Note: Not a good performance with throtlling since the trottling is currently coarse-grain
+    // such that if there is congestion at any channel the CC halts making new operons. Now adaptive
+    // west-first could just easily have sent to up or right channels where there wouldn't have been
+    // much congestion but it couldnt. TODO: Implement sophisticated throttling that takes into
+    // account different channels.
     // return get_adaptive_west_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+
     // return get_vertical_first_route_towards_cc_id(dst_cc_id);
     return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
