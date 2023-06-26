@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+#include "cca_sssp.hpp"
 
 #include "Action.hpp"
 #include "Address.hpp"
@@ -44,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "memory_management.hpp"
 
 // Datastructures
+#include "Graph.hpp"
 #include "SimpleVertex.hpp"
 
 #include <cassert>
@@ -118,12 +120,6 @@ sssp_predicate_func(ComputeCell& cc,
     int incoming_distance = args[0];
     int origin_vertex = args[1];
 
-    if constexpr (DEBUG_CODE) {
-        std::cout << "vertex ID : " << v->id << " sssp_predicate | origin vertex: " << origin_vertex
-                  << " | incoming_distance = " << incoming_distance
-                  << " v->sssp_distance = " << v->sssp_distance << std::endl;
-    }
-
     if (v->sssp_distance > incoming_distance) {
         return 1;
     }
@@ -150,23 +146,11 @@ sssp_diffuse_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        if constexpr (debug_code) {
-            std::string message = "Send from ";
-            message += std::to_string(v->id) + " --> (" + std::to_string(v->edges[i].edge.cc_id) +
-                       ", " + std::to_string(v->edges[i].edge.addr) + ")\n";
-
-            std::cout << message;
-        }
-
         // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         args_x[1] = static_cast<int>(v->id);
-
-        /* std::cout << "  CC: " << cc.id
-                  << " Inside sssp_diffuse_func: action.predicate = " << sssp_predicate
-                  << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n"; */
 
         SSSPAction action(v->edges[i].edge,
                           addr,
@@ -178,12 +162,8 @@ sssp_diffuse_func(ComputeCell& cc,
                           sssp_work,
                           sssp_diffuse);
 
-        // TODO: Hide cc and provide functions using CCASimulator
-        Operon operon_to_send = cc.construct_operon(cc.id, v->edges[i].edge.cc_id, action);
-        cc.task_queue.push(cc.send_operon(operon_to_send));
+        cc.diffuse(action);
     }
-    // These many new actions were created
-    cc.statistics.actions_created += v->number_of_edges;
 
     return 0;
 }
@@ -203,86 +183,6 @@ insert_edge_by_address(CCASimulator& cca_simulator,
     // TODO: Later implement the hierarical parallel vertex object
     return vertex->insert_edge(dst_vertex_addr, edge_weight);
 }
-
-void
-configure_parser(cli::Parser& parser)
-{
-    parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");
-    parser.set_required<std::string>("g",
-                                     "graphname",
-                                     "Name of the input graph used to set the name of the output "
-                                     "file. Example: Erdos or anything");
-    parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
-    parser.set_required<u_int32_t>(
-        "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
-    parser.set_optional<u_int32_t>("m",
-                                   "memory_per_cc",
-                                   1 * 512 * 1024,
-                                   "Memory per compute cell in bytes. Default is 0.5 MB");
-    parser.set_optional<std::string>(
-        "od", "outputdirectory", "./", "Path to the output file directory. Default: ./");
-
-    parser.set_optional<u_int32_t>(
-        "hx",
-        "htree_x",
-        3,
-        "Rows of Cells that are served by a single end Htree node. hx must be an odd value");
-    parser.set_optional<u_int32_t>(
-        "hy",
-        "htree_y",
-        5,
-        "Columns of Cells that are served by a single end Htree node. hy must be an odd value");
-
-    parser.set_optional<u_int32_t>("hdepth",
-                                   "htree_depth",
-                                   0,
-                                   "Depth of the Htree. This is the size of the Htree. \n\t0: No "
-                                   "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
-                                   "as it recurssively constructs more...");
-
-    parser.set_optional<u_int32_t>(
-        "hb",
-        "hbandwidth_max",
-        64,
-        "Max possible lanes in the htree joints. The htree is recursively constructred with end "
-        "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
-        "then 16 and so on. There needs to be a max value to avoid exponential growth.");
-
-    parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
-}
-
-class Graph
-{
-  public:
-    u_int32_t total_vertices;
-    std::shared_ptr<SimpleVertex<u_int32_t>[]> vertices;
-
-    Graph(u_int32_t total_vertices_in)
-    {
-        this->total_vertices = total_vertices_in;
-
-        // this->vertices = std::make_shared<SimpleVertex<u_int32_t>[]>(this->total_vertices);
-        std::shared_ptr<SimpleVertex<u_int32_t>[]> vertices(
-            new SimpleVertex<u_int32_t>[total_vertices],
-            std::default_delete<SimpleVertex<u_int32_t>[]>());
-        this->vertices = vertices;
-
-        for (int i = 0; i < this->total_vertices; i++) {
-            this->vertices[i].id = i;
-            this->vertices[i].number_of_edges = 0;
-        }
-    }
-    void add_edge(SimpleVertex<u_int32_t>& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
-    {
-        if (!vertex.insert_edge(dst_vertex_id, weight)) {
-            std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
-                      << ") cannot be inserted\n";
-            exit(0);
-        }
-    }
-    ~Graph() {}
-};
 
 u_int32_t
 get_htree_dims(u_int32_t dim, u_int32_t depth)
@@ -411,32 +311,8 @@ main(int argc, char** argv)
     std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
               << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
 
-    // Generate or read the input data graph
-    FILE* input_graph_file_handler = NULL;
-
-    if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == NULL)
-        return -1;
-
-    u_int32_t total_vertices = 0;
-    u_int32_t total_edges = 0;
-
-    fscanf(input_graph_file_handler, "%d\t%d", &total_vertices, &total_vertices);
-    fscanf(input_graph_file_handler, "%d", &total_edges);
-
-    std::cout << "The graph: " << input_graph_path << " has total_vertices: " << total_vertices
-              << " with " << total_edges << " egdes.\n";
-
-    Graph input_graph(total_vertices);
-
-    // Read from file and insert edges
-    u_int32_t vertex_from;
-    u_int32_t vertex_to;
-    u_int32_t weight;
-    for (int i = 0; i < total_edges; i++) {
-        fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
-        input_graph.add_edge(input_graph.vertices[vertex_from], vertex_to, weight);
-    }
-    fclose(input_graph_file_handler);
+    // Read the input data graph.
+    Graph<SimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion.
@@ -569,8 +445,8 @@ main(int argc, char** argv)
     // Write results to a file
     std::string output_file_name = "square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
-                                   graph_name + "_v_" + std::to_string(total_vertices) + "_e_" +
-                                   std::to_string(total_edges) + "_hb_" +
+                                   graph_name + "_v_" + std::to_string(input_graph.total_vertices) + "_e_" +
+                                   std::to_string(input_graph.total_edges) + "_hb_" +
                                    std::to_string(hbandwidth_max);
     std::string output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
@@ -585,7 +461,7 @@ main(int argc, char** argv)
 
     // Output input graph details
     output_file << "graph_file\tvertices\tedges\troot_vertex\n"
-                << input_graph_path << "\t" << total_vertices << "\t" << total_edges << "\t"
+                << input_graph_path << "\t" << input_graph.total_vertices << "\t" << input_graph.total_edges << "\t"
                 << root_vertex << "\n";
 
     // Output total cycles, total actions, total actions performed work, total actions false on

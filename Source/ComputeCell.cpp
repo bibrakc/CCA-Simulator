@@ -187,6 +187,16 @@ ComputeCell::construct_operon(const u_int32_t src_cc_id,
 }
 
 void
+ComputeCell::diffuse(const Action& action)
+{
+    Operon operon_to_send = this->construct_operon(this->id, action.obj_addr.cc_id, action);
+    this->task_queue.push(this->send_operon(operon_to_send));
+
+    // A new action was created. Increment the statistics for action.
+    this->statistics.actions_created++;
+}
+
+void
 ComputeCell::execute_action(void* function_events)
 {
 

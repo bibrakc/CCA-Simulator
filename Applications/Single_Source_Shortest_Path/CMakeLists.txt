@@ -75,8 +75,7 @@ add_library(CCASimulator
             ${SourceDirectory}/CCAFunctionEvents.cpp
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/Enums.cpp
-            ${SourceDirectory}/memory_management.cpp
-         #   ${SourceDirectory}/Routing.cpp           
+            ${SourceDirectory}/memory_management.cpp         
             ${SourceDirectory}/SinkCell.cpp
             ${SourceDirectory}/Terminator.cpp
             )
@@ -94,7 +93,8 @@ target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)# CCACommons)
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
 
-target_include_directories(${executable_name} PUBLIC 
+target_include_directories(${executable_name} PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}
                            ${UtilitiesDirectory}
                            ${IncludeDirectory}
                            ${IncludeDirectory}/Datastructure

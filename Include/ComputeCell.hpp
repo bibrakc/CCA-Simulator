@@ -100,6 +100,8 @@ class ComputeCell : public Cell
                             const u_int32_t dst_cc_id,
                             const Action& action);
 
+    void diffuse(const Action& action);                        
+
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
     // related operations. This allows not just ease of programming but also opens the compute cells
