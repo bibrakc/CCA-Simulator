@@ -36,4 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Compile with: -DDEBUG_CODE=true/false
 inline constexpr bool debug_code = DEBUG_CODE;
 
+// Used for throttling.
+// Compile with: -DTHROTTLE=true/false
+inline constexpr bool throttling_switch = THROTTLE;
+
 #endif // CONSTANTS_HPP

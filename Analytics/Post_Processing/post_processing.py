@@ -232,7 +232,7 @@ def active_status_chart():
 
 # Main
 congestion_charts()
-# active_status_chart()
+active_status_chart()
 
 # Display the plot
 plt.show()

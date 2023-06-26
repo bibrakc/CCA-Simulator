@@ -331,6 +331,7 @@ CCASimulator::run_simulation(Address app_terminator)
         }
 
         if (this->htree_network.hdepth != 0) {
+#pragma omp parallel for
             for (u_int32_t i = 0; i < this->htree_network.htree_all_nodes.size(); i++) {
                 this->htree_network.htree_all_nodes[i]->prepare_communication_cycle();
             }
@@ -348,9 +349,18 @@ CCASimulator::run_simulation(Address app_terminator)
                 this->htree_network.htree_all_nodes[i]->run_a_communication_cylce();
             }
         }
-        // Check for termination
+
+// Run communication cycle
+#pragma omp parallel for
+        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
+            this->CCA_chip[i]->essential_house_keeping_cycle(this->CCA_chip);
+        }
+
+        // Check for termination. Not needed now since the terminator is implemented but keeping it
+        // here for ploting activation charts.
         u_int32_t sum_global_active_cc_local = 0;
-        // Also put the active status in the statistics to create an animation later
+        // Also put the active status in the statistics to create the animation using the python
+        // script.
         std::shared_ptr<u_int32_t[]> active_status_frame_per_cells(
             new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
 
