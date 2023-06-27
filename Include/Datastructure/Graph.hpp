@@ -41,26 +41,87 @@ class Graph
     u_int32_t total_edges;
     std::shared_ptr<VertexType[]> vertices;
 
-    Graph(u_int32_t total_vertices_in)
+    // Store the CCA address of vertices in a map so as to retrieve easily for edge insertion and
+    // other tasks.
+    std::map<u_int32_t, Address> vertex_addresses;
+
+    Address get_vertex_address_in_cca(u_int32_t vertex_id)
     {
-        this->total_vertices = total_vertices_in;
-
-        // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
-        std::shared_ptr<VertexType[]> vertices(new VertexType[total_vertices],
-                                               std::default_delete<VertexType[]>());
-        this->vertices = vertices;
-
-        for (int i = 0; i < this->total_vertices; i++) {
-            this->vertices[i].id = i;
-            this->vertices[i].number_of_edges = 0;
-        }
+        return this->vertex_addresses[vertex_id];
     }
+
     void add_edge(VertexType& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
         if (!vertex.insert_edge(dst_vertex_id, weight)) {
             std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
                       << ") cannot be inserted\n";
             exit(0);
+        }
+    }
+
+    // Insert edge by `Address` type src and dst
+    template<class VertexTypeOfAddress>
+    inline bool insert_edge_by_address(CCASimulator& cca_simulator,
+                                       Address src_vertex_addr,
+                                       Address dst_vertex_addr,
+                                       u_int32_t edge_weight)
+    {
+
+        VertexTypeOfAddress* vertex =
+            static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+
+        // Check if edges are not full
+        // TODO: Later implement the hierarical parallel vertex object
+        return vertex->insert_edge(dst_vertex_addr, edge_weight);
+    }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
+                                    std::unique_ptr<MemoryAlloctor>& allocator)
+    {
+        // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
+        // constructor everytime.
+        VertexTypeOfAddress vertex_(0);
+        for (int i = 0; i < this->total_vertices; i++) {
+
+            // Put a vertex in memory with id = i
+            vertex_.id = i;
+
+            // Get the Address of this vertex allocated on the CCA chip. Note here we use
+            // VertexType<Address> since the object is now going to be sent to the CCA chip and
+            // there the address type is Address (not u_int32_t ID)
+            std::optional<Address> vertex_addr = cca_simulator.allocate_and_insert_object_on_cc(
+                allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+            if (!vertex_addr) {
+                std::cerr << "Error! Memory not allocated for Vertex ID: " << this->vertices[i].id
+                          << "\n";
+                exit(0);
+            }
+
+            // Insert into the vertex_addresses map
+            vertex_addresses[i] = vertex_addr.value();
+        }
+
+        std::cout << "Populating vertices by inserting edges: \n";
+        for (int i = 0; i < this->total_vertices; i++) {
+            u_int32_t src_vertex_id = this->vertices[i].id;
+
+            for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
+
+                u_int32_t dst_vertex_id = this->vertices[i].edges[j].edge;
+                u_int32_t edge_weight = this->vertices[i].edges[j].weight;
+
+                if (!this->insert_edge_by_address<VertexTypeOfAddress>(
+                        cca_simulator,
+                        this->vertex_addresses[src_vertex_id],
+                        this->vertex_addresses[dst_vertex_id],
+                        edge_weight)) {
+                    std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                              << edge_weight << ") not inserted successfully.\n";
+                    exit(0);
+                }
+            }
         }
     }
 

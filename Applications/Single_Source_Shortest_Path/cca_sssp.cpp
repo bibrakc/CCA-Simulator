@@ -168,22 +168,6 @@ sssp_diffuse_func(ComputeCell& cc,
     return 0;
 }
 
-// Insert edge by `Address` type src and dst
-inline bool
-insert_edge_by_address(CCASimulator& cca_simulator,
-                       Address src_vertex_addr,
-                       Address dst_vertex_addr,
-                       u_int32_t edge_weight)
-{
-
-    SimpleVertex<Address>* vertex =
-        static_cast<SimpleVertex<Address>*>(cca_simulator.get_object(src_vertex_addr));
-
-    // Check if edges are not full
-    // TODO: Later implement the hierarical parallel vertex object
-    return vertex->insert_edge(dst_vertex_addr, edge_weight);
-}
-
 int
 main(int argc, char** argv)
 {
@@ -257,61 +241,19 @@ main(int argc, char** argv)
     // Read the input data graph.
     Graph<SimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
+    std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
+
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAlloctor> allocator = std::make_unique<CyclicMemoryAllocator>();
 
-    // Store the address of vertices in a map so as to retrieve easily for edge insertion and other
-    // tasks
-    std::map<u_int32_t, Address> vertex_addresses;
-
-    std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
-
-    SimpleVertex<Address> vertex_(0);
-    for (int i = 0; i < input_graph.total_vertices; i++) {
-
-        // Put a vertex in memory with id = i
-        vertex_.id = i;
-
-        // Get the Address of this vertex allocated on the CCA chip. Note here we use
-        // SimpleVertex<Address> since the object is now going to be sent to the CCA chip and
-        // there the address type is Address (not u_int32_t ID)
-        std::optional<Address> vertex_addr = cca_square_simulator.allocate_and_insert_object_on_cc(
-            allocator, &vertex_, sizeof(SimpleVertex<Address>));
-
-        if (!vertex_addr) {
-            std::cerr << "Error! Memory not allocated for Vertex ID: " << input_graph.vertices[i].id
-                      << "\n";
-            exit(0);
-        }
-
-        // Insert into the vertex_addresses map
-        vertex_addresses[i] = vertex_addr.value();
-    }
-
-    std::cout << "Populating vertices by inserting edges: \n";
-    for (int i = 0; i < input_graph.total_vertices; i++) {
-        u_int32_t src_vertex_id = input_graph.vertices[i].id;
-
-        for (int j = 0; j < input_graph.vertices[i].number_of_edges; j++) {
-
-            u_int32_t dst_vertex_id = input_graph.vertices[i].edges[j].edge;
-            u_int32_t edge_weight = input_graph.vertices[i].edges[j].weight;
-
-            if (!insert_edge_by_address(cca_square_simulator,
-                                        vertex_addresses[src_vertex_id],
-                                        vertex_addresses[dst_vertex_id],
-                                        edge_weight)) {
-                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
-                          << edge_weight << ") not inserted successfully.\n";
-                exit(0);
-            }
-        }
-    }
+    // Note: here we use SimpleVertex<Address> since the vertex object is now going to be sent to
+    // the CCA chip and there the address type is Address (not u_int32_t ID).
+    input_graph.transfer_graph_host_to_cca<SimpleVertex<Address>>(cca_square_simulator, allocator);
 
     // Only put the SSSP seed action on a single vertex.
     // In this case SSSP root = root_vertex
-    auto vertex_addr = vertex_addresses[root_vertex];
+    auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
     // Register the SSSP action functions for predicate, work, and diffuse.
     CCAFunctionEvent sssp_predicate =
@@ -358,7 +300,7 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    Address test_vertex_addr = vertex_addresses[test_vertex];
+    Address test_vertex_addr = input_graph.vertex_addresses[test_vertex];
 
     SimpleVertex<Address>* v_test =
         static_cast<SimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));

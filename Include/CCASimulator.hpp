@@ -292,7 +292,7 @@ class CCASimulator
 
     void run_simulation(Address app_terminator);
 
-    // Get the pointer to the object at `Address addr_in`
+    // Get the pointer to the object at `Address addr_in`.
     void* get_object(Address addr_in) const;
 
   private:
