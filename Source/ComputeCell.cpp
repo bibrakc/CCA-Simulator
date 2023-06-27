@@ -229,33 +229,22 @@ ComputeCell::execute_action(void* function_events)
             // if predicate
             int predicate_resolution = function_events_manager->get_function_event_handler(
                 action.predicate)(*this, action.obj_addr, action.nargs, action.args);
-            // event_handlers[action.predicate](*this, action.obj_addr, action.nargs, action.args);
 
             if (predicate_resolution == 1) {
 
                 // work
                 function_events_manager->get_function_event_handler(action.work)(
                     *this, action.obj_addr, action.nargs, action.args);
-                // event_handlers[action.work](*this, action.obj_addr, action.nargs, action.args);
                 this->statistics.actions_performed_work++;
 
                 // diffuse
                 function_events_manager->get_function_event_handler(action.diffuse)(
                     *this, action.obj_addr, action.nargs, action.args);
-                // event_handlers[action.diffuse](*this, action.obj_addr, action.nargs,
-                // action.args);
             } else {
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
-
-            /*   if (obj->terminator.parent.value().cc_id == this->host_id) {
-                  std::cout << "CC: " << this->id << " with parent = " << this->host_id
-                            << " deficit: " << obj->terminator.deficit << "\n";
-              } */
-
             obj->terminator.unsignal(*this);
-
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
             function_events_manager->get_acknowledgement_event_handler()(
@@ -281,11 +270,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     if (!this->is_compute_cell_active()) {
         return;
     }
-    /*     if (this->id == CCA_chip.size() - 1) {
-            std::cout << "CCA_chip size = " << CCA_chip.size() << ", Compute Cell: " << this->id
-                      << this->cooridates << "  prepare_a_cycle : " << *this << "\n";
-        }
-     */
+
     // Move the operon from previous cycle (that was not able to be sent due to congestion) to
     // the send link of the network
     this->prepare_a_communication_cycle(CCA_chip);
@@ -375,8 +360,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
     if (!this->is_compute_cell_active()) {
         return;
     }
-    /* std::cout << this->id << ": Compute Cell " << this->cooridates
-              << "  run_a_computation_cycle : " << *this << "\n"; */
+
     // A single compute cell can perform work and communication in parallel in a single cycle
     // This function does both. First it performs work if there is any. Then it performs
     // communication
@@ -441,8 +425,6 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 void
 ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
-    /*    std::cout << this->id << ": Compute Cell " << this->cooridates
-                << "  prepare_a_communication_cycle : " << *this << "\n";  */
 
     if (this->staging_operon_from_logic) {
 
@@ -508,8 +490,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
             if (this->send_channel_per_neighbor[i].size()) {
-                /* std::cout << "CC : " << this->cooridates << " send_channel_per_neighbor[" << i
-                          << "].size(): " << this->send_channel_per_neighbor[i].size() << "\n"; */
 
                 // TODO: NOTE: the size of each channel is fixed to be `1`, therfore this leftover
                 // etc is of no use for now
