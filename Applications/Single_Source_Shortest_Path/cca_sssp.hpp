@@ -33,9 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CCA_SSSP_HPP
 #define CCA_SSSP_HPP
 
-#include "Action.hpp"
-#include "ComputeCell.hpp"
-
+#include "CCASimulator.hpp"
 #include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"

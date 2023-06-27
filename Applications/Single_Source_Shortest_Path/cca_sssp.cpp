@@ -31,34 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "cca_sssp.hpp"
 
-#include "Action.hpp"
-#include "Address.hpp"
-#include "CCASimulator.hpp"
-#include "Cell.hpp"
-#include "ComputeCell.hpp"
-#include "Constants.hpp"
-#include "Enums.hpp"
-#include "Function.hpp"
-#include "Operon.hpp"
-
-#include "cmdparser.hpp"
-#include "memory_management.hpp"
-
 // Datastructures
 #include "Graph.hpp"
-#include "SimpleVertex.hpp"
 
-#include <cassert>
 #include <chrono>
-#include <cmath>
-#include <iostream>
-
-// std::ofstream
 #include <fstream>
-#include <map>
-#include <queue>
-#include <stdlib.h>
-
 #include <omp.h>
 
 // Declare the function event ids for the SSSP action functions of predicate, work, and diffuse.
