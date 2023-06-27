@@ -114,8 +114,6 @@ main(int argc, char** argv)
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells;
-    // u_int32_t CCA_dim_x, CCA_dim_y;
-    // u_int32_t total_compute_cells;
 
     if (shape_arg == "square") {
         shape_of_compute_cells = computeCellShape::square;
@@ -131,10 +129,12 @@ main(int argc, char** argv)
     u_int32_t routing_policy = parser.get<u_int32_t>("route");
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
+
     // Create the simulation environment
     CCASimulator cca_square_simulator(
         shape_of_compute_cells, hx, hy, hdepth, hbandwidth_max, memory_per_cc, routing_policy);
 
+    // Print details of the CCA Chip.
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
@@ -158,9 +158,6 @@ main(int argc, char** argv)
     sssp_predicate = cca_square_simulator.register_function_event(sssp_predicate_func);
     sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
     sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
-
-    std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
-              << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
 
     // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
     std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
@@ -198,7 +195,7 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    Address test_vertex_addr = input_graph.vertex_addresses[test_vertex];
+    Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
     SimpleVertex<Address>* v_test =
         static_cast<SimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
