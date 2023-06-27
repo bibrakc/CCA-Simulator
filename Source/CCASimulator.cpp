@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SinkCell.hpp"
 #include "Task.hpp"
 
-#include "memory_management.hpp"
 #include "operators.hpp"
 
 #include <cmath>

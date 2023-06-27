@@ -42,8 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Operon.hpp"
 #include "Task.hpp"
 
-#include "memory_management.hpp"
-
 #include <map>
 #include <optional>
 #include <queue>
@@ -100,7 +98,7 @@ class ComputeCell : public Cell
                             const u_int32_t dst_cc_id,
                             const Action& action);
 
-    void diffuse(const Action& action);                        
+    void diffuse(const Action& action);
 
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking

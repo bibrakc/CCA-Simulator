@@ -45,8 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Routing.hpp"
 #include "Task.hpp"
 
-#include "memory_management.hpp"
-
 #include <map>
 #include <queue>
 #include <stdlib.h>
