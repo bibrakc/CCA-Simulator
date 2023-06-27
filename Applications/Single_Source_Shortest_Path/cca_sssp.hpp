@@ -33,7 +33,107 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CCA_SSSP_HPP
 #define CCA_SSSP_HPP
 
+#include "Action.hpp"
+#include "ComputeCell.hpp"
+
+#include "SimpleVertex.hpp"
+
 #include "cmdparser.hpp"
+
+// CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
+// In the main register the functions with the CCASimulator chip and get their ids.
+extern CCAFunctionEvent sssp_predicate;
+extern CCAFunctionEvent sssp_work;
+extern CCAFunctionEvent sssp_diffuse;
+
+// Action for the SSSP program.
+class SSSPAction : public Action
+{
+  public:
+    SSSPAction(const Address destination_vertex_addr_in,
+               const Address origin_vertex_addr_in,
+               actionType type,
+               const bool ready,
+               const int nargs_in,
+               const std::shared_ptr<int[]>& args_in,
+               CCAFunctionEvent predicate_in,
+               CCAFunctionEvent work_in,
+               CCAFunctionEvent diffuse_in)
+    {
+        this->obj_addr = destination_vertex_addr_in;
+        this->origin_addr = origin_vertex_addr_in;
+
+        this->action_type = type;
+        this->is_ready = ready;
+
+        this->nargs = nargs_in;
+        this->args = args_in;
+
+        this->predicate = predicate_in;
+        this->work = work_in;
+        this->diffuse = diffuse_in;
+    }
+
+    ~SSSPAction() override {}
+};
+
+int
+sssp_predicate_func(ComputeCell& cc,
+                    const Address& addr,
+                    int nargs,
+                    const std::shared_ptr<int[]>& args)
+{
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_distance = args[0];
+    int origin_vertex = args[1];
+
+    if (v->sssp_distance > incoming_distance) {
+        return 1;
+    }
+    return 0;
+}
+
+int
+sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+{
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_distance = args[0];
+
+    // Update distance with the new distance
+    v->sssp_distance = incoming_distance;
+    return 0;
+}
+
+int
+sssp_diffuse_func(ComputeCell& cc,
+                  const Address& addr,
+                  int nargs,
+                  const std::shared_ptr<int[]>& args)
+{
+    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    for (int i = 0; i < v->number_of_edges; i++) {
+
+        // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
+        // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+        std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
+        args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
+        args_x[1] = static_cast<int>(v->id);
+
+        SSSPAction action(v->edges[i].edge,
+                          addr,
+                          actionType::application_action,
+                          true,
+                          2,
+                          args_x,
+                          sssp_predicate,
+                          sssp_work,
+                          sssp_diffuse);
+
+        cc.diffuse(action);
+    }
+
+    return 0;
+}
 
 void
 configure_parser(cli::Parser& parser)

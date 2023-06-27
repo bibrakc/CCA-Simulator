@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ACTION_HPP
 
 #include "Address.hpp"
-// #include "Enums.hpp"
 #include "Function.hpp"
 
 #include <memory>

@@ -67,107 +67,6 @@ CCAFunctionEvent sssp_predicate;
 CCAFunctionEvent sssp_work;
 CCAFunctionEvent sssp_diffuse;
 
-static u_int32_t test_vertex;
-
-// TODO: Currently this SSSPAction class has nothing different than its base class Action. See if
-// this inheritence makes sense later when the project matures.
-class SSSPAction : public Action
-{
-  public:
-    SSSPAction(const Address destination_vertex_addr_in,
-               const Address origin_vertex_addr_in,
-               actionType type,
-               const bool ready,
-               const int nargs_in,
-               const std::shared_ptr<int[]>& args_in,
-               CCAFunctionEvent predicate_in,
-               CCAFunctionEvent work_in,
-               CCAFunctionEvent diffuse_in)
-    {
-
-        /*  std::cout << "\nSSSPAction constructor: predicate_in = " << predicate_in
-                   << " work_in = " << work_in << " diffuse_in = " << diffuse_in << "\n\n"; */
-
-        this->obj_addr = destination_vertex_addr_in;
-        this->origin_addr = origin_vertex_addr_in;
-
-        this->action_type = type;
-        this->is_ready = ready;
-
-        this->nargs = nargs_in;
-        this->args = args_in;
-
-        // TODO: fix this bug
-        this->predicate = predicate_in;
-        this->work = work_in;
-        this->diffuse = diffuse_in;
-
-        this->predicate = 1;
-        this->work = 2;
-        this->diffuse = 3;
-    }
-
-    ~SSSPAction() override {}
-};
-
-int
-sssp_predicate_func(ComputeCell& cc,
-                    const Address& addr,
-                    int nargs,
-                    const std::shared_ptr<int[]>& args)
-{
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
-    int origin_vertex = args[1];
-
-    if (v->sssp_distance > incoming_distance) {
-        return 1;
-    }
-    return 0;
-}
-
-int
-sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-{
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
-
-    // Update distance with the new distance
-    v->sssp_distance = incoming_distance;
-    return 0;
-}
-
-int
-sssp_diffuse_func(ComputeCell& cc,
-                  const Address& addr,
-                  int nargs,
-                  const std::shared_ptr<int[]>& args)
-{
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
-    for (int i = 0; i < v->number_of_edges; i++) {
-
-        // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
-        // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
-        args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
-        args_x[1] = static_cast<int>(v->id);
-
-        SSSPAction action(v->edges[i].edge,
-                          addr,
-                          actionType::application_action,
-                          true,
-                          2,
-                          args_x,
-                          sssp_predicate,
-                          sssp_work,
-                          sssp_diffuse);
-
-        cc.diffuse(action);
-    }
-
-    return 0;
-}
-
 int
 main(int argc, char** argv)
 {
@@ -180,7 +79,7 @@ main(int argc, char** argv)
     u_int32_t root_vertex = parser.get<u_int32_t>("root");
 
     // Test vertex to print its distance from the root
-    test_vertex = parser.get<u_int32_t>("tv");
+    u_int32_t test_vertex = parser.get<u_int32_t>("tv");
 
     // Configuration related to the input data graph
     std::string input_graph_path = parser.get<std::string>("f");
@@ -256,10 +155,9 @@ main(int argc, char** argv)
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
     // Register the SSSP action functions for predicate, work, and diffuse.
-    CCAFunctionEvent sssp_predicate =
-        cca_square_simulator.register_function_event(sssp_predicate_func);
-    CCAFunctionEvent sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
-    CCAFunctionEvent sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
+    sssp_predicate = cca_square_simulator.register_function_event(sssp_predicate_func);
+    sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
+    sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
 
     std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
               << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
