@@ -184,20 +184,6 @@ insert_edge_by_address(CCASimulator& cca_simulator,
     return vertex->insert_edge(dst_vertex_addr, edge_weight);
 }
 
-u_int32_t
-get_htree_dims(u_int32_t dim, u_int32_t depth)
-{
-
-    if (depth == 0) {
-        return dim;
-    }
-
-    if (depth == 1) {
-        return 2 * dim;
-    }
-    return 2 * get_htree_dims(dim, depth - 1);
-}
-
 int
 main(int argc, char** argv)
 {
@@ -245,14 +231,11 @@ main(int argc, char** argv)
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells;
-    u_int32_t CCA_dim_x, CCA_dim_y;
-    u_int32_t total_compute_cells;
+    // u_int32_t CCA_dim_x, CCA_dim_y;
+    // u_int32_t total_compute_cells;
 
     if (shape_arg == "square") {
         shape_of_compute_cells = computeCellShape::square;
-        CCA_dim_x = get_htree_dims(hx, hdepth);
-        CCA_dim_y = get_htree_dims(hy, hdepth);
-        total_compute_cells = CCA_dim_x * CCA_dim_y;
     } else {
         std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
         exit(0);
@@ -266,50 +249,10 @@ main(int argc, char** argv)
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
     // Create the simulation environment
-    CCASimulator cca_square_simulator(shape_of_compute_cells,
-                                      CCA_dim_x,
-                                      CCA_dim_y,
-                                      hx,
-                                      hy,
-                                      hdepth,
-                                      hbandwidth_max,
-                                      total_compute_cells,
-                                      memory_per_cc,
-                                      routing_policy);
+    CCASimulator cca_square_simulator(
+        shape_of_compute_cells, hx, hy, hdepth, hbandwidth_max, memory_per_cc, routing_policy);
 
-    double total_sink_cells = 0;
-    if (hdepth != 0) {
-        total_sink_cells = std::pow(2, hdepth);
-    }
-    total_sink_cells *= total_sink_cells;
-    double ratio =
-        (100.0 * total_sink_cells) / static_cast<double>(cca_square_simulator.total_compute_cells);
-
-    std::cout << "\nCCA Chip Details:\n\tShape: "
-              << ComputeCell::get_compute_cell_shape_name(
-                     cca_square_simulator.shape_of_compute_cells)
-              << "\n\tDim: " << cca_square_simulator.dim_x << " x " << cca_square_simulator.dim_y
-              << "\n\tHtree End Node Coverage Block: " << hx << " x " << hy
-              << "\n\tHtree Depth: " << hdepth
-              << "\n\tHtree Possible Bandwidth Max: " << hbandwidth_max
-              << "\n\tTotal Cells: " << cca_square_simulator.total_compute_cells
-              << "\n\tTotal Compute Cells: "
-              << cca_square_simulator.total_compute_cells - total_sink_cells
-              << "\n\tTotal Sink Cells: " << total_sink_cells
-              << "\n\tSink/Compute Ratio (%): " << ratio << "\n\tMemory Per Compute Cell: "
-              << cca_square_simulator.memory_per_cc / static_cast<double>(1024) << " KB"
-              << "\n\tTotal Chip Memory: "
-              << cca_square_simulator.total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
-              << "\n\tRouting Policy: " << routing_policy << "\n\n";
-
-    // Register the SSSP action functions for predicate, work, and diffuse.
-    CCAFunctionEvent sssp_predicate =
-        cca_square_simulator.register_function_event(sssp_predicate_func);
-    CCAFunctionEvent sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
-    CCAFunctionEvent sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
-
-    std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
-              << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
+    cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
     Graph<SimpleVertex<u_int32_t>> input_graph(input_graph_path);
@@ -322,77 +265,28 @@ main(int argc, char** argv)
     // tasks
     std::map<u_int32_t, Address> vertex_addresses;
 
-    std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
-    if (!sssp_terminator) {
-        std::cerr << "Error! Memory not allocated for sssp_terminator \n";
-        exit(0);
-    }
-
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
-    { // Block so that the vertex_ object is contained in this scope. It is reused in the for loop
-      // and we don't want it's constructor to be called everytime.
 
-        SimpleVertex<Address> vertex_(0);
-        for (int i = 0; i < input_graph.total_vertices; i++) {
+    SimpleVertex<Address> vertex_(0);
+    for (int i = 0; i < input_graph.total_vertices; i++) {
 
-            // Put a vertex in memory with id = i
-            vertex_.id = i;
+        // Put a vertex in memory with id = i
+        vertex_.id = i;
 
-            // Get the ID of the compute cell where this vertex is to be allocated
-            u_int32_t cc_id = allocator->get_next_available_cc(cca_square_simulator);
+        // Get the Address of this vertex allocated on the CCA chip. Note here we use
+        // SimpleVertex<Address> since the object is now going to be sent to the CCA chip and
+        // there the address type is Address (not u_int32_t ID)
+        std::optional<Address> vertex_addr = cca_square_simulator.allocate_and_insert_object_on_cc(
+            allocator, &vertex_, sizeof(SimpleVertex<Address>));
 
-            // Get the Address of this vertex allocated on the CCA chip. Note here we use
-            // SimpleVertex<Address> since the object is now going to be sent to the CCA chip and
-            // there the address type is Address (not u_int32_t ID)
-            std::optional<Address> vertex_addr =
-                cca_square_simulator.allocate_and_insert_object_on_cc(
-                    cc_id, &vertex_, sizeof(SimpleVertex<Address>));
-
-            if (!vertex_addr) {
-                std::cerr << "Error! Memory not allocated for Vertex ID: "
-                          << input_graph.vertices[i].id << "\n";
-                exit(0);
-            }
-
-            // Insert into the vertex_addresses map
-            vertex_addresses[i] = vertex_addr.value();
-
-            // Only put the SSSP seed action on a single vertex.
-            // In this case SSSP root = root_vertex
-            if (vertex_.id == root_vertex) {
-
-                // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-                std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
-                // Set distance to 0
-                args_x[0] = 0;
-                // Origin vertex from where this action came
-                args_x[1] = root_vertex;
-
-                // dynamic_pointer_cast to go down/across class hierarchy
-                auto compute_cell =
-                    std::dynamic_pointer_cast<ComputeCell>(cca_square_simulator.CCA_chip[cc_id]);
-                if (compute_cell) {
-                    compute_cell->insert_action(SSSPAction(vertex_addr.value(),
-                                                           sssp_terminator.value(),
-                                                           actionType::application_action,
-                                                           true,
-                                                           2,
-                                                           args_x,
-                                                           sssp_predicate,
-                                                           sssp_work,
-                                                           sssp_diffuse));
-                    compute_cell->statistics.actions_created++;
-
-                    Object* obj = static_cast<Object*>(
-                        cca_square_simulator.get_object(sssp_terminator.value()));
-                    obj->terminator.host_signal();
-
-                } else {
-                    std::cerr << "Bug! Compute Cell not found: " << cc_id << "\n";
-                    exit(0);
-                }
-            }
+        if (!vertex_addr) {
+            std::cerr << "Error! Memory not allocated for Vertex ID: " << input_graph.vertices[i].id
+                      << "\n";
+            exit(0);
         }
+
+        // Insert into the vertex_addresses map
+        vertex_addresses[i] = vertex_addr.value();
     }
 
     std::cout << "Populating vertices by inserting edges: \n";
@@ -414,6 +308,43 @@ main(int argc, char** argv)
             }
         }
     }
+
+    // Only put the SSSP seed action on a single vertex.
+    // In this case SSSP root = root_vertex
+    auto vertex_addr = vertex_addresses[root_vertex];
+
+    // Register the SSSP action functions for predicate, work, and diffuse.
+    CCAFunctionEvent sssp_predicate =
+        cca_square_simulator.register_function_event(sssp_predicate_func);
+    CCAFunctionEvent sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
+    CCAFunctionEvent sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
+
+    std::cout << "\nCCAFunctionEvent generated: action.predicate = " << sssp_predicate
+              << " sssp_work = " << sssp_work << " sssp_diffuse = " << sssp_diffuse << "\n\n";
+
+    // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
+    std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
+    // Set distance to 0
+    args_x[0] = 0;
+    // Origin vertex from where this action came
+    args_x[1] = root_vertex;
+
+    std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
+    if (!sssp_terminator) {
+        std::cerr << "Error! Memory not allocated for sssp_terminator \n";
+        exit(0);
+    }
+
+    // Insert a seed action into the CCA chip that will help start the diffusion.
+    cca_square_simulator.germinate_action(SSSPAction(vertex_addr,
+                                                     sssp_terminator.value(),
+                                                     actionType::application_action,
+                                                     true,
+                                                     2,
+                                                     args_x,
+                                                     sssp_predicate,
+                                                     sssp_work,
+                                                     sssp_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
@@ -445,8 +376,8 @@ main(int argc, char** argv)
     // Write results to a file
     std::string output_file_name = "square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
-                                   graph_name + "_v_" + std::to_string(input_graph.total_vertices) + "_e_" +
-                                   std::to_string(input_graph.total_edges) + "_hb_" +
+                                   graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
+                                   "_e_" + std::to_string(input_graph.total_edges) + "_hb_" +
                                    std::to_string(hbandwidth_max);
     std::string output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
@@ -461,8 +392,8 @@ main(int argc, char** argv)
 
     // Output input graph details
     output_file << "graph_file\tvertices\tedges\troot_vertex\n"
-                << input_graph_path << "\t" << input_graph.total_vertices << "\t" << input_graph.total_edges << "\t"
-                << root_vertex << "\n";
+                << input_graph_path << "\t" << input_graph.total_vertices << "\t"
+                << input_graph.total_edges << "\t" << root_vertex << "\n";
 
     // Output total cycles, total actions, total actions performed work, total actions false on
     // predicate. TODO: Somehow put the resource usage as a percentage...?

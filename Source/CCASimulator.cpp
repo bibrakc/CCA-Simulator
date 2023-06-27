@@ -289,15 +289,37 @@ CCASimulator::is_diffusion_active(Address terminator_in)
 }
 
 std::optional<Address>
-CCASimulator::allocate_and_insert_object_on_cc(u_int32_t cc_id, void* obj, size_t size_of_obj)
+CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAlloctor>& allocator,
+                                               void* obj,
+                                               size_t size_of_obj)
 {
+    // Get the ID of the compute cell where this vertex is to be allocated.
+    u_int32_t cc_id = allocator->get_next_available_cc(*this);
 
-    // TODO: Hahaha comedy! See how to made this casting and pointers more graceful and elegant ASAP
-
-    // std::shared_ptr<ComputeCell> cc_ptr = this->CCA_chip[cc_id];
-    ComputeCell* cc_ptr = static_cast<ComputeCell*>(this->CCA_chip[cc_id].get());
+    auto cc_ptr = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
     return cc_ptr->create_object_in_memory(obj, size_of_obj);
-    // return this->CCA_chip[cc_id]->create_object_in_memory(obj, size_of_obj);
+}
+
+void
+CCASimulator::germinate_action(Action action_to_germinate)
+{
+    // dynamic_pointer_cast to go down/across class hierarchy
+    auto compute_cell =
+        std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[action_to_germinate.obj_addr.cc_id]);
+
+    if (compute_cell) {
+        compute_cell->insert_action(action_to_germinate);
+
+        // Get the host terminator object for signal.
+        Object* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
+        obj->terminator.host_signal();
+
+        compute_cell->statistics.actions_created++;
+
+    } else {
+        std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
+        exit(0);
+    }
 }
 
 void

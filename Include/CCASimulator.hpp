@@ -58,6 +58,8 @@ typedef unsigned long u_long;
 
 using CCATerminator = Object;
 
+class MemoryAlloctor;
+
 struct ActiveStatusPerCycle
 {
     double cells_active_percent;
@@ -90,6 +92,9 @@ class CCASimulator
     u_int32_t hx, hy, hdepth;
     // Max possible lanes in the htree joints
     u_int32_t hbandwidth_max;
+
+    // Number of SinkCells per CCA chip.
+    u_int32_t total_sink_cells;
 
     // Total CCA Cells (including Sink Cells)
     u_int32_t total_compute_cells;
@@ -132,27 +137,35 @@ class CCASimulator
     CCASimulatorStatistics cca_statistics;
 
     CCASimulator(computeCellShape shape_in,
-                 u_int32_t dim_x_in,
-                 u_int32_t dim_y_in,
                  u_int32_t hx_in,
                  u_int32_t hy_in,
                  u_int32_t hdepth_in,
                  u_int32_t hbandwidth_max_in,
-                 u_int32_t total_compute_cells_in,
                  u_int32_t memory_per_cc_in,
                  u_int32_t mesh_routing_policy_id_in)
         : shape_of_compute_cells(shape_in)
-        , dim_x(dim_x_in)
-        , dim_y(dim_y_in)
         , hx(hx_in)
         , hy(hy_in)
         , hdepth(hdepth_in)
         , hbandwidth_max(hbandwidth_max_in)
-        , total_compute_cells(total_compute_cells_in)
         , memory_per_cc(memory_per_cc_in)
         , mesh_routing_policy_id(mesh_routing_policy_id_in)
         , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
+        // Currently using Low-Latency Network as Htree therefore just by default using it to
+        // prepare the CCA chip.
+        this->dim_x = HtreeNetwork::get_htree_dims(this->hx, this->hdepth);
+        this->dim_y = HtreeNetwork::get_htree_dims(this->hy, this->hdepth);
+        this->total_compute_cells = this->dim_x * this->dim_y;
+
+        // Find the total number of SinkCells
+        double total_sink_cells_calculator = 0;
+        if (hdepth != 0) {
+            total_sink_cells_calculator = std::pow(2, hdepth);
+        }
+        total_sink_cells_calculator *= total_sink_cells_calculator;
+        this->total_sink_cells = static_cast<u_int32_t>(total_sink_cells_calculator);
+
         this->global_active_cc = false;
         this->total_cycles = 0;
         this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
@@ -172,6 +185,28 @@ class CCASimulator
         this->create_the_chip();
 
         assert(this->host_id == this->CCA_chip.size());
+    }
+
+    inline void print_discription(std::ostream& os)
+    {
+        double ratio_sink_compute =
+            (100.0 * this->total_sink_cells) / static_cast<double>(this->total_compute_cells);
+
+        os << "\nCCA Chip Details:\n\tShape: "
+           << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
+           << "\n\tDim: " << this->dim_x << " x " << this->dim_y
+           << "\n\tHtree End Node Coverage Block: " << this->hx << " x " << this->hy
+           << "\n\tHtree Depth: " << this->hdepth
+           << "\n\tHtree Possible Bandwidth Max: " << this->hbandwidth_max
+           << "\n\tTotal Cells: " << this->total_compute_cells
+           << "\n\tTotal Compute Cells: " << this->total_compute_cells - this->total_sink_cells
+           << "\n\tTotal Sink Cells: " << this->total_sink_cells
+           << "\n\tSink/Compute Ratio (%): " << ratio_sink_compute
+           << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
+           << " KB"
+           << "\n\tTotal Chip Memory: "
+           << this->total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
+           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n\n";
     }
 
     inline void generate_label(std::ostream& os)
@@ -248,9 +283,12 @@ class CCASimulator
     // Check for termination of the diffusion
     bool is_diffusion_active(Address terminator_in);
 
-    std::optional<Address> allocate_and_insert_object_on_cc(u_int32_t cc_id,
-                                                            void* obj,
-                                                            size_t size_of_obj);
+    std::optional<Address> allocate_and_insert_object_on_cc(
+        std::unique_ptr<MemoryAlloctor>& allocator,
+        void* obj,
+        size_t size_of_obj);
+
+    void germinate_action(Action action_to_germinate);
 
     void run_simulation(Address app_terminator);
 
