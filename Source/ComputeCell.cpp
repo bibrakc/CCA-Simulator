@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+
 #include "ComputeCell.hpp"
 #include "CCAFunctionEvents.hpp"
 #include "Cell.hpp"
@@ -36,11 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "Object.hpp"
 #include "Routing.hpp"
-
-#if debug_code == true
-// TODO: Later make it generic to be data structure agnostic
-#include "SimpleVertex.hpp"
-#endif
 
 // For memcpy()
 #include <cstring>
@@ -211,14 +207,17 @@ ComputeCell::execute_action(void* function_events)
         FunctionEventManager* function_events_manager =
             static_cast<FunctionEventManager*>(function_events);
 
-#if debug_code == true
-        if (action.obj_addr.cc_id != this->id) {
-            std::cout << "Invalid addr! The vertex does not exist on this CC\n";
-            return;
+        if constexpr (debug_code) {
+            if (action.obj_addr.cc_id != this->id) {
+                std::cout << "Invalid addr! The vertex does not exist on this CC\n";
+                return;
+            }
+            // When needed put the inlude header for that datastructure and print it here.
+            /* SimpleVertex<Address>* vertex =
+                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
+            print_SimpleVertex(vertex, action.obj_addr); */
         }
-        SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)this->get_object(action.obj_addr);
-        print_SimpleVertex(vertex, action.obj_addr);
-#endif
+
         if (action.action_type == actionType::application_action) {
 
             Object* obj = static_cast<Object*>(this->get_object(action.obj_addr));

@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-// Compile with: -DDEBUG_CODE=true/false
-inline constexpr bool debug_code = DEBUG_CODE;
+// Set it to true/false
+inline constexpr bool debug_code = false;
 
 // Used for throttling.
 // Compile with: -DTHROTTLE=true/false

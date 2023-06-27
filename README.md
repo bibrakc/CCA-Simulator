@@ -8,11 +8,10 @@ The CCA Simulator enables exploring design space of the CCA class of non-Von Neu
 ### Using CMake
 To generate the executable `SSSP_CCASimulator`:
 
-> `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D DEBUG_CODE=false -D THROTTLE=true`
+> `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true`
 
 > `$ cmake --build build`
 
-- `DEBUG_CODE=true/false`: for outputing debuging information.
 - `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
 
 ## Executing
