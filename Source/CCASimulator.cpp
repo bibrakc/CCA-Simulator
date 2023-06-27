@@ -53,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <vector>
 
+// for std::ofstream
+#include <fstream>
+
 // Chip's coordinates are from top-left....
 /*
 For a CCA chip of 4x4 with square shaped compute cells
@@ -319,6 +322,44 @@ CCASimulator::germinate_action(Action action_to_germinate)
     } else {
         std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
         exit(0);
+    }
+}
+
+// Output simulation statistics and details
+void
+CCASimulator::print_statistics(std::ofstream& output_file)
+{
+
+    ComputeCellStatistics simulation_statistics;
+    for (auto& cc : this->CCA_chip) {
+        simulation_statistics += cc->statistics;
+    }
+
+    std::cout << simulation_statistics;
+
+    // Output CCA Chip details
+    this->generate_label(output_file);
+    this->output_description_in_a_single_line(output_file);
+
+    // Output total cycles, total actions, total actions performed work, total actions false on
+    // predicate. TODO: Somehow put the resource usage as a percentage...?
+    output_file
+        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
+           "false_on_predicate\n"
+        << this->total_cycles << "\t" << simulation_statistics.actions_invoked << "\t"
+        << simulation_statistics.actions_performed_work << "\t"
+        << simulation_statistics.actions_false_on_predicate << "\n";
+
+    // Output the active status of the individual cells and htree per cycle
+    this->output_CCA_active_status_per_cycle(output_file);
+
+    // Output statistics for each compute cell
+    simulation_statistics.generate_label(output_file);
+    for (auto& cc : this->CCA_chip) {
+        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
+        if (&cc != &this->CCA_chip.back()) {
+            output_file << "\n";
+        }
     }
 }
 

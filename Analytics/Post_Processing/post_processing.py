@@ -53,20 +53,20 @@ with open(output_file, 'r') as file:
     header = file.readline()
 
     # read the next line and split it into variables
-    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = file.readline().strip().split()
+    graph_file, vertices, edges, root_vertex = file.readline().strip().split()
 
-    # convert dim_x, dim_y, cells, and memory to integers
-    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = map(
-        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory])
+    # convert vertices, edges and root_vertex to integers
+    vertices, edges, root_vertex = map(int, [vertices, edges, root_vertex])
 
     # read the header line for the table and discard it
     header = file.readline()
 
     # read the next line and split it into variables
-    graph_file, vertices, edges, root_vertex = file.readline().strip().split()
+    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = file.readline().strip().split()
 
-    # convert vertices, edges and root_vertex to integers
-    vertices, edges, root_vertex = map(int, [vertices, edges, root_vertex])
+    # convert dim_x, dim_y, cells, and memory to integers
+    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = map(
+        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory])
 
     # read the header line for the table and discard it
     header = file.readline()

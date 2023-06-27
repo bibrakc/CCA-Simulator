@@ -292,6 +292,9 @@ class CCASimulator
 
     void run_simulation(Address app_terminator);
 
+    // Output simulation statistics and details
+    void print_statistics(std::ofstream& output_file);
+
     // Get the pointer to the object at `Address addr_in`.
     void* get_object(Address addr_in) const;
 

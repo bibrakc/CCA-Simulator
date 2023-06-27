@@ -195,6 +195,7 @@ main(int argc, char** argv)
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
+    // Check for correctness. Print the distance to a target test vertex.
     Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
     SimpleVertex<Address>* v_test =
@@ -203,69 +204,47 @@ main(int argc, char** argv)
     std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
               << " is: " << v_test->sssp_distance << "\n";
 
-    ComputeCellStatistics simulation_statistics;
-    for (auto& cc : cca_square_simulator.CCA_chip) {
-        simulation_statistics += cc->statistics;
-    }
-
-    std::cout << simulation_statistics;
-
-    // Write results to a file
+    // Write simulation statistics to a file
     std::string output_file_name = "square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
                                    graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
                                    "_e_" + std::to_string(input_graph.total_edges) + "_hb_" +
                                    std::to_string(hbandwidth_max);
+
     std::string output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
+
     std::ofstream output_file(output_file_path);
     if (!output_file) {
         std::cerr << "Error! Output file not created\n";
     }
 
-    // Output CCA Chip details
-    cca_square_simulator.generate_label(output_file);
-    cca_square_simulator.output_description_in_a_single_line(output_file);
-
-    // Output input graph details
+    // Output input graph details in the header of the statistics for us to know which input graph
+    // it operated on.
     output_file << "graph_file\tvertices\tedges\troot_vertex\n"
                 << input_graph_path << "\t" << input_graph.total_vertices << "\t"
                 << input_graph.total_edges << "\t" << root_vertex << "\n";
 
-    // Output total cycles, total actions, total actions performed work, total actions false on
-    // predicate. TODO: Somehow put the resource usage as a percentage...?
-    output_file
-        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
-           "false_on_predicate\n"
-        << cca_square_simulator.total_cycles << "\t" << simulation_statistics.actions_invoked
-        << "\t" << simulation_statistics.actions_performed_work << "\t"
-        << simulation_statistics.actions_false_on_predicate << "\n";
-
-    // Output the active status of the individual cells and htree per cycle
-    cca_square_simulator.output_CCA_active_status_per_cycle(output_file);
-
-    // Output statistics for each compute cell
-    simulation_statistics.generate_label(output_file);
-    for (auto& cc : cca_square_simulator.CCA_chip) {
-        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
-        if (&cc != &cca_square_simulator.CCA_chip.back()) {
-            output_file << "\n";
-        }
-    }
+    // Ask the simulator to print its statistics to the `output_file`.
+    cca_square_simulator.print_statistics(output_file);
 
     // Close the output file
     output_file.close();
 
-    // Write the active status animation data in a separate file
+    // Write the active status animation data in a separate file.
     std::string output_file_path_animation = output_file_path + "_active_animation";
     std::cout << "\nWriting active status animation data to output file: "
               << output_file_path_animation << "\n";
+
     std::ofstream output_file_animation(output_file_path_animation);
     if (!output_file_animation) {
         std::cerr << "Error! Output file not created\n";
     }
 
+    // Ask the simulator to print cell active status information per cycle to the
+    // `output_file_animation`. This will be used mostly for animation purposes.
     cca_square_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
+
     // Close the output file
     output_file_animation.close();
 
