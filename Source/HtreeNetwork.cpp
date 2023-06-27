@@ -783,3 +783,17 @@ HtreeNetwork::construct_htree_network()
     print_details_of_an_htree_node(this->htree_all_nodes, 0);
     print_details_of_an_htree_node(this->htree_all_nodes, root_in_first_temp->id);
 }
+
+u_int32_t
+HtreeNetwork::get_htree_dims(u_int32_t dim, u_int32_t depth)
+{
+
+    if (depth == 0) {
+        return dim;
+    }
+
+    if (depth == 1) {
+        return 2 * dim;
+    }
+    return 2 * get_htree_dims(dim, depth - 1);
+}

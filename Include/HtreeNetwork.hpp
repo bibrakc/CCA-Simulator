@@ -63,6 +63,8 @@ class HtreeNetwork
 
     void construct_htree_network();
 
+    static u_int32_t get_htree_dims(u_int32_t dim, u_int32_t depth);
+
     // Members
 
     u_int32_t hx, hy, hdepth;

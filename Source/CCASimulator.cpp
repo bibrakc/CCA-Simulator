@@ -53,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <vector>
 
+// for std::ofstream
+#include <fstream>
+
 // Chip's coordinates are from top-left....
 /*
 For a CCA chip of 4x4 with square shaped compute cells
@@ -289,15 +292,75 @@ CCASimulator::is_diffusion_active(Address terminator_in)
 }
 
 std::optional<Address>
-CCASimulator::allocate_and_insert_object_on_cc(u_int32_t cc_id, void* obj, size_t size_of_obj)
+CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAlloctor>& allocator,
+                                               void* obj,
+                                               size_t size_of_obj)
+{
+    // Get the ID of the compute cell where this vertex is to be allocated.
+    u_int32_t cc_id = allocator->get_next_available_cc(*this);
+
+    auto cc_ptr = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
+    return cc_ptr->create_object_in_memory(obj, size_of_obj);
+}
+
+void
+CCASimulator::germinate_action(Action action_to_germinate)
+{
+    // dynamic_pointer_cast to go down/across class hierarchy
+    auto compute_cell =
+        std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[action_to_germinate.obj_addr.cc_id]);
+
+    if (compute_cell) {
+        compute_cell->insert_action(action_to_germinate);
+
+        // Get the host terminator object for signal.
+        Object* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
+        obj->terminator.host_signal();
+
+        compute_cell->statistics.actions_created++;
+
+    } else {
+        std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
+        exit(0);
+    }
+}
+
+// Output simulation statistics and details
+void
+CCASimulator::print_statistics(std::ofstream& output_file)
 {
 
-    // TODO: Hahaha comedy! See how to made this casting and pointers more graceful and elegant ASAP
+    ComputeCellStatistics simulation_statistics;
+    for (auto& cc : this->CCA_chip) {
+        simulation_statistics += cc->statistics;
+    }
 
-    // std::shared_ptr<ComputeCell> cc_ptr = this->CCA_chip[cc_id];
-    ComputeCell* cc_ptr = static_cast<ComputeCell*>(this->CCA_chip[cc_id].get());
-    return cc_ptr->create_object_in_memory(obj, size_of_obj);
-    // return this->CCA_chip[cc_id]->create_object_in_memory(obj, size_of_obj);
+    std::cout << simulation_statistics;
+
+    // Output CCA Chip details
+    this->generate_label(output_file);
+    this->output_description_in_a_single_line(output_file);
+
+    // Output total cycles, total actions, total actions performed work, total actions false on
+    // predicate. TODO: Somehow put the resource usage as a percentage...?
+    output_file
+        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
+           "false_on_predicate\n"
+        << this->total_cycles << "\t" << simulation_statistics.actions_invoked << "\t"
+        << simulation_statistics.actions_performed_work << "\t"
+        << simulation_statistics.actions_false_on_predicate << "\n";
+
+    // Output the active status of the individual cells and htree per cycle
+    this->output_CCA_active_status_per_cycle(output_file);
+
+    // Output statistics for each compute cell
+    simulation_statistics.generate_label(output_file);
+    for (auto& cc : this->CCA_chip) {
+        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
+        if (&cc != &this->CCA_chip.back()) {
+            output_file << "\n";
+        }
+    }
 }
 
 void
@@ -312,8 +375,8 @@ CCASimulator::run_simulation(Address app_terminator)
     // while (is_system_active) {
     while (this->is_diffusion_active(app_terminator)) {
         //     u_int32_t count_temp = 0;
-        //    while (count_temp < 2000) {
-        //       count_temp++;
+        //        while (count_temp < 2) {
+        //          count_temp++;
 
         is_system_active = false;
 

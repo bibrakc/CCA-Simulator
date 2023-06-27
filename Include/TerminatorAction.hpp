@@ -43,14 +43,14 @@ class TerminatorAction : public Action
                      const Address origin_addr_in,
                      const actionType action_type_in)
     {
-        // This is the address to which the action will be sent
+        // This is the address to which the action will be sent.
         this->obj_addr = obj_addr_in;
 
         // This is the type of the action, most likely:
-        // `actionType::terminator_acknowledgement_action`
+        // `actionType::terminator_acknowledgement_action`.
         this->action_type = action_type_in;
 
-        // TODO: Not really needed. Check?
+        // The object addr that sent this acknoledgement back.
         this->origin_addr = origin_addr_in;
     }
 
