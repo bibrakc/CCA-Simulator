@@ -111,23 +111,20 @@ sssp_diffuse_func(ComputeCell& cc,
     SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        // TODO: later convert this type int[] to something generic, perhaps std::forward args&& ...
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         args_x[1] = static_cast<int>(v->id);
 
-        SSSPAction action(v->edges[i].edge,
-                          addr,
-                          actionType::application_action,
-                          true,
-                          2,
-                          args_x,
-                          sssp_predicate,
-                          sssp_work,
-                          sssp_diffuse);
-
-        cc.diffuse(action);
+        cc.diffuse(SSSPAction(v->edges[i].edge,
+                              addr,
+                              actionType::application_action,
+                              true,
+                              2,
+                              args_x,
+                              sssp_predicate,
+                              sssp_work,
+                              sssp_diffuse));
     }
 
     return 0;
