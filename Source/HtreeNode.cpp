@@ -266,7 +266,6 @@ HtreeNode::prepare_communication_cycle()
 void
 HtreeNode::run_a_communication_cylce()
 {
-    //   std::cout << this->id << ": in run_a_communication_cylce\n";
     if (!this->is_htree_node_active()) {
         return;
     }
@@ -286,22 +285,20 @@ HtreeNode::run_a_communication_cylce()
         }
 
         for (Operon operon : send_operons) {
-          /*    std::cout
-                << this->id << ": HtreeNode. Operon for cc: "
-                << Cell::cc_id_to_cooridinate(operon.first,
-                                              computeCellShape::square,
-                                              this->sink_cell_connector.value()->dim_y)
-                << " will be sent to sink cell depending on its recv queue. Coord of sink cell: "
-                << this->sink_cell_connector.value()->cooridates << "\n";  */
 
-             if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
+            /* std::cout
+                << this->id << ": HtreeNode. Operon for cc: " << operon.first.dst_cc_id
+                << " will be sent to sink cell depending on its recv queue. Coord of sink cell: \n";
+             */
 
-               // std::cout << this->id << ": HtreeNode. Not able to push in sinkcell recv\n";
+            if (!this->sink_cell_connector.value()->recv_channel_to_htree_node.push(operon)) {
+
+                // std::cout << this->id << ": HtreeNode. Not able to push in sinkcell recv\n";
 
                 // Put this back since it was not sent in this cycle due to the
                 // recv_channel_to_htree_node being full
                 this->send_channel_to_sink_cell->push(operon);
-            } 
+            }
         }
     }
 

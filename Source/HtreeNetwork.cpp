@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 
-#include "operators.hpp"
 #include "types.hpp"
 
 #include <cmath>
