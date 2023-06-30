@@ -40,9 +40,9 @@ struct Object
     // Terminator
     Terminator terminator;
 
-    // Garbage collection
+    // Garbage collection. To be added.
 
-    // Type tag?
+    // Type tag. To be added.
 
     Object()
     { /* std::cout << "Object Constructor\n"; */

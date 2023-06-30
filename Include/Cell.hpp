@@ -356,27 +356,6 @@ class Cell
                    << neighbor_coordinate.second << ")] ";
             }
         }
-
-        /*         os << "\n\t recv_channel_per_neighbor: ";
-                for (auto& recv_channel_per_neighbor_ : cc.recv_channel_per_neighbor) {
-                    if (recv_channel_per_neighbor_ == std::nullopt) {
-                        os << "[nullopt] ";
-                    } else {
-                        Operon operon = recv_channel_per_neighbor_.value();
-                        os << "[" << operon.first << ", "
-                           << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
-                    }
-                }
-                os << "\n\t send_channel_per_neighbor: ";
-                for (auto& send_channel_per_neighbor_ : cc.send_channel_per_neighbor) {
-                    if (send_channel_per_neighbor_ == std::nullopt) {
-                        os << "[nullopt] ";
-                    } else {
-                        auto operon = send_channel_per_neighbor_.value();
-                        os << "[" << operon.first << ", "
-                           << Cell::cc_id_to_cooridinate(operon.first, cc.shape, cc.dim_y) << "] ";
-                    }
-                } */
         os << "\n";
         return os;
     }
