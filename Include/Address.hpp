@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ADDRESS_HPP
 
 #include <iostream>
-#include <stdlib.h>
 
 enum class adressType : u_int32_t
 {

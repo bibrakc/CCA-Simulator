@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Action.hpp"
 #include "types.hpp"
 
-#include <utility>
-
 struct SourceDestinationPair
 {
     u_int32_t src_cc_id;

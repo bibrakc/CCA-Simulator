@@ -35,10 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ostream>
 #include <queue>
-#include <stdlib.h>
-#include <utility>
 
 // TODO: Temporary then remove this and put some runtime value from commandline
+// How many channels in a single direction. How many parallel send/recv occur in a single cycle per
+// channel.
 constexpr u_int32_t lane_width = 1;
 
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;

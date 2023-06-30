@@ -32,9 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Operon.hpp"
 
-// #include <utility>
 #include <optional>
-#include <vector>
 
 std::ostream&
 operator<<(std::ostream& os, const Operon& operon_)

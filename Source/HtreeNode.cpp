@@ -31,11 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "HtreeNode.hpp"
-#include "Operon.hpp"
-#include "types.hpp"
-
-#include <memory>
-#include <utility>
 
 // Overload printing for HtreeNode
 std::ostream&

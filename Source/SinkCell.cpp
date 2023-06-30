@@ -30,17 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 #include "SinkCell.hpp"
-#include "Cell.hpp"
 #include "HtreeNode.hpp"
 #include "Routing.hpp"
-
-#include <cassert>
-
-// For memcpy()
-#include <cstring>
-
-// For assert
-#include <cassert>
 
 std::pair<u_int32_t, u_int32_t>
 return_asymetric_neighbors(u_int32_t channel_to_send)

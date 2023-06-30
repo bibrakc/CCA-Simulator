@@ -32,16 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ComputeCell.hpp"
 #include "CCAFunctionEvents.hpp"
-#include "Cell.hpp"
-#include "Constants.hpp"
-#include "Function.hpp"
-#include "Object.hpp"
 #include "Routing.hpp"
 
 // For memcpy()
 #include <cstring>
-
-#include <cassert>
 
 // Recieved an acknowledgement message back. Decreament my deficit.
 int

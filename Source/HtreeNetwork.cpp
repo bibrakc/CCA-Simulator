@@ -33,17 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
 
-#include "types.hpp"
-
-#include <cmath>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <optional>
-#include <stdlib.h>
-#include <utility>
-#include <vector>
-
 // Increase the lane size at each recursive joint
 #define BANDWIDTH_SCALE_FACTOR 2
 

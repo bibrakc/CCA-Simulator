@@ -35,15 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "HtreeNode.hpp"
 
-#include "types.hpp"
-
 #include <cmath>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <optional>
-#include <stdlib.h>
-#include <vector>
+#include <map> 
+
 
 class HtreeNetwork
 {

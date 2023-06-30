@@ -33,19 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef COMPUTE_CELL_HPP
 #define COMPUTE_CELL_HPP
 
-#include "Action.hpp"
-#include "Address.hpp"
 #include "Cell.hpp"
-#include "Constants.hpp"
-#include "Function.hpp"
 #include "Object.hpp"
-#include "Operon.hpp"
 #include "Task.hpp"
-
-#include <map>
-#include <optional>
-#include <queue>
-#include <stdlib.h>
 
 // Note this class is not thread-safe.
 class ComputeCell : public Cell

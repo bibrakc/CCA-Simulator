@@ -30,10 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// #include "Action.hpp"
-#include "Address.hpp"
 #include "ComputeCell.hpp"
-#include "Object.hpp"
 #include "TerminatorAction.hpp"
 
 #include <cassert>
@@ -48,23 +45,12 @@ Terminator::is_active()
 void
 Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
 {
-
-    /*    std::cout << "CC: " << cc.id << " In signal() deficit: " << this->deficit
-                << " parent has value? = " << this->parent.has_value() << "\n"; */
-
     // this->deficit++;
     if (this->deficit == 0) {
         assert(this->parent == std::nullopt);
 
         this->parent = origin_addr_in;
-        /*  std::cout << "\tCC: " << cc.id
-                   << " In signal() set the parent and now deficit: " << this->deficit << "\n"; */
     } else {
-
-        /* std::cout << "\tCC: " << cc.id << " In signal() else send ack: to " <<
-           origin_addr_in.cc_id
-                  << "\n"; */
-
         // Send acknowledgement back to where the action came from
         TerminatorAction acknowledgement_action(
             origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
@@ -78,25 +64,13 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
             cc.construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
         cc.task_queue.push(cc.send_operon(operon_to_send));
     }
-    /* std::cout << "\tCC: " << cc.id << " Leaving signal() deficit: " << this->deficit
-              << " parent has value? = " << this->parent.has_value() << "\n"; */
 }
 
 // Make the object (vertex) inactive
 void
 Terminator::unsignal(ComputeCell& cc)
 {
-
-    /*     if (this->parent.value().cc_id == cc.host_id) {
-            std::cout << "CC: " << cc.id << " In acknowledgement() with parent = " << cc.host_id
-                      << " deficit: " << this->deficit << "\n";
-        } */
-
-    // assert(this->deficit != 0);
-
     if ((this->deficit == 0) && (this->parent != std::nullopt)) {
-        /*  std::cout << "CC: " << cc.id << " In acknowledgement() dual if "
-                   << " deficit: " << this->deficit << "\n"; */
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
             Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
@@ -131,14 +105,11 @@ Terminator::unsignal(ComputeCell& cc)
 void
 Terminator::host_signal()
 {
-    /* std::cout << " In host_signal() deficit: " << this->deficit << "\n"; */
     this->deficit++;
 }
 void
 Terminator::host_acknowledgement()
 {
-    /*  std::cout << " In host_acknowledgement() deficit: " << this->deficit << "\n"; */
-
     assert(this->deficit != 0);
     this->deficit--;
 }
@@ -147,23 +118,12 @@ Terminator::host_acknowledgement()
 void
 Terminator::acknowledgement(ComputeCell& cc)
 {
-
-    /*     if (this->parent.value().cc_id == cc.host_id) {
-            std::cout << "CC: " << cc.id << " In acknowledgement() with parent = " << cc.host_id
-                      << " deficit: " << this->deficit << "\n";
-        } */
-
-    // assert(this->deficit != 0);
-
     if ((this->deficit == 0) && (this->parent != std::nullopt)) {
-        /*  std::cout << "CC: " << cc.id << " In acknowledgement() dual if "
-                   << " deficit: " << this->deficit << "\n"; */
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
             Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
-            /*   std::cout << "Host Terminator Acknowledgement Sent!\n"; */
         } else {
 
             // Create an special acknowledgement action towards the parent in the
@@ -189,17 +149,12 @@ Terminator::acknowledgement(ComputeCell& cc)
 
     this->deficit--;
     if (this->deficit == 0) {
-        // Unset the parent and send an acknowledgement back to the parent
-        /*    std::cout << "CC: " << cc.id
-                     << " In acknowledgement() deficit == 0, this->parent.value().cc_id: "
-                     << this->parent.value().cc_id << "\n"; */
-
+        // Unset the parent and send an acknowledgement back to the parent.
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
             Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
-            /*  std::cout << "Host Terminator Acknowledgement Sent!\n"; */
         } else {
 
             // Create an special acknowledgement action towards the parent in the

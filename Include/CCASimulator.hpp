@@ -33,28 +33,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CCASimulator_HPP
 #define CCASimulator_HPP
 
-#include "Action.hpp"
-#include "Address.hpp"
 #include "CCAFunctionEvents.hpp"
 #include "Cell.hpp"
-#include "ComputeCell.hpp"
-#include "Constants.hpp"
-#include "Function.hpp"
 #include "HtreeNetwork.hpp"
-#include "HtreeNode.hpp"
 #include "MemoryAllocator.hpp"
 #include "Routing.hpp"
-#include "Task.hpp"
-
-#include <map>
-#include <queue>
-#include <stdlib.h>
-
-// Used for `pow` function
-#include <cmath>
 
 typedef unsigned long u_long;
 
+// The user uses this alias for `Object` to create `Terminator` since the object contains a
+// `Terminator`.
 using CCATerminator = Object;
 
 struct ActiveStatusPerCycle

@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
-#include <algorithm>
-#include <random>
+#include <cmath>
+//#include <random>
 
 // Utility function to convert type of pair
 template<typename To, typename From>

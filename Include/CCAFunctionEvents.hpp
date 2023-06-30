@@ -33,11 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CCA_FUNCTION_EVENTS_HPP
 #define CCA_FUNCTION_EVENTS_HPP
 
-#include "Address.hpp"
 #include "Function.hpp"
 #include <vector>
-
-#include <cassert>
 
 struct FunctionEventManager
 {

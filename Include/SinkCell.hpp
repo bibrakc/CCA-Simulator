@@ -35,10 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
-#include <iostream>
-#include <memory>
-#include <stdlib.h>
-
 // Forward declaring to solve the circular dependency.
 struct HtreeNode;
 

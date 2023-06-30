@@ -33,12 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HTREE_NODE_HPP
 #define HTREE_NODE_HPP
 
-#include "Operon.hpp"
 #include "SinkCell.hpp"
-#include "types.hpp"
-
-#include <memory>
-#include <optional>
 
 // H-Tree Node
 struct HtreeNode

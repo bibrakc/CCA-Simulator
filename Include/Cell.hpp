@@ -35,15 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Constants.hpp"
 #include "Operon.hpp"
-#include "Task.hpp"
 
-#include "types.hpp"
-
-#include <map>
-#include <memory>
 #include <optional>
-#include <queue>
-#include <stdlib.h>
 
 typedef std::pair<int32_t, int32_t> SignedCoordinates;
 

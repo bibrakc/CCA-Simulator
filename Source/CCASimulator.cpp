@@ -31,24 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "CCASimulator.hpp"
-#include "Action.hpp"
-#include "Address.hpp"
-#include "ComputeCell.hpp"
-#include "Constants.hpp"
-#include "HtreeNode.hpp"
-#include "Object.hpp"
-#include "Operon.hpp"
-#include "SinkCell.hpp"
-#include "Task.hpp"
 
-#include <cmath>
 #include <cstring>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <optional>
-#include <stdlib.h>
-#include <vector>
 
 // for std::ofstream
 #include <fstream>

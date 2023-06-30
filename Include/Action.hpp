@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "Function.hpp"
 
-#include <memory>
-
 enum class actionType : u_int32_t
 {
     terminator_acknowledgement_action = 0,
