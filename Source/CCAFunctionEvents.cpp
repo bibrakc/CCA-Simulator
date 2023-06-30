@@ -63,8 +63,3 @@ FunctionEventManager::get_function_event_handler(CCAFunctionEvent function_event
 
     return this->event_handlers[function_event_in];
 }
-
-extern CCAFunctionEvent sssp_predicate;
-extern CCAFunctionEvent sssp_work;
-extern CCAFunctionEvent sssp_diffuse;
-
