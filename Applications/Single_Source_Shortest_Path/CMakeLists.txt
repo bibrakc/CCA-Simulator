@@ -39,7 +39,6 @@ add_definitions(-DTHROTTLE=${THROTTLE})
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)
-
 set(IncludeDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Include)
 set(UtilitiesDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities)
 
@@ -65,8 +64,6 @@ target_include_directories(HtreeNework PUBLIC
 
 target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
 
-target_link_libraries(HtreeNework PUBLIC CCACommons)
-
 add_library(CCASimulator
             ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/CCASimulator.cpp
@@ -77,7 +74,6 @@ add_library(CCASimulator
             ${SourceDirectory}/Terminator.cpp
             )
 
-
 target_include_directories(CCASimulator PUBLIC 
                            ${IncludeDirectory}
                            ${IncludeDirectory}/Datastructure
@@ -85,7 +81,7 @@ target_include_directories(CCASimulator PUBLIC
                            
 target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-parameter)
 
-target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)# CCACommons)
+target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
 add_executable(${executable_name} cca_sssp.cpp)
