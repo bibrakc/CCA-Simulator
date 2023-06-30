@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FUNCTION_HPP
 #define FUNCTION_HPP
 
+#include "Address.hpp"
+
 #include <memory>
 
 // Event Id of the function that is registered with the CCA: predicate, work, diffuse, and other

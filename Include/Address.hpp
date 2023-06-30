@@ -59,11 +59,7 @@ struct Address
     // TODO: later can be used for garbage collection
     // bool is_valid;
 
-    Address()
-    {
-        /* this->cc_id = -1;
-        this->addr = -1; */
-    }
+    Address() {}
 
     Address(const u_int32_t id, const u_int32_t address_in)
     {
