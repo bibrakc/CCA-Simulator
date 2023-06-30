@@ -71,7 +71,8 @@ add_library(CCASimulator
             ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/CCASimulator.cpp
             ${SourceDirectory}/CCAFunctionEvents.cpp
-            ${SourceDirectory}/ComputeCell.cpp  
+            ${SourceDirectory}/ComputeCell.cpp
+            ${SourceDirectory}/CyclicMemoryAllocator.cpp
             ${SourceDirectory}/SinkCell.cpp
             ${SourceDirectory}/Terminator.cpp
             )

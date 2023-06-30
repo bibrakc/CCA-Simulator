@@ -77,7 +77,7 @@ class Graph
 
     template<class VertexTypeOfAddress>
     void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
-                                    std::unique_ptr<MemoryAlloctor>& allocator)
+                                    std::unique_ptr<MemoryAllocator>& allocator)
     {
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.

@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include "HtreeNetwork.hpp"
 #include "HtreeNode.hpp"
+#include "MemoryAllocator.hpp"
 #include "Routing.hpp"
 #include "Task.hpp"
 
@@ -55,8 +56,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef unsigned long u_long;
 
 using CCATerminator = Object;
-
-class MemoryAlloctor;
 
 struct ActiveStatusPerCycle
 {
@@ -282,7 +281,7 @@ class CCASimulator
     bool is_diffusion_active(Address terminator_in);
 
     std::optional<Address> allocate_and_insert_object_on_cc(
-        std::unique_ptr<MemoryAlloctor>& allocator,
+        std::unique_ptr<MemoryAllocator>& allocator,
         void* obj,
         size_t size_of_obj);
 
@@ -305,31 +304,6 @@ class CCASimulator
     // second layer network involved. It includes creating the cells and initializing them with IDs
     // and their types and more
     void create_square_cell_mesh_only_chip();
-};
-
-// TODO: Find a better file/location for MemoryAlloctor classes
-// Base class for memroy allocation
-class MemoryAlloctor
-{
-  public:
-    u_int32_t next_cc_id{};
-    virtual u_int32_t get_next_available_cc(CCASimulator&) = 0;
-};
-
-// Cyclic allocator across all Compute Cells
-class CyclicMemoryAllocator : public MemoryAlloctor
-{
-  public:
-    u_int32_t get_next_available_cc(CCASimulator& cca_simulator)
-    {
-        // Skip the Cell if it is not of type ComputeCell
-        while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell) {
-            this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
-        }
-        u_int32_t cc_available = this->next_cc_id;
-        this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
-        return cc_available;
-    }
 };
 
 #endif // CCASimulator_HPP

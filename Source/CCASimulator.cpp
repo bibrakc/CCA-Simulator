@@ -289,7 +289,7 @@ CCASimulator::is_diffusion_active(Address terminator_in)
 }
 
 std::optional<Address>
-CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAlloctor>& allocator,
+CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
                                                void* obj,
                                                size_t size_of_obj)
 {
