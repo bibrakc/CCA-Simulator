@@ -55,8 +55,6 @@ class SinkCell : public Cell
     // TODO: write comments
     void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
-    void essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
-
     // Checks if the cell is active or not
     u_int32_t is_compute_cell_active();
 

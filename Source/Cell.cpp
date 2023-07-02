@@ -370,6 +370,19 @@ Cell::is_congested()
     return std::pair<bool, u_int32_t>(is_congested, congestion_level_addition);
 }
 
+void
+Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+{
+    // Update the last_congested_cycle if needed;
+    auto [is_congested, congestion_level_addition] = this->is_congested();
+    if (is_congested) {
+        this->last_congested_cycle = this->current_cycle;
+    }
+
+    // Update the cycle #
+    this->current_cycle++;
+}
+
 bool
 Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
 {

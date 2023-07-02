@@ -247,7 +247,7 @@ class Cell
     // TODO: write comments
     virtual void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
 
-    virtual void essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) = 0;
+    void essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Checks if the cell is active or not
     virtual u_int32_t is_compute_cell_active() = 0;

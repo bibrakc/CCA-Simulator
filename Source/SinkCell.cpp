@@ -357,21 +357,6 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
     }
 }
 
-// TODO: for now both ComputeCell and SinkCell have identical code. See later if this changes
-// otherwise put this in the parent Cell class. 
-void
-SinkCell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
-{
-    // Update the last_congested_cycle if needed;
-    auto [is_congested, congestion_level_addition] = this->is_congested();
-    if (is_congested) {
-        this->last_congested_cycle = this->current_cycle;
-    }
-
-    // Update the cycle #
-    this->current_cycle++;
-}
-
 // Checks if the compute cell is active or not
 u_int32_t
 SinkCell::is_compute_cell_active()
