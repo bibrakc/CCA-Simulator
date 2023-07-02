@@ -64,6 +64,8 @@ target_include_directories(HtreeNework PUBLIC
 
 target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
 
+target_link_libraries(HtreeNework PUBLIC CCACommons)
+
 add_library(CCASimulator
             ${SourceDirectory}/Cell.cpp
             ${SourceDirectory}/CCASimulator.cpp
@@ -92,6 +94,9 @@ target_include_directories(${executable_name} PUBLIC
                            ${IncludeDirectory}
                            ${IncludeDirectory}/Datastructure
                            )
+
+# Enable debugging
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
 target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
