@@ -44,7 +44,6 @@ struct Edge
     u_int32_t weight;
 };
 
-inline constexpr u_int32_t max_distance = 999999;
 inline constexpr u_int32_t edges_max = 60;
 
 template<typename Address_T>
@@ -53,7 +52,6 @@ struct SimpleVertex : Object
     u_int32_t id{};
     Edge<Address_T> edges[edges_max]{};
     u_int32_t number_of_edges{};
-    u_int32_t sssp_distance;
 
     // Insert an edge with weight
     bool insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight)
@@ -71,24 +69,20 @@ struct SimpleVertex : Object
     SimpleVertex(u_int32_t id_in)
         : id(id_in)
         , number_of_edges(0)
-        , sssp_distance(max_distance)
     {
-        /* std::cout << "SimpleVertex Constructor\n"; */
     }
-    SimpleVertex()
-    { /* std::cout << "SimpleVertex default Constructor\n"; */
-    }
-    ~SimpleVertex()
-    { /* std::cout << "SimpleVertex Destructor\n"; */
-    }
+
+    SimpleVertex() {}
+    ~SimpleVertex() {}
 };
 
 // Print the SimpleVertex vertex
 void
 print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_addr)
 {
-    std::cout << "Vertex ID: " << vertex->id << ", Addr: " << vertex_addr
-              << " sssp_distance: " << vertex->sssp_distance
+    std::cout << "Vertex ID: " << vertex->id << ", Addr: "
+              << vertex_addr
+              //<< " sssp_distance: " << vertex->sssp_distance
               << " deficit: " << vertex->terminator.deficit << "\n";
 
     for (u_int32_t i = 0; i < vertex->number_of_edges; i++) {

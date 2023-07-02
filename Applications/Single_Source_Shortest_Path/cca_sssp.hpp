@@ -38,6 +38,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmdparser.hpp"
 
+inline constexpr u_int32_t max_distance = 999999;
+
+template<typename Address_T>
+struct SSSPSimpleVertex : SimpleVertex<Address_T>
+{
+    u_int32_t sssp_distance;
+
+    SSSPSimpleVertex(u_int32_t id_in)
+        : sssp_distance(max_distance)
+    {
+        this->id = id_in;
+        this->number_of_edges = 0;
+    }
+
+    SSSPSimpleVertex() {}
+    ~SSSPSimpleVertex() {}
+};
+
 // CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent sssp_predicate;
@@ -81,7 +99,7 @@ sssp_predicate_func(ComputeCell& cc,
                     int nargs,
                     const std::shared_ptr<int[]>& args)
 {
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
     int origin_vertex = args[1];
 
@@ -94,7 +112,7 @@ sssp_predicate_func(ComputeCell& cc,
 int
 sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
 
     // Update distance with the new distance
@@ -108,7 +126,7 @@ sssp_diffuse_func(ComputeCell& cc,
                   int nargs,
                   const std::shared_ptr<int[]>& args)
 {
-    SimpleVertex<Address>* v = static_cast<SimpleVertex<Address>*>(cc.get_object(addr));
+    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
 
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);

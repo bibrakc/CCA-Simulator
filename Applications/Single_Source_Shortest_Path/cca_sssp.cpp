@@ -117,7 +117,7 @@ main(int argc, char** argv)
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<SimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<SSSPSimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -125,9 +125,9 @@ main(int argc, char** argv)
     // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
 
-    // Note: here we use SimpleVertex<Address> since the vertex object is now going to be sent to
+    // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<SimpleVertex<Address>>(cca_square_simulator, allocator);
+    input_graph.transfer_graph_host_to_cca<SSSPSimpleVertex<Address>>(cca_square_simulator, allocator);
 
     // Only put the SSSP seed action on a single vertex.
     // In this case SSSP root = root_vertex
@@ -177,8 +177,8 @@ main(int argc, char** argv)
     // Check for correctness. Print the distance to a target test vertex.
     Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
-    SimpleVertex<Address>* v_test =
-        static_cast<SimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+    SSSPSimpleVertex<Address>* v_test =
+        static_cast<SSSPSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
 
     std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
               << " is: " << v_test->sssp_distance << "\n";
