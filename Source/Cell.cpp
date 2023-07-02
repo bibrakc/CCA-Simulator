@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 
 #include <cmath>
-//#include <random>
+// #include <random>
 
 // Utility function to convert type of pair
 template<typename To, typename From>
@@ -204,11 +204,7 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << this->send_channel_per_neighbor_contention_count_record[2].get_total_count()
 
        << "\t" << this->send_channel_per_neighbor_contention_count_record[3].get_max_count() << "\t"
-       << this->send_channel_per_neighbor_contention_count_record[3].get_total_count()
-
-       << "\t" << this->stall_logic_on_network << "\t" << this->stall_network_on_recv << "\t"
-       << this->stall_network_on_send << "\t" << this->cycles_resource_usage << "\t"
-       << this->cycles_inactive;
+       << this->send_channel_per_neighbor_contention_count_record[3].get_total_count();
 }
 
 std::string

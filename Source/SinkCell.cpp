@@ -110,9 +110,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         }
 
         if (!pushed) {
-            // Increament the stall counter for send/recv
-            this->statistics.stall_network_on_send++;
-
             // Put this back since it was not sent in this cycle due to the
             // send_channel_per_neighbor being full
             left_over_operons.push_back(operon);
@@ -181,8 +178,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
 
                         if (!pushed) {
-                            // Increament the stall counter for send/recv
-                            this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
                         }
 
@@ -197,8 +192,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         if (!this->send_channel_to_htree_node.push(coordinated_operon)) {
 
                             // not sent in this cycle due to the send_channel being full
-                            // Increament the stall counter for send/recv
-                            this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
                         }
                     }
@@ -215,21 +208,9 @@ void
 SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
                                   void* function_events)
 {
-    // assert(CCA_chip.size() != 0);
-
     if (!this->is_compute_cell_active()) {
         return;
     }
-
-    /* std::cout << this->id << ": Sink Cell " << this->cooridates
-              << "  run_a_computation_cycle : " << *this << "\n"; */
-
-    // Initialize the counter for measuring resource usage and starvation. Start with all then
-    // decreament as they are active. Later use that to find the percent active status for this
-    // cycle. If nothing was decreamented it means that this cycle was totally inactive with the
-    // CC starving.
-    this->statistics.cycle_resource_use_counter =
-        Cell::get_number_of_neighbors(this->shape) + 1; // +1 for 2nd layer
 
     // Apply the network operations from the previous cycle and prepare this cycle for
     // computation and communication
@@ -292,14 +273,11 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_
         }
 
         if (!pushed) {
-            // Increament the stall counter for send/recv
+
             // Put this back since it was not sent in this cycle due to the
             // recv_channel_to_htree_node being full
             left_over_operons.push_back(operon);
             // this->recv_channel_to_htree_node.push(operon);
-
-            // Increament the stall counter for send/recv
-            this->statistics.stall_network_on_send++;
         }
     }
 
@@ -337,9 +315,6 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 
             if (this->send_channel_per_neighbor[i].size()) {
 
-                // Update the cycle_resource_use_counter
-                this->statistics.cycle_resource_use_counter--;
-
                 std::vector<Operon> send_operons;
                 while (this->send_channel_per_neighbor[i].size()) {
                     send_operons.push_back(this->send_channel_per_neighbor[i].front());
@@ -362,9 +337,8 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                             operon,
                             receiving_direction[i],
                             this->send_channel_per_neighbor_current_distance_class[i])) {
-                        this->statistics.stall_network_on_recv++;
+
                         this->send_channel_per_neighbor_contention_count[i].increment();
-                        // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
 
                         /* std::cout << "SC : " << this->cooridates << " Not able to push on "
@@ -379,18 +353,6 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     this->send_channel_per_neighbor[i].push(operon);
                 }
             }
-        }
-
-        // TODO: Verify this
-        // Since this is the end of the cycle find out how much percent of the CC was active and
-        // whether it was inactive altogether?
-        u_int32_t number_of_resources_per_cc = Cell::get_number_of_neighbors(this->shape) + 1;
-        if (this->statistics.cycle_resource_use_counter == number_of_resources_per_cc) {
-            this->statistics.cycles_inactive++;
-        } else {
-            this->statistics.cycles_resource_usage +=
-                (number_of_resources_per_cc - this->statistics.cycle_resource_use_counter) /
-                static_cast<long double>(number_of_resources_per_cc);
         }
     }
 }

@@ -128,6 +128,8 @@ class SinkCell : public Cell
         // type for example)
         this->current_recv_channel_to_start_a_cycle = 0;
 
+        this->last_congested_cycle = std::nullopt;
+
         // Experimental
         this->current_cycle = 0;
     }

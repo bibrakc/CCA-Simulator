@@ -184,17 +184,13 @@ class ComputeCell : public Cell
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
                                                                 MaxCounter());
 
-        /*    for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-               this->send_channel_per_neighbor_contention_count[i] = 0;
-           } */
-
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example)
         this->current_recv_channel_to_start_a_cycle = 0;
+        this->last_congested_cycle = std::nullopt;
 
         // Experimental
         this->current_cycle = 0;
-        this->last_congested_cycle = std::nullopt;
     }
 
   private:

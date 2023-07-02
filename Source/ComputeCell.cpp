@@ -324,8 +324,6 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
 
                         if (!pushed) {
-                            // Increament the stall counter for send/recv
-                            this->statistics.stall_network_on_send++;
                             left_over_operons.push_back(operon);
                         }
                     }
@@ -359,14 +357,6 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
     // This function does both. First it performs work if there is any. Then it performs
     // communication
 
-    // Initialize the counter for measuring resource usage and starvation. Start with all then
-    // decreament as they are active. Later use that to find the percent active status for this
-    // cycle. If nothing was decreamented it means that this cycle was totally inactive with the
-    // CC starving. TODO: These counters are not reliable anymore. Need to rethink all of
-    // this....
-    this->statistics.cycle_resource_use_counter =
-        ComputeCell::get_number_of_neighbors(this->shape) + 1; // +1 for logic
-
     // Apply the network operations from the previous cycle and prepare this cycle for
     // computation and communication
     this->prepare_a_cycle(CCA_chip);
@@ -380,8 +370,6 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
         // In that case stall and don't do anything. Because the task can't send operon
         if (this->staging_operon_from_logic &&
             (current_task.first == taskType::send_operon_task_type)) {
-
-            this->statistics.stall_logic_on_network++;
         } else {
             // Apply throttle if enabled.
             bool was_cerently_congested = false;
@@ -400,15 +388,10 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                 current_task.second();
             }
         }
-        // The logic was active. In this cycle it diffused or performaned a task.
-        this->statistics.cycle_resource_use_counter--;
 
     } else if (!this->action_queue.empty()) {
         // Else execute an action if the action_queue is not empty
         this->execute_action(function_events);
-
-        // The logic was active. In this cycle it did predicate resolution and action work.
-        this->statistics.cycle_resource_use_counter--;
     }
 }
 
@@ -446,7 +429,6 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             std::vector<u_int32_t> channels_to_send =
                 this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
-            bool pushed = false;
             for (auto channel_to_send : channels_to_send) {
                 if (this->send_channel_per_neighbor[channel_to_send].push(
                         this->staging_operon_from_logic.value())) {
@@ -458,13 +440,8 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                     this->staging_operon_from_logic = std::nullopt;
 
                     // Break out of the for loop. Discard other paths.
-                    pushed = true;
                     break;
                 }
-            }
-
-            if (!pushed) {
-                this->statistics.stall_logic_on_network++;
             }
         }
     }
@@ -495,9 +472,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : send_operons) {
-
-                    // Update the cycle_resource_use_counter. TODO fix these counters lol
-                    this->statistics.cycle_resource_use_counter--;
                     u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
@@ -511,8 +485,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                             receiving_direction[i],
                             this->send_channel_per_neighbor_current_distance_class[i])) {
 
-                        this->statistics.stall_network_on_recv++;
-
                         this->send_channel_per_neighbor_contention_count[i].increment();
 
                         /*  std::cout
@@ -524,7 +496,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                              << this->send_channel_per_neighbor_contention_count[i].get_count()
                              << "\n"; */
 
-                        // increament the stall counter for send/recv
                         left_over_operons.push_back(operon);
                     } else {
                         this->send_channel_per_neighbor_contention_count[i].reset();
@@ -536,17 +507,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                 }
             }
         }
-    }
-    // Since this is the end of the cycle find out how much percent of the CC was active and
-    // whether it was inactive altogether? TODO: Fix all these counter. They are meaningless at
-    // this point in the developmetn
-    u_int32_t number_of_resources_per_cc = ComputeCell::get_number_of_neighbors(this->shape) + 1;
-    if (this->statistics.cycle_resource_use_counter == number_of_resources_per_cc) {
-        this->statistics.cycles_inactive++;
-    } else {
-        this->statistics.cycles_resource_usage +=
-            (number_of_resources_per_cc - this->statistics.cycle_resource_use_counter) /
-            static_cast<long double>(number_of_resources_per_cc);
     }
 }
 

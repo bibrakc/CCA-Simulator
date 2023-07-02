@@ -84,39 +84,11 @@ struct ComputeCellStatistics
     u_int32_t actions_acknowledgement_invoked{};
 
     u_int32_t actions_performed_work{};
+
     // # of Actions subsumed
     u_int32_t actions_false_on_predicate{};
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
-
-    // When network is busy passing other operon so the operons from logic to network get stalled
-    u_int32_t stall_logic_on_network{};
-    u_int32_t stall_network_on_recv{};
-    u_int32_t stall_network_on_send{};
-
-    // Accumulation of the percentage this CC was active.
-    // For example: A square CC has 4 network connections, where each connection has 2 links, making
-    // 8 total channels. For a single CC to be 100% occupied (working/active) it needs to use all of
-    // these channels. To avoid couting an event twice only the send event from a CC is counted. In
-    // that case for a single square CC to be 100% active in a single cycle it needs to send 4
-    // operons along all of its 4 neighbors. The logic also plays part in being active. Therefore,
-    // when a CC is active working on logic that includes predicate resolution, work, and creating
-    // and sending operons then it is considered to be active. In that way for the entire CC to be
-    // 100% active for a single cycle all 5 consituents need to be active. For a single cycle we
-    // count the active status of network and logic and then divide the counter by 5 to get the
-    // percent. This percent is accumulated and is later used with the total active cycles to find
-    // resource usage.
-    // TODO: refine this methodology
-    long double cycles_resource_usage{};
-
-    // Start this counter with 5 for the square CC and then decreament as the resources are used for
-    // that cycle. This reverse way of counting will also help in distinguishing between an inactive
-    // cycle and a cycle in which the CC a deadlocked/waiting.
-    u_int32_t cycle_resource_use_counter{};
-
-    // # of Cycles for which this CC was not active: Starvation
-    // When `cycle_resource_use_counter == 0` then that cycle the CC was inactive
-    u_int32_t cycles_inactive{};
 
     // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
     CellType type;
@@ -130,9 +102,7 @@ struct ComputeCellStatistics
               "\tleft_send_contention_max\tleft_send_contention_total"
               "\tup_send_contention_max\tup_send_contention_total"
               "\tright_send_contention_max\tright_send_contention_total"
-              "\tdown_send_contention_max\tdown_send_contention_total"
-              "\tstall_logic_on_network\tstall_network_on_recv\tstall_network_on_"
-              "send\tcycles_resource_usage\tcycles_inactive\n";
+              "\tdown_send_contention_max\tdown_send_contention_total\n";
     }
 
     // Print all the stats in a single line
@@ -150,12 +120,7 @@ struct ComputeCellStatistics
            << "\n\tactions_invoked: " << stat.actions_invoked
            << "\n\tactions_performed_work: " << stat.actions_performed_work
            << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
-           << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
-           << "\n\n\tstall_logic_on_network: " << stat.stall_logic_on_network
-           << "\n\tstall_network_on_recv: " << stat.stall_network_on_recv
-           << "\n\tstall_network_on_send: " << stat.stall_network_on_send
-           << "\n\n\tcycles_resource_usage: " << stat.cycles_resource_usage
-           << "\n\tcycles_inactive: " << stat.cycles_inactive << "\n";
+           << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate << "\n";
         return os;
     }
 
@@ -168,13 +133,6 @@ struct ComputeCellStatistics
         this->actions_performed_work += rhs.actions_performed_work;
         this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
-
-        this->stall_logic_on_network += rhs.stall_logic_on_network;
-        this->stall_network_on_recv += rhs.stall_network_on_recv;
-        this->stall_network_on_send += rhs.stall_network_on_send;
-
-        this->cycles_resource_usage += rhs.cycles_resource_usage;
-        this->cycles_inactive += rhs.cycles_inactive;
 
         return *this;
     }
