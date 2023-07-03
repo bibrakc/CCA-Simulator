@@ -57,11 +57,10 @@ struct FunctionEventManager
     handler_func get_function_event_handler(CCAFunctionEvent function_event_in);
 
     FunctionEventManager()
+        : event_handlers()
+        , next_available_event_id(0)
+        , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
-        // Start with id 0
-        this->next_available_event_id = 0;
-        this->acknowledgement_event_id =
-            this->register_function_event(terminator_acknowledgement_func);
     }
 };
 

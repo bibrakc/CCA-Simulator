@@ -45,39 +45,43 @@ enum class adressType : u_int32_t
 
 struct Address
 {
-  public:
-    // CCA address or Host address? Default is CCA address.
-    adressType type;
+public:
+  // CCA address or Host address? Default is CCA address.
+  adressType type;
 
-    // Global ID of the compute cell where the address resides
-    u_int32_t cc_id;
-    // The offset to the memory of the compute cell
-    u_int32_t addr;
+  // Global ID of the compute cell where the address resides
+  u_int32_t cc_id;
+  // The offset to the memory of the compute cell
+  u_int32_t addr;
 
-    // Is true when this address is not pointing to any valid object
-    // TODO: later can be used for garbage collection
-    // bool is_valid;
+  // Is true when this address is not pointing to any valid object
+  // TODO: later can be used for garbage collection
+  // bool is_valid;
 
-    Address() {}
+  Address()
+  {
+  }
 
-    Address(const u_int32_t id, const u_int32_t address_in)
-    {
-        this->cc_id = id;
-        this->addr = address_in;
-        this->type = adressType::cca_address;
-    }
+  Address(const u_int32_t id, const u_int32_t address_in)
+      : type(adressType::cca_address)
+      , cc_id(id)
+      , addr(address_in)
+  {
+  }
 
-    Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
-    {
-        this->cc_id = id;
-        this->addr = address_in;
-        this->type = address_type_in;
-    }
-    friend std::ostream& operator<<(std::ostream& os, const Address& ad)
-    {
-        os << "(" << ad.cc_id << ", " << ad.addr << ")";
-        return os;
-    }
+  Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
+      : type(address_type_in)
+      , cc_id(id)
+      , addr(address_in)
+  {
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Address& ad)
+  {
+    os << "(" << ad.cc_id << ", " << ad.addr << ")";
+    return os;
+  }
 };
+
 
 #endif // ADDRESS_HPP

@@ -66,16 +66,16 @@ class ComputeCell : public Cell
 
     // Execute a single cycle for this cell
     void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                 void* function_events);
+                                 void* function_events) override;
 
     // TODO: write comments
-    void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // TODO: write comments
-    void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // Checks if the cell is active or not
-    u_int32_t is_compute_cell_active();
+    u_int32_t is_compute_cell_active() override;
 
     // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
     // on the `staging_operon_from_logic`
@@ -190,6 +190,8 @@ class ComputeCell : public Cell
         // Experimental
         this->current_cycle = 0;
     }
+
+    virtual ~ComputeCell() {}
 
   private:
     // Each compute cell has a sink cell configured such that when it has to send an operon to far

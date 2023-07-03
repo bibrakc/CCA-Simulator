@@ -47,16 +47,16 @@ class SinkCell : public Cell
 
     // Execute a single cycle for this cell
     void run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                 void* function_events);
+                                 void* function_events) override;
 
     // TODO: write comments
-    void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // TODO: write comments
-    void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
+    void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // Checks if the cell is active or not
-    u_int32_t is_compute_cell_active();
+    u_int32_t is_compute_cell_active() override;
 
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)
@@ -131,6 +131,8 @@ class SinkCell : public Cell
         // Experimental
         this->current_cycle = 0;
     }
+
+    virtual ~SinkCell() {}
 };
 
 #endif // SINK_CELL_HPP

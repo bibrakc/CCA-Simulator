@@ -310,6 +310,8 @@ class Cell
         os << "\n";
         return os;
     }
+
+    virtual ~Cell() {}
 };
 
 #endif // CELL_HPP
