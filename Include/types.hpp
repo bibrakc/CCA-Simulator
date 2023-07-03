@@ -73,19 +73,19 @@ class FixedSizeQueue
     }
 
     // Get from front FIFO
-    auto front() const -> T { return underlying_queue.front(); }
+    [[nodiscard]] auto front() const -> T { return underlying_queue.front(); }
 
     // Pop/Dequeue
     void pop() { underlying_queue.pop(); }
 
     // Return the current size of the queue
-    auto size() const -> u_int32_t { return underlying_queue.size(); }
+    [[nodiscard]] auto size() const -> u_int32_t { return underlying_queue.size(); }
 
     // Return the max size of the queue
-    auto queue_size_max() const -> u_int32_t { return this->size_max; }
+    [[nodiscard]] auto queue_size_max() const -> u_int32_t { return this->size_max; }
 
     // Return whether there is a slot in the queue
-    auto has_room() const -> bool { return (this->underlying_queue.size() != this->size_max); }
+    [[nodiscard]] auto has_room() const -> bool { return (this->underlying_queue.size() != this->size_max); }
 };
 
 class MaxCounter
@@ -113,9 +113,9 @@ class MaxCounter
     }
 
     void reset() { this->counter = 0; }
-    auto get_count() const -> u_int32_t { return this->counter; }
-    auto get_max_count() const -> u_int32_t { return this->max_counter; }
-    auto get_total_count() const -> u_int32_t { return this->total_counter; }
+    [[nodiscard]] auto get_count() const -> u_int32_t { return this->counter; }
+    [[nodiscard]] auto get_max_count() const -> u_int32_t { return this->max_counter; }
+    [[nodiscard]] auto get_total_count() const -> u_int32_t { return this->total_counter; }
 };
 
 #endif // TYPES_HPP

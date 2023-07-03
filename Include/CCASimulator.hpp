@@ -281,7 +281,7 @@ class CCASimulator
     void print_statistics(std::ofstream& output_file);
 
     // Get the pointer to the object at `Address addr_in`.
-    auto get_object(Address addr_in) const -> void*;
+    [[nodiscard]] auto get_object(Address addr_in) const -> void*;
 
   private:
     // Create the chip. It includes creating the cells and initializing them with IDs and their

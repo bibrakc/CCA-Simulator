@@ -102,10 +102,10 @@ class Parser
         bool const dominant;
         bool const variadic;
 
-        virtual auto print_value() const -> std::string = 0;
+        [[nodiscard]] virtual auto print_value() const -> std::string = 0;
         virtual auto parse(std::ostream& output, std::ostream& error) -> bool = 0;
 
-        auto is(const std::string& given) const -> bool { return given == command || given == alternative; }
+        [[nodiscard]] auto is(const std::string& given) const -> bool { return given == command || given == alternative; }
     };
 
     template<typename T>
@@ -155,7 +155,7 @@ class Parser
             }
         }
 
-        auto print_value() const -> std::string override { return ""; }
+        [[nodiscard]] auto print_value() const -> std::string override { return ""; }
 
         std::function<T(CallbackArgs&)> callback;
         T value;
@@ -189,7 +189,7 @@ class Parser
             }
         }
 
-        auto print_value() const -> std::string override { return stringify(value); }
+        [[nodiscard]] auto print_value() const -> std::string override { return stringify(value); }
 
         T value;
     };
@@ -397,7 +397,7 @@ class Parser
         }
     }
 
-    auto has_help() const -> bool
+    [[nodiscard]] auto has_help() const -> bool
     {
         for (const auto& command : _commands) {
             if (command->name == "h" && command->alternative == "--help") {
@@ -557,7 +557,7 @@ class Parser
     }
 
     template<typename T>
-    auto get(const std::string& name) const -> T
+    [[nodiscard]] [[nodiscard]] auto get(const std::string& name) const -> T
     {
         for (const auto& command : _commands) {
             if (command->name == name) {
@@ -582,7 +582,7 @@ class Parser
         return callback(value);
     }
 
-    auto requirements() const -> int
+    [[nodiscard]] auto requirements() const -> int
     {
         int count = 0;
 
@@ -595,9 +595,9 @@ class Parser
         return count;
     }
 
-    auto commands() const -> int { return static_cast<int>(_commands.size()); }
+    [[nodiscard]] auto commands() const -> int { return static_cast<int>(_commands.size()); }
 
-    inline auto app_name() const -> const std::string& { return _appname; }
+    [[nodiscard]] inline auto app_name() const -> const std::string& { return _appname; }
 
   protected:
     auto find(const std::string& name) -> CmdBase*
@@ -622,7 +622,7 @@ class Parser
         return nullptr;
     }
 
-    auto usage() const -> std::string
+    [[nodiscard]] auto usage() const -> std::string
     {
         std::stringstream ss{};
         ss << _general_help_text << "\n\n";
@@ -674,7 +674,7 @@ class Parser
         return ss.str();
     }
 
-    auto no_default() const -> std::string
+    [[nodiscard]] auto no_default() const -> std::string
     {
         std::stringstream ss{};
         ss << "No default parameter has been specified.\n";
@@ -683,7 +683,7 @@ class Parser
         return ss.str();
     }
 
-    auto get_general_help_text() const -> const std::string& { return _general_help_text; }
+    [[nodiscard]] auto get_general_help_text() const -> const std::string& { return _general_help_text; }
 
     void set_general_help_text(const std::string& generalHelpText)
     {

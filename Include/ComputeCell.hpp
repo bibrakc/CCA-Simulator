@@ -42,7 +42,7 @@ class ComputeCell : public Cell
 {
   public:
     // Get the object memory location at address addr_in
-    auto get_object(Address addr_in) const -> void*;
+    [[nodiscard]] auto get_object(Address addr_in) const -> void*;
 
     // Return the memory used in bytes
     auto get_memory_used() -> u_int32_t;
