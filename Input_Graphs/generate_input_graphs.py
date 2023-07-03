@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import time
 import networkx as nx
 import random
+from collections import deque
 
 # For statistics
 import pandas as pd
@@ -132,7 +133,7 @@ def ShortestPaths_Analysis(G):
         cc = cc_sorted[i]
         cc_graph = G.subgraph(cc)
 
-        if (len(cc) > 200):
+        if (len(cc) > 100):
             print(
                 "This component is too large. Using fifteen single-source shortest paths.")
             cc = list(cc)
@@ -219,8 +220,30 @@ def plot_degree_bar(G):
     ax.set_ylabel('Number of nodes with degree $k$ ($N_k$)')
 
 
-# Main
+# Perform BFS using nx.bfs_tree
+def bfs(graph, source, target_node_for_printing, Output_filename):
+    bfs_tree = nx.bfs_tree(graph, source)
+    level = {source: 0}  # Dictionary to store the level of each node
+    # Queue to keep track of nodes and their levels
+    queue = deque([(source, 0)])
 
+    while queue:
+        node, node_level = queue.popleft()
+        if node == target_node_for_printing:
+            print("\nBFS level")
+            print(f"Node: {node}, Level: {node_level}")
+            write_to_file(Output_filename, "\nBFS level")
+            write_to_file(Output_filename, "Node: " +
+                          str(node)+", Level: "+str(node_level))
+            break
+
+        for neighbor in bfs_tree.neighbors(node):
+            if neighbor not in level:
+                level[neighbor] = node_level + 1
+                queue.append((neighbor, node_level + 1))
+
+
+# Main
 args = sys.argv
 
 # graph_types = ["Powerlaw", "Scalefree", "Smallworld", "Erdos"]
@@ -235,7 +258,7 @@ edges_needed = vertices_needed * edge_factor
 print(graph)
 Output_filename = graph+"_ef_" + \
     str(edge_factor)+"_v_"+str(scale_factor)+"_output.txt"
-write_to_file(Output_filename, "\n\n"+graph)
+write_to_file(Output_filename, graph+"\n")
 
 if graph == "Powerlaw":
     G_gen = nx.powerlaw_cluster_graph(vertices_needed, edge_factor, .4)
@@ -297,8 +320,14 @@ print("Time in SSSP: ", end-start, "\n") """
 
 
 length, path = nx.single_source_dijkstra(G_gen, 0, 35, weight='weight')
-print("SSSP Path with wieghts from Src: 0 to target: 35 = ", length, "\n")
-print(path)
+print("\nSSSP path length with wieghts from Src: 0 to target: 35 = ", length)
+print("SSSP path = ", path)
+write_to_file(Output_filename,
+              "\nSSSP path length with wieghts from Src: 0 to target: 35 = " + str(length))
+write_to_file(Output_filename, "SSSP path = "+str(path))
+
+# Call BFS starting from node 0. Print the level of target node 35
+bfs(G_gen, 0, 35, Output_filename)
 
 # sssp = nx.shortest_path(G_gen,source=4, target=47, weight=None)#, weight='weight')
 # sssp = nx.shortest_path(G_gen,source=0, target=35,  weight='weight')
@@ -342,9 +371,9 @@ nx.write_weighted_edgelist(G, filename_to_write, delimiter='\t')
 
 n = G.number_of_nodes()
 m = G.number_of_edges()
-print(A, "Directed : Number of vertices:", n, ", Number of edges: ",
+print(A, "Directed : Number of vertices: ", n, ", Number of edges: ",
       m, ", Edge Factor: ", edge_factor, ", Scale: ", scale_factor)
-write_to_file(Output_filename, A+" Directed: Number of vertices:" + str(n)+", Number of edges: " +
+write_to_file(Output_filename, A+" Directed: Number of vertices: " + str(n)+", Number of edges: " +
               str(m)+", Edge Factor: " + str(edge_factor) + ", Scale: " + str(scale_factor))
 
 
