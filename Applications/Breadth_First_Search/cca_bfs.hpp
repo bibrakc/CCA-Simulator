@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_SSSP_HPP
-#define CCA_SSSP_HPP
+#ifndef CCA_BFS_HPP
+#define CCA_BFS_HPP
 
 #include "CCASimulator.hpp"
 #include "SimpleVertex.hpp"
@@ -41,40 +41,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 inline constexpr u_int32_t max_level = 999999;
 
 template<typename Address_T>
-struct SSSPSimpleVertex : SimpleVertex<Address_T>
+struct BFSSimpleVertex : SimpleVertex<Address_T>
 {
-    u_int32_t sssp_distance;
+    u_int32_t bfs_level;
 
-    SSSPSimpleVertex(u_int32_t id_in)
-        : sssp_distance(max_level)
+    BFSSimpleVertex(u_int32_t id_in)
+        : bfs_level(max_level)
     {
         this->id = id_in;
         this->number_of_edges = 0;
     }
 
-    SSSPSimpleVertex() {}
-    ~SSSPSimpleVertex() {}
+    BFSSimpleVertex() {}
+    ~BFSSimpleVertex() {}
 };
 
-// CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
+// CCAFunctionEvent ids for the BFS action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
-extern CCAFunctionEvent sssp_predicate;
-extern CCAFunctionEvent sssp_work;
-extern CCAFunctionEvent sssp_diffuse;
+extern CCAFunctionEvent bfs_predicate;
+extern CCAFunctionEvent bfs_work;
+extern CCAFunctionEvent bfs_diffuse;
 
-// Action for the SSSP program.
-class SSSPAction : public Action
+// Action for the BFS program.
+class BFSAction : public Action
 {
   public:
-    SSSPAction(const Address destination_vertex_addr_in,
-               const Address origin_vertex_addr_in,
-               actionType type,
-               const bool ready,
-               const int nargs_in,
-               const std::shared_ptr<int[]>& args_in,
-               CCAFunctionEvent predicate_in,
-               CCAFunctionEvent work_in,
-               CCAFunctionEvent diffuse_in)
+    BFSAction(const Address destination_vertex_addr_in,
+              const Address origin_vertex_addr_in,
+              actionType type,
+              const bool ready,
+              const int nargs_in,
+              const std::shared_ptr<int[]>& args_in,
+              CCAFunctionEvent predicate_in,
+              CCAFunctionEvent work_in,
+              CCAFunctionEvent diffuse_in)
     {
         this->obj_addr = destination_vertex_addr_in;
         this->origin_addr = origin_vertex_addr_in;
@@ -90,59 +90,59 @@ class SSSPAction : public Action
         this->diffuse = diffuse_in;
     }
 
-    ~SSSPAction() override {}
+    ~BFSAction() override {}
 };
 
 int
-sssp_predicate_func(ComputeCell& cc,
-                    const Address& addr,
-                    int nargs,
-                    const std::shared_ptr<int[]>& args)
+bfs_predicate_func(ComputeCell& cc,
+                   const Address& addr,
+                   int nargs,
+                   const std::shared_ptr<int[]>& args)
 {
-    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
+    BFSSimpleVertex<Address>* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_level = args[0];
     int origin_vertex = args[1];
 
-    if (v->sssp_distance > incoming_distance) {
+    if (v->bfs_level > incoming_level) {
         return 1;
     }
     return 0;
 }
 
 int
-sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
 {
-    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
+    BFSSimpleVertex<Address>* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+    int incoming_level = args[0];
 
-    // Update distance with the new distance
-    v->sssp_distance = incoming_distance;
+    // Update level with the new level
+    v->bfs_level = incoming_level;
     return 0;
 }
 
 int
-sssp_diffuse_func(ComputeCell& cc,
-                  const Address& addr,
-                  int nargs,
-                  const std::shared_ptr<int[]>& args)
+bfs_diffuse_func(ComputeCell& cc,
+                 const Address& addr,
+                 int nargs,
+                 const std::shared_ptr<int[]>& args)
 {
-    SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
+    BFSSimpleVertex<Address>* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {
 
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
         std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
-        args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
+        args_x[0] = static_cast<int>(v->bfs_level + 1);
         args_x[1] = static_cast<int>(v->id);
 
-        cc.diffuse(SSSPAction(v->edges[i].edge,
-                              addr,
-                              actionType::application_action,
-                              true,
-                              2,
-                              args_x,
-                              sssp_predicate,
-                              sssp_work,
-                              sssp_diffuse));
+        cc.diffuse(BFSAction(v->edges[i].edge,
+                             addr,
+                             actionType::application_action,
+                             true,
+                             2,
+                             args_x,
+                             bfs_predicate,
+                             bfs_work,
+                             bfs_diffuse));
     }
 
     return 0;
@@ -157,9 +157,8 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
-    parser.set_required<u_int32_t>(
-        "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
+    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its bfs level");
+    parser.set_required<u_int32_t>("root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,
@@ -196,4 +195,4 @@ configure_parser(cli::Parser& parser)
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
 }
 
-#endif // CCA_SSSP_HPP
+#endif // CCA_BFS_HPP
