@@ -92,7 +92,7 @@ main(int argc, char** argv)
     }
     // Configuration related to the CCA Chip
     std::string shape_arg = parser.get<std::string>("s");
-    computeCellShape shape_of_compute_cells;
+    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;
 
     if (shape_arg == "square") {
         shape_of_compute_cells = computeCellShape::square;

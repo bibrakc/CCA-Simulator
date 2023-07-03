@@ -153,9 +153,9 @@ class Graph
         }
 
         // Read from file and insert edges
-        u_int32_t vertex_from;
-        u_int32_t vertex_to;
-        u_int32_t weight;
+        u_int32_t vertex_from = 0;
+        u_int32_t vertex_to = 0;
+        u_int32_t weight = 0;
         for (int i = 0; i < this->total_edges; i++) {
             fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
             this->add_edge(this->vertices[vertex_from], vertex_to, weight);
