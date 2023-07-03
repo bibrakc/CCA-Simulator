@@ -32,4 +32,7 @@ Assuming the current directory is `/Applications/Breadth_First_Search`
 ## Using clang-tidy
 Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
 
-Inside an application use something like: `noglob /opt/homebrew/opt/llvm/bin/clang-tidy -p build ../../Source/ComputeCell.cpp -checks=cppcoreguidelines-* -header-filter=.*`
+Inside an application use something like:
+> `$ noglob /opt/homebrew/opt/llvm/bin/clang-tidy -p build ../../Source/ComputeCell.cpp -checks=cppcoreguidelines-* -header-filter=.*`
+
+> `$ noglob python3 /opt/homebrew/opt/llvm/bin/run-clang-tidy -p build -header-filter='.*' -checks='-*,modernize-use-nullptr'`
