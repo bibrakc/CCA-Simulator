@@ -59,8 +59,7 @@ public:
   // bool is_valid;
 
   Address()
-  {
-  }
+  = default;
 
   Address(const u_int32_t id, const u_int32_t address_in)
       : type(adressType::cca_address)

@@ -52,8 +52,8 @@ struct SSSPSimpleVertex : SimpleVertex<Address_T>
         this->number_of_edges = 0;
     }
 
-    SSSPSimpleVertex() {}
-    ~SSSPSimpleVertex() {}
+    SSSPSimpleVertex() = default;
+    ~SSSPSimpleVertex() = default;
 };
 
 // CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
@@ -90,7 +90,7 @@ class SSSPAction : public Action
         this->diffuse = diffuse_in;
     }
 
-    ~SSSPAction() override {}
+    ~SSSPAction() override = default;
 };
 
 auto

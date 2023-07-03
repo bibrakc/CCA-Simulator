@@ -54,7 +54,7 @@ class TerminatorAction : public Action
         this->origin_addr = origin_addr_in;
     }
 
-    ~TerminatorAction() override {}
+    ~TerminatorAction() override = default;
 };
 
 #endif // TERMINATOR_ACTION_HPP

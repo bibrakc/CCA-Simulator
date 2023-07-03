@@ -72,8 +72,8 @@ struct SimpleVertex : Object
     {
     }
 
-    SimpleVertex() {}
-    ~SimpleVertex() {}
+    SimpleVertex() = default;
+    ~SimpleVertex() = default;
 };
 
 // Print the SimpleVertex vertex

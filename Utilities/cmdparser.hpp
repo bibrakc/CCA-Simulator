@@ -90,7 +90,7 @@ class Parser
         {
         }
 
-        virtual ~CmdBase() {}
+        virtual ~CmdBase() = default;
 
         std::string name;
         std::string command;

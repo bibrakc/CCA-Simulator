@@ -163,7 +163,7 @@ class Graph
         fclose(input_graph_file_handler);
     }
 
-    ~Graph() {}
+    ~Graph() = default;
 };
 
 #endif // Graph_HPP

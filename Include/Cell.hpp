@@ -311,7 +311,7 @@ class Cell
         return os;
     }
 
-    virtual ~Cell() {}
+    virtual ~Cell() = default;
 };
 
 #endif // CELL_HPP
