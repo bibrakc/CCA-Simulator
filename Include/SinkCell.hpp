@@ -132,7 +132,7 @@ class SinkCell : public Cell
         this->current_cycle = 0;
     }
 
-    virtual ~SinkCell() {}
+    ~SinkCell() override {}
 };
 
 #endif // SINK_CELL_HPP

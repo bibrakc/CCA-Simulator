@@ -191,7 +191,7 @@ class ComputeCell : public Cell
         this->current_cycle = 0;
     }
 
-    virtual ~ComputeCell() {}
+    ~ComputeCell() override {}
 
   private:
     // Each compute cell has a sink cell configured such that when it has to send an operon to far

@@ -325,11 +325,12 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
         u_int32_t mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
         u_int32_t mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
 
-        // TODO: later make this distance customizable, either at compile time or runtime
+        // TODO: later make this distance customizable, either at compile time or runtime.
+        // TODO: Look at narrow_cast and see if we should use that.
         if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
-             mesh_usage_region_length_cols) &&
+             static_cast<int>(mesh_usage_region_length_cols)) &&
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
-             mesh_usage_region_length_rows)) {
+             static_cast<int>(mesh_usage_region_length_rows))) {
             return true;
         } else {
             /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
@@ -391,8 +392,11 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
         auto [dst_col, dst_row] = dst_cc_cooridinate;
 
         // TODO: later make this distance customizable, either at compile time or runtime
-        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <= this->hy / 2) &&
-            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <= this->hx / 2)) {
+        // TODO: Look at narrow_cast and see if we should use that.
+        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
+             static_cast<int>(this->hy / 2)) &&
+            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
+             static_cast<int>(this->hx / 2))) {
             return true;
         } else {
             return false;
