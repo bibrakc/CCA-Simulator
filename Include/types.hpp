@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // channel.
 constexpr u_int32_t lane_width = 1;
 
-typedef std::pair<u_int32_t, u_int32_t> Coordinates;
+using Coordinates = std::pair<u_int32_t, u_int32_t>;
 
 // Overload printing for Coordinates
 auto

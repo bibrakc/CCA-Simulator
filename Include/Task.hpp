@@ -42,10 +42,10 @@ enum class taskType : u_int32_t
     taskType_count
 };
 
-typedef std::function<void()> Task_func;
+using Task_func = std::function<void ()>;
 
 // Task: [task type, task function]
 // task type can be sending, or other
-typedef std::pair<taskType, std::function<void()>> Task;
+using Task = std::pair<taskType, std::function<void ()>>;
 
 #endif // TASK_HPP

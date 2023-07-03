@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MemoryAllocator.hpp"
 #include "Routing.hpp"
 
-typedef unsigned long u_long;
+using u_long = unsigned long;
 
 // The user uses this alias for `Object` to create `Terminator` since the object contains a
 // `Terminator`.

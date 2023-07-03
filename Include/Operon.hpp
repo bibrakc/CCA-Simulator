@@ -49,10 +49,10 @@ struct SourceDestinationPair
 };
 
 // cc_id, Action
-typedef std::pair<SourceDestinationPair, Action> Operon;
+using Operon = std::pair<SourceDestinationPair, Action>;
 
 // For Htree routing. At the end node of Htree that connects to a sink cell take the Coordinates out
 // and send the simple Operon to the CCA chip though the sink cell
-typedef std::pair<Coordinates, Operon> CoordinatedOperon;
+using CoordinatedOperon = std::pair<Coordinates, Operon>;
 
 #endif // OPERON_HPP

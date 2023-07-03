@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <optional>
 
-typedef std::pair<int32_t, int32_t> SignedCoordinates;
+using SignedCoordinates = std::pair<int32_t, int32_t>;
 
 // Threshold value after which it is considered to be congested. Used for creating active status
 // values for statistics and animation.
