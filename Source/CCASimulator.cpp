@@ -51,22 +51,22 @@ For a CCA chip of 4x4 with square shaped compute cells
  |         |         |         |
 (0,3)----(1,3)----(2,3)----(3,3)
 */
-inline Coordinates
-CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y)
+inline auto
+CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y) -> Coordinates
 {
     // Note: Later when new shapes are added this function night need to be changed to decide based
     // on the cell shape and chip dimensions
     return Coordinates(cc_id % dim_y, cc_id / dim_y);
 }
 
-Coordinates
-CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id)
+auto
+CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates
 {
     return ComputeCell::cc_id_to_cooridinate(cc_id, this->shape_of_compute_cells, this->dim_y);
 }
 
-u_int32_t
-CCASimulator::cc_cooridinate_to_id(Coordinates cc_cooridinate)
+auto
+CCASimulator::cc_cooridinate_to_id(Coordinates cc_cooridinate) -> u_int32_t
 {
 
     return ComputeCell::cc_cooridinate_to_id(
@@ -201,36 +201,36 @@ CCASimulator::create_the_chip()
 }
 
 // Register a function event
-CCAFunctionEvent
-CCASimulator::register_function_event(handler_func function_event_handler)
+auto
+CCASimulator::register_function_event(handler_func function_event_handler) -> CCAFunctionEvent
 {
     return this->function_events.register_function_event(function_event_handler);
 }
 
 // Return the memory used in bytes
-u_int32_t
-CCASimulator::get_host_memory_used()
+auto
+CCASimulator::get_host_memory_used() -> u_int32_t
 {
     return this->host_memory_curr_ptr - this->host_memory_raw_ptr;
 }
 
 // In bytes
-u_int32_t
-CCASimulator::get_host_memory_curr_ptr_offset()
+auto
+CCASimulator::get_host_memory_curr_ptr_offset() -> u_int32_t
 {
     return get_host_memory_used();
 }
 
 // Get memory left in bytes
-u_int32_t
-CCASimulator::host_memory_available_in_bytes()
+auto
+CCASimulator::host_memory_available_in_bytes() -> u_int32_t
 {
     return this->host_memory_size_in_bytes - this->get_host_memory_used();
 }
 
 // Get the pointer to the object at `Address addr_in`
-void*
-CCASimulator::get_object(Address addr_in) const
+auto
+CCASimulator::get_object(Address addr_in) const -> void*
 {
 
     if (addr_in.type == adressType::host_address) {
@@ -246,8 +246,8 @@ CCASimulator::get_object(Address addr_in) const
 }
 
 // Create a CCATerminator object on host and return the address
-std::optional<Address>
-CCASimulator::create_terminator()
+auto
+CCASimulator::create_terminator() -> std::optional<Address>
 {
     if (this->host_memory_available_in_bytes() < sizeof(CCATerminator)) {
         return std::nullopt;
@@ -264,18 +264,18 @@ CCASimulator::create_terminator()
 
     return host_terminator_addr;
 }
-bool
-CCASimulator::is_diffusion_active(Address terminator_in)
+auto
+CCASimulator::is_diffusion_active(Address terminator_in) -> bool
 {
 
     CCATerminator* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
     return terminator_obj->terminator.is_active();
 }
 
-std::optional<Address>
+auto
 CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
                                                void* obj,
-                                               size_t size_of_obj)
+                                               size_t size_of_obj) -> std::optional<Address>
 {
     // Get the ID of the compute cell where this vertex is to be allocated.
     u_int32_t cc_id = allocator->get_next_available_cc(*this);

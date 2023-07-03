@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Cyclic allocator across all Compute Cells
 
-u_int32_t
-CyclicMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator)
+auto
+CyclicMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t
 {
     // Skip the Cell if it is not of type ComputeCell
     while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell) {

@@ -102,10 +102,10 @@ class Parser
         bool const dominant;
         bool const variadic;
 
-        virtual std::string print_value() const = 0;
-        virtual bool parse(std::ostream& output, std::ostream& error) = 0;
+        virtual auto print_value() const -> std::string = 0;
+        virtual auto parse(std::ostream& output, std::ostream& error) -> bool = 0;
 
-        bool is(const std::string& given) const { return given == command || given == alternative; }
+        auto is(const std::string& given) const -> bool { return given == command || given == alternative; }
     };
 
     template<typename T>
@@ -144,7 +144,7 @@ class Parser
         {
         }
 
-        bool parse(std::ostream& output, std::ostream& error) override
+        auto parse(std::ostream& output, std::ostream& error) -> bool override
         {
             try {
                 CallbackArgs args{ arguments, output, error };
@@ -155,7 +155,7 @@ class Parser
             }
         }
 
-        std::string print_value() const override { return ""; }
+        auto print_value() const -> std::string override { return ""; }
 
         std::function<T(CallbackArgs&)> callback;
         T value;
@@ -179,7 +179,7 @@ class Parser
         {
         }
 
-        bool parse(std::ostream&, std::ostream&) override
+        auto parse(std::ostream&, std::ostream&) -> bool override
         {
             try {
                 value = Parser::parse(arguments, value);
@@ -189,12 +189,12 @@ class Parser
             }
         }
 
-        std::string print_value() const override { return stringify(value); }
+        auto print_value() const -> std::string override { return stringify(value); }
 
         T value;
     };
 
-    static int parse(const std::vector<std::string>& elements, const int&, int numberBase = 0)
+    static auto parse(const std::vector<std::string>& elements, const int&, int numberBase = 0) -> int
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -202,7 +202,7 @@ class Parser
         return std::stoi(elements[0], nullptr, numberBase);
     }
 
-    static bool parse(const std::vector<std::string>& elements, const bool& defval)
+    static auto parse(const std::vector<std::string>& elements, const bool& defval) -> bool
     {
         if (elements.size() != 0)
             throw std::runtime_error("A boolean command line parameter cannot have any arguments.");
@@ -210,7 +210,7 @@ class Parser
         return !defval;
     }
 
-    static double parse(const std::vector<std::string>& elements, const double&)
+    static auto parse(const std::vector<std::string>& elements, const double&) -> double
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -218,7 +218,7 @@ class Parser
         return std::stod(elements[0]);
     }
 
-    static float parse(const std::vector<std::string>& elements, const float&)
+    static auto parse(const std::vector<std::string>& elements, const float&) -> float
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -226,7 +226,7 @@ class Parser
         return std::stof(elements[0]);
     }
 
-    static long double parse(const std::vector<std::string>& elements, const long double&)
+    static auto parse(const std::vector<std::string>& elements, const long double&) -> long double
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -234,9 +234,9 @@ class Parser
         return std::stold(elements[0]);
     }
 
-    static unsigned int parse(const std::vector<std::string>& elements,
+    static auto parse(const std::vector<std::string>& elements,
                               const unsigned int&,
-                              int numberBase = 0)
+                              int numberBase = 0) -> unsigned int
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -244,9 +244,9 @@ class Parser
         return static_cast<unsigned int>(std::stoul(elements[0], nullptr, numberBase));
     }
 
-    static unsigned long parse(const std::vector<std::string>& elements,
+    static auto parse(const std::vector<std::string>& elements,
                                const unsigned long&,
-                               int numberBase = 0)
+                               int numberBase = 0) -> unsigned long
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -254,9 +254,9 @@ class Parser
         return std::stoul(elements[0], nullptr, numberBase);
     }
 
-    static unsigned long long parse(const std::vector<std::string>& elements,
+    static auto parse(const std::vector<std::string>& elements,
                                     const unsigned long long&,
-                                    int numberBase = 0)
+                                    int numberBase = 0) -> unsigned long long
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -264,9 +264,9 @@ class Parser
         return std::stoull(elements[0], nullptr, numberBase);
     }
 
-    static long long parse(const std::vector<std::string>& elements,
+    static auto parse(const std::vector<std::string>& elements,
                            const long long&,
-                           int numberBase = 0)
+                           int numberBase = 0) -> long long
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -274,7 +274,7 @@ class Parser
         return std::stoll(elements[0], nullptr, numberBase);
     }
 
-    static long parse(const std::vector<std::string>& elements, const long&, int numberBase = 0)
+    static auto parse(const std::vector<std::string>& elements, const long&, int numberBase = 0) -> long
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -282,7 +282,7 @@ class Parser
         return std::stol(elements[0], nullptr, numberBase);
     }
 
-    static std::string parse(const std::vector<std::string>& elements, const std::string&)
+    static auto parse(const std::vector<std::string>& elements, const std::string&) -> std::string
     {
         if (elements.size() != 1)
             throw std::bad_cast();
@@ -291,7 +291,7 @@ class Parser
     }
 
     template<class T>
-    static std::vector<T> parse(const std::vector<std::string>& elements, const std::vector<T>&)
+    static auto parse(const std::vector<std::string>& elements, const std::vector<T>&) -> std::vector<T>
     {
         const T defval = T();
         std::vector<T> values{};
@@ -306,7 +306,7 @@ class Parser
     }
 
     template<typename T>
-    static T parse(const std::vector<std::string>& elements, const NumericalBase<T>& wrapper)
+    static auto parse(const std::vector<std::string>& elements, const NumericalBase<T>& wrapper) -> T
     {
         return parse(elements, wrapper.value, 0);
     }
@@ -318,25 +318,25 @@ class Parser
     /// \param wrapper
     /// \return parsed number
     template<typename T, int base>
-    static T parse(const std::vector<std::string>& elements, const NumericalBase<T, base>& wrapper)
+    static auto parse(const std::vector<std::string>& elements, const NumericalBase<T, base>& wrapper) -> T
     {
         return parse(elements, wrapper.value, wrapper.base);
     }
 
     template<class T>
-    static std::string stringify(const T& value)
+    static auto stringify(const T& value) -> std::string
     {
         return std::to_string(value);
     }
 
     template<class T, int base>
-    static std::string stringify(const NumericalBase<T, base>& wrapper)
+    static auto stringify(const NumericalBase<T, base>& wrapper) -> std::string
     {
         return std::to_string(wrapper.value);
     }
 
     template<class T>
-    static std::string stringify(const std::vector<T>& values)
+    static auto stringify(const std::vector<T>& values) -> std::string
     {
         std::stringstream ss{};
         ss << "[ ";
@@ -349,7 +349,7 @@ class Parser
         return ss.str();
     }
 
-    static std::string stringify(const std::string& str) { return str; }
+    static auto stringify(const std::string& str) -> std::string { return str; }
 
   public:
     explicit Parser(int argc, const char** argv)
@@ -397,7 +397,7 @@ class Parser
         }
     }
 
-    bool has_help() const
+    auto has_help() const -> bool
     {
         for (const auto& command : _commands) {
             if (command->name == "h" && command->alternative == "--help") {
@@ -482,11 +482,11 @@ class Parser
         }
     }
 
-    inline bool run() { return run(std::cout, std::cerr); }
+    inline auto run() -> bool { return run(std::cout, std::cerr); }
 
-    inline bool run(std::ostream& output) { return run(output, std::cerr); }
+    inline auto run(std::ostream& output) -> bool { return run(output, std::cerr); }
 
-    bool doesArgumentExist(std::string name, std::string altName)
+    auto doesArgumentExist(std::string name, std::string altName) -> bool
     {
         for (const auto& argument : _arguments) {
 
@@ -498,9 +498,9 @@ class Parser
         return false;
     }
 
-    inline bool doesHelpExist() { return doesArgumentExist("h", "--help"); }
+    inline auto doesHelpExist() -> bool { return doesArgumentExist("h", "--help"); }
 
-    bool run(std::ostream& output, std::ostream& error)
+    auto run(std::ostream& output, std::ostream& error) -> bool
     {
         if (_arguments.size() > 0) {
             auto current = find_default();
@@ -557,7 +557,7 @@ class Parser
     }
 
     template<typename T>
-    T get(const std::string& name) const
+    auto get(const std::string& name) const -> T
     {
         for (const auto& command : _commands) {
             if (command->name == name) {
@@ -576,13 +576,13 @@ class Parser
     }
 
     template<typename T>
-    T get_if(const std::string& name, std::function<T(T)> callback) const
+    auto get_if(const std::string& name, std::function<T(T)> callback) const -> T
     {
         auto value = get<T>(name);
         return callback(value);
     }
 
-    int requirements() const
+    auto requirements() const -> int
     {
         int count = 0;
 
@@ -595,12 +595,12 @@ class Parser
         return count;
     }
 
-    int commands() const { return static_cast<int>(_commands.size()); }
+    auto commands() const -> int { return static_cast<int>(_commands.size()); }
 
-    inline const std::string& app_name() const { return _appname; }
+    inline auto app_name() const -> const std::string& { return _appname; }
 
   protected:
-    CmdBase* find(const std::string& name)
+    auto find(const std::string& name) -> CmdBase*
     {
         for (auto command : _commands) {
             if (command->is(name)) {
@@ -611,7 +611,7 @@ class Parser
         return nullptr;
     }
 
-    CmdBase* find_default()
+    auto find_default() -> CmdBase*
     {
         for (auto command : _commands) {
             if (command->name == "") {
@@ -622,7 +622,7 @@ class Parser
         return nullptr;
     }
 
-    std::string usage() const
+    auto usage() const -> std::string
     {
         std::stringstream ss{};
         ss << _general_help_text << "\n\n";
@@ -656,7 +656,7 @@ class Parser
         }
     }
 
-    std::string howto_required(CmdBase* command) const
+    auto howto_required(CmdBase* command) const -> std::string
     {
         std::stringstream ss{};
         ss << "The parameter " << command->name << " is required.\n";
@@ -665,7 +665,7 @@ class Parser
         return ss.str();
     }
 
-    std::string howto_use(CmdBase* command) const
+    auto howto_use(CmdBase* command) const -> std::string
     {
         std::stringstream ss{};
         ss << "The parameter " << command->name << " has invalid arguments.\n";
@@ -674,7 +674,7 @@ class Parser
         return ss.str();
     }
 
-    std::string no_default() const
+    auto no_default() const -> std::string
     {
         std::stringstream ss{};
         ss << "No default parameter has been specified.\n";
@@ -683,7 +683,7 @@ class Parser
         return ss.str();
     }
 
-    const std::string& get_general_help_text() const { return _general_help_text; }
+    auto get_general_help_text() const -> const std::string& { return _general_help_text; }
 
     void set_general_help_text(const std::string& generalHelpText)
     {

@@ -56,7 +56,7 @@ class SinkCell : public Cell
     void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // Checks if the cell is active or not
-    u_int32_t is_compute_cell_active() override;
+    auto is_compute_cell_active() -> u_int32_t override;
 
     // This is the id of the Htree node in the second layer network. Think of this as connecting in
     // the 3rd dimension under the chip using TSA (Through Silicon Via)

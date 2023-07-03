@@ -111,7 +111,7 @@ struct ComputeCellStatistics
                                          Coordinates cc_cooridinates);
 
     // Overloading <<
-    friend std::ostream& operator<<(std::ostream& os, const ComputeCellStatistics& stat)
+    friend auto operator<<(std::ostream& os, const ComputeCellStatistics& stat) -> std::ostream&
     {
         os << "Statistics:"
            << "\n\tactions_created: " << stat.actions_created
@@ -124,7 +124,7 @@ struct ComputeCellStatistics
         return os;
     }
 
-    ComputeCellStatistics& operator+=(const ComputeCellStatistics& rhs)
+    auto operator+=(const ComputeCellStatistics& rhs) -> ComputeCellStatistics&
     {
         this->actions_created += rhs.actions_created;
         this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
@@ -210,27 +210,27 @@ class Cell
     // cause congestion at any one link.
     u_int32_t current_recv_channel_to_start_a_cycle{};
 
-    static std::string get_cell_type_name(CellType type);
+    static auto get_cell_type_name(CellType type) -> std::string;
 
-    static std::string get_compute_cell_shape_name(computeCellShape shape);
+    static auto get_compute_cell_shape_name(computeCellShape shape) -> std::string;
 
-    static computeCellShape get_compute_cell_shape_enum(std::string shape);
+    static auto get_compute_cell_shape_enum(std::string shape) -> computeCellShape;
 
-    static u_int32_t get_number_of_neighbors(computeCellShape);
+    static auto get_number_of_neighbors(computeCellShape) -> u_int32_t;
 
-    static Coordinates cc_id_to_cooridinate(u_int32_t cc_id,
+    static auto cc_id_to_cooridinate(u_int32_t cc_id,
                                             computeCellShape shape,
-                                            u_int32_t dim_y);
+                                            u_int32_t dim_y) -> Coordinates;
 
-    static u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate,
+    static auto cc_cooridinate_to_id(Coordinates cc_cooridinate,
                                           computeCellShape shape_,
-                                          u_int32_t dim_y);
+                                          u_int32_t dim_y) -> u_int32_t;
 
-    inline bool cc_exists(const SignedCoordinates cc_coordinate);
+    inline auto cc_exists(const SignedCoordinates cc_coordinate) -> bool;
 
-    bool should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate);
+    auto should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool;
 
-    bool check_cut_off_distance(Coordinates dst_cc_cooridinate);
+    auto check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool;
 
     void add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
 
@@ -250,9 +250,9 @@ class Cell
     void essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip);
 
     // Checks if the cell is active or not
-    virtual u_int32_t is_compute_cell_active() = 0;
+    virtual auto is_compute_cell_active() -> u_int32_t = 0;
 
-    std::pair<bool, u_int32_t> is_congested();
+    auto is_congested() -> std::pair<bool, u_int32_t>;
 
     u_int32_t current_cycle;
 
@@ -264,35 +264,35 @@ class Cell
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
-    std::vector<u_int32_t> get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id);
-    std::vector<u_int32_t> get_west_first_route_towards_cc_id(u_int32_t dst_cc_id);
-    std::vector<u_int32_t> get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id);
-    std::vector<u_int32_t> get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id);
+    auto get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
 
     // Experimental
 
-    std::vector<u_int32_t> get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                                               u_int32_t dst_cc_id);
-    std::vector<u_int32_t> get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id,
-                                                                           u_int32_t dst_cc_id);
+    auto get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
+                                                               u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id,
+                                                                           u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
 
-    std::vector<u_int32_t> get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                                                       u_int32_t dst_cc_id);
+    auto get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
+                                                                       u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
 
-    inline std::vector<u_int32_t> horizontal_first_routing(Coordinates dst_cc_coordinates);
-    inline std::vector<u_int32_t> vertical_first_routing(Coordinates dst_cc_coordinates);
+    inline auto horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;
+    inline auto vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;
 
     // Experimental Ends
 
     // Depreciated
-    u_int32_t get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id);
+    auto get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t;
 
     // Receive an operon from a neighbor
-    bool recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class);
+    auto recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class) -> bool;
 
     void copy_cell_simulation_records_to_statistics();
 
-    friend std::ostream& operator<<(std::ostream& os, const Cell& cc)
+    friend auto operator<<(std::ostream& os, const Cell& cc) -> std::ostream&
     {
         os << "CC Id: " << cc.id << ", CC Coordinates: (" << cc.cooridates.first << ", "
            << cc.cooridates.second << ")\n";

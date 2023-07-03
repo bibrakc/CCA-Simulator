@@ -42,10 +42,10 @@ struct Routing
 {
   public:
     template<class SomeCellType>
-    static std::optional<u_int32_t> routing_0_aggressively_use_htree(
+    static auto routing_0_aggressively_use_htree(
         std::vector<std::shared_ptr<Cell>>& CCA_chip,
         Operon& operon,
-        u_int32_t current_cc_id)
+        u_int32_t current_cc_id) -> std::optional<u_int32_t>
     {
         // Routing 1: Aggresively use the mesh. This is a static routing algrithm.
 
@@ -94,10 +94,10 @@ struct Routing
     }
 
     template<class SomeCellType>
-    static std::optional<u_int32_t> routing_1_use_mesh_more_often(
+    static auto routing_1_use_mesh_more_often(
         std::vector<std::shared_ptr<Cell>>& CCA_chip,
         Operon& operon,
-        u_int32_t current_cc_id)
+        u_int32_t current_cc_id) -> std::optional<u_int32_t>
     {
         // Routing 1: Try to use the mesh network more often.
         u_int32_t src_cc_id = operon.first.src_cc_id;
@@ -143,10 +143,10 @@ struct Routing
     }
 
     template<class SomeCellType>
-    static std::optional<u_int32_t> get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+    static auto get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
                                                   Operon& operon,
                                                   u_int32_t current_cc_id,
-                                                  u_int32_t routing_algorithm_id)
+                                                  u_int32_t routing_algorithm_id) -> std::optional<u_int32_t>
     {
         // std::cout << "routing_algorithm_id = " << routing_algorithm_id << "\n";
 

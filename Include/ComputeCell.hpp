@@ -42,19 +42,19 @@ class ComputeCell : public Cell
 {
   public:
     // Get the object memory location at address addr_in
-    void* get_object(Address addr_in) const;
+    auto get_object(Address addr_in) const -> void*;
 
     // Return the memory used in bytes
-    u_int32_t get_memory_used();
+    auto get_memory_used() -> u_int32_t;
 
     // In bytes
-    u_int32_t get_memory_curr_ptr_offset();
+    auto get_memory_curr_ptr_offset() -> u_int32_t;
 
     // Get memory left in bytes
-    u_int32_t memory_available_in_bytes();
+    auto memory_available_in_bytes() -> u_int32_t;
 
     // Returns the offset in memory for this newly created object
-    std::optional<Address> create_object_in_memory(void* obj, size_t size_of_obj);
+    auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
     void insert_action(const Action& action);
 
@@ -75,16 +75,16 @@ class ComputeCell : public Cell
     void run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip) override;
 
     // Checks if the cell is active or not
-    u_int32_t is_compute_cell_active() override;
+    auto is_compute_cell_active() -> u_int32_t override;
 
     // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
     // on the `staging_operon_from_logic`
-    Task send_operon(Operon operon_in);
+    auto send_operon(Operon operon_in) -> Task;
 
     // Construct an Operon
-    Operon construct_operon(const u_int32_t src_cc_id,
+    auto construct_operon(const u_int32_t src_cc_id,
                             const u_int32_t dst_cc_id,
-                            const Action& action);
+                            const Action& action) -> Operon;
 
     void diffuse(const Action& action);
 
@@ -197,7 +197,7 @@ class ComputeCell : public Cell
     // Each compute cell has a sink cell configured such that when it has to send an operon to far
     // flung compute cell it routes to the Htree network and has to sink the operon into the sink
     // cell that is nearby
-    std::optional<Coordinates> get_cc_htree_sink_cell();
+    auto get_cc_htree_sink_cell() -> std::optional<Coordinates>;
 };
 
 #endif // COMPUTE_CELL_HPP

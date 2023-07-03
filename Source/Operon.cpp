@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <optional>
 
-std::ostream&
-operator<<(std::ostream& os, const Operon& operon_)
+auto
+operator<<(std::ostream& os, const Operon& operon_) -> std::ostream&
 {
     os << "Operon: Src cc_id " << operon_.first.src_cc_id << ", Dst cc_id "
        << operon_.first.dst_cc_id << " Action target addr: " << operon_.second.obj_addr;
@@ -44,8 +44,8 @@ operator<<(std::ostream& os, const Operon& operon_)
     return os;
 }
 
-std::ostream&
-operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_)
+auto
+operator<<(std::ostream& os, const std::vector<std::optional<Operon>>& operons_) -> std::ostream&
 {
 
     for (auto& op_ : operons_) {

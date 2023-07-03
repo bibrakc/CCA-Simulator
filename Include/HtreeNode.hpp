@@ -39,14 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct HtreeNode
 {
 
-    std::ostream& operator<<(std::ostream& os);
+    auto operator<<(std::ostream& os) -> std::ostream&;
 
-    bool put_operon_from_sink_cell(const CoordinatedOperon operon);
-    bool is_coordinate_in_my_range(const Coordinates point);
+    auto put_operon_from_sink_cell(const CoordinatedOperon operon) -> bool;
+    auto is_coordinate_in_my_range(const Coordinates point) -> bool;
 
-    bool is_end_htree_node();
+    auto is_end_htree_node() -> bool;
 
-    bool is_htree_node_active();
+    auto is_htree_node_active() -> bool;
 
     void transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
                   std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,

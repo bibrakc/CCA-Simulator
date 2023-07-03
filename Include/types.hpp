@@ -44,8 +44,8 @@ constexpr u_int32_t lane_width = 1;
 typedef std::pair<u_int32_t, u_int32_t> Coordinates;
 
 // Overload printing for Coordinates
-std::ostream&
-operator<<(std::ostream& os, const Coordinates& coord);
+auto
+operator<<(std::ostream& os, const Coordinates& coord) -> std::ostream&;
 
 // Fixed size queue to be used for storing Operons. The fixed queue size is the bandwidth at that
 // HtreeNode
@@ -62,7 +62,7 @@ class FixedSizeQueue
     {
     }
 
-    bool push(const T& value)
+    auto push(const T& value) -> bool
     {
         // Not able to enqueue. Return false
         if (underlying_queue.size() == this->size_max) {
@@ -73,19 +73,19 @@ class FixedSizeQueue
     }
 
     // Get from front FIFO
-    T front() const { return underlying_queue.front(); }
+    auto front() const -> T { return underlying_queue.front(); }
 
     // Pop/Dequeue
     void pop() { underlying_queue.pop(); }
 
     // Return the current size of the queue
-    u_int32_t size() const { return underlying_queue.size(); }
+    auto size() const -> u_int32_t { return underlying_queue.size(); }
 
     // Return the max size of the queue
-    u_int32_t queue_size_max() const { return this->size_max; }
+    auto queue_size_max() const -> u_int32_t { return this->size_max; }
 
     // Return whether there is a slot in the queue
-    bool has_room() const { return (this->underlying_queue.size() != this->size_max); }
+    auto has_room() const -> bool { return (this->underlying_queue.size() != this->size_max); }
 };
 
 class MaxCounter
@@ -113,9 +113,9 @@ class MaxCounter
     }
 
     void reset() { this->counter = 0; }
-    u_int32_t get_count() const { return this->counter; }
-    u_int32_t get_max_count() const { return this->max_counter; }
-    u_int32_t get_total_count() const { return this->total_counter; }
+    auto get_count() const -> u_int32_t { return this->counter; }
+    auto get_max_count() const -> u_int32_t { return this->max_counter; }
+    auto get_total_count() const -> u_int32_t { return this->total_counter; }
 };
 
 #endif // TYPES_HPP

@@ -243,35 +243,35 @@ class CCASimulator
         }
     }
 
-    inline Coordinates get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y);
+    inline auto get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y) -> Coordinates;
 
-    Coordinates cc_id_to_cooridinate(u_int32_t cc_id);
+    auto cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates;
 
-    u_int32_t cc_cooridinate_to_id(Coordinates cc_cooridinate);
+    auto cc_cooridinate_to_id(Coordinates cc_cooridinate) -> u_int32_t;
 
     // The main chip creation function
     void create_the_chip();
 
     // Register a function event
-    CCAFunctionEvent register_function_event(handler_func function_event_handler);
+    auto register_function_event(handler_func function_event_handler) -> CCAFunctionEvent;
 
     // Return the memory used in bytes
-    u_int32_t get_host_memory_used();
+    auto get_host_memory_used() -> u_int32_t;
     // In bytes
-    u_int32_t get_host_memory_curr_ptr_offset();
+    auto get_host_memory_curr_ptr_offset() -> u_int32_t;
     // Get memory left in bytes
-    u_int32_t host_memory_available_in_bytes();
+    auto host_memory_available_in_bytes() -> u_int32_t;
 
     // Create a CCATerminator object on host and return the address
-    std::optional<Address> create_terminator();
+    auto create_terminator() -> std::optional<Address>;
 
     // Check for termination of the diffusion
-    bool is_diffusion_active(Address terminator_in);
+    auto is_diffusion_active(Address terminator_in) -> bool;
 
-    std::optional<Address> allocate_and_insert_object_on_cc(
+    auto allocate_and_insert_object_on_cc(
         std::unique_ptr<MemoryAllocator>& allocator,
         void* obj,
-        size_t size_of_obj);
+        size_t size_of_obj) -> std::optional<Address>;
 
     void germinate_action(Action action_to_germinate);
 
@@ -281,7 +281,7 @@ class CCASimulator
     void print_statistics(std::ofstream& output_file);
 
     // Get the pointer to the object at `Address addr_in`.
-    void* get_object(Address addr_in) const;
+    auto get_object(Address addr_in) const -> void*;
 
   private:
     // Create the chip. It includes creating the cells and initializing them with IDs and their

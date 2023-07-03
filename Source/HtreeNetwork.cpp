@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Increase the lane size at each recursive joint
 #define BANDWIDTH_SCALE_FACTOR 2
 
-Coordinates
-find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+auto
+find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4) -> Coordinates
 {
     Coordinates coordinates_min;
     coordinates_min.first = c1.first;
@@ -62,8 +62,8 @@ find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, co
     return coordinates_min;
 }
 
-Coordinates
-find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+auto
+find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4) -> Coordinates
 {
     Coordinates coordinates_max;
     coordinates_max.first = c1.first;
@@ -88,17 +88,17 @@ find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, co
     return coordinates_max;
 }
 
-std::pair<Coordinates, Coordinates>
+auto
 union_coverage_ranges(const Coordinates& c1,
                       const Coordinates& c2,
                       const Coordinates& c3,
-                      const Coordinates& c4)
+                      const Coordinates& c4) -> std::pair<Coordinates, Coordinates>
 {
     return std::pair<Coordinates, Coordinates>(find_min(c1, c2, c3, c4), find_max(c1, c2, c3, c4));
 }
 
-u_int32_t
-find_closest_value(const std::vector<u_int32_t>& values, u_int32_t point)
+auto
+find_closest_value(const std::vector<u_int32_t>& values, u_int32_t point) -> u_int32_t
 {
     int left = 0;
     int right = values.size() - 1;
@@ -124,7 +124,7 @@ find_closest_value(const std::vector<u_int32_t>& values, u_int32_t point)
     return closest;
 }
 
-std::shared_ptr<HtreeNode>
+auto
 create_vertical(int hx,
                 int hy,
                 const std::vector<u_int32_t>& all_possible_rows,
@@ -139,9 +139,9 @@ create_vertical(int hx,
                 Coordinates coverage_bottom_right_in,
                 int depth,
                 u_int32_t bandwidth_max,
-                u_int32_t& index);
+                u_int32_t& index) -> std::shared_ptr<HtreeNode>;
 
-std::shared_ptr<HtreeNode>
+auto
 create_horizontal(int hx,
                   int hy,
                   const std::vector<u_int32_t>& all_possible_rows,
@@ -156,7 +156,7 @@ create_horizontal(int hx,
                   Coordinates coverage_bottom_right_in,
                   int depth,
                   u_int32_t bandwidth_max,
-                  u_int32_t& index)
+                  u_int32_t& index) -> std::shared_ptr<HtreeNode>
 {
 
     if (depth < 0) {
@@ -318,7 +318,7 @@ create_horizontal(int hx,
     return center;
 }
 
-std::shared_ptr<HtreeNode>
+auto
 create_vertical(int hx,
                 int hy,
                 const std::vector<u_int32_t>& all_possible_rows,
@@ -333,7 +333,7 @@ create_vertical(int hx,
                 Coordinates coverage_bottom_right_in,
                 int depth,
                 u_int32_t bandwidth_max,
-                u_int32_t& index)
+                u_int32_t& index) -> std::shared_ptr<HtreeNode>
 {
 
     if (depth < 0) {
@@ -466,8 +466,8 @@ create_vertical(int hx,
     return center;
 }
 
-int
-get_htree_dims(int dim, int depth)
+auto
+get_htree_dims(int dim, int depth) -> int
 {
 
     if (depth == 0) {
@@ -480,13 +480,13 @@ get_htree_dims(int dim, int depth)
     return 2 * get_htree_dims(dim, depth - 1);
 }
 
-std::shared_ptr<HtreeNode>
+auto
 create_htree(u_int32_t hx,
              u_int32_t hy,
              u_int32_t depth,
              u_int32_t bandwidth_max,
              const std::vector<u_int32_t>& all_possible_rows,
-             const std::vector<u_int32_t>& all_possible_cols)
+             const std::vector<u_int32_t>& all_possible_cols) -> std::shared_ptr<HtreeNode>
 {
     if (depth == 0) {
         return nullptr;
@@ -772,8 +772,8 @@ HtreeNetwork::construct_htree_network()
     print_details_of_an_htree_node(this->htree_all_nodes, root_in_first_temp->id);
 }
 
-u_int32_t
-HtreeNetwork::get_htree_dims(u_int32_t dim, u_int32_t depth)
+auto
+HtreeNetwork::get_htree_dims(u_int32_t dim, u_int32_t depth) -> u_int32_t
 {
 
     if (depth == 0) {

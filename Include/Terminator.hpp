@@ -46,7 +46,7 @@ struct Terminator
     // The address of the object of which this terminator is part of.
     Address my_object;
 
-    bool is_active();
+    auto is_active() -> bool;
 
     // Recieved an action. Increament my deficit.
     void signal(ComputeCell& cc, const Address origin_addr_in);

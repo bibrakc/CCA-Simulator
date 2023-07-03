@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNode.hpp"
 
 // Overload printing for HtreeNode
-std::ostream&
-HtreeNode::operator<<(std::ostream& os)
+auto
+HtreeNode::operator<<(std::ostream& os) -> std::ostream&
 {
 
     if (this->in_first == nullptr && this->in_second == nullptr) {
@@ -49,24 +49,24 @@ HtreeNode::operator<<(std::ostream& os)
 }
 
 // TODO: see if we keep this globally here or use the HtreeNode function?
-bool
+auto
 is_coordinate_in_a_particular_range(const Coordinates start,
                                     const Coordinates end,
-                                    const Coordinates point)
+                                    const Coordinates point) -> bool
 {
     // Check if the point is within the range
     return ((point.first >= start.first) && (point.first <= end.first) &&
             (point.second >= start.second) && (point.second <= end.second));
 }
 
-bool
-HtreeNode::put_operon_from_sink_cell(const CoordinatedOperon operon)
+auto
+HtreeNode::put_operon_from_sink_cell(const CoordinatedOperon operon) -> bool
 {
     return this->recv_channel_from_sink_cell->push(operon);
 }
 
-bool
-HtreeNode::is_coordinate_in_my_range(const Coordinates point)
+auto
+HtreeNode::is_coordinate_in_my_range(const Coordinates point) -> bool
 {
     // Check if the point is within the range
     return ((point.first >= this->coverage_top_left.first) &&
@@ -75,14 +75,14 @@ HtreeNode::is_coordinate_in_my_range(const Coordinates point)
             (point.second <= this->coverage_bottom_right.second));
 }
 
-bool
-HtreeNode::is_end_htree_node()
+auto
+HtreeNode::is_end_htree_node() -> bool
 {
     return (!this->in_first && !this->in_second);
 }
 
-bool
-HtreeNode::is_htree_node_active()
+auto
+HtreeNode::is_htree_node_active() -> bool
 {
     bool send_channels_active = false;
     bool recv_channels_active = false;

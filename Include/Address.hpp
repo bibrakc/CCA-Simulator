@@ -76,7 +76,7 @@ public:
   {
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Address& ad)
+  friend auto operator<<(std::ostream& os, const Address& ad) -> std::ostream&
   {
     os << "(" << ad.cc_id << ", " << ad.addr << ")";
     return os;

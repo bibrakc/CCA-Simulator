@@ -52,7 +52,7 @@ struct FunctionEventManager
 
     handler_func get_acknowledgement_event_handler();
 
-    CCAFunctionEvent register_function_event(handler_func function_event_handler);
+    auto register_function_event(handler_func function_event_handler) -> CCAFunctionEvent;
 
     handler_func get_function_event_handler(CCAFunctionEvent function_event_in);
 

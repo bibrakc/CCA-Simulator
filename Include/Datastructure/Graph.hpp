@@ -45,7 +45,7 @@ class Graph
     // other tasks.
     std::map<u_int32_t, Address> vertex_addresses;
 
-    Address get_vertex_address_in_cca(u_int32_t vertex_id)
+    auto get_vertex_address_in_cca(u_int32_t vertex_id) -> Address
     {
         return this->vertex_addresses[vertex_id];
     }
@@ -61,10 +61,10 @@ class Graph
 
     // Insert edge by `Address` type src and dst
     template<class VertexTypeOfAddress>
-    inline bool insert_edge_by_address(CCASimulator& cca_simulator,
+    inline auto insert_edge_by_address(CCASimulator& cca_simulator,
                                        Address src_vertex_addr,
                                        Address dst_vertex_addr,
-                                       u_int32_t edge_weight)
+                                       u_int32_t edge_weight) -> bool
     {
 
         VertexTypeOfAddress* vertex =

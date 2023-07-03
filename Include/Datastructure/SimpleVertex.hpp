@@ -54,7 +54,7 @@ struct SimpleVertex : Object
     u_int32_t number_of_edges{};
 
     // Insert an edge with weight
-    bool insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight)
+    auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
         if (this->number_of_edges >= edges_max)
             return false;

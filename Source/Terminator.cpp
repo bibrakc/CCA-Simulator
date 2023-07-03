@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
-bool
-Terminator::is_active()
+auto
+Terminator::is_active() -> bool
 {
     return (this->deficit == 0) ? false : true;
 }

@@ -46,8 +46,8 @@ CCAFunctionEvent bfs_predicate;
 CCAFunctionEvent bfs_work;
 CCAFunctionEvent bfs_diffuse;
 
-int
-main(int argc, char** argv)
+auto
+main(int argc, char** argv) -> int
 {
     // Parse the commandline input
     cli::Parser parser(argc, argv);

@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CyclicMemoryAllocator : public MemoryAllocator
 {
   public:
-    u_int32_t get_next_available_cc(CCASimulator& cca_simulator) override;
+    auto get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t override;
 };
 
 #endif // CYCLIC_MEMORY_ALLOCATOR_HPP

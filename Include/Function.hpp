@@ -55,10 +55,10 @@ using handler_func = int (*)(ComputeCell& cc,
                              const std::shared_ptr<int[]>& args);
 
 // Recieved an acknowledgement message back. Decreament my deficit.
-int
+auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 int nargs,
-                                const std::shared_ptr<int[]>& args);
+                                const std::shared_ptr<int[]>& args) -> int;
 
 #endif // FUNCTION_HPP

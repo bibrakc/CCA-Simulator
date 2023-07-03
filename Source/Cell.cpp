@@ -37,8 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Utility function to convert type of pair
 template<typename To, typename From>
-inline std::pair<To, To>
-convert_internal_type_of_pair(const std::pair<From, From>& p)
+inline auto
+convert_internal_type_of_pair(const std::pair<From, From>& p) -> std::pair<To, To>
 {
     return std::make_pair(static_cast<To>(p.first), static_cast<To>(p.second));
 }
@@ -130,8 +130,8 @@ Cell::add_neighbor_compute_cells()
     }
 }
 
-bool
-Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class)
+auto
+Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class) -> bool
 {
     bool success = this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 
@@ -163,8 +163,8 @@ Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_clas
     return success;
 }
 
-inline bool
-Cell::cc_exists(const SignedCoordinates cc_coordinate)
+inline auto
+Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
 {
     auto [cc_coordinate_x, cc_coordinate_y] = cc_coordinate;
     int zero = 0;
@@ -207,8 +207,8 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << this->send_channel_per_neighbor_contention_count_record[3].get_total_count();
 }
 
-std::string
-Cell::get_cell_type_name(CellType type)
+auto
+Cell::get_cell_type_name(CellType type) -> std::string
 {
     switch (type) {
         case (CellType::compute_cell):
@@ -223,8 +223,8 @@ Cell::get_cell_type_name(CellType type)
     }
 }
 
-std::string
-Cell::get_compute_cell_shape_name(computeCellShape shape)
+auto
+Cell::get_compute_cell_shape_name(computeCellShape shape) -> std::string
 {
     switch (shape) {
         case (computeCellShape::block_1D):
@@ -246,8 +246,8 @@ Cell::get_compute_cell_shape_name(computeCellShape shape)
     }
 }
 
-computeCellShape
-Cell::get_compute_cell_shape_enum(std::string shape)
+auto
+Cell::get_compute_cell_shape_enum(std::string shape) -> computeCellShape
 {
     if (shape == "block_1D") {
         return computeCellShape::block_1D;
@@ -262,8 +262,8 @@ Cell::get_compute_cell_shape_enum(std::string shape)
     }
 }
 
-u_int32_t
-Cell::get_number_of_neighbors(computeCellShape shape_in)
+auto
+Cell::get_number_of_neighbors(computeCellShape shape_in) -> u_int32_t
 {
     switch (shape_in) {
         case (computeCellShape::block_1D):
@@ -286,8 +286,8 @@ Cell::get_number_of_neighbors(computeCellShape shape_in)
     }
 }
 
-Coordinates
-Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t dim_y)
+auto
+Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t dim_y) -> Coordinates
 {
 
     if (shape_ == computeCellShape::square) {
@@ -298,8 +298,9 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t d
     exit(0);
 }
 
-u_int32_t
+auto
 Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, u_int32_t dim_y)
+    -> u_int32_t
 {
 
     if (shape_ == computeCellShape::square) {
@@ -313,8 +314,8 @@ Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, 
     exit(0);
 }
 
-bool
-Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate)
+auto
+Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool
 {
     if (this->shape == computeCellShape::square) {
         auto [src_col, src_row] = src_cc_cooridinate;
@@ -348,8 +349,8 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
     exit(0);
 }
 
-std::pair<bool, u_int32_t>
-Cell::is_congested()
+auto
+Cell::is_congested() -> std::pair<bool, u_int32_t>
 {
 
     bool is_congested = false;
@@ -384,8 +385,8 @@ Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
     this->current_cycle++;
 }
 
-bool
-Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
+auto
+Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
 {
     if (this->shape == computeCellShape::square) {
         auto [src_col, src_row] = this->cooridates;
@@ -407,8 +408,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate)
     exit(0);
 }
 
-std::vector<u_int32_t>
-Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+auto
+Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
 
@@ -428,8 +429,8 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
     // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
-u_int32_t
-Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
+auto
+Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
 {
 
     // Algorithm == dimensional routing
@@ -467,8 +468,9 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
-std::vector<u_int32_t>
+auto
 Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
     // This has deadlock :(
 
@@ -530,8 +532,9 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int
     exit(0);
 }
 
-std::vector<u_int32_t>
+auto
 Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
 
     // Algorithm == west first adaptive
@@ -593,8 +596,8 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t
     exit(0);
 }
 
-std::vector<u_int32_t>
-Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
+auto
+Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
     // Algorithm == west first
@@ -646,8 +649,8 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id)
     exit(0);
 }
 
-inline std::vector<u_int32_t>
-Cell::vertical_first_routing(Coordinates dst_cc_coordinates)
+inline auto
+Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>
 {
 
     std::vector<u_int32_t> paths;
@@ -667,8 +670,8 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates)
     return paths;
 }
 
-inline std::vector<u_int32_t>
-Cell::horizontal_first_routing(Coordinates dst_cc_coordinates)
+inline auto
+Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>
 {
     std::vector<u_int32_t> paths;
     if (this->cooridates.first > dst_cc_coordinates.first) {
@@ -684,16 +687,17 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates)
     return paths;
 }
 
-inline bool
-row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y)
+inline auto
+row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y) -> bool
 {
     u_int32_t center = dim_y / 2;
     u_int32_t start_chunk = (dim_y * row) + center + 4;
     return ((cc_id > start_chunk) && (cc_id < start_chunk + chunk_size));
 }
 
-std::vector<u_int32_t>
+auto
 Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
 
     // Algorithm == mixed first.
@@ -743,8 +747,8 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
 }
 
 // Dimension-ordered (Y-X) routing
-std::vector<u_int32_t>
-Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
+auto
+Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
     // Algorithm == mixed first.
@@ -766,8 +770,8 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id)
 }
 
 // Dimension-ordered (X-Y) routing
-std::vector<u_int32_t>
-Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id)
+auto
+Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
     // Algorithm == mixed first.

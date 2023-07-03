@@ -44,8 +44,8 @@ FunctionEventManager::get_acknowledgement_event_handler()
     return this->event_handlers[this->acknowledgement_event_id];
 }
 
-CCAFunctionEvent
-FunctionEventManager::register_function_event(handler_func function_event_handler)
+auto
+FunctionEventManager::register_function_event(handler_func function_event_handler) -> CCAFunctionEvent
 {
     assert(this->next_available_event_id == this->event_handlers.size());
 

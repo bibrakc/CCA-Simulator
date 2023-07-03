@@ -33,8 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNode.hpp"
 #include "Routing.hpp"
 
-std::pair<u_int32_t, u_int32_t>
-return_asymetric_neighbors(u_int32_t channel_to_send)
+auto
+return_asymetric_neighbors(u_int32_t channel_to_send) -> std::pair<u_int32_t, u_int32_t>
 {
     switch (channel_to_send) {
         case (0):
@@ -358,8 +358,8 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
 }
 
 // Checks if the compute cell is active or not
-u_int32_t
-SinkCell::is_compute_cell_active()
+auto
+SinkCell::is_compute_cell_active() -> u_int32_t
 {
     bool send_channels = false;
     bool recv_channels = false;

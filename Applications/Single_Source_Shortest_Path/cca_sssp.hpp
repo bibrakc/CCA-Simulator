@@ -93,11 +93,11 @@ class SSSPAction : public Action
     ~SSSPAction() override {}
 };
 
-int
+auto
 sssp_predicate_func(ComputeCell& cc,
                     const Address& addr,
                     int nargs,
-                    const std::shared_ptr<int[]>& args)
+                    const std::shared_ptr<int[]>& args) -> int
 {
     SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
@@ -109,8 +109,8 @@ sssp_predicate_func(ComputeCell& cc,
     return 0;
 }
 
-int
-sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+auto
+sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args) -> int
 {
     SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     int incoming_distance = args[0];
@@ -120,11 +120,11 @@ sssp_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::share
     return 0;
 }
 
-int
+auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   int nargs,
-                  const std::shared_ptr<int[]>& args)
+                  const std::shared_ptr<int[]>& args) -> int
 {
     SSSPSimpleVertex<Address>* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     for (int i = 0; i < v->number_of_edges; i++) {

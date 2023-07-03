@@ -42,7 +42,7 @@ class MemoryAllocator
 {
   public:
     u_int32_t next_cc_id{};
-    virtual u_int32_t get_next_available_cc(CCASimulator&) = 0;
+    virtual auto get_next_available_cc(CCASimulator&) -> u_int32_t = 0;
 };
 
 #endif // MEMORY_ALLOCATOR_HPP
