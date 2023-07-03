@@ -439,8 +439,7 @@ CCASimulator::run_simulation(Address app_terminator)
                   << "%, htree Active: " << percent_htree_active << "%\n";
         //  << "%, Diffusion Termianated? = " << this->is_diffusion_active(app_terminator)
 
-        this->cca_statistics.active_status.push_back(
-            ActiveStatusPerCycle(percent_CCs_active, percent_htree_active));
+        this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         total_cycles++;
 
 // Set new cycle # for every Cell: Experimental

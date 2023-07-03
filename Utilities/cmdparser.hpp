@@ -356,7 +356,7 @@ class Parser
         : _appname(argv[0])
     {
         for (int i = 1; i < argc; ++i) {
-            _arguments.push_back(argv[i]);
+            _arguments.emplace_back(argv[i]);
         }
         enable_help();
     }
@@ -365,7 +365,7 @@ class Parser
         : _appname(argv[0])
     {
         for (int i = 1; i < argc; ++i) {
-            _arguments.push_back(argv[i]);
+            _arguments.emplace_back(argv[i]);
         }
         enable_help();
     }
@@ -375,7 +375,7 @@ class Parser
         , _general_help_text(std::move(generalProgramDescriptionForHelpText))
     {
         for (int i = 1; i < argc; ++i) {
-            _arguments.push_back(argv[i]);
+            _arguments.emplace_back(argv[i]);
         }
         enable_help();
     }
@@ -385,7 +385,7 @@ class Parser
         , _general_help_text(std::move(generalProgramDescriptionForHelpText))
     {
         for (int i = 1; i < argc; ++i) {
-            _arguments.push_back(argv[i]);
+            _arguments.emplace_back(argv[i]);
         }
         enable_help();
     }
