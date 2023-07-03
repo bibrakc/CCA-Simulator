@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_sssp.hpp"
+#include "cca_bfs.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -40,11 +40,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <omp.h>
 
-// Declare the function event ids for the SSSP action functions of predicate, work, and diffuse.
+// Declare the function event ids for the BFS action functions of predicate, work, and diffuse.
 // In the main register the functions and get their ids
-CCAFunctionEvent sssp_predicate;
-CCAFunctionEvent sssp_work;
-CCAFunctionEvent sssp_diffuse;
+CCAFunctionEvent bfs_predicate;
+CCAFunctionEvent bfs_work;
+CCAFunctionEvent bfs_diffuse;
 
 int
 main(int argc, char** argv)
@@ -54,7 +54,7 @@ main(int argc, char** argv)
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
-    // SSSP root vertex
+    // BFS root vertex
     u_int32_t root_vertex = parser.get<u_int32_t>("root");
 
     // Test vertex to print its distance from the root
@@ -117,7 +117,7 @@ main(int argc, char** argv)
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<SSSPSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<BFSSimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -125,19 +125,19 @@ main(int argc, char** argv)
     // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
 
-    // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
-    // to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<SSSPSimpleVertex<Address>>(cca_square_simulator,
-                                                                      allocator);
+    // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
+    // the CCA chip and there the address type is Address (not u_int32_t ID).
+    input_graph.transfer_graph_host_to_cca<BFSSimpleVertex<Address>>(cca_square_simulator,
+                                                                     allocator);
 
-    // Only put the SSSP seed action on a single vertex.
-    // In this case SSSP root = root_vertex
+    // Only put the BFS seed action on a single vertex.
+    // In this case BFS root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
-    // Register the SSSP action functions for predicate, work, and diffuse.
-    sssp_predicate = cca_square_simulator.register_function_event(sssp_predicate_func);
-    sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
-    sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
+    // Register the BFS action functions for predicate, work, and diffuse.
+    bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);
+    bfs_work = cca_square_simulator.register_function_event(bfs_work_func);
+    bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
 
     // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
     std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
@@ -146,26 +146,26 @@ main(int argc, char** argv)
     // Origin vertex from where this action came
     args_x[1] = root_vertex;
 
-    std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
-    if (!sssp_terminator) {
-        std::cerr << "Error! Memory not allocated for sssp_terminator \n";
+    std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
+    if (!bfs_terminator) {
+        std::cerr << "Error! Memory not allocated for bfs_terminator \n";
         exit(0);
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(SSSPAction(vertex_addr,
-                                                     sssp_terminator.value(),
-                                                     actionType::application_action,
-                                                     true,
-                                                     2,
-                                                     args_x,
-                                                     sssp_predicate,
-                                                     sssp_work,
-                                                     sssp_diffuse));
+    cca_square_simulator.germinate_action(BFSAction(vertex_addr,
+                                                    bfs_terminator.value(),
+                                                    actionType::application_action,
+                                                    true,
+                                                    2,
+                                                    args_x,
+                                                    bfs_predicate,
+                                                    bfs_work,
+                                                    bfs_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
-    cca_square_simulator.run_simulation(sssp_terminator.value());
+    cca_square_simulator.run_simulation(bfs_terminator.value());
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
@@ -178,14 +178,14 @@ main(int argc, char** argv)
     // Check for correctness. Print the distance to a target test vertex.
     Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
-    SSSPSimpleVertex<Address>* v_test =
-        static_cast<SSSPSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+    BFSSimpleVertex<Address>* v_test =
+        static_cast<BFSSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
 
-    std::cout << "\nSSSP distance from vertex: " << root_vertex << " to vertex: " << v_test->id
-              << " is: " << v_test->sssp_distance << "\n";
+    std::cout << "\nBFS distance from vertex: " << root_vertex << " to vertex: " << v_test->id
+              << " is: " << v_test->bfs_level << "\n";
 
     // Write simulation statistics to a file
-    std::string output_file_name = "sssp_square_x_" + std::to_string(cca_square_simulator.dim_x) +
+    std::string output_file_name = "bfs_square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
                                    graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
                                    "_e_" + std::to_string(input_graph.total_edges) + "_hb_" +

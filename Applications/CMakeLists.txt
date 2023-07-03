@@ -35,3 +35,4 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Add the source directory
 add_subdirectory(Single_Source_Shortest_Path)
+add_subdirectory(Breadth_First_Search)

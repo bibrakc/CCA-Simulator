@@ -4,10 +4,8 @@ Event-level simulator for [Continuum Computer Architecture (CCA)](https://superf
 ## Summary
 The CCA Simulator enables exploring design space of the CCA class of non-Von Neumann intelligent memory systems. These systems are concieved to be highly fine-grain parallel and use event-driven mechanisms to perform computation.
 
-## Building
-### Using CMake
-To generate the executable `SSSP_CCASimulator`:
-
+## Building Using CMake
+To compile the applications, navigate to the [Applications](/Applications) directory and select a specific application. Once inside the chosen application directory, execute the following `cmake` commands to generate the executable.
 > `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true`
 
 > `$ cmake --build build`
@@ -16,9 +14,17 @@ To generate the executable `SSSP_CCASimulator`:
 
 ## Executing
 ### SSSP Application
-
+Assuming the current directory is `/Applications/Single_Source_Shortest_Path`
 #### Using Low-Latency Network (Htree)
-> `$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0`
+> `$ ./build/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0`
 
 #### Using Pure Mesh Netowrk
-> `$ ./build/Applications/Single_Source_Shortest_Path/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
+> `$ ./build/SSSP_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
+
+### BFS Application
+Assuming the current directory is `/Applications/Breadth_First_Search`
+#### Using Low-Latency Network (Htree)
+> `$ ./build/BFS_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0`
+
+#### Using Pure Mesh Netowrk
+> `$ ./build/BFS_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
