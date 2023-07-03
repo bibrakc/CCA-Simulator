@@ -199,7 +199,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return std::stoi(elements[0], 0, numberBase);
+        return std::stoi(elements[0], nullptr, numberBase);
     }
 
     static bool parse(const std::vector<std::string>& elements, const bool& defval)
@@ -241,7 +241,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return static_cast<unsigned int>(std::stoul(elements[0], 0, numberBase));
+        return static_cast<unsigned int>(std::stoul(elements[0], nullptr, numberBase));
     }
 
     static unsigned long parse(const std::vector<std::string>& elements,
@@ -251,7 +251,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return std::stoul(elements[0], 0, numberBase);
+        return std::stoul(elements[0], nullptr, numberBase);
     }
 
     static unsigned long long parse(const std::vector<std::string>& elements,
@@ -261,7 +261,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return std::stoull(elements[0], 0, numberBase);
+        return std::stoull(elements[0], nullptr, numberBase);
     }
 
     static long long parse(const std::vector<std::string>& elements,
@@ -271,7 +271,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return std::stoll(elements[0], 0, numberBase);
+        return std::stoll(elements[0], nullptr, numberBase);
     }
 
     static long parse(const std::vector<std::string>& elements, const long&, int numberBase = 0)
@@ -279,7 +279,7 @@ class Parser
         if (elements.size() != 1)
             throw std::bad_cast();
 
-        return std::stol(elements[0], 0, numberBase);
+        return std::stol(elements[0], nullptr, numberBase);
     }
 
     static std::string parse(const std::vector<std::string>& elements, const std::string&)

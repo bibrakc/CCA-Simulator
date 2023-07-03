@@ -129,9 +129,9 @@ class Graph
     {
 
         // Generate or read the input data graph
-        FILE* input_graph_file_handler = NULL;
+        FILE* input_graph_file_handler = nullptr;
 
-        if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == NULL) {
+        if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == nullptr) {
             exit(0);
         }
 
