@@ -144,7 +144,7 @@ class Parser
         {
         }
 
-        virtual bool parse(std::ostream& output, std::ostream& error)
+        bool parse(std::ostream& output, std::ostream& error) override
         {
             try {
                 CallbackArgs args{ arguments, output, error };
@@ -155,7 +155,7 @@ class Parser
             }
         }
 
-        virtual std::string print_value() const { return ""; }
+        std::string print_value() const override { return ""; }
 
         std::function<T(CallbackArgs&)> callback;
         T value;
@@ -179,7 +179,7 @@ class Parser
         {
         }
 
-        virtual bool parse(std::ostream&, std::ostream&)
+        bool parse(std::ostream&, std::ostream&) override
         {
             try {
                 value = Parser::parse(arguments, value);
@@ -189,7 +189,7 @@ class Parser
             }
         }
 
-        virtual std::string print_value() const { return stringify(value); }
+        std::string print_value() const override { return stringify(value); }
 
         T value;
     };
