@@ -28,3 +28,8 @@ Assuming the current directory is `/Applications/Breadth_First_Search`
 
 #### Using Pure Mesh Netowrk
 > `$ ./build/BFS_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
+
+## Using clang-tidy
+Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+
+Inside an application use something like: `noglob /opt/homebrew/opt/llvm/bin/clang-tidy -p build ../../Source/ComputeCell.cpp -checks=cppcoreguidelines-* -header-filter=.*`
