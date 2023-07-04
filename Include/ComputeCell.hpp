@@ -82,7 +82,7 @@ class ComputeCell : public Cell
     auto send_operon(Operon operon_in) -> Task;
 
     // Construct an Operon
-    auto construct_operon(const u_int32_t src_cc_id,
+    static auto construct_operon(const u_int32_t src_cc_id,
                             const u_int32_t dst_cc_id,
                             const Action& action) -> Operon;
 

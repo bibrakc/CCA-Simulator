@@ -225,7 +225,7 @@ CCASimulator::get_host_memory_curr_ptr_offset() -> u_int32_t
 auto
 CCASimulator::host_memory_available_in_bytes() -> u_int32_t
 {
-    return this->host_memory_size_in_bytes - this->get_host_memory_used();
+    return CCASimulator::host_memory_size_in_bytes - this->get_host_memory_used();
 }
 
 // Get the pointer to the object at `Address addr_in`
@@ -319,7 +319,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     std::cout << simulation_statistics;
 
     // Output CCA Chip details
-    this->generate_label(output_file);
+    CCASimulator::generate_label(output_file);
     this->output_description_in_a_single_line(output_file);
 
     // Output total cycles, total actions, total actions performed work, total actions false on
@@ -335,7 +335,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     this->output_CCA_active_status_per_cycle(output_file);
 
     // Output statistics for each compute cell
-    simulation_statistics.generate_label(output_file);
+    ComputeCellStatistics::generate_label(output_file);
     for (auto& cc : this->CCA_chip) {
         cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
         if (&cc != &this->CCA_chip.back()) {
@@ -432,9 +432,10 @@ CCASimulator::run_simulation(Address app_terminator)
             is_system_active = true;
         }
         double const percent_CCs_active = 100.0 * static_cast<double>(sum_global_active_cc_local) /
-                                    static_cast<double>(this->CCA_chip.size());
-        double const percent_htree_active = 100.0 * static_cast<double>(sum_global_active_htree) /
-                                      static_cast<double>(htree_network.htree_all_nodes.size());
+                                          static_cast<double>(this->CCA_chip.size());
+        double const percent_htree_active =
+            100.0 * static_cast<double>(sum_global_active_htree) /
+            static_cast<double>(htree_network.htree_all_nodes.size());
         std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
                   << "%, htree Active: " << percent_htree_active << "%\n";
         //  << "%, Diffusion Termianated? = " << this->is_diffusion_active(app_terminator)

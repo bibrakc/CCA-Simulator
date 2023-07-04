@@ -160,8 +160,8 @@ class CCASimulator
         // This doesn't work with older compilers that don't have newer C++ features. Therefore
         // using the old way of explicitly providing new and deleters. this->host_memory =
         // std::make_shared<char[]>(this->host_memory_size_in_bytes);
-        std::shared_ptr<char[]> const host_memory_ptr(new char[this->host_memory_size_in_bytes],
-                                                std::default_delete<char[]>());
+        std::shared_ptr<char[]> const host_memory_ptr(
+            new char[CCASimulator::host_memory_size_in_bytes], std::default_delete<char[]>());
         this->host_memory = host_memory_ptr;
 
         this->host_memory_raw_ptr = this->host_memory.get();
@@ -194,7 +194,7 @@ class CCASimulator
            << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n\n";
     }
 
-    inline void generate_label(std::ostream& os)
+    static inline void generate_label(std::ostream& os)
     {
         os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_compute_cells\ttotal_"
               "chip_memory(byes)\n";
@@ -243,7 +243,8 @@ class CCASimulator
         }
     }
 
-    inline auto get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y) -> Coordinates;
+    static inline auto get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y)
+        -> Coordinates;
 
     auto cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates;
 
@@ -268,10 +269,9 @@ class CCASimulator
     // Check for termination of the diffusion
     auto is_diffusion_active(Address terminator_in) -> bool;
 
-    auto allocate_and_insert_object_on_cc(
-        std::unique_ptr<MemoryAllocator>& allocator,
-        void* obj,
-        size_t size_of_obj) -> std::optional<Address>;
+    auto allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
+                                          void* obj,
+                                          size_t size_of_obj) -> std::optional<Address>;
 
     void germinate_action(Action action_to_germinate);
 

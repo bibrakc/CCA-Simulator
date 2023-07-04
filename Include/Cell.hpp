@@ -93,7 +93,7 @@ struct ComputeCellStatistics
     // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
     CellType type;
 
-    inline void generate_label(std::ostream& os)
+    static inline void generate_label(std::ostream& os)
     {
         os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y"
               "\tactions_created\tactions_acknowledgement_created"

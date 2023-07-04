@@ -61,7 +61,7 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
         cc.statistics.actions_acknowledgement_created++;
         // Create Operon and put it in the task queue
         Operon const operon_to_send =
-            cc.construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
+            ComputeCell::construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
         cc.task_queue.push(cc.send_operon(operon_to_send));
     }
 }
@@ -91,7 +91,7 @@ Terminator::unsignal(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon const operon_to_send =
-                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
+                ComputeCell::construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent
@@ -138,7 +138,7 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon const operon_to_send =
-                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
+                ComputeCell::construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent
@@ -169,7 +169,7 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
             Operon const operon_to_send =
-                cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
+                ComputeCell::construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
             // Unset the parent
