@@ -71,7 +71,7 @@ struct SimpleVertex : Object
 };
 
 // Print the SimpleVertex vertex
-void
+inline void
 print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "

@@ -93,7 +93,7 @@ class SSSPAction : public Action
     ~SSSPAction() override = default;
 };
 
-auto
+inline auto
 sssp_predicate_func(ComputeCell& cc,
                     const Address& addr,
                     int  /*nargs*/,
@@ -109,7 +109,7 @@ sssp_predicate_func(ComputeCell& cc,
     return 0;
 }
 
-auto
+inline auto
 sssp_work_func(ComputeCell& cc, const Address& addr, int  /*nargs*/, const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
@@ -120,7 +120,7 @@ sssp_work_func(ComputeCell& cc, const Address& addr, int  /*nargs*/, const std::
     return 0;
 }
 
-auto
+inline auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   int  /*nargs*/,
@@ -148,7 +148,7 @@ sssp_diffuse_func(ComputeCell& cc,
     return 0;
 }
 
-void
+inline void
 configure_parser(cli::Parser& parser)
 {
     parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");

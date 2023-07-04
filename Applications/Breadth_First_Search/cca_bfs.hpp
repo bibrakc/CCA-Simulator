@@ -93,7 +93,7 @@ class BFSAction : public Action
     ~BFSAction() override {}
 };
 
-auto
+inline auto
 bfs_predicate_func(ComputeCell& cc,
                    const Address& addr,
                    int nargs,
@@ -109,7 +109,7 @@ bfs_predicate_func(ComputeCell& cc,
     return 0;
 }
 
-auto
+inline auto
 bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
@@ -120,7 +120,7 @@ bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared
     return 0;
 }
 
-auto
+inline auto
 bfs_diffuse_func(ComputeCell& cc,
                  const Address& addr,
                  int nargs,
@@ -148,7 +148,7 @@ bfs_diffuse_func(ComputeCell& cc,
     return 0;
 }
 
-void
+inline void
 configure_parser(cli::Parser& parser)
 {
     parser.set_required<std::string>("f", "graphfile", "Path to the input data graph file");
