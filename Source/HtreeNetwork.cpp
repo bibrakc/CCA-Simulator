@@ -693,7 +693,7 @@ HtreeNetwork::construct_htree_network()
         return;
     }
 
-    u_int32_t total_rows_cols_with_htree_nodes = static_cast<u_int32_t>(pow(2, this->hdepth));
+    auto total_rows_cols_with_htree_nodes = static_cast<u_int32_t>(pow(2, this->hdepth));
 
     u_int32_t first_row = std::ceil(this->hx / 2.0);
     u_int32_t first_col = std::ceil(this->hy / 2.0);

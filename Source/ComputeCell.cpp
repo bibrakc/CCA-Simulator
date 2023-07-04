@@ -44,7 +44,7 @@ terminator_acknowledgement_func(ComputeCell& cc,
                                 int nargs,
                                 const std::shared_ptr<int[]>& args) -> int
 {
-    Object* obj = static_cast<Object*>(cc.get_object(addr));
+    auto* obj = static_cast<Object*>(cc.get_object(addr));
 
     obj->terminator.acknowledgement(cc);
     return 0;
@@ -91,7 +91,7 @@ ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj) -> std::o
         return std::nullopt;
     }
 
-    Object* cca_obj = static_cast<Object*>(obj_in);
+    auto* cca_obj = static_cast<Object*>(obj_in);
 
     u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
     Address obj_addr(this->id, obj_memory_addr_offset);
@@ -140,7 +140,7 @@ ComputeCell::send_operon(Operon operon_in) -> Task
     actionType action_type = operon_in.second.action_type;
     if (action_type == actionType::application_action) {
         Address addr = operon_in.second.origin_addr;
-        Object* obj = static_cast<Object*>(this->get_object(addr));
+        auto* obj = static_cast<Object*>(this->get_object(addr));
 
         obj->terminator.deficit++;
     }
@@ -198,7 +198,7 @@ ComputeCell::execute_action(void* function_events)
         Action action = this->action_queue.front();
         this->action_queue.pop();
 
-        FunctionEventManager* function_events_manager =
+        auto* function_events_manager =
             static_cast<FunctionEventManager*>(function_events);
 
         if constexpr (debug_code) {
@@ -214,7 +214,7 @@ ComputeCell::execute_action(void* function_events)
 
         if (action.action_type == actionType::application_action) {
 
-            Object* obj = static_cast<Object*>(this->get_object(action.obj_addr));
+            auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
 
             // Signal that this object is active for termination detection
             // origin_addr is set to be parent if deficit == 0

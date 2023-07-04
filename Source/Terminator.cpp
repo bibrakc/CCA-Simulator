@@ -73,7 +73,7 @@ Terminator::unsignal(ComputeCell& cc)
     if ((this->deficit == 0) && (this->parent != std::nullopt)) {
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
-            Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
+            auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
             std::cout << "Host Terminator Acknowledgement Sent!\n";
@@ -121,7 +121,7 @@ Terminator::acknowledgement(ComputeCell& cc)
     if ((this->deficit == 0) && (this->parent != std::nullopt)) {
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
-            Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
+            auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
         } else {
@@ -152,7 +152,7 @@ Terminator::acknowledgement(ComputeCell& cc)
         // Unset the parent and send an acknowledgement back to the parent.
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
-            Object* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
+            auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
         } else {

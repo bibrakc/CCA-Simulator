@@ -268,7 +268,7 @@ auto
 CCASimulator::is_diffusion_active(Address terminator_in) -> bool
 {
 
-    CCATerminator* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
+    auto* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
     return terminator_obj->terminator.is_active();
 }
 
@@ -295,7 +295,7 @@ CCASimulator::germinate_action(Action action_to_germinate)
         compute_cell->insert_action(action_to_germinate);
 
         // Get the host terminator object for signal.
-        Object* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
+        auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
         obj->terminator.host_signal();
 
         compute_cell->statistics.actions_created++;

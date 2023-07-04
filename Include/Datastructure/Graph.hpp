@@ -67,7 +67,7 @@ class Graph
                                        u_int32_t edge_weight) -> bool
     {
 
-        VertexTypeOfAddress* vertex =
+        auto* vertex =
             static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
 
         // Check if edges are not full

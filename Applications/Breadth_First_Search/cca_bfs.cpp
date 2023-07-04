@@ -55,25 +55,25 @@ main(int argc, char** argv) -> int
     parser.run_and_exit_if_error();
 
     // BFS root vertex
-    u_int32_t root_vertex = parser.get<u_int32_t>("root");
+    auto root_vertex = parser.get<u_int32_t>("root");
 
     // Test vertex to print its distance from the root
-    u_int32_t test_vertex = parser.get<u_int32_t>("tv");
+    auto test_vertex = parser.get<u_int32_t>("tv");
 
     // Configuration related to the input data graph
-    std::string input_graph_path = parser.get<std::string>("f");
-    std::string graph_name = parser.get<std::string>("g");
+    auto input_graph_path = parser.get<std::string>("f");
+    auto graph_name = parser.get<std::string>("g");
 
     // Optional output directory path
-    std::string output_file_directory = parser.get<std::string>("od");
+    auto output_file_directory = parser.get<std::string>("od");
 
     // Get the depth of Htree
-    u_int32_t hdepth = parser.get<u_int32_t>("hdepth");
+    auto hdepth = parser.get<u_int32_t>("hdepth");
 
     // Get the rows and columbs of cells that are served by a single end Htree node. This will help
     // in construction of the CCA chip, Htree, and routing
-    u_int32_t hx = parser.get<u_int32_t>("hx");
-    u_int32_t hy = parser.get<u_int32_t>("hy");
+    auto hx = parser.get<u_int32_t>("hx");
+    auto hy = parser.get<u_int32_t>("hy");
     if (hdepth != 0) {
         if (!(hx % 2)) {
             std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
@@ -86,12 +86,12 @@ main(int argc, char** argv) -> int
     }
 
     // Get the max bandwidth of Htree
-    u_int32_t hbandwidth_max = parser.get<u_int32_t>("hb");
+    auto hbandwidth_max = parser.get<u_int32_t>("hb");
     if (hdepth == 0) {
         hbandwidth_max = 0;
     }
     // Configuration related to the CCA Chip
-    std::string shape_arg = parser.get<std::string>("s");
+    auto shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;
 
     if (shape_arg == "square") {
@@ -102,10 +102,10 @@ main(int argc, char** argv) -> int
     }
 
     // Get the memory per cc or use the default
-    u_int32_t memory_per_cc = parser.get<u_int32_t>("m");
+    auto memory_per_cc = parser.get<u_int32_t>("m");
 
     // Get the routing policy to use
-    u_int32_t routing_policy = parser.get<u_int32_t>("route");
+    auto routing_policy = parser.get<u_int32_t>("route");
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
 
@@ -178,7 +178,7 @@ main(int argc, char** argv) -> int
     // Check for correctness. Print the distance to a target test vertex.
     Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
-    BFSSimpleVertex<Address>* v_test =
+    auto* v_test =
         static_cast<BFSSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
 
     std::cout << "\nBFS distance from vertex: " << root_vertex << " to vertex: " << v_test->id
