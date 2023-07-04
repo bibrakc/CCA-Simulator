@@ -34,7 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNode.hpp"
 
 // Increase the lane size at each recursive joint
-#define BANDWIDTH_SCALE_FACTOR 2
+enum {
+BANDWIDTH_SCALE_FACTOR = 2
+};
 
 auto
 find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4) -> Coordinates
