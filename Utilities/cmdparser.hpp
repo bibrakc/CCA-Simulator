@@ -197,40 +197,45 @@ class Parser
 
     static auto parse(const std::vector<std::string>& elements, const int&, int numberBase = 0) -> int
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stoi(elements[0], nullptr, numberBase);
     }
 
     static auto parse(const std::vector<std::string>& elements, const bool& defval) -> bool
     {
-        if (!elements.empty())
+        if (!elements.empty()) {
             throw std::runtime_error("A boolean command line parameter cannot have any arguments.");
+}
 
         return !defval;
     }
 
     static auto parse(const std::vector<std::string>& elements, const double&) -> double
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stod(elements[0]);
     }
 
     static auto parse(const std::vector<std::string>& elements, const float&) -> float
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stof(elements[0]);
     }
 
     static auto parse(const std::vector<std::string>& elements, const long double&) -> long double
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stold(elements[0]);
     }
@@ -239,8 +244,9 @@ class Parser
                               const unsigned int&,
                               int numberBase = 0) -> unsigned int
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return static_cast<unsigned int>(std::stoul(elements[0], nullptr, numberBase));
     }
@@ -249,8 +255,9 @@ class Parser
                                const unsigned long&,
                                int numberBase = 0) -> unsigned long
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stoul(elements[0], nullptr, numberBase);
     }
@@ -259,8 +266,9 @@ class Parser
                                     const unsigned long long&,
                                     int numberBase = 0) -> unsigned long long
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stoull(elements[0], nullptr, numberBase);
     }
@@ -269,24 +277,27 @@ class Parser
                            const long long&,
                            int numberBase = 0) -> long long
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stoll(elements[0], nullptr, numberBase);
     }
 
     static auto parse(const std::vector<std::string>& elements, const long&, int numberBase = 0) -> long
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return std::stol(elements[0], nullptr, numberBase);
     }
 
     static auto parse(const std::vector<std::string>& elements, const std::string&) -> std::string
     {
-        if (elements.size() != 1)
+        if (elements.size() != 1) {
             throw std::bad_cast();
+}
 
         return elements[0];
     }

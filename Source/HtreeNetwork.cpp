@@ -34,58 +34,73 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNode.hpp"
 
 // Increase the lane size at each recursive joint
-enum {
-BANDWIDTH_SCALE_FACTOR = 2
+enum
+{
+    BANDWIDTH_SCALE_FACTOR = 2
 };
 
 auto
-find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4) -> Coordinates
+find_min(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+    -> Coordinates
 {
     Coordinates coordinates_min;
     coordinates_min.first = c1.first;
     coordinates_min.second = c1.second;
 
     // Find the minimum x-values
-    if (c2.first < coordinates_min.first)
+    if (c2.first < coordinates_min.first) {
         coordinates_min.first = c2.first;
-    if (c3.first < coordinates_min.first)
+    }
+    if (c3.first < coordinates_min.first) {
         coordinates_min.first = c3.first;
-    if (c4.first < coordinates_min.first)
+    }
+    if (c4.first < coordinates_min.first) {
         coordinates_min.first = c4.first;
+    }
 
     // Find the minimum y-values
-    if (c2.second < coordinates_min.second)
+    if (c2.second < coordinates_min.second) {
         coordinates_min.second = c2.second;
-    if (c3.second < coordinates_min.second)
+    }
+    if (c3.second < coordinates_min.second) {
         coordinates_min.second = c3.second;
-    if (c4.second < coordinates_min.second)
+    }
+    if (c4.second < coordinates_min.second) {
         coordinates_min.second = c4.second;
+    }
 
     return coordinates_min;
 }
 
 auto
-find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4) -> Coordinates
+find_max(const Coordinates& c1, const Coordinates& c2, const Coordinates& c3, const Coordinates& c4)
+    -> Coordinates
 {
     Coordinates coordinates_max;
     coordinates_max.first = c1.first;
     coordinates_max.second = c1.second;
 
     // Find the maximum x-values
-    if (c2.first > coordinates_max.first)
+    if (c2.first > coordinates_max.first) {
         coordinates_max.first = c2.first;
-    if (c3.first > coordinates_max.first)
+    }
+    if (c3.first > coordinates_max.first) {
         coordinates_max.first = c3.first;
-    if (c4.first > coordinates_max.first)
+    }
+    if (c4.first > coordinates_max.first) {
         coordinates_max.first = c4.first;
+    }
 
     // Find the maximum y-values
-    if (c2.second > coordinates_max.second)
+    if (c2.second > coordinates_max.second) {
         coordinates_max.second = c2.second;
-    if (c3.second > coordinates_max.second)
+    }
+    if (c3.second > coordinates_max.second) {
         coordinates_max.second = c3.second;
-    if (c4.second > coordinates_max.second)
+    }
+    if (c4.second > coordinates_max.second) {
         coordinates_max.second = c4.second;
+    }
 
     return coordinates_max;
 }
