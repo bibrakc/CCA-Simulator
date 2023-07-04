@@ -58,7 +58,7 @@ struct SimpleVertex : Object
     {
         if (this->number_of_edges >= edges_max) {
             return false;
-}
+        }
 
         this->edges[this->number_of_edges].edge = dst_vertex_addr;
         this->edges[this->number_of_edges].weight = edge_weight;

@@ -42,10 +42,10 @@ struct Routing
 {
   public:
     template<class SomeCellType>
-    static auto routing_0_aggressively_use_htree(
-        std::vector<std::shared_ptr<Cell>>& CCA_chip,
-        Operon& operon,
-        u_int32_t current_cc_id) -> std::optional<u_int32_t>
+    static auto routing_0_aggressively_use_htree(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                                 Operon& operon,
+                                                 u_int32_t current_cc_id)
+        -> std::optional<u_int32_t>
     {
         // Routing 1: Aggresively use the mesh. This is a static routing algrithm.
 
@@ -62,7 +62,8 @@ struct Routing
         Coordinates const dst_cc_coordinates = Cell::cc_id_to_cooridinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        bool const use_mesh_network = current_compute_cell->check_cut_off_distance(dst_cc_coordinates);
+        bool const use_mesh_network =
+            current_compute_cell->check_cut_off_distance(dst_cc_coordinates);
 
         // For type ComputeCell
         if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
@@ -78,8 +79,9 @@ struct Routing
                 return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
                                                   current_compute_cell->shape,
                                                   current_compute_cell->dim_y);
-            }                 return dst_cc_id;
-           
+            }
+            return dst_cc_id;
+
         } else {
             // For SinkCell
             if (use_mesh_network) {
@@ -93,10 +95,9 @@ struct Routing
     }
 
     template<class SomeCellType>
-    static auto routing_1_use_mesh_more_often(
-        std::vector<std::shared_ptr<Cell>>& CCA_chip,
-        Operon& operon,
-        u_int32_t current_cc_id) -> std::optional<u_int32_t>
+    static auto routing_1_use_mesh_more_often(std::vector<std::shared_ptr<Cell>>& CCA_chip,
+                                              Operon& operon,
+                                              u_int32_t current_cc_id) -> std::optional<u_int32_t>
     {
         // Routing 1: Try to use the mesh network more often.
         u_int32_t const src_cc_id = operon.first.src_cc_id;
@@ -120,20 +121,19 @@ struct Routing
 
         if (use_mesh_network) {
             return dst_cc_id;
-        }             /* std::cout << "CC: " << current_compute_cell->id << " Sending (" << src_cc_id << ", "
-                      << dst_cc_id << " in Mesh\n"; */
-            if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
+        } /* std::cout << "CC: " << current_compute_cell->id << " Sending (" << src_cc_id << ", "
+          << dst_cc_id << " in Mesh\n"; */
+        if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
 
-                // Route it in second layer netowrk
-                return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
-                                                  current_compute_cell->shape,
-                                                  current_compute_cell->dim_y);
-            } else {
-                // This means that SinkCell returns std::nullptr, which means it will send the
-                // operon  to the low latency Htree network.s
-                return std::nullopt;
-            }
-       
+            // Route it in second layer netowrk
+            return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
+                                              current_compute_cell->shape,
+                                              current_compute_cell->dim_y);
+        } else {
+            // This means that SinkCell returns std::nullptr, which means it will send the
+            // operon  to the low latency Htree network.s
+            return std::nullopt;
+        }
 
         // This means that SinkCell returns std::nullptr, which means it will send the operon to
         // the low latency Htree network.
@@ -142,9 +142,9 @@ struct Routing
 
     template<class SomeCellType>
     static auto get_next_move(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                                  Operon& operon,
-                                                  u_int32_t current_cc_id,
-                                                  u_int32_t routing_algorithm_id) -> std::optional<u_int32_t>
+                              Operon& operon,
+                              u_int32_t current_cc_id,
+                              u_int32_t routing_algorithm_id) -> std::optional<u_int32_t>
     {
         // std::cout << "routing_algorithm_id = " << routing_algorithm_id << "\n";
 

@@ -67,8 +67,7 @@ class Graph
                                        u_int32_t edge_weight) -> bool
     {
 
-        auto* vertex =
-            static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
 
         // Check if edges are not full
         // TODO: Later implement the hierarical parallel vertex object
@@ -125,7 +124,7 @@ class Graph
         }
     }
 
-    Graph(std::string input_graph_path)
+    Graph(const std::string& input_graph_path)
     {
 
         // Generate or read the input data graph
@@ -144,7 +143,7 @@ class Graph
 
         // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
         std::shared_ptr<VertexType[]> const vertices_(new VertexType[this->total_vertices],
-                                                std::default_delete<VertexType[]>());
+                                                      std::default_delete<VertexType[]>());
         this->vertices = vertices_;
 
         for (int i = 0; i < this->total_vertices; i++) {

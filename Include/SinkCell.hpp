@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
+#include <utility>
+
 // Forward declaring to solve the circular dependency.
 struct HtreeNode;
 
@@ -89,7 +91,7 @@ class SinkCell : public Cell
         this->type = type_in;
         this->statistics.type = this->type;
 
-        this->connecting_htree_node = connecting_htree_node_in;
+        this->connecting_htree_node = std::move(connecting_htree_node_in);
 
         this->shape = shape_in;
         this->number_of_neighbors = Cell::get_number_of_neighbors(this->shape);

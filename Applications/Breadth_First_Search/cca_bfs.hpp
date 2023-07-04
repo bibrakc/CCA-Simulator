@@ -110,7 +110,8 @@ bfs_predicate_func(ComputeCell& cc,
 }
 
 inline auto
-bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args) -> int
+bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
+    -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
     int const incoming_level = args[0];

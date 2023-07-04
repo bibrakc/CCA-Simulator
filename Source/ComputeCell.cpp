@@ -41,8 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
-                                int  /*nargs*/,
-                                const std::shared_ptr<int[]>&  /*args*/) -> int
+                                int /*nargs*/,
+                                const std::shared_ptr<int[]>& /*args*/) -> int
 {
     auto* obj = static_cast<Object*>(cc.get_object(addr));
 
@@ -132,7 +132,7 @@ ComputeCell::insert_action(const Action& action)
 // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon on
 // the `staging_operon_from_logic`
 auto
-ComputeCell::send_operon(Operon operon_in) -> Task
+ComputeCell::send_operon(const Operon& operon_in) -> Task
 {
 
     // Increament the deficit for termination detection if actionType !=
@@ -198,8 +198,7 @@ ComputeCell::execute_action(void* function_events)
         Action const action = this->action_queue.front();
         this->action_queue.pop();
 
-        auto* function_events_manager =
-            static_cast<FunctionEventManager*>(function_events);
+        auto* function_events_manager = static_cast<FunctionEventManager*>(function_events);
 
         if constexpr (debug_code) {
             if (action.obj_addr.cc_id != this->id) {
@@ -306,8 +305,9 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             Routing::get_next_move<ComputeCell>(
                                 CCA_chip, operon, this->id, this->mesh_routing_policy);
 
-                        std::vector<u_int32_t> const channels_to_send = this->get_route_towards_cc_id(
-                            operon.first.src_cc_id, routing_cell_id.value());
+                        std::vector<u_int32_t> const channels_to_send =
+                            this->get_route_towards_cc_id(operon.first.src_cc_id,
+                                                          routing_cell_id.value());
 
                         bool pushed = false;
                         for (auto channel_to_send : channels_to_send) {
@@ -329,7 +329,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     }
                 }
 
-                for (Operon const &operon : left_over_operons) {
+                for (Operon const& operon : left_over_operons) {
                     this->recv_channel_per_neighbor[i][j].push(operon);
                 }
 
@@ -471,7 +471,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                 }
 
                 std::vector<Operon> left_over_operons;
-                for (Operon const &operon : send_operons) {
+                for (Operon const& operon : send_operons) {
                     u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
@@ -501,7 +501,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                         this->send_channel_per_neighbor_contention_count[i].reset();
                     }
 
-                    for (Operon const &operon : left_over_operons) {
+                    for (Operon const& operon : left_over_operons) {
                         this->send_channel_per_neighbor[i].push(operon);
                     }
                 }
@@ -530,7 +530,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         }
     }
     bool const compute_active = !this->action_queue.empty() || !this->task_queue.empty();
-    bool const communication_active = (this->staging_operon_from_logic || send_channels || recv_channels);
+    bool const communication_active =
+        (this->staging_operon_from_logic || send_channels || recv_channels);
 
     auto [is_congested, congestion_level_addition] = this->is_congested();
 
@@ -559,8 +560,9 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         // Both compute and communicate active
         if (is_congested) {
             return (both_congested_status + congestion_level_addition);
-        }             return both_status;
-       
+        }
+        return both_status;
+
     } else if (compute_active) {
         // Only compute active
         return computation_status;
@@ -568,8 +570,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         // Only communication active
         if (is_congested) {
             return (communication_congested_status + congestion_level_addition);
-        }             return communication_status;
-       
+        }
+        return communication_status;
     }
     // Inactive
     return inactive_status;

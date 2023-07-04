@@ -273,7 +273,7 @@ class CCASimulator
                                           void* obj,
                                           size_t size_of_obj) -> std::optional<Address>;
 
-    void germinate_action(Action action_to_germinate);
+    void germinate_action(const Action& action_to_germinate);
 
     void run_simulation(Address app_terminator);
 

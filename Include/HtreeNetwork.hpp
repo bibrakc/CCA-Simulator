@@ -36,8 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HtreeNode.hpp"
 
 #include <cmath>
-#include <map> 
-
+#include <map>
 
 class HtreeNetwork
 {

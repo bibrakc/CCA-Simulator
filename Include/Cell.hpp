@@ -214,17 +214,16 @@ class Cell
 
     static auto get_compute_cell_shape_name(computeCellShape shape) -> std::string;
 
-    static auto get_compute_cell_shape_enum(std::string shape) -> computeCellShape;
+    static auto get_compute_cell_shape_enum(const std::string& shape) -> computeCellShape;
 
     static auto get_number_of_neighbors(computeCellShape) -> u_int32_t;
 
-    static auto cc_id_to_cooridinate(u_int32_t cc_id,
-                                            computeCellShape shape,
-                                            u_int32_t dim_y) -> Coordinates;
+    static auto cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape, u_int32_t dim_y)
+        -> Coordinates;
 
     static auto cc_cooridinate_to_id(Coordinates cc_cooridinate,
-                                          computeCellShape shape_,
-                                          u_int32_t dim_y) -> u_int32_t;
+                                     computeCellShape shape_,
+                                     u_int32_t dim_y) -> u_int32_t;
 
     inline auto cc_exists(SignedCoordinates cc_coordinate) -> bool;
 
@@ -264,20 +263,21 @@ class Cell
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
-    auto get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
     auto get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
     auto get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
     auto get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
 
     // Experimental
 
-    auto get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                                               u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
-    auto get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id,
-                                                                           u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
+    auto get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
 
-    auto get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                                                       u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
 
     inline auto horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;
     inline auto vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;
@@ -288,7 +288,7 @@ class Cell
     auto get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t;
 
     // Receive an operon from a neighbor
-    auto recv_operon(Operon operon, u_int32_t direction, u_int32_t distance_class) -> bool;
+    auto recv_operon(const Operon& operon, u_int32_t direction, u_int32_t distance_class) -> bool;
 
     void copy_cell_simulation_records_to_statistics();
 

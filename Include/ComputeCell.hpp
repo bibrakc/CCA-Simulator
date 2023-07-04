@@ -34,8 +34,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COMPUTE_CELL_HPP
 
 #include "Cell.hpp"
+
 #include "Object.hpp"
 #include "Task.hpp"
+#include <utility>
 
 // Note this class is not thread-safe.
 class ComputeCell : public Cell
@@ -79,12 +81,11 @@ class ComputeCell : public Cell
 
     // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon
     // on the `staging_operon_from_logic`
-    auto send_operon(Operon operon_in) -> Task;
+    auto send_operon(const Operon& operon_in) -> Task;
 
     // Construct an Operon
-    static auto construct_operon(u_int32_t src_cc_id,
-                            u_int32_t dst_cc_id,
-                            const Action& action) -> Operon;
+    static auto construct_operon(u_int32_t src_cc_id, u_int32_t dst_cc_id, const Action& action)
+        -> Operon;
 
     void diffuse(const Action& action);
 
@@ -158,7 +159,7 @@ class ComputeCell : public Cell
         this->memory_raw_ptr = memory.get();
         this->memory_curr_ptr = memory_raw_ptr;
 
-        this->host_memory = host_memory_in;
+        this->host_memory = std::move(host_memory_in);
         this->host_id = this->dim_x * this->dim_y;
 
         // Assign neighbor CCs to this CC. This is based on the Shape and Dim

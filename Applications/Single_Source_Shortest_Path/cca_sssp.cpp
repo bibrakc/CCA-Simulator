@@ -185,11 +185,11 @@ main(int argc, char** argv) -> int
               << " is: " << v_test->sssp_distance << "\n";
 
     // Write simulation statistics to a file
-    std::string const output_file_name = "sssp_square_x_" + std::to_string(cca_square_simulator.dim_x) +
-                                   "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
-                                   graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
-                                   "_e_" + std::to_string(input_graph.total_edges) + "_hb_" +
-                                   std::to_string(hbandwidth_max);
+    std::string const output_file_name =
+        "sssp_square_x_" + std::to_string(cca_square_simulator.dim_x) + "_y_" +
+        std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
+        std::to_string(input_graph.total_vertices) + "_e_" +
+        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(hbandwidth_max);
 
     std::string const output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";

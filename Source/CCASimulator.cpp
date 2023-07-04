@@ -285,7 +285,7 @@ CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>&
 }
 
 void
-CCASimulator::germinate_action(Action action_to_germinate)
+CCASimulator::germinate_action(const Action& action_to_germinate)
 {
     // dynamic_pointer_cast to go down/across class hierarchy
     auto compute_cell =

@@ -41,23 +41,23 @@ struct HtreeNode
 
     auto operator<<(std::ostream& os) -> std::ostream&;
 
-    auto put_operon_from_sink_cell(CoordinatedOperon operon) -> bool;
+    auto put_operon_from_sink_cell(const CoordinatedOperon& operon) -> bool;
     auto is_coordinate_in_my_range(Coordinates point) -> bool;
 
     auto is_end_htree_node() -> bool;
 
     auto is_htree_node_active() -> bool;
 
-    void transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+    void transfer(const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& recv,
                   std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
-                  CoordinatedOperon operon);
+                  const CoordinatedOperon& operon);
 
     void transfer_send_to_recv(
         std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
         std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv);
 
     void shift_from_a_single_recv_channel_to_send_channels(
-        std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+        const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& recv,
         std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send[]);
 
     void prepare_communication_cycle();

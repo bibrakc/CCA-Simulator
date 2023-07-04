@@ -116,7 +116,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         }
     }
 
-    for (Operon const &operon : left_over_operons) {
+    for (Operon const& operon : left_over_operons) {
         this->recv_channel_to_htree_node.push(operon);
     }
 
@@ -160,8 +160,9 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        std::vector<u_int32_t> const channels_to_send = this->get_route_towards_cc_id(
-                            operon.first.src_cc_id, routing_cell_id.value());
+                        std::vector<u_int32_t> const channels_to_send =
+                            this->get_route_towards_cc_id(operon.first.src_cc_id,
+                                                          routing_cell_id.value());
 
                         bool pushed = false;
                         for (auto channel_to_send : channels_to_send) {
@@ -196,7 +197,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
                     }
                 }
-                for (Operon const &operon : left_over_operons) {
+                for (Operon const& operon : left_over_operons) {
                     this->recv_channel_per_neighbor[i][j].push(operon);
                 }
             }
@@ -206,7 +207,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
 void
 SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                  void*  /*function_events*/)
+                                  void* /*function_events*/)
 {
     if (!this->is_compute_cell_active()) {
         return;
@@ -222,7 +223,7 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
 // This act as synchronization and needs to be called before the actual communication cycle so
 // as to not cause race conditions on the communicaton buffer.
 void
-SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*CCA_chip*/)
+SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CCA_chip*/)
 {
     // assert(CCA_chip.size() != 0);
 
@@ -281,7 +282,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*C
         }
     }
 
-    for (Operon const &operon : left_over_operons) {
+    for (Operon const& operon : left_over_operons) {
         this->recv_channel_to_htree_node.push(operon);
     }
 }
@@ -322,7 +323,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                 }
 
                 std::vector<Operon> left_over_operons;
-                for (Operon const &operon : send_operons) {
+                for (Operon const& operon : send_operons) {
 
                     u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
@@ -349,7 +350,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                         this->send_channel_per_neighbor_contention_count[i].reset();
                     }
                 }
-                for (Operon const &operon : left_over_operons) {
+                for (Operon const& operon : left_over_operons) {
                     this->send_channel_per_neighbor[i].push(operon);
                 }
             }
@@ -400,8 +401,8 @@ SinkCell::is_compute_cell_active() -> u_int32_t
         // Only communication active
         if (is_congested) {
             return (communication_congested_status + congestion_level_addition);
-        }             return communication_status;
-       
+        }
+        return communication_status;
     }
     // Inactive
     return inactive_status;

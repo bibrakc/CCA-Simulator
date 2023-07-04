@@ -498,7 +498,7 @@ class Parser
 
     inline auto run(std::ostream& output) -> bool { return run(output, std::cerr); }
 
-    auto doesArgumentExist(std::string name, std::string altName) -> bool
+    auto doesArgumentExist(const std::string& name, const std::string& altName) -> bool
     {
         for (const auto& argument : _arguments) {
 

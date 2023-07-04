@@ -60,7 +60,7 @@ is_coordinate_in_a_particular_range(const Coordinates start,
 }
 
 auto
-HtreeNode::put_operon_from_sink_cell(const CoordinatedOperon operon) -> bool
+HtreeNode::put_operon_from_sink_cell(const CoordinatedOperon& operon) -> bool
 {
     return this->recv_channel_from_sink_cell->push(operon);
 }
@@ -117,9 +117,9 @@ HtreeNode::is_htree_node_active() -> bool
 }
 
 void
-HtreeNode::transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+HtreeNode::transfer(const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& recv,
                     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
-                    CoordinatedOperon operon)
+                    const CoordinatedOperon& operon)
 {
     if (send == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer: send_channel cannot be null\n";
@@ -168,7 +168,7 @@ HtreeNode::transfer_send_to_recv(
 
 void
 HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
-    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
+    const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& recv,
     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send[])
 {
 
@@ -180,7 +180,7 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
         recv->pop();
     }
 
-    for (CoordinatedOperon const &operon : recv_operons) {
+    for (CoordinatedOperon const& operon : recv_operons) {
 
         Coordinates const destination_cc_coorinates = operon.first;
 
@@ -279,7 +279,7 @@ HtreeNode::run_a_communication_cylce()
             this->send_channel_to_sink_cell->pop();
         }
 
-        for (Operon const &operon : send_operons) {
+        for (Operon const& operon : send_operons) {
 
             /* std::cout
                 << this->id << ": HtreeNode. Operon for cc: " << operon.first.dst_cc_id

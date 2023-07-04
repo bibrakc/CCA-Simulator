@@ -131,7 +131,7 @@ Cell::add_neighbor_compute_cells()
 }
 
 auto
-Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class) -> bool
+Cell::recv_operon(const Operon& operon, u_int32_t direction_in, u_int32_t distance_class) -> bool
 {
     bool const success = this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 
@@ -174,8 +174,8 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
         if ((cc_coordinate_x < zero) || (cc_coordinate_x >= static_cast<int>(this->dim_y)) ||
             (cc_coordinate_y < zero) || (cc_coordinate_y >= static_cast<int>(this->dim_x))) {
             return false;
-        }             return true;
-       
+        }
+        return true;
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -211,13 +211,13 @@ Cell::get_cell_type_name(CellType type) -> std::string
 {
     switch (type) {
         case (CellType::compute_cell):
-            return {"ComputeCell"};
+            return { "ComputeCell" };
             break;
         case (CellType::sink_cell):
-            return {"SinkCell"};
+            return { "SinkCell" };
             break;
         default:
-            return {"Invalid CellType"};
+            return { "Invalid CellType" };
             break;
     }
 }
@@ -227,30 +227,31 @@ Cell::get_compute_cell_shape_name(computeCellShape shape) -> std::string
 {
     switch (shape) {
         case (computeCellShape::block_1D):
-            return {"block_1D"};
+            return { "block_1D" };
             break;
         case (computeCellShape::triangular):
-            return {"triangular"};
+            return { "triangular" };
             break;
         case (computeCellShape::square):
-            return {"square"};
+            return { "square" };
             break;
         case (computeCellShape::hexagon):
-            return {"hexagon"};
+            return { "hexagon" };
             break;
 
         default:
-            return {"Invalid Shape"};
+            return { "Invalid Shape" };
             break;
     }
 }
 
 auto
-Cell::get_compute_cell_shape_enum(std::string shape) -> computeCellShape
+Cell::get_compute_cell_shape_enum(const std::string& shape) -> computeCellShape
 {
     if (shape == "block_1D") {
         return computeCellShape::block_1D;
-    } if (shape == "triangular") {
+    }
+    if (shape == "triangular") {
         return computeCellShape::triangular;
     } else if (shape == "sqaure") {
         return computeCellShape::square;
@@ -332,15 +333,14 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
              static_cast<int>(mesh_usage_region_length_rows))) {
             return true;
-        }             /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
-                       << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
-                       << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
-                       << "\n";
-             std::cout << "CC: " << this->id << ", src: " << src_cc_cooridinate
-                       << ", dst: " << dst_cc_cooridinate << "\n"; */
+        } /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
+           << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
+           << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
+           << "\n";
+ std::cout << "CC: " << this->id << ", src: " << src_cc_cooridinate
+           << ", dst: " << dst_cc_cooridinate << "\n"; */
 
-            return false;
-       
+        return false;
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -371,7 +371,7 @@ Cell::is_congested() -> std::pair<bool, u_int32_t>
 }
 
 void
-Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>&  /*CCA_chip*/)
+Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& /*CCA_chip*/)
 {
     // Update the last_congested_cycle if needed;
     auto [is_congested, congestion_level_addition] = this->is_congested();
@@ -397,8 +397,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
              static_cast<int>(this->hx / 2))) {
             return true;
-        }             return false;
-       
+        }
+        return false;
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -406,7 +406,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
 }
 
 auto
-Cell::get_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id) -> std::vector<u_int32_t>
+Cell::get_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
 
@@ -447,7 +448,8 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
         // First check vertically in y axis then horizontally in x axis
         if (this->cooridates.second > dst_cc_coordinates.second) {
             return 1; // Clockwise 1 = up
-        } if (this->cooridates.second < dst_cc_coordinates.second) {
+        }
+        if (this->cooridates.second < dst_cc_coordinates.second) {
             return 3; // Clockwise 3 = down
         } else if (this->cooridates.first > dst_cc_coordinates.first) {
             // std::cout <<"left\n";
@@ -466,7 +468,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
 }
 
 auto
-Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id)
+Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
     -> std::vector<u_int32_t>
 {
     // This has deadlock :(
@@ -530,7 +532,7 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t  /*src_cc_id*/, 
 }
 
 auto
-Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id)
+Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
     -> std::vector<u_int32_t>
 {
 
@@ -730,9 +732,8 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
         if (is_vertical_routing_operon) {
             // std::cout << "vertical_first_routing\n";
             return this->vertical_first_routing(dst_cc_coordinates);
-        }             // Route horizontally first
-            return this->horizontal_first_routing(dst_cc_coordinates);
-       
+        } // Route horizontally first
+        return this->horizontal_first_routing(dst_cc_coordinates);
 
         std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                   << " Bug: routing not sucessful!\n";
