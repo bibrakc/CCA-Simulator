@@ -42,7 +42,7 @@ class Graph
     std::shared_ptr<VertexType[]> vertices;
 
     // Store the CCA address of vertices in a map so as to retrieve easily for edge insertion and
-    // other tasks.
+    // other tasks like printing for debuging and solution checking.
     std::map<u_int32_t, Address> vertex_addresses;
 
     auto get_vertex_address_in_cca(u_int32_t vertex_id) -> Address
