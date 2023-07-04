@@ -400,9 +400,8 @@ SinkCell::is_compute_cell_active() -> u_int32_t
         // Only communication active
         if (is_congested) {
             return (communication_congested_status + congestion_level_addition);
-        } else {
-            return communication_status;
-        }
+        }             return communication_status;
+       
     }
     // Inactive
     return inactive_status;

@@ -559,9 +559,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         // Both compute and communicate active
         if (is_congested) {
             return (both_congested_status + congestion_level_addition);
-        } else {
-            return both_status;
-        }
+        }             return both_status;
+       
     } else if (compute_active) {
         // Only compute active
         return computation_status;
@@ -569,9 +568,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         // Only communication active
         if (is_congested) {
             return (communication_congested_status + congestion_level_addition);
-        } else {
-            return communication_status;
-        }
+        }             return communication_status;
+       
     }
     // Inactive
     return inactive_status;

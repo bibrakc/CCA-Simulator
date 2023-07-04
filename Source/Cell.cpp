@@ -174,9 +174,8 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
         if ((cc_coordinate_x < zero) || (cc_coordinate_x >= static_cast<int>(this->dim_y)) ||
             (cc_coordinate_y < zero) || (cc_coordinate_y >= static_cast<int>(this->dim_x))) {
             return false;
-        } else {
-            return true;
-        }
+        }             return true;
+       
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -251,7 +250,7 @@ Cell::get_compute_cell_shape_enum(std::string shape) -> computeCellShape
 {
     if (shape == "block_1D") {
         return computeCellShape::block_1D;
-    } else if (shape == "triangular") {
+    } if (shape == "triangular") {
         return computeCellShape::triangular;
     } else if (shape == "sqaure") {
         return computeCellShape::square;
@@ -333,8 +332,7 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
              static_cast<int>(mesh_usage_region_length_rows))) {
             return true;
-        } else {
-            /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
+        }             /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
                        << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
                        << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
                        << "\n";
@@ -342,7 +340,7 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
                        << ", dst: " << dst_cc_cooridinate << "\n"; */
 
             return false;
-        }
+       
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -399,9 +397,8 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
             (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
              static_cast<int>(this->hx / 2))) {
             return true;
-        } else {
-            return false;
-        }
+        }             return false;
+       
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -450,7 +447,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
         // First check vertically in y axis then horizontally in x axis
         if (this->cooridates.second > dst_cc_coordinates.second) {
             return 1; // Clockwise 1 = up
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } if (this->cooridates.second < dst_cc_coordinates.second) {
             return 3; // Clockwise 3 = down
         } else if (this->cooridates.first > dst_cc_coordinates.first) {
             // std::cout <<"left\n";
@@ -733,10 +730,9 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
         if (is_vertical_routing_operon) {
             // std::cout << "vertical_first_routing\n";
             return this->vertical_first_routing(dst_cc_coordinates);
-        } else {
-            // Route horizontally first
+        }             // Route horizontally first
             return this->horizontal_first_routing(dst_cc_coordinates);
-        }
+       
 
         std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                   << " Bug: routing not sucessful!\n";

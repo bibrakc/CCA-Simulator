@@ -78,9 +78,8 @@ struct Routing
                 return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
                                                   current_compute_cell->shape,
                                                   current_compute_cell->dim_y);
-            } else {
-                return dst_cc_id;
-            }
+            }                 return dst_cc_id;
+           
         } else {
             // For SinkCell
             if (use_mesh_network) {
@@ -121,8 +120,7 @@ struct Routing
 
         if (use_mesh_network) {
             return dst_cc_id;
-        } else {
-            /* std::cout << "CC: " << current_compute_cell->id << " Sending (" << src_cc_id << ", "
+        }             /* std::cout << "CC: " << current_compute_cell->id << " Sending (" << src_cc_id << ", "
                       << dst_cc_id << " in Mesh\n"; */
             if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
 
@@ -135,7 +133,7 @@ struct Routing
                 // operon  to the low latency Htree network.s
                 return std::nullopt;
             }
-        }
+       
 
         // This means that SinkCell returns std::nullptr, which means it will send the operon to
         // the low latency Htree network.
