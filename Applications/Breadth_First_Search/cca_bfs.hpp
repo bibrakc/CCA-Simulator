@@ -100,8 +100,8 @@ bfs_predicate_func(ComputeCell& cc,
                    const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_level = args[0];
-    int origin_vertex = args[1];
+    int const incoming_level = args[0];
+    int const origin_vertex = args[1];
 
     if (v->bfs_level > incoming_level) {
         return 1;
@@ -113,7 +113,7 @@ inline auto
 bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_level = args[0];
+    int const incoming_level = args[0];
 
     // Update level with the new level
     v->bfs_level = incoming_level;
@@ -130,7 +130,7 @@ bfs_diffuse_func(ComputeCell& cc,
     for (int i = 0; i < v->number_of_edges; i++) {
 
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
+        std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->bfs_level + 1);
         args_x[1] = static_cast<int>(v->id);
 

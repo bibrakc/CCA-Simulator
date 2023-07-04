@@ -128,7 +128,7 @@ HtreeNode::transfer(std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> recv,
 
     // std::cout << this->cooridinates << ": HtreeNode transfer\n";
 
-    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> current_send_channel = send.value();
+    std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> const current_send_channel = send.value();
 
     if (!current_send_channel->push(operon)) {
 
@@ -156,7 +156,7 @@ HtreeNode::transfer_send_to_recv(
 
     while (send.value()->size()) {
 
-        CoordinatedOperon operon = send.value()->front();
+        CoordinatedOperon const operon = send.value()->front();
         if (recv.value()->push(operon)) {
             send.value()->pop();
         } else {
@@ -180,9 +180,9 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
         recv->pop();
     }
 
-    for (CoordinatedOperon operon : recv_operons) {
+    for (CoordinatedOperon const &operon : recv_operons) {
 
-        Coordinates destination_cc_coorinates = operon.first;
+        Coordinates const destination_cc_coorinates = operon.first;
 
         // Find route.
 
@@ -191,7 +191,7 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
             // Does the route needs to go thought the sink channel?
             if (this->is_coordinate_in_my_range(destination_cc_coorinates)) {
 
-                Operon simple_operon = operon.second;
+                Operon const simple_operon = operon.second;
                 if (!this->send_channel_to_sink_cell->push(simple_operon)) {
 
                     // Put this back since it was not sent in this cycle due to the send_channel
@@ -279,7 +279,7 @@ HtreeNode::run_a_communication_cylce()
             this->send_channel_to_sink_cell->pop();
         }
 
-        for (Operon operon : send_operons) {
+        for (Operon const &operon : send_operons) {
 
             /* std::cout
                 << this->id << ": HtreeNode. Operon for cc: " << operon.first.dst_cc_id

@@ -100,8 +100,8 @@ sssp_predicate_func(ComputeCell& cc,
                     const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
-    int origin_vertex = args[1];
+    int const incoming_distance = args[0];
+    int const origin_vertex = args[1];
 
     if (v->sssp_distance > incoming_distance) {
         return 1;
@@ -113,7 +113,7 @@ inline auto
 sssp_work_func(ComputeCell& cc, const Address& addr, int  /*nargs*/, const std::shared_ptr<int[]>& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int incoming_distance = args[0];
+    int const incoming_distance = args[0];
 
     // Update distance with the new distance
     v->sssp_distance = incoming_distance;
@@ -130,7 +130,7 @@ sssp_diffuse_func(ComputeCell& cc,
     for (int i = 0; i < v->number_of_edges; i++) {
 
         // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
+        std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
         args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
         args_x[1] = static_cast<int>(v->id);
 

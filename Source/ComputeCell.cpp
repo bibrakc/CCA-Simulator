@@ -93,7 +93,7 @@ ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj) -> std::o
 
     auto* cca_obj = static_cast<Object*>(obj_in);
 
-    u_int32_t obj_memory_addr_offset = get_memory_curr_ptr_offset();
+    u_int32_t const obj_memory_addr_offset = get_memory_curr_ptr_offset();
     Address obj_addr(this->id, obj_memory_addr_offset);
 
     cca_obj->terminator.my_object = obj_addr;
@@ -114,8 +114,8 @@ ComputeCell::get_cc_htree_sink_cell() -> std::optional<Coordinates>
         return std::nullopt;
     }
 
-    u_int32_t nearby_row = (this->hx / 2) + (this->cooridates.second / this->hx) * this->hx;
-    u_int32_t nearby_col = (this->hy / 2) + (this->cooridates.first / this->hy) * this->hy;
+    u_int32_t const nearby_row = (this->hx / 2) + (this->cooridates.second / this->hx) * this->hx;
+    u_int32_t const nearby_col = (this->hy / 2) + (this->cooridates.first / this->hy) * this->hy;
 
     // We store cooridinates from top-left therefore in a row it is (0,0), (1,0), (2,0), (3,0) ....
     // That is why the row is the second in the pair/tuple and the column is the first entry
@@ -137,9 +137,9 @@ ComputeCell::send_operon(Operon operon_in) -> Task
 
     // Increament the deficit for termination detection if actionType !=
     // terminator_acknowledgement_action
-    actionType action_type = operon_in.second.action_type;
+    actionType const action_type = operon_in.second.action_type;
     if (action_type == actionType::application_action) {
-        Address addr = operon_in.second.origin_addr;
+        Address const addr = operon_in.second.origin_addr;
         auto* obj = static_cast<Object*>(this->get_object(addr));
 
         obj->terminator.deficit++;
@@ -179,7 +179,7 @@ ComputeCell::construct_operon(const u_int32_t src_cc_id,
 void
 ComputeCell::diffuse(const Action& action)
 {
-    Operon operon_to_send = this->construct_operon(this->id, action.obj_addr.cc_id, action);
+    Operon const operon_to_send = this->construct_operon(this->id, action.obj_addr.cc_id, action);
     this->task_queue.push(this->send_operon(operon_to_send));
 
     // A new action was created. Increment the statistics for action.
@@ -195,7 +195,7 @@ ComputeCell::execute_action(void* function_events)
     // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->action_queue.empty()) {
-        Action action = this->action_queue.front();
+        Action const action = this->action_queue.front();
         this->action_queue.pop();
 
         auto* function_events_manager =
@@ -221,7 +221,7 @@ ComputeCell::execute_action(void* function_events)
             obj->terminator.signal(*this, action.origin_addr);
 
             // if predicate
-            int predicate_resolution = function_events_manager->get_function_event_handler(
+            int const predicate_resolution = function_events_manager->get_function_event_handler(
                 action.predicate)(*this, action.obj_addr, action.nargs, action.args);
 
             if (predicate_resolution == 1) {
@@ -292,7 +292,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : recv_operons) {
 
-                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
+                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
                     // Bug check: Make sure the destination is not a Sink Cell
                     assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
 
@@ -306,7 +306,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             Routing::get_next_move<ComputeCell>(
                                 CCA_chip, operon, this->id, this->mesh_routing_policy);
 
-                        std::vector<u_int32_t> channels_to_send = this->get_route_towards_cc_id(
+                        std::vector<u_int32_t> const channels_to_send = this->get_route_towards_cc_id(
                             operon.first.src_cc_id, routing_cell_id.value());
 
                         bool pushed = false;
@@ -329,7 +329,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     }
                 }
 
-                for (Operon operon : left_over_operons) {
+                for (Operon const &operon : left_over_operons) {
                     this->recv_channel_per_neighbor[i][j].push(operon);
                 }
 
@@ -364,7 +364,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
     // Perform execution of work. Exectute a task if the task_queue is not empty
     if (!this->task_queue.empty()) {
         //  Get a task from the task_queue
-        Task current_task = this->task_queue.front();
+        Task const current_task = this->task_queue.front();
 
         // Check if the staging buffer is not full and the task type is send operon
         // In that case stall and don't do anything. Because the task can't send operon
@@ -406,7 +406,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
     if (this->staging_operon_from_logic) {
 
         Operon operon_ = this->staging_operon_from_logic.value();
-        u_int32_t dst_cc_id = operon_.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon_.first.dst_cc_id;
 
         // Bug check: Make sure the destination is not a Sink Cell
         assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
@@ -426,7 +426,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             // Based on the routing algorithm and the shape of CCs it will return which neighbor
             // to pass this operon to. The returned value is the index [0...number of neighbors)
             // coresponding clockwise the channel id of the physical shape.
-            std::vector<u_int32_t> channels_to_send =
+            std::vector<u_int32_t> const channels_to_send =
                 this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
             for (auto channel_to_send : channels_to_send) {
@@ -456,7 +456,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
     // For shape square
     if (this->shape == computeCellShape::square) {
-        int receiving_direction[4] = { 2, 3, 0, 1 };
+        int const receiving_direction[4] = { 2, 3, 0, 1 };
 
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
@@ -471,14 +471,14 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                 }
 
                 std::vector<Operon> left_over_operons;
-                for (Operon operon : send_operons) {
-                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
+                for (Operon const &operon : send_operons) {
+                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     assert(this->id != dst_cc_id);
                     assert(this->neighbor_compute_cells[i] != std::nullopt);
 
-                    u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
+                    u_int32_t const neighbor_id_ = this->neighbor_compute_cells[i].value().first;
 
                     if (!CCA_chip[neighbor_id_]->recv_operon(
                             operon,
@@ -501,7 +501,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                         this->send_channel_per_neighbor_contention_count[i].reset();
                     }
 
-                    for (Operon operon : left_over_operons) {
+                    for (Operon const &operon : left_over_operons) {
                         this->send_channel_per_neighbor[i].push(operon);
                     }
                 }
@@ -529,8 +529,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
             }
         }
     }
-    bool compute_active = !this->action_queue.empty() || !this->task_queue.empty();
-    bool communication_active = (this->staging_operon_from_logic || send_channels || recv_channels);
+    bool const compute_active = !this->action_queue.empty() || !this->task_queue.empty();
+    bool const communication_active = (this->staging_operon_from_logic || send_channels || recv_channels);
 
     auto [is_congested, congestion_level_addition] = this->is_congested();
 

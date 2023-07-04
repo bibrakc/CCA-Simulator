@@ -86,12 +86,12 @@ CCASimulator::create_square_cell_htree_chip()
     for (u_int32_t i = 0; i < this->dim_x; i++) {
         for (u_int32_t j = 0; j < this->dim_y; j++) {
 
-            u_int32_t cc_id = i * this->dim_y + j;
+            u_int32_t const cc_id = i * this->dim_y + j;
 
             // Insert the sink cell
             if ((next_row_sink_cells == i) && (next_col_sink_cells == j)) {
 
-                Coordinates sink_cell_cooridnates =
+                Coordinates const sink_cell_cooridnates =
                     Coordinates(next_col_sink_cells, next_row_sink_cells);
 
                 // std::cout << "SinkCell: " << sink_cell_cooridnates << "\n";
@@ -107,7 +107,7 @@ CCASimulator::create_square_cell_htree_chip()
 
                 // Create the sink cells where the chip connects to the underlying
                 // second layer network (for example the Htree)
-                std::shared_ptr<SinkCell> sink_cell =
+                std::shared_ptr<SinkCell> const sink_cell =
                     std::make_shared<SinkCell>(cc_id,
                                                CellType::sink_cell,
                                                htree_node_address_entry->second,
@@ -161,7 +161,7 @@ CCASimulator::create_square_cell_mesh_only_chip()
     for (u_int32_t i = 0; i < this->dim_x; i++) {
         for (u_int32_t j = 0; j < this->dim_y; j++) {
 
-            u_int32_t cc_id = i * this->dim_y + j;
+            u_int32_t const cc_id = i * this->dim_y + j;
 
             // Create individual compute cells of computeCellShape shape_of_compute_cells
             this->CCA_chip.push_back(std::make_shared<ComputeCell>(cc_id,
@@ -254,7 +254,7 @@ CCASimulator::create_terminator() -> std::optional<Address>
     }
 
     CCATerminator host_terminator;
-    u_int32_t obj_memory_addr_offset = get_host_memory_curr_ptr_offset();
+    u_int32_t const obj_memory_addr_offset = get_host_memory_curr_ptr_offset();
     Address host_terminator_addr(this->host_id, obj_memory_addr_offset, adressType::host_address);
 
     host_terminator.terminator.my_object = host_terminator_addr;
@@ -278,7 +278,7 @@ CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>&
                                                size_t size_of_obj) -> std::optional<Address>
 {
     // Get the ID of the compute cell where this vertex is to be allocated.
-    u_int32_t cc_id = allocator->get_next_available_cc(*this);
+    u_int32_t const cc_id = allocator->get_next_available_cc(*this);
 
     auto cc_ptr = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
     return cc_ptr->create_object_in_memory(obj, size_of_obj);
@@ -405,7 +405,7 @@ CCASimulator::run_simulation(Address app_terminator)
         u_int32_t sum_global_active_cc_local = 0;
         // Also put the active status in the statistics to create the animation using the python
         // script.
-        std::shared_ptr<u_int32_t[]> active_status_frame_per_cells(
+        std::shared_ptr<u_int32_t[]> const active_status_frame_per_cells(
             new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
 
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
@@ -431,9 +431,9 @@ CCASimulator::run_simulation(Address app_terminator)
         if (sum_global_active_cc_local || sum_global_active_htree) {
             is_system_active = true;
         }
-        double percent_CCs_active = 100.0 * static_cast<double>(sum_global_active_cc_local) /
+        double const percent_CCs_active = 100.0 * static_cast<double>(sum_global_active_cc_local) /
                                     static_cast<double>(this->CCA_chip.size());
-        double percent_htree_active = 100.0 * static_cast<double>(sum_global_active_htree) /
+        double const percent_htree_active = 100.0 * static_cast<double>(sum_global_active_htree) /
                                       static_cast<double>(htree_network.htree_all_nodes.size());
         std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
                   << "%, htree Active: " << percent_htree_active << "%\n";

@@ -55,14 +55,14 @@ struct Routing
         auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
         assert(dst_compute_cell != nullptr);
 
-        std::shared_ptr<SomeCellType> current_compute_cell =
+        std::shared_ptr<SomeCellType> const current_compute_cell =
             std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
         assert(current_compute_cell != nullptr);
 
-        Coordinates dst_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const dst_cc_coordinates = Cell::cc_id_to_cooridinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        bool use_mesh_network = current_compute_cell->check_cut_off_distance(dst_cc_coordinates);
+        bool const use_mesh_network = current_compute_cell->check_cut_off_distance(dst_cc_coordinates);
 
         // For type ComputeCell
         if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
@@ -100,23 +100,23 @@ struct Routing
         u_int32_t current_cc_id) -> std::optional<u_int32_t>
     {
         // Routing 1: Try to use the mesh network more often.
-        u_int32_t src_cc_id = operon.first.src_cc_id;
+        u_int32_t const src_cc_id = operon.first.src_cc_id;
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
         /* auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
         assert(dst_compute_cell != nullptr); */
 
-        std::shared_ptr<SomeCellType> current_compute_cell =
+        std::shared_ptr<SomeCellType> const current_compute_cell =
             std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
         assert(current_compute_cell != nullptr);
 
-        Coordinates src_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const src_cc_coordinates = Cell::cc_id_to_cooridinate(
             src_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        Coordinates dst_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const dst_cc_coordinates = Cell::cc_id_to_cooridinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        bool use_mesh_network =
+        bool const use_mesh_network =
             current_compute_cell->should_I_use_mesh(src_cc_coordinates, dst_cc_coordinates);
 
         if (use_mesh_network) {

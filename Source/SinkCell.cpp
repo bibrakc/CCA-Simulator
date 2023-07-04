@@ -83,7 +83,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     std::vector<Operon> left_over_operons;
     for (Operon operon : recv_operons) {
 
-        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
@@ -93,7 +93,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             operon.first.src_cc_id = this->id;
         }
 
-        std::vector<u_int32_t> channels_to_send =
+        std::vector<u_int32_t> const channels_to_send =
             this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
         bool pushed = false;
@@ -116,7 +116,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         }
     }
 
-    for (Operon operon : left_over_operons) {
+    for (Operon const &operon : left_over_operons) {
         this->recv_channel_to_htree_node.push(operon);
     }
 
@@ -144,7 +144,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 std::vector<Operon> left_over_operons;
                 for (Operon operon : recv_operons) {
 
-                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
+                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     // Bug check with assert: A SinkCell cannot invoke an action
@@ -160,7 +160,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     if (routing_cell_id != std::nullopt) {
                         // Pass it on within the mesh network since the destination is close by.
 
-                        std::vector<u_int32_t> channels_to_send = this->get_route_towards_cc_id(
+                        std::vector<u_int32_t> const channels_to_send = this->get_route_towards_cc_id(
                             operon.first.src_cc_id, routing_cell_id.value());
 
                         bool pushed = false;
@@ -183,11 +183,11 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                     } else {
 
-                        Coordinates dst_cc_coordinates =
+                        Coordinates const dst_cc_coordinates =
                             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
                         // Send to the second layer Htree network using the sink hole
                         // First form a CooridiantedOperon to send
-                        CoordinatedOperon coordinated_operon(dst_cc_coordinates, operon);
+                        CoordinatedOperon const coordinated_operon(dst_cc_coordinates, operon);
 
                         if (!this->send_channel_to_htree_node.push(coordinated_operon)) {
 
@@ -196,7 +196,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
                     }
                 }
-                for (Operon operon : left_over_operons) {
+                for (Operon const &operon : left_over_operons) {
                     this->recv_channel_per_neighbor[i][j].push(operon);
                 }
             }
@@ -246,7 +246,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*C
     std::vector<Operon> left_over_operons;
     for (Operon operon : recv_operons) {
 
-        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
@@ -256,7 +256,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*C
             operon.first.src_cc_id = this->id;
         }
 
-        std::vector<u_int32_t> channels_to_send =
+        std::vector<u_int32_t> const channels_to_send =
             this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
 
         bool pushed = false;
@@ -281,7 +281,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*C
         }
     }
 
-    for (Operon operon : left_over_operons) {
+    for (Operon const &operon : left_over_operons) {
         this->recv_channel_to_htree_node.push(operon);
     }
 }
@@ -299,7 +299,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
         // Send from send sink channel to the recv channel of the underlying htree end node
         while (this->send_channel_to_htree_node.size()) {
 
-            CoordinatedOperon operon = this->send_channel_to_htree_node.front();
+            CoordinatedOperon const operon = this->send_channel_to_htree_node.front();
 
             if (this->connecting_htree_node->recv_channel_from_sink_cell->push(operon)) {
                 this->send_channel_to_htree_node.pop();
@@ -309,7 +309,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
             }
         }
 
-        int receiving_direction[4] = { 2, 3, 0, 1 };
+        int const receiving_direction[4] = { 2, 3, 0, 1 };
 
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
@@ -322,9 +322,9 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                 }
 
                 std::vector<Operon> left_over_operons;
-                for (Operon operon : send_operons) {
+                for (Operon const &operon : send_operons) {
 
-                    u_int32_t dst_cc_id = operon.first.dst_cc_id;
+                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
 
                     // Check if this operon is destined for this compute/sink cell. If it does then
                     // it is a bug
@@ -332,7 +332,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     // The neighbor of this compute cell cannot be null
                     assert(this->neighbor_compute_cells[i] != std::nullopt);
 
-                    u_int32_t neighbor_id_ = this->neighbor_compute_cells[i].value().first;
+                    u_int32_t const neighbor_id_ = this->neighbor_compute_cells[i].value().first;
                     if (!CCA_chip[neighbor_id_]->recv_operon(
                             operon,
                             receiving_direction[i],
@@ -349,7 +349,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                         this->send_channel_per_neighbor_contention_count[i].reset();
                     }
                 }
-                for (Operon operon : left_over_operons) {
+                for (Operon const &operon : left_over_operons) {
                     this->send_channel_per_neighbor[i].push(operon);
                 }
             }

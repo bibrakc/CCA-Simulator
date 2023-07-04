@@ -49,7 +49,7 @@ FunctionEventManager::register_function_event(handler_func function_event_handle
 {
     assert(this->next_available_event_id == this->event_handlers.size());
 
-    CCAFunctionEvent current_function_event_id = this->next_available_event_id;
+    CCAFunctionEvent const current_function_event_id = this->next_available_event_id;
     this->event_handlers.push_back(function_event_handler);
     this->next_available_event_id++;
 

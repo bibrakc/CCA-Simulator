@@ -105,12 +105,12 @@ find_closest_value(const std::vector<u_int32_t>& values, u_int32_t point) -> u_i
     int left = 0;
     int right = values.size() - 1;
     u_int32_t closest = values[0];
-    int point_signed_integer = static_cast<int>(point);
+    int const point_signed_integer = static_cast<int>(point);
 
     while (left <= right) {
-        int mid = (left + right) / 2;
+        int const mid = (left + right) / 2;
 
-        int mid_value_signed_integer = static_cast<int>(values[mid]);
+        int const mid_value_signed_integer = static_cast<int>(values[mid]);
 
         if (abs(mid_value_signed_integer - point_signed_integer) <
             abs(static_cast<int>(closest) - point_signed_integer)) {
@@ -164,7 +164,7 @@ create_horizontal(int hx,
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<HtreeNode> left = create_vertical(
+    std::shared_ptr<HtreeNode> const left = create_vertical(
         hx,
         hy,
         all_possible_rows,
@@ -182,7 +182,7 @@ create_horizontal(int hx,
         bandwidth_max,
         index);
 
-    std::shared_ptr<HtreeNode> right =
+    std::shared_ptr<HtreeNode> const right =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -341,7 +341,7 @@ create_vertical(int hx,
     if (depth < 0) {
         return nullptr;
     }
-    std::shared_ptr<HtreeNode> up = create_horizontal(
+    std::shared_ptr<HtreeNode> const up = create_horizontal(
         hx,
         hy,
         all_possible_rows,
@@ -358,7 +358,7 @@ create_vertical(int hx,
         bandwidth_max,
         index);
 
-    std::shared_ptr<HtreeNode> down = create_horizontal(
+    std::shared_ptr<HtreeNode> const down = create_horizontal(
         hx,
         hy,
         all_possible_rows,
@@ -495,23 +495,23 @@ create_htree(u_int32_t hx,
     }
     // Create two verticals and join them
     u_int32_t index = 0;
-    u_int32_t dim_x = get_htree_dims(hx, depth);
-    u_int32_t dim_y = get_htree_dims(hy, depth);
+    u_int32_t const dim_x = get_htree_dims(hx, depth);
+    u_int32_t const dim_y = get_htree_dims(hy, depth);
 
-    u_int32_t chip_center_x = (dim_x / 2); // row
-    u_int32_t chip_center_y = (dim_y / 2); // col
+    u_int32_t const chip_center_x = (dim_x / 2); // row
+    u_int32_t const chip_center_y = (dim_y / 2); // col
 
     std::cout << "Chip dimenssions: " << dim_x << " x " << dim_y << "\n";
     std::cout << "Creating Htree with center at: (" << chip_center_x << ", " << chip_center_y
               << ")\n";
 
-    int left_sub_htree_initial_row = chip_center_x;
-    int left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
+    int const left_sub_htree_initial_row = chip_center_x;
+    int const left_sub_htree_initial_col = chip_center_y - (chip_center_y / 2);
 
-    Coordinates chip_coverage_top_left = Coordinates(0, 0);
-    Coordinates chip_coverage_bottom_right = Coordinates(dim_y - 1, dim_x - 1);
+    Coordinates const chip_coverage_top_left = Coordinates(0, 0);
+    Coordinates const chip_coverage_bottom_right = Coordinates(dim_y - 1, dim_x - 1);
 
-    std::shared_ptr<HtreeNode> left =
+    std::shared_ptr<HtreeNode> const left =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -528,10 +528,10 @@ create_htree(u_int32_t hx,
                         bandwidth_max,
                         index);
 
-    int right_sub_htree_initial_row = chip_center_x;
-    int right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
+    int const right_sub_htree_initial_row = chip_center_x;
+    int const right_sub_htree_initial_col = chip_center_y + (chip_center_y / 2);
 
-    std::shared_ptr<HtreeNode> right =
+    std::shared_ptr<HtreeNode> const right =
         create_vertical(hx,
                         hy,
                         all_possible_rows,
@@ -697,11 +697,11 @@ HtreeNetwork::construct_htree_network()
 
     auto total_rows_cols_with_htree_nodes = static_cast<u_int32_t>(pow(2, this->hdepth));
 
-    u_int32_t first_row = std::ceil(this->hx / 2.0);
-    u_int32_t first_col = std::ceil(this->hy / 2.0);
+    u_int32_t const first_row = std::ceil(this->hx / 2.0);
+    u_int32_t const first_col = std::ceil(this->hy / 2.0);
 
-    u_int32_t range_rows = total_rows_cols_with_htree_nodes * this->hx;
-    u_int32_t range_cols = total_rows_cols_with_htree_nodes * this->hy;
+    u_int32_t const range_rows = total_rows_cols_with_htree_nodes * this->hx;
+    u_int32_t const range_cols = total_rows_cols_with_htree_nodes * this->hy;
 
     // All possible coordiantes per row and cols. Useful to find the exact end node using the
     // find_closest_value() method
@@ -766,7 +766,7 @@ HtreeNetwork::construct_htree_network()
     this->htree_all_nodes.pop_back();
 
     // Merge two halves of the Htree and remove the root
-    std::shared_ptr<HtreeNode> root_in_first_temp = root->in_first;
+    std::shared_ptr<HtreeNode> const root_in_first_temp = root->in_first;
     root_in_first_temp->out = root->in_second;
     root->in_second->out = root->in_first;
 

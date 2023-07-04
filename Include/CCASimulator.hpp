@@ -160,7 +160,7 @@ class CCASimulator
         // This doesn't work with older compilers that don't have newer C++ features. Therefore
         // using the old way of explicitly providing new and deleters. this->host_memory =
         // std::make_shared<char[]>(this->host_memory_size_in_bytes);
-        std::shared_ptr<char[]> host_memory_ptr(new char[this->host_memory_size_in_bytes],
+        std::shared_ptr<char[]> const host_memory_ptr(new char[this->host_memory_size_in_bytes],
                                                 std::default_delete<char[]>());
         this->host_memory = host_memory_ptr;
 
@@ -174,7 +174,7 @@ class CCASimulator
 
     inline void print_discription(std::ostream& os)
     {
-        double ratio_sink_compute =
+        double const ratio_sink_compute =
             (100.0 * this->total_sink_cells) / static_cast<double>(this->total_compute_cells);
 
         os << "\nCCA Chip Details:\n\tShape: "
@@ -224,7 +224,7 @@ class CCASimulator
         os << "Active_Status_Per_Cell_Per_Cycle\n";
         for (size_t i = 0; i < this->cca_statistics.individual_cells_active_status_per_cycle.size();
              i++) {
-            std::shared_ptr<u_int32_t[]> frame =
+            std::shared_ptr<u_int32_t[]> const frame =
                 this->cca_statistics.individual_cells_active_status_per_cycle[i];
             for (u_int32_t rows = 0; rows < this->dim_x; rows++) {
                 for (u_int32_t cols = 0; cols < this->dim_y; cols++) {

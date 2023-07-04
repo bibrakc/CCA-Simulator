@@ -58,11 +58,11 @@ Cell::add_neighbor_compute_cells()
         // Note: The coordinates are of type unsigned int and we need to do arithematics that
         // may give negative int values. Therefore, we cast them to signed int
         auto coordinate_signed = convert_internal_type_of_pair<int32_t>(this->cooridates);
-        int32_t cc_coordinate_x = coordinate_signed.first;
-        int32_t cc_coordinate_y = coordinate_signed.second;
+        int32_t const cc_coordinate_x = coordinate_signed.first;
+        int32_t const cc_coordinate_y = coordinate_signed.second;
 
         // Left neighbor
-        SignedCoordinates left_neighbor =
+        SignedCoordinates const left_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x - 1, cc_coordinate_y);
         if (this->cc_exists(left_neighbor)) {
             auto left_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(left_neighbor);
@@ -77,7 +77,7 @@ Cell::add_neighbor_compute_cells()
         }
 
         // Up neighbor
-        SignedCoordinates up_neighbor =
+        SignedCoordinates const up_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x, cc_coordinate_y - 1);
         if (this->cc_exists(up_neighbor)) {
             auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
@@ -91,7 +91,7 @@ Cell::add_neighbor_compute_cells()
             this->add_neighbor(std::nullopt);
         }
         // Right neighbor
-        SignedCoordinates right_neighbor =
+        SignedCoordinates const right_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x + 1, cc_coordinate_y);
         if (this->cc_exists(right_neighbor)) {
             auto right_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(right_neighbor);
@@ -105,7 +105,7 @@ Cell::add_neighbor_compute_cells()
             this->add_neighbor(std::nullopt);
         }
         // Down neighbor
-        SignedCoordinates down_neighbor = Coordinates(cc_coordinate_x, cc_coordinate_y + 1);
+        SignedCoordinates const down_neighbor = Coordinates(cc_coordinate_x, cc_coordinate_y + 1);
         if (this->cc_exists(down_neighbor)) {
             auto down_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
@@ -133,7 +133,7 @@ Cell::add_neighbor_compute_cells()
 auto
 Cell::recv_operon(Operon operon, u_int32_t direction_in, u_int32_t distance_class) -> bool
 {
-    bool success = this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
+    bool const success = this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
 
     if (!success) {
         // this->recv_channel_per_neighbor[direction_in][distance_class].front().first.dst_cc_id
@@ -167,7 +167,7 @@ inline auto
 Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
 {
     auto [cc_coordinate_x, cc_coordinate_y] = cc_coordinate;
-    int zero = 0;
+    int const zero = 0;
     if (this->shape == computeCellShape::square) {
 
         // If invalid
@@ -323,8 +323,8 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
 
         double num_unit_h_in_row = std::pow(2, this->hdepth - 1);
         num_unit_h_in_row = num_unit_h_in_row + (num_unit_h_in_row / 2);
-        u_int32_t mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
-        u_int32_t mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
+        u_int32_t const mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
+        u_int32_t const mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
 
         // TODO: later make this distance customizable, either at compile time or runtime.
         // TODO: Look at narrow_cast and see if we should use that.
@@ -438,7 +438,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         if constexpr (debug_code) {
@@ -479,7 +479,7 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t  /*src_cc_id*/, 
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         std::vector<u_int32_t> paths;
@@ -542,7 +542,7 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_in
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         std::vector<u_int32_t> paths;
@@ -605,7 +605,7 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_i
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         // West first routing restricts turns to the west side. Take west/left first if needed
@@ -690,8 +690,8 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
 inline auto
 row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y) -> bool
 {
-    u_int32_t center = dim_y / 2;
-    u_int32_t start_chunk = (dim_y * row) + center + 4;
+    u_int32_t const center = dim_y / 2;
+    u_int32_t const start_chunk = (dim_y * row) + center + 4;
     return ((cc_id > start_chunk) && (cc_id < start_chunk + chunk_size));
 }
 
@@ -707,10 +707,10 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
-        Coordinates src_cc_coordinates =
+        Coordinates const src_cc_coordinates =
             Cell::cc_id_to_cooridinate(src_cc_id, this->shape, this->dim_y);
 
         // .first = col, .second = row
@@ -758,7 +758,7 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         // std::cout << "vertical_first_routing\n";
@@ -781,7 +781,7 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vect
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
-        Coordinates dst_cc_coordinates =
+        Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
         // std::cout << "vertical_first_routing\n";

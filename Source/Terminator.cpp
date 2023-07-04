@@ -52,7 +52,7 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
         this->parent = origin_addr_in;
     } else {
         // Send acknowledgement back to where the action came from
-        TerminatorAction acknowledgement_action(
+        TerminatorAction const acknowledgement_action(
             origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
 
         // TODO: put this counter in its own and separate betweek ack and nornal action
@@ -60,7 +60,7 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
 
         cc.statistics.actions_acknowledgement_created++;
         // Create Operon and put it in the task queue
-        Operon operon_to_send =
+        Operon const operon_to_send =
             cc.construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
         cc.task_queue.push(cc.send_operon(operon_to_send));
     }
@@ -81,7 +81,7 @@ Terminator::unsignal(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction acknowledgement_action(this->parent.value(),
+            TerminatorAction const acknowledgement_action(this->parent.value(),
                                                     this->my_object,
                                                     actionType::terminator_acknowledgement_action);
 
@@ -90,7 +90,7 @@ Terminator::unsignal(ComputeCell& cc)
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
-            Operon operon_to_send =
+            Operon const operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
@@ -128,7 +128,7 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction acknowledgement_action(this->parent.value(),
+            TerminatorAction const acknowledgement_action(this->parent.value(),
                                                     this->my_object,
                                                     actionType::terminator_acknowledgement_action);
 
@@ -137,7 +137,7 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
-            Operon operon_to_send =
+            Operon const operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 
@@ -159,7 +159,7 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction acknowledgement_action(this->parent.value(),
+            TerminatorAction const acknowledgement_action(this->parent.value(),
                                                     this->my_object,
                                                     actionType::terminator_acknowledgement_action);
 
@@ -168,7 +168,7 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
-            Operon operon_to_send =
+            Operon const operon_to_send =
                 cc.construct_operon(cc.id, this->parent.value().cc_id, acknowledgement_action);
             cc.task_queue.push(cc.send_operon(operon_to_send));
 

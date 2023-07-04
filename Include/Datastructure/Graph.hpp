@@ -105,12 +105,12 @@ class Graph
 
         std::cout << "Populating vertices by inserting edges: \n";
         for (int i = 0; i < this->total_vertices; i++) {
-            u_int32_t src_vertex_id = this->vertices[i].id;
+            u_int32_t const src_vertex_id = this->vertices[i].id;
 
             for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
 
-                u_int32_t dst_vertex_id = this->vertices[i].edges[j].edge;
-                u_int32_t edge_weight = this->vertices[i].edges[j].weight;
+                u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
+                u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
 
                 if (!this->insert_edge_by_address<VertexTypeOfAddress>(
                         cca_simulator,
@@ -143,7 +143,7 @@ class Graph
                   << this->total_edges << " egdes.\n";
 
         // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
-        std::shared_ptr<VertexType[]> vertices_(new VertexType[this->total_vertices],
+        std::shared_ptr<VertexType[]> const vertices_(new VertexType[this->total_vertices],
                                                 std::default_delete<VertexType[]>());
         this->vertices = vertices_;
 

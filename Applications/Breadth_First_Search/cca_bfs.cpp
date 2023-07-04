@@ -140,7 +140,7 @@ main(int argc, char** argv) -> int
     bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
 
     // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-    std::shared_ptr<int[]> args_x(new int[2], std::default_delete<int[]>());
+    std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
     // Set distance to 0
     args_x[0] = 0;
     // Origin vertex from where this action came
@@ -176,7 +176,7 @@ main(int argc, char** argv) -> int
               << std::endl;
 
     // Check for correctness. Print the distance to a target test vertex.
-    Address test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
+    Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
 
     auto* v_test =
         static_cast<BFSSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
@@ -185,13 +185,13 @@ main(int argc, char** argv) -> int
               << " is: " << v_test->bfs_level << "\n";
 
     // Write simulation statistics to a file
-    std::string output_file_name = "bfs_square_x_" + std::to_string(cca_square_simulator.dim_x) +
+    std::string const output_file_name = "bfs_square_x_" + std::to_string(cca_square_simulator.dim_x) +
                                    "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" +
                                    graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
                                    "_e_" + std::to_string(input_graph.total_edges) + "_hb_" +
                                    std::to_string(hbandwidth_max);
 
-    std::string output_file_path = output_file_directory + "/" + output_file_name;
+    std::string const output_file_path = output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
 
     std::ofstream output_file(output_file_path);
@@ -212,7 +212,7 @@ main(int argc, char** argv) -> int
     output_file.close();
 
     // Write the active status animation data in a separate file.
-    std::string output_file_path_animation = output_file_path + "_active_animation";
+    std::string const output_file_path_animation = output_file_path + "_active_animation";
     std::cout << "\nWriting active status animation data to output file: "
               << output_file_path_animation << "\n";
 
