@@ -212,13 +212,13 @@ Cell::get_cell_type_name(CellType type) -> std::string
 {
     switch (type) {
         case (CellType::compute_cell):
-            return std::string("ComputeCell");
+            return {"ComputeCell"};
             break;
         case (CellType::sink_cell):
-            return std::string("SinkCell");
+            return {"SinkCell"};
             break;
         default:
-            return std::string("Invalid CellType");
+            return {"Invalid CellType"};
             break;
     }
 }
@@ -228,20 +228,20 @@ Cell::get_compute_cell_shape_name(computeCellShape shape) -> std::string
 {
     switch (shape) {
         case (computeCellShape::block_1D):
-            return std::string("block_1D");
+            return {"block_1D"};
             break;
         case (computeCellShape::triangular):
-            return std::string("triangular");
+            return {"triangular"};
             break;
         case (computeCellShape::square):
-            return std::string("square");
+            return {"square"};
             break;
         case (computeCellShape::hexagon):
-            return std::string("hexagon");
+            return {"hexagon"};
             break;
 
         default:
-            return std::string("Invalid Shape");
+            return {"Invalid Shape"};
             break;
     }
 }
