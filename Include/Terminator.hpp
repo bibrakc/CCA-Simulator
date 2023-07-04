@@ -49,7 +49,7 @@ struct Terminator
     auto is_active() -> bool;
 
     // Recieved an action. Increament my deficit.
-    void signal(ComputeCell& cc, const Address origin_addr_in);
+    void signal(ComputeCell& cc, Address origin_addr_in);
 
     // Make the object (vertex) inactive
     void unsignal(ComputeCell& cc);

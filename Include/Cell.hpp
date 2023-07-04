@@ -226,7 +226,7 @@ class Cell
                                           computeCellShape shape_,
                                           u_int32_t dim_y) -> u_int32_t;
 
-    inline auto cc_exists(const SignedCoordinates cc_coordinate) -> bool;
+    inline auto cc_exists(SignedCoordinates cc_coordinate) -> bool;
 
     auto should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool;
 

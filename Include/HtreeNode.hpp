@@ -41,8 +41,8 @@ struct HtreeNode
 
     auto operator<<(std::ostream& os) -> std::ostream&;
 
-    auto put_operon_from_sink_cell(const CoordinatedOperon operon) -> bool;
-    auto is_coordinate_in_my_range(const Coordinates point) -> bool;
+    auto put_operon_from_sink_cell(CoordinatedOperon operon) -> bool;
+    auto is_coordinate_in_my_range(Coordinates point) -> bool;
 
     auto is_end_htree_node() -> bool;
 
