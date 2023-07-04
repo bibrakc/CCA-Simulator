@@ -101,7 +101,6 @@ sssp_predicate_func(ComputeCell& cc,
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
     int const incoming_distance = args[0];
-    int const origin_vertex = args[1];
 
     if (v->sssp_distance > incoming_distance) {
         return 1;

@@ -101,7 +101,6 @@ bfs_predicate_func(ComputeCell& cc,
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
     int const incoming_level = args[0];
-    int const origin_vertex = args[1];
 
     if (v->bfs_level > incoming_level) {
         return 1;
