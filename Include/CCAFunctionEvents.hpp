@@ -44,7 +44,7 @@ struct FunctionEventManager
 
     // Each event gets its unique id that is used by the end user or runtime to create actions that
     // will call events.
-    CCAFunctionEvent next_available_event_id;
+    CCAFunctionEvent next_available_event_id{0};
 
     // Special system events:
     // Acknowledgement event id for termination detection.
@@ -58,8 +58,8 @@ struct FunctionEventManager
 
     FunctionEventManager()
         : event_handlers()
-        , next_available_event_id(0)
-        , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
+        , 
+         acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
     }
 };

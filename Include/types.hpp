@@ -85,23 +85,21 @@ class FixedSizeQueue
     [[nodiscard]] auto queue_size_max() const -> u_int32_t { return this->size_max; }
 
     // Return whether there is a slot in the queue
-    [[nodiscard]] auto has_room() const -> bool { return (this->underlying_queue.size() != this->size_max); }
+    [[nodiscard]] auto has_room() const -> bool
+    {
+        return (this->underlying_queue.size() != this->size_max);
+    }
 };
 
 class MaxCounter
 {
   private:
-    u_int32_t counter;
-    u_int32_t max_counter;
-    u_int32_t total_counter;
+    u_int32_t counter{ 0 };
+    u_int32_t max_counter{ 0 };
+    u_int32_t total_counter{ 0 };
 
   public:
-    MaxCounter()
-        : counter(0)
-        , max_counter(0)
-        , total_counter(0)
-    {
-    }
+    MaxCounter() {}
 
     void increment()
     {

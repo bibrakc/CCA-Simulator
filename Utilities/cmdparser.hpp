@@ -83,8 +83,8 @@ class Parser
             , alternative(alternative.size() > 0 ? "--" + alternative : "")
             , description(description)
             , required(required)
-            , handled(false)
-            , arguments({})
+            , 
+             arguments({})
             , dominant(dominant)
             , variadic(variadic)
         {
@@ -97,7 +97,7 @@ class Parser
         std::string alternative;
         std::string description;
         bool required;
-        bool handled;
+        bool handled{false};
         std::vector<std::string> arguments;
         bool const dominant;
         bool const variadic;

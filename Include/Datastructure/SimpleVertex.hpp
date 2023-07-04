@@ -66,12 +66,6 @@ struct SimpleVertex : Object
         return true;
     }
 
-    SimpleVertex(u_int32_t id_in)
-        : id(id_in)
-        , number_of_edges(0)
-    {
-    }
-
     SimpleVertex() = default;
     ~SimpleVertex() = default;
 };
