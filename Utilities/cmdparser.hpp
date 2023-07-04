@@ -30,6 +30,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace cli {
@@ -74,14 +75,14 @@ class Parser
       public:
         explicit CmdBase(const std::string& name,
                          const std::string& alternative,
-                         const std::string& description,
+                         std::string  description,
                          bool required,
                          bool dominant,
                          bool variadic)
             : name(name)
             , command(name.size() > 0 ? "-" + name : "")
             , alternative(alternative.size() > 0 ? "--" + alternative : "")
-            , description(description)
+            , description(std::move(description))
             , required(required)
             , 
              arguments({})
