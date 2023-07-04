@@ -517,7 +517,7 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t  /*src_cc_id*/, 
             paths.push_back(1);
         }
 
-        if (paths.size() == 0) {
+        if (paths.empty()) {
             std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                       << " Bug: routing not sucessful!\n";
         }
@@ -571,7 +571,7 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_in
             paths.push_back(1);
         }
 
-        if (paths.size() == 0) {
+        if (paths.empty()) {
             std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                       << " Bug: routing not sucessful!\n";
         }
@@ -634,7 +634,7 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_i
             paths.push_back(1);
         }
 
-        if (paths.size() == 0) {
+        if (paths.empty()) {
             std::cerr << Cell::get_compute_cell_shape_name(this->shape)
                       << " Bug: routing not sucessful!\n";
         }

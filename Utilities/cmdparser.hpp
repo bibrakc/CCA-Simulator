@@ -80,8 +80,8 @@ class Parser
                          bool dominant,
                          bool variadic)
             : name(name)
-            , command(name.size() > 0 ? "-" + name : "")
-            , alternative(alternative.size() > 0 ? "--" + alternative : "")
+            , command(!name.empty() ? "-" + name : "")
+            , alternative(!alternative.empty() ? "--" + alternative : "")
             , description(std::move(description))
             , required(required)
             , 
@@ -205,7 +205,7 @@ class Parser
 
     static auto parse(const std::vector<std::string>& elements, const bool& defval) -> bool
     {
-        if (elements.size() != 0)
+        if (!elements.empty())
             throw std::runtime_error("A boolean command line parameter cannot have any arguments.");
 
         return !defval;
@@ -503,11 +503,11 @@ class Parser
 
     auto run(std::ostream& output, std::ostream& error) -> bool
     {
-        if (_arguments.size() > 0) {
+        if (!_arguments.empty()) {
             auto current = find_default();
 
             for (size_t i = 0, n = _arguments.size(); i < n; ++i) {
-                auto isarg = _arguments[i].size() > 0 && _arguments[i][0] == '-';
+                auto isarg = !_arguments[i].empty() && _arguments[i][0] == '-';
                 auto associated = isarg ? find(_arguments[i]) : nullptr;
 
                 if (associated != nullptr) {
@@ -615,7 +615,7 @@ class Parser
     auto find_default() -> CmdBase*
     {
         for (auto command : _commands) {
-            if (command->name == "") {
+            if (command->name.empty()) {
                 return command;
             }
         }
