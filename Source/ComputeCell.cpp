@@ -41,8 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
-                                int nargs,
-                                const std::shared_ptr<int[]>& args) -> int
+                                int  /*nargs*/,
+                                const std::shared_ptr<int[]>&  /*args*/) -> int
 {
     auto* obj = static_cast<Object*>(cc.get_object(addr));
 

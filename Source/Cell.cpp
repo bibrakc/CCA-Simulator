@@ -373,7 +373,7 @@ Cell::is_congested() -> std::pair<bool, u_int32_t>
 }
 
 void
-Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>&  /*CCA_chip*/)
 {
     // Update the last_congested_cycle if needed;
     auto [is_congested, congestion_level_addition] = this->is_congested();
@@ -409,7 +409,7 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
 }
 
 auto
-Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::vector<u_int32_t>
+Cell::get_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
 
@@ -469,7 +469,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
 }
 
 auto
-Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id)
     -> std::vector<u_int32_t>
 {
     // This has deadlock :(
@@ -533,7 +533,7 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int
 }
 
 auto
-Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t  /*src_cc_id*/, u_int32_t dst_cc_id)
     -> std::vector<u_int32_t>
 {
 

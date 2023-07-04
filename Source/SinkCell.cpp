@@ -206,7 +206,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
 void
 SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
-                                  void* function_events)
+                                  void*  /*function_events*/)
 {
     if (!this->is_compute_cell_active()) {
         return;
@@ -222,7 +222,7 @@ SinkCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
 // This act as synchronization and needs to be called before the actual communication cycle so
 // as to not cause race conditions on the communicaton buffer.
 void
-SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
+SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>&  /*CCA_chip*/)
 {
     // assert(CCA_chip.size() != 0);
 
