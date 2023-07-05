@@ -94,6 +94,7 @@ extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 struct PageRankFixedIterationsArguments
 {
     double score;
+    u_int32_t src_vertex_id;
 };
 
 // Action for the Page Rank Fixed Iterations program.
@@ -149,17 +150,26 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     PageRankFixedIterationsArguments page_rank_args{};
     memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
 
-    // Update partial new score with the new incoming score.
-    v->current_iteration_rank_score += page_rank_args.score;
-    v->current_iteration_incoming_count++;
+    std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+              << ", outbound: " << v->number_of_edges
+              << ", recieved from v: " << page_rank_args.src_vertex_id
+              << ", with score value: " << page_rank_args.score << "\n";
 
+    // FIX ME: Adhoc way to distinguish between a diffusion action and one that same from the host
+    // to germinate.
+    if (page_rank_args.score != 0) {
+        // Update partial new score with the new incoming score.
+        v->current_iteration_rank_score += page_rank_args.score;
+        v->current_iteration_incoming_count++;
+    }
     if (v->current_iteration_incoming_count == v->inbound_degree) {
         // Update the page rank score.
         v->page_rank_current_rank_score = ((1 - damping_factor) / v->total_number_of_vertices) +
                                           (damping_factor * v->current_iteration_rank_score);
 
         // Reset. TODO: Think about this later.
-        // v->current_iteration_rank_score = 0;
+        v->current_iteration_rank_score = 0.0;
+        v->current_iteration_incoming_count = 0;
     }
     return 0;
 }
@@ -177,6 +187,9 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         PageRankFixedIterationsArguments my_score_to_send;
         my_score_to_send.score =
             v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
+
+        my_score_to_send.src_vertex_id = v->id;
+
         for (int i = 0; i < v->number_of_edges; i++) {
 
             // Prepare arguments (paylaod) of the action.
@@ -185,7 +198,9 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
             memcpy(args_x.get(), &my_score_to_send, sizeof(PageRankFixedIterationsArguments));
 
             std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-                      << ", diffusing to v: " << v->edges[i].edge << "\n";
+                      << ", outbound: " << v->number_of_edges
+                      << ", diffusing to v: " << v->edges[i].edge
+                      << ", with score value: " << my_score_to_send.score << "\n";
 
             // Diffuse.
             cc.diffuse(PageRankFixedIterationsAction(v->edges[i].edge,
