@@ -42,7 +42,7 @@ auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 int /*nargs*/,
-                                const std::shared_ptr<int[]>& /*args*/) -> int
+                                const std::shared_ptr<char[]>& /*args*/) -> int
 {
     auto* obj = static_cast<Object*>(cc.get_object(addr));
 

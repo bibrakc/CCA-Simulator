@@ -38,6 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmdparser.hpp"
 
+// For memcpy()
+#include <cstring>
+
 inline constexpr double damping_factor = 0.85;
 
 template<typename Address_T>
@@ -51,9 +54,6 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
 
     // Used in the calculation with the damping factor.
     u_int32_t total_number_of_vertices;
-
-    // Total inbound edges to this vertex.
-    u_int32_t inbound_degree;
 
     // The page rank score for this vertex.
     double page_rank_current_rank_score{};
@@ -105,7 +105,7 @@ class PageRankFixedIterationsAction : public Action
                                   actionType type,
                                   const bool ready,
                                   const int nargs_in,
-                                  const std::shared_ptr<int[]>& args_in,
+                                  const std::shared_ptr<char[]>& args_in,
                                   CCAFunctionEvent predicate_in,
                                   CCAFunctionEvent work_in,
                                   CCAFunctionEvent diffuse_in)
@@ -131,7 +131,7 @@ inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address& addr,
                                           int /*nargs*/,
-                                          const std::shared_ptr<int[]>& args) -> int
+                                          const std::shared_ptr<char[]>& args) -> int
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
     // vertices.
@@ -142,20 +142,24 @@ inline auto
 page_rank_fixed_iterations_work_func(ComputeCell& cc,
                                      const Address& addr,
                                      int /*nargs*/,
-                                     const std::shared_ptr<int[]>& args) -> int
+                                     const std::shared_ptr<char[]>& args) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
-    // TODO: memcpy size of double. Change the func to be generic.
-    double const incoming_score = args[0];
+
+    PageRankFixedIterationsArguments page_rank_args{};
+    memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
 
     // Update partial new score with the new incoming score.
-    v->current_iteration_rank_score += incoming_score;
+    v->current_iteration_rank_score += page_rank_args.score;
     v->current_iteration_incoming_count++;
 
     if (v->current_iteration_incoming_count == v->inbound_degree) {
         // Update the page rank score.
         v->page_rank_current_rank_score = ((1 - damping_factor) / v->total_number_of_vertices) +
                                           (damping_factor * v->current_iteration_rank_score);
+
+        // Reset. TODO: Think about this later.
+        // v->current_iteration_rank_score = 0;
     }
     return 0;
 }
@@ -164,22 +168,26 @@ inline auto
 page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const Address& addr,
                                         int /*nargs*/,
-                                        const std::shared_ptr<int[]>& /*args*/) -> int
+                                        const std::shared_ptr<char[]>& /*args*/) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
-        double my_score_to_send =
+        PageRankFixedIterationsArguments my_score_to_send;
+        my_score_to_send.score =
             v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
         for (int i = 0; i < v->number_of_edges; i++) {
 
-            // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-            std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
+            // Prepare arguments (paylaod) of the action.
+            std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
+                                                 std::default_delete<char[]>());
+            memcpy(args_x.get(), &my_score_to_send, sizeof(PageRankFixedIterationsArguments));
 
-            args_x[0] = static_cast<int>(my_score_to_send);
-            args_x[1] = static_cast<int>(v->id);
+            std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+                      << ", diffusing to v: " << v->edges[i].edge << "\n";
 
+            // Diffuse.
             cc.diffuse(PageRankFixedIterationsAction(v->edges[i].edge,
                                                      addr,
                                                      actionType::application_action,

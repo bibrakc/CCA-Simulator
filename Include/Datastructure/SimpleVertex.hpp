@@ -51,7 +51,12 @@ struct SimpleVertex : Object
 {
     u_int32_t id{};
     Edge<Address_T> edges[edges_max]{};
+
+    // Outbound degree.
     u_int32_t number_of_edges{};
+
+    // Total inbound edges to this vertex.
+    u_int32_t inbound_degree{};
 
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool

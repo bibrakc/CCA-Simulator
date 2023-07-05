@@ -59,7 +59,7 @@ class Action
     int nargs;
 
     // Payload that contains the data like the arguments to the action function
-    std::shared_ptr<int[]> args;
+    std::shared_ptr<char[]> args;
 
     // Memory location of the object for which this action is destined
     Address obj_addr;

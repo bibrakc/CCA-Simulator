@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_pagerank_fixed_iterations.hpp"
+#include "cca_page_rank_fixed_iterations.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -40,8 +40,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <omp.h>
 
-// Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate, work, and diffuse.
-// In the main register the functions and get their ids
+// Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate,
+// work, and diffuse. In the main register the functions and get their ids
 CCAFunctionEvent page_rank_fixed_iterations_predicate;
 CCAFunctionEvent page_rank_fixed_iterations_work;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse;
@@ -125,43 +125,48 @@ main(int argc, char** argv) -> int
     // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
 
-    // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now going to be sent
-    // to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsSimpleVertex<Address>>(cca_square_simulator,
-                                                                      allocator);
+    // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
+    // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
+    input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsSimpleVertex<Address>>(
+        cca_square_simulator, allocator);
 
     // Only put the Page Rank Fixed Iterations seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
     // Register the Page Rank Fixed Iterations action functions for predicate, work, and diffuse.
-    page_rank_fixed_iterations_predicate = cca_square_simulator.register_function_event(page_rank_fixed_iterations_predicate_func);
-    page_rank_fixed_iterations_work = cca_square_simulator.register_function_event(page_rank_fixed_iterations_work_func);
-    page_rank_fixed_iterations_diffuse = cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
+    page_rank_fixed_iterations_predicate =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_predicate_func);
+    page_rank_fixed_iterations_work =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_work_func);
+    page_rank_fixed_iterations_diffuse =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
 
-    // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-    std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
-    // Set distance to 0
-    args_x[0] = 0;
-    // Origin vertex from where this action came
-    args_x[1] = root_vertex;
+    // Prepare the arguments (payload) for the actions.
+    PageRankFixedIterationsArguments root_score_to_send;
+    root_score_to_send.score = 0;
+    std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
+                                         std::default_delete<char[]>());
+    memcpy(args_x.get(), &root_score_to_send, sizeof(PageRankFixedIterationsArguments));
 
-    std::optional<Address> page_rank_fixed_iterations_terminator = cca_square_simulator.create_terminator();
+    std::optional<Address> page_rank_fixed_iterations_terminator =
+        cca_square_simulator.create_terminator();
     if (!page_rank_fixed_iterations_terminator) {
         std::cerr << "Error! Memory not allocated for page_rank_fixed_iterations_terminator \n";
         exit(0);
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(PageRankFixedIterationsAction(vertex_addr,
-                                                     page_rank_fixed_iterations_terminator.value(),
-                                                     actionType::application_action,
-                                                     true,
-                                                     2,
-                                                     args_x,
-                                                     page_rank_fixed_iterations_predicate,
-                                                     page_rank_fixed_iterations_work,
-                                                     page_rank_fixed_iterations_diffuse));
+    cca_square_simulator.germinate_action(
+        PageRankFixedIterationsAction(vertex_addr,
+                                      page_rank_fixed_iterations_terminator.value(),
+                                      actionType::application_action,
+                                      true,
+                                      2,
+                                      args_x,
+                                      page_rank_fixed_iterations_predicate,
+                                      page_rank_fixed_iterations_work,
+                                      page_rank_fixed_iterations_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
@@ -175,19 +180,23 @@ main(int argc, char** argv) -> int
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    // Check for correctness. Print the distance to a target test vertex.
-    Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
+    std::cout << "\nPage Rank Fixed Iterations score: \n";
+    for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
 
-    auto* v_test =
-        static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+        // Check for correctness. Print the distance to a target test vertex. test_vertex
+        Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-    std::cout << "\nPage Rank Fixed Iterations distance from vertex: " << root_vertex << " to vertex: " << v_test->id
-              << " is: " << v_test->page_rank_fixed_iterations_distance << "\n";
+        auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
+            cca_square_simulator.get_object(test_vertex_addr));
+
+        std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
+                  << "\n";
+    }
 
     // Write simulation statistics to a file
     std::string const output_file_name =
-        "page_rank_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) + "_y_" +
-        std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
+        "page_rank_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
+        "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(hbandwidth_max);
 
