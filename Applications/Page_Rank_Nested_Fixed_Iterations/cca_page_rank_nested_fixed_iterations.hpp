@@ -42,10 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
+inline constexpr u_int32_t nested_iterations = 2;
 
 template<typename Address_T>
-struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
+struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
 {
+    // This is the global iteration
     u_int32_t page_rank_current_iteration{};
 
     // When a diffusion occurs for a single iteration this is set to true so as to not diffuse the
@@ -55,15 +57,19 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // The page rank score for this vertex.
     double page_rank_current_rank_score{};
 
+    // This is the nested iteration count
+    u_int32_t page_rank_current_nested_iteration{};
+
     // The page rank score for this vertex. This acts as a temporary to compute the new score.
-    double current_iteration_rank_score{};
+    double current_iteration_rank_score[nested_iterations]{};
 
     // Count to see if this vertex has recieved all messages (scores) so as to then compute the
     // final score and move to the next iteration.
     // current_iteration_incoming_count == inbound_degree
-    u_int32_t current_iteration_incoming_count{};
+    u_int32_t current_iteration_incoming_count[nested_iterations]{};
 
-    PageRankFixedIterationsSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+    PageRankNestedFixedIterationsSimpleVertex(u_int32_t id_in,
+                                              u_int32_t total_number_of_vertices_in)
         : page_rank_current_rank_score(1.0 / total_number_of_vertices_in)
     {
         this->id = id_in;
@@ -77,28 +83,29 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->page_rank_current_rank_score = initial_page_rank_score;
     }
 
-    PageRankFixedIterationsSimpleVertex() = default;
-    ~PageRankFixedIterationsSimpleVertex() = default;
+    PageRankNestedFixedIterationsSimpleVertex() = default;
+    ~PageRankNestedFixedIterationsSimpleVertex() = default;
 };
 
 // CCAFunctionEvent ids for the Page Rank Fixed Iterations action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
-extern CCAFunctionEvent page_rank_fixed_iterations_predicate;
-extern CCAFunctionEvent page_rank_fixed_iterations_work;
-extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
+extern CCAFunctionEvent page_rank_nested_fixed_iterations_predicate;
+extern CCAFunctionEvent page_rank_nested_fixed_iterations_work;
+extern CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse;
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
 {
     double score;
+    u_int32_t nested_iteration;
     u_int32_t src_vertex_id;
 };
 
 inline auto
-page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
-                                          const Address& addr,
-                                          actionType /* action_type_in */,
-                                          const ActionArgumentType& args) -> int
+page_rank_nested_fixed_iterations_predicate_func(ComputeCell& cc,
+                                                 const Address& addr,
+                                                 actionType /* action_type_in */,
+                                                 const ActionArgumentType& args) -> int
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
     // vertices.
@@ -106,46 +113,50 @@ page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
 }
 
 inline auto
-page_rank_fixed_iterations_work_func(ComputeCell& cc,
-                                     const Address& addr,
-                                     actionType action_type_in,
-                                     const ActionArgumentType& args) -> int
+page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
+                                            const Address& addr,
+                                            actionType action_type_in,
+                                            const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
-
-    PageRankNestedFixedIterationsArguments const page_rank_args =
-        cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
     if (action_type_in == actionType::application_action) {
+        auto* v =
+            static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+
+        PageRankNestedFixedIterationsArguments const page_rank_args =
+            cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
+
         // Update partial new score with the new incoming score.
-        v->current_iteration_rank_score += page_rank_args.score;
-        v->current_iteration_incoming_count++;
+        v->current_iteration_rank_score[page_rank_args.nested_iteration] += page_rank_args.score;
+        v->current_iteration_incoming_count[page_rank_args.nested_iteration]++;
     }
     return 0;
 }
 
 inline auto
-page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
-                                        const Address& addr,
-                                        actionType /* action_type_in */,
-                                        const ActionArgumentType& /*args*/) -> int
+page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
+                                               const Address& addr,
+                                               actionType /* action_type_in */,
+                                               const ActionArgumentType& /*args*/) -> int
 {
-    auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
         PageRankNestedFixedIterationsArguments my_score_to_send;
+
         my_score_to_send.score =
             v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
-
         my_score_to_send.src_vertex_id = v->id;
+        my_score_to_send.nested_iteration = v->page_rank_current_nested_iteration;
 
         for (int i = 0; i < v->number_of_edges; i++) {
 
             ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(my_score_to_send);
+                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+                    my_score_to_send);
 
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
@@ -153,27 +164,55 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                               actionType::application_action,
                               true,
                               args_x,
-                              page_rank_fixed_iterations_predicate,
-                              page_rank_fixed_iterations_work,
-                              page_rank_fixed_iterations_diffuse));
+                              page_rank_nested_fixed_iterations_predicate,
+                              page_rank_nested_fixed_iterations_work,
+                              page_rank_nested_fixed_iterations_diffuse));
         }
 
         v->has_current_iteration_diffused = true;
     }
 
-    if (v->current_iteration_incoming_count == v->inbound_degree) {
+    if (v->current_iteration_incoming_count[v->page_rank_current_nested_iteration] ==
+        v->inbound_degree) {
         // Update the page rank score.
         v->page_rank_current_rank_score =
             ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
-            (damping_factor * v->current_iteration_rank_score);
+            (damping_factor *
+             v->current_iteration_rank_score[v->page_rank_current_nested_iteration]);
 
         // Reset.
-        v->current_iteration_rank_score = 0.0;
-        v->current_iteration_incoming_count = 0;
+        v->current_iteration_rank_score[v->page_rank_current_nested_iteration] = 0.0;
+        v->current_iteration_incoming_count[v->page_rank_current_nested_iteration] = 0;
         v->has_current_iteration_diffused = false;
 
         // Increament the global iteration count.
-        // v->page_rank_current_iteration++;
+        v->page_rank_current_iteration++;
+
+        // Go to the next nested iteration.
+        v->page_rank_current_nested_iteration++;
+        if (v->page_rank_current_nested_iteration == nested_iterations) {
+            // Reset and done with all the nested iterations.
+            v->page_rank_current_nested_iteration = 0;
+        } else {
+
+            // Reset
+            v->has_current_iteration_diffused = false;
+
+            PageRankNestedFixedIterationsArguments dummy;
+            ActionArgumentType const args_x =
+                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(dummy);
+
+            // Germinate action onto ownself.
+            // Diffuse.
+            cc.diffuse(Action(addr, // ownself
+                              addr, // from myself
+                              actionType::germinate_action,
+                              true,
+                              args_x,
+                              page_rank_nested_fixed_iterations_predicate,
+                              page_rank_nested_fixed_iterations_work,
+                              page_rank_nested_fixed_iterations_diffuse));
+        }
     }
 
     return 0;
@@ -189,9 +228,9 @@ configure_parser(cli::Parser& parser)
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     parser.set_required<u_int32_t>(
-        "tv", "testvertex", "test vertex to print its page_rank_fixed_iterations score");
+        "tv", "testvertex", "test vertex to print its page_rank_nested_fixed_iterations score");
     parser.set_required<u_int32_t>("root",
-                                   "page_rank_fixed_iterations_root",
+                                   "page_rank_nested_fixed_iterations_root",
                                    "Root vertex where to germinate action for Page Rank (Page Rank "
                                    "Fixed Iterations). Makes no difference to the results.");
     parser.set_optional<u_int32_t>(
