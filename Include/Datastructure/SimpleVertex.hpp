@@ -44,7 +44,7 @@ struct Edge
     u_int32_t weight;
 };
 
-inline constexpr u_int32_t edges_max = 60;
+inline constexpr u_int32_t edges_max = 2000;
 
 template<typename Address_T>
 struct SimpleVertex : Object
@@ -67,6 +67,7 @@ struct SimpleVertex : Object
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
         if (this->number_of_edges >= edges_max) {
+            std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
             return false;
         }
 

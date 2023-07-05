@@ -70,9 +70,9 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
 
-        std::cout << "PageRankFixedIterationsSimpleVertex, v: " << this->id
+        /* std::cout << "PageRankFixedIterationsSimpleVertex, v: " << this->id
                   << ", page_rank_current_rank_score: " << this->page_rank_current_rank_score
-                  << "\n";
+                  << "\n"; */
     }
 
     // Custom initialize the page rank score other than the default of (1.0 / N).
@@ -106,7 +106,6 @@ class PageRankFixedIterationsAction : public Action
                                   const Address origin_vertex_addr_in,
                                   actionType type,
                                   const bool ready,
-                                  /* const int nargs_in, */
                                   const ActionArgumentType& args_in,
                                   CCAFunctionEvent predicate_in,
                                   CCAFunctionEvent work_in,
@@ -118,7 +117,6 @@ class PageRankFixedIterationsAction : public Action
         this->action_type = type;
         this->is_ready = ready;
 
-        /* this->nargs = nargs_in; */
         this->args = args_in;
 
         this->predicate = predicate_in;
@@ -159,7 +157,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
-    if (action_type_in != actionType::germinate_action) {
+    if (action_type_in == actionType::application_action) {
         // Update partial new score with the new incoming score.
         v->current_iteration_rank_score += page_rank_args.score;
         v->current_iteration_incoming_count++;
@@ -207,7 +205,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                      addr,
                                                      actionType::application_action,
                                                      true,
-                                                     /*  2, */
                                                      args_x,
                                                      page_rank_fixed_iterations_predicate,
                                                      page_rank_fixed_iterations_work,
@@ -223,7 +220,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
             ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
             (damping_factor * v->current_iteration_rank_score);
 
-        // Reset. TODO: Think about this later.
+        // Reset.
         v->current_iteration_rank_score = 0.0;
         v->current_iteration_incoming_count = 0;
         v->has_current_iteration_diffused = false;
