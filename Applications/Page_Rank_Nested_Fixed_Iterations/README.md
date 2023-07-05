@@ -1,6 +1,7 @@
 # Page Rank Fixed Iterations
 
 ## Notes
+THIS MIGHT NOT BE TRUE! Thre is a bug.
 Seems like over diffusiveness degrades the performance. Worst performance even if `nested_iterations = 2`. Non-nested iterations from the host seems to have great performance. This can be verified by implementing iterative versions of sssp and bfs.
 
 ## Limitations

@@ -148,14 +148,6 @@ main(int argc, char** argv) -> int
     page_rank_nested_fixed_iterations_diffuse = cca_square_simulator.register_function_event(
         page_rank_nested_fixed_iterations_diffuse_func);
 
-    // Prepare the arguments (payload) for the actions.
-    PageRankNestedFixedIterationsArguments root_score_to_send;
-    root_score_to_send.score = -10;
-    root_score_to_send.src_vertex_id = 99999;
-
-    ActionArgumentType const args_x =
-        cca_create_action_argument<PageRankNestedFixedIterationsArguments>(root_score_to_send);
-
     std::optional<Address> page_rank_nested_fixed_iterations_terminator =
         cca_square_simulator.create_terminator();
     if (!page_rank_nested_fixed_iterations_terminator) {
@@ -174,7 +166,7 @@ main(int argc, char** argv) -> int
                    page_rank_nested_fixed_iterations_terminator.value(),
                    actionType::germinate_action,
                    true,
-                   args_x,
+                   nullptr, // action arguments are not needed for germinate action.
                    page_rank_nested_fixed_iterations_predicate,
                    page_rank_nested_fixed_iterations_work,
                    page_rank_nested_fixed_iterations_diffuse));
@@ -212,6 +204,7 @@ main(int argc, char** argv) -> int
                 cca_square_simulator.get_object(test_vertex_addr));
 
             std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
+                      << ", v_test->page_rank_current_iteration: " << v_test->page_rank_current_iteration
                       << "\n";
 #if PRINT_RESULTS_FOR_ALL_VERTICES
         }

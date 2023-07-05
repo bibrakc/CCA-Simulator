@@ -198,17 +198,13 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
             // Reset
             v->has_current_iteration_diffused = false;
 
-            PageRankNestedFixedIterationsArguments dummy;
-            ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(dummy);
-
             // Germinate action onto ownself.
             // Diffuse.
             cc.diffuse(Action(addr, // ownself
                               addr, // from myself
                               actionType::germinate_action,
                               true,
-                              args_x,
+                              nullptr,
                               page_rank_nested_fixed_iterations_predicate,
                               page_rank_nested_fixed_iterations_work,
                               page_rank_nested_fixed_iterations_diffuse));
