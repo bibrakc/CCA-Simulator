@@ -247,6 +247,8 @@ configure_parser(cli::Parser& parser)
                                    "page_rank_fixed_iterations_root",
                                    "Root vertex where to germinate action for Page Rank (Page Rank "
                                    "Fixed Iterations). Makes no difference to the results.");
+    parser.set_optional<u_int32_t>(
+        "iter", "iterations", 20, "Number of fixed iterations to perform");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,

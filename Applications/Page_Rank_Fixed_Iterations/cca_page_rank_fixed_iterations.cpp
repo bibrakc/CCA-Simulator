@@ -56,6 +56,9 @@ main(int argc, char** argv) -> int
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
+    // Total fixed iterations to perform.
+    auto total_iterations = parser.get<u_int32_t>("iter");
+
     // Page Rank Fixed Iterations root vertex where to germinate action and start the computation.
     // Makes no difference to the end result.
     auto root_vertex = parser.get<u_int32_t>("root");
@@ -161,7 +164,6 @@ main(int argc, char** argv) -> int
     }
 
     u_int32_t total_program_cycles = 0;
-    u_int32_t constexpr total_iterations = 30;
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
 
