@@ -144,8 +144,7 @@ main(int argc, char** argv) -> int
     // Origin vertex from where this action came. Host not used. Put any value;
     root_level_to_send.src_vertex_id = 99999;
 
-    ActionArgumentType const args_x(new char[sizeof(BFSArguments)], std::default_delete<char[]>());
-    memcpy(args_x.get(), &root_level_to_send, sizeof(BFSArguments));
+    ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(root_level_to_send);
 
     std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
     if (!bfs_terminator) {

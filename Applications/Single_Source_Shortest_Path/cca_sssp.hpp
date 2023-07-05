@@ -81,9 +81,8 @@ sssp_predicate_func(ComputeCell& cc,
                     const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    SSSPArguments sssp_args{};
-    memcpy(&sssp_args, args.get(), sizeof(SSSPArguments));
 
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
     if (v->sssp_distance > incoming_distance) {
@@ -100,8 +99,7 @@ sssp_work_func(ComputeCell& cc,
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
 
-    SSSPArguments sssp_args{};
-    memcpy(&sssp_args, args.get(), sizeof(SSSPArguments));
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
     // Update distance with the new distance
@@ -123,11 +121,8 @@ sssp_diffuse_func(ComputeCell& cc,
     for (int i = 0; i < v->number_of_edges; i++) {
 
         distance_to_send.distance = v->sssp_distance + v->edges[i].weight;
-
-        ActionArgumentType const args_x(new char[sizeof(SSSPArguments)],
-                                        std::default_delete<char[]>());
-
-        memcpy(args_x.get(), &distance_to_send, sizeof(SSSPArguments));
+        ActionArgumentType const args_x =
+            cca_create_action_argument<SSSPArguments>(distance_to_send);
 
         cc.diffuse(Action(v->edges[i].edge,
                           addr,

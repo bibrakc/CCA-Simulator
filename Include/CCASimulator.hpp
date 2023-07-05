@@ -45,6 +45,32 @@ using u_long = unsigned long;
 // `Terminator`.
 using CCATerminator = Object;
 
+
+// Utility function to create action arguments.
+// TODO: Later maybe move these to some CCAUtils header class?
+template<typename ApplicationArgumentType>
+inline auto
+cca_create_action_argument(const ApplicationArgumentType& src) -> ActionArgumentType
+{
+    ActionArgumentType const args_x(new char[sizeof(ApplicationArgumentType)],
+                                    std::default_delete<char[]>());
+    memcpy(args_x.get(), &src, sizeof(ApplicationArgumentType));
+
+    return args_x;
+}
+
+// Utility function to get action arguments.
+// TODO: Later maybe move these to some CCAUtils header class?
+template<typename ApplicationArgumentType>
+inline auto
+cca_get_action_argument(const ActionArgumentType& src) -> ApplicationArgumentType
+{
+    ApplicationArgumentType app_args{};
+    memcpy(&app_args, src.get(), sizeof(ApplicationArgumentType));
+
+    return app_args;
+}
+
 struct ActiveStatusPerCycle
 {
     double cells_active_percent;

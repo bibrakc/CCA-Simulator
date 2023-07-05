@@ -143,8 +143,8 @@ main(int argc, char** argv) -> int
     root_distance_to_send.distance = 0;
     root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
 
-    ActionArgumentType const args_x(new char[sizeof(SSSPArguments)], std::default_delete<char[]>());
-    memcpy(args_x.get(), &root_distance_to_send, sizeof(SSSPArguments));
+    ActionArgumentType const args_x =
+        cca_create_action_argument<SSSPArguments>(root_distance_to_send);
 
     std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
     if (!sssp_terminator) {

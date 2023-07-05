@@ -81,9 +81,7 @@ bfs_predicate_func(ComputeCell& cc,
                    const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-
-    BFSArguments bfs_args{};
-    memcpy(&bfs_args, args.get(), sizeof(BFSArguments));
+    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
 
@@ -100,9 +98,7 @@ bfs_work_func(ComputeCell& cc,
               const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-
-    BFSArguments bfs_args{};
-    memcpy(&bfs_args, args.get(), sizeof(BFSArguments));
+    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
 
@@ -125,11 +121,7 @@ bfs_diffuse_func(ComputeCell& cc,
     for (int i = 0; i < v->number_of_edges; i++) {
 
         level_to_send.level = v->bfs_level + 1;
-
-        ActionArgumentType const args_x(new char[sizeof(BFSArguments)],
-                                        std::default_delete<char[]>());
-
-        memcpy(args_x.get(), &level_to_send, sizeof(BFSArguments));
+        ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
 
         cc.diffuse(Action(v->edges[i].edge,
                           addr,

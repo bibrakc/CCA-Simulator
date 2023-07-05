@@ -69,10 +69,6 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->id = id_in;
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
-
-        /* std::cout << "PageRankFixedIterationsSimpleVertex, v: " << this->id
-                  << ", page_rank_current_rank_score: " << this->page_rank_current_rank_score
-                  << "\n"; */
     }
 
     // Custom initialize the page rank score other than the default of (1.0 / N).
@@ -98,35 +94,6 @@ struct PageRankFixedIterationsArguments
     u_int32_t src_vertex_id;
 };
 
-// Action for the Page Rank Fixed Iterations program.
-/* class PageRankFixedIterationsAction : public Action
-{
-  public:
-    PageRankFixedIterationsAction(const Address destination_vertex_addr_in,
-                                  const Address origin_vertex_addr_in,
-                                  actionType type,
-                                  const bool ready,
-                                  const ActionArgumentType& args_in,
-                                  CCAFunctionEvent predicate_in,
-                                  CCAFunctionEvent work_in,
-                                  CCAFunctionEvent diffuse_in)
-    {
-        this->obj_addr = destination_vertex_addr_in;
-        this->origin_addr = origin_vertex_addr_in;
-
-        this->action_type = type;
-        this->is_ready = ready;
-
-        this->args = args_in;
-
-        this->predicate = predicate_in;
-        this->work = work_in;
-        this->diffuse = diffuse_in;
-    }
-
-    ~PageRankFixedIterationsAction() override = default;
-}; */
-
 inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address& addr,
@@ -146,14 +113,8 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
-    PageRankFixedIterationsArguments page_rank_args{};
-    memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
-
-    /*  std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-               << ", outbound: " << v->number_of_edges
-               << ", recieved from v: " << page_rank_args.src_vertex_id
-               << ", with score value: " << page_rank_args.score
-               << ", current_iteration_rank_score: " << v->current_iteration_rank_score << "\n"; */
+    PageRankFixedIterationsArguments const page_rank_args =
+        cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
@@ -162,11 +123,6 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         v->current_iteration_rank_score += page_rank_args.score;
         v->current_iteration_incoming_count++;
     }
-
-    /* std::cout << "v: " << v->id
-              << ", after current_iteration_rank_score: " << v->current_iteration_rank_score
-              << "\n"; */
-
     return 0;
 }
 
@@ -188,18 +144,9 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
         for (int i = 0; i < v->number_of_edges; i++) {
 
-            // Prepare arguments (paylaod) of the action.
-            ActionArgumentType const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
-                                            std::default_delete<char[]>());
-            memcpy(args_x.get(), &my_score_to_send, sizeof(PageRankFixedIterationsArguments));
-            /*  if (v->id == 8 || v->id == 0 || true) {
-                 std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-                           << ", outbound: " << v->number_of_edges
-                           << ", diffusing to v: " << v->edges[i].edge
-                           << ", with score value: " << my_score_to_send.score
-                           << ",  v->page_rank_current_rank_score: "
-                           << v->page_rank_current_rank_score << "\n";
-             } */
+            ActionArgumentType const args_x =
+                cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send);
+
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
                               addr,

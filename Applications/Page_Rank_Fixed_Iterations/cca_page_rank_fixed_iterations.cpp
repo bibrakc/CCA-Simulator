@@ -152,9 +152,9 @@ main(int argc, char** argv) -> int
     PageRankFixedIterationsArguments root_score_to_send;
     root_score_to_send.score = -10;
     root_score_to_send.src_vertex_id = 99999;
-    ActionArgumentType const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
-                                    std::default_delete<char[]>());
-    memcpy(args_x.get(), &root_score_to_send, sizeof(PageRankFixedIterationsArguments));
+
+    ActionArgumentType const args_x =
+        cca_create_action_argument<PageRankFixedIterationsArguments>(root_score_to_send);
 
     std::optional<Address> page_rank_fixed_iterations_terminator =
         cca_square_simulator.create_terminator();
@@ -168,16 +168,15 @@ main(int argc, char** argv) -> int
     for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(
-            Action(vertex_addr,
-                                          page_rank_fixed_iterations_terminator.value(),
-                                          actionType::germinate_action,
-                                          true,
-                                          /* 2, */
-                                          args_x,
-                                          page_rank_fixed_iterations_predicate,
-                                          page_rank_fixed_iterations_work,
-                                          page_rank_fixed_iterations_diffuse));
+        cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                     page_rank_fixed_iterations_terminator.value(),
+                                                     actionType::germinate_action,
+                                                     true,
+                                                     /* 2, */
+                                                     args_x,
+                                                     page_rank_fixed_iterations_predicate,
+                                                     page_rank_fixed_iterations_work,
+                                                     page_rank_fixed_iterations_diffuse));
 
         std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
 
