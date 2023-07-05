@@ -72,6 +72,10 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     {
         this->id = id_in;
         this->number_of_edges = 0;
+
+        std::cout << "PageRankFixedIterationsSimpleVertex, v: " << this->id
+                  << ", page_rank_current_rank_score: " << this->page_rank_current_rank_score
+                  << "\n";
     }
 
     // Custom initialize the page rank score other than the default of (1.0 / N).
@@ -150,27 +154,28 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     PageRankFixedIterationsArguments page_rank_args{};
     memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
 
-    std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-              << ", outbound: " << v->number_of_edges
-              << ", recieved from v: " << page_rank_args.src_vertex_id
-              << ", with score value: " << page_rank_args.score << "\n";
-
+    /*   if (v->id == 1) {
+          std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+                    << ", outbound: " << v->number_of_edges
+                    << ", recieved from v: " << page_rank_args.src_vertex_id
+                    << ", with score value: " << page_rank_args.score
+                    << ", current_iteration_rank_score: " << v->current_iteration_rank_score <<
+      "\n";
+      } */
     // FIX ME: Adhoc way to distinguish between a diffusion action and one that same from the host
     // to germinate.
-    if (page_rank_args.score != 0) {
+    if (page_rank_args.score >= 0) {
         // Update partial new score with the new incoming score.
         v->current_iteration_rank_score += page_rank_args.score;
         v->current_iteration_incoming_count++;
     }
-    if (v->current_iteration_incoming_count == v->inbound_degree) {
-        // Update the page rank score.
-        v->page_rank_current_rank_score = ((1 - damping_factor) / v->total_number_of_vertices) +
-                                          (damping_factor * v->current_iteration_rank_score);
 
-        // Reset. TODO: Think about this later.
-        v->current_iteration_rank_score = 0.0;
-        v->current_iteration_incoming_count = 0;
-    }
+    /* if (v->id == 1) {
+        std::cout << "v: " << v->id
+                  << ", after current_iteration_rank_score: " << v->current_iteration_rank_score
+                  << "\n";
+    } */
+
     return 0;
 }
 
@@ -196,12 +201,14 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
             std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
                                                  std::default_delete<char[]>());
             memcpy(args_x.get(), &my_score_to_send, sizeof(PageRankFixedIterationsArguments));
-
-            std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-                      << ", outbound: " << v->number_of_edges
-                      << ", diffusing to v: " << v->edges[i].edge
-                      << ", with score value: " << my_score_to_send.score << "\n";
-
+            /*  if (v->id == 8 || v->id == 0 || true) {
+                 std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+                           << ", outbound: " << v->number_of_edges
+                           << ", diffusing to v: " << v->edges[i].edge
+                           << ", with score value: " << my_score_to_send.score
+                           << ",  v->page_rank_current_rank_score: "
+                           << v->page_rank_current_rank_score << "\n";
+             } */
             // Diffuse.
             cc.diffuse(PageRankFixedIterationsAction(v->edges[i].edge,
                                                      addr,
@@ -215,6 +222,17 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         }
 
         v->has_current_iteration_diffused = true;
+    }
+
+    if (v->current_iteration_incoming_count == v->inbound_degree) {
+        // Update the page rank score.
+        v->page_rank_current_rank_score =
+            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
+            (damping_factor * v->current_iteration_rank_score);
+
+        // Reset. TODO: Think about this later.
+        v->current_iteration_rank_score = 0.0;
+        v->current_iteration_incoming_count = 0;
     }
 
     return 0;

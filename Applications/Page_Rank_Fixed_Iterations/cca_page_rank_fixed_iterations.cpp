@@ -144,7 +144,7 @@ main(int argc, char** argv) -> int
 
     // Prepare the arguments (payload) for the actions.
     PageRankFixedIterationsArguments root_score_to_send;
-    root_score_to_send.score = 0;
+    root_score_to_send.score = -10;
     root_score_to_send.src_vertex_id = 99999;
     std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
                                          std::default_delete<char[]>());
