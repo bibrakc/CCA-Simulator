@@ -29,6 +29,14 @@ Assuming the current directory is `/Applications/Breadth_First_Search`
 #### Using Pure Mesh Netowrk
 > `$ ./build/BFS_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
 
+### Page Rank Fixed Iterations Application
+Assuming the current directory is `/Applications/Page_Rank_Fixed_Iterations`, and 100 iterations to perform.
+#### Using Low-Latency Network (Htree)
+> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0 -iter 100`
+
+#### Using Pure Mesh Netowrk
+> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0 -iter 100`
+
 ## Using clang-tidy
 Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
 
