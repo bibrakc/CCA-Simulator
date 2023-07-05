@@ -154,14 +154,12 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     PageRankFixedIterationsArguments page_rank_args{};
     memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
 
-    /*   if (v->id == 1) {
-          std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-                    << ", outbound: " << v->number_of_edges
-                    << ", recieved from v: " << page_rank_args.src_vertex_id
-                    << ", with score value: " << page_rank_args.score
-                    << ", current_iteration_rank_score: " << v->current_iteration_rank_score <<
-      "\n";
-      } */
+   /*  std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+              << ", outbound: " << v->number_of_edges
+              << ", recieved from v: " << page_rank_args.src_vertex_id
+              << ", with score value: " << page_rank_args.score
+              << ", current_iteration_rank_score: " << v->current_iteration_rank_score << "\n"; */
+
     // FIX ME: Adhoc way to distinguish between a diffusion action and one that same from the host
     // to germinate.
     if (page_rank_args.score >= 0) {
@@ -170,11 +168,9 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         v->current_iteration_incoming_count++;
     }
 
-    /* if (v->id == 1) {
-        std::cout << "v: " << v->id
-                  << ", after current_iteration_rank_score: " << v->current_iteration_rank_score
-                  << "\n";
-    } */
+    /* std::cout << "v: " << v->id
+              << ", after current_iteration_rank_score: " << v->current_iteration_rank_score
+              << "\n"; */
 
     return 0;
 }
@@ -233,6 +229,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         // Reset. TODO: Think about this later.
         v->current_iteration_rank_score = 0.0;
         v->current_iteration_incoming_count = 0;
+        v->has_current_iteration_diffused = false;
     }
 
     return 0;

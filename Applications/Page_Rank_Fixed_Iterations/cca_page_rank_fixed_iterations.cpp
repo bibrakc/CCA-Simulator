@@ -157,29 +157,42 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
-    // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(
-        PageRankFixedIterationsAction(vertex_addr,
-                                      page_rank_fixed_iterations_terminator.value(),
-                                      actionType::application_action,
-                                      true,
-                                      2,
-                                      args_x,
-                                      page_rank_fixed_iterations_predicate,
-                                      page_rank_fixed_iterations_work,
-                                      page_rank_fixed_iterations_diffuse));
-
-    std::cout << "\nStarting Execution on the CCA Chip:\n\n";
+    u_int32_t total_program_cycles = 0;
+    u_int32_t constexpr total_iterations = 30;
     auto start = std::chrono::steady_clock::now();
-    cca_square_simulator.run_simulation(page_rank_fixed_iterations_terminator.value());
+    for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
+
+        // Insert a seed action into the CCA chip that will help start the diffusion.
+        cca_square_simulator.germinate_action(
+            PageRankFixedIterationsAction(vertex_addr,
+                                          page_rank_fixed_iterations_terminator.value(),
+                                          actionType::application_action,
+                                          true,
+                                          2,
+                                          args_x,
+                                          page_rank_fixed_iterations_predicate,
+                                          page_rank_fixed_iterations_work,
+                                          page_rank_fixed_iterations_diffuse));
+
+        std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
+
+        cca_square_simulator.run_simulation(page_rank_fixed_iterations_terminator.value());
+
+        std::cout << "\nIteration: " << iterations
+                  << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
+        total_program_cycles += cca_square_simulator.total_cycles;
+        // Reset the terminator for the next iteration.
+        cca_square_simulator.reset_terminator(page_rank_fixed_iterations_terminator.value());
+    }
+
     auto end = std::chrono::steady_clock::now();
-
-    std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
-
     std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
                  "itself): "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
+
+    std::cout << "\nTotal Iterations: " << total_iterations
+              << ", Total Program Cycles: " << total_program_cycles << "\n";
 
     std::cout << "\nPage Rank Fixed Iterations score: \n";
     for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {

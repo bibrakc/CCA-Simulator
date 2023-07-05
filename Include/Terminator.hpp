@@ -62,6 +62,9 @@ struct Terminator
     // Recieved an acknowledgement message back. Decreament my deficit.
     void acknowledgement(ComputeCell& cc);
 
+    // Reset the terminator to be used again. Useful in iterative algorithms like Page Rank.
+    void reset();
+
     Terminator()
     {
         /* std::cout << "Terminator Constructor\n"; */

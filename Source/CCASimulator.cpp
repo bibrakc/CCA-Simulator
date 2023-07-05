@@ -272,6 +272,16 @@ CCASimulator::is_diffusion_active(Address terminator_in) -> bool
     return terminator_obj->terminator.is_active();
 }
 
+void
+CCASimulator::reset_terminator(Address terminator_in)
+{
+    // For now this is only implemented for host type terminators.
+    assert(terminator_in.type == adressType::host_address);
+
+    auto* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
+    terminator_obj->terminator.reset();
+}
+
 auto
 CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
                                                void* obj,
@@ -298,6 +308,7 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
         auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
         obj->terminator.host_signal();
 
+        // TODO: make these separate counter for different kind of actions. FIXME
         compute_cell->statistics.actions_created++;
 
     } else {
@@ -347,8 +358,6 @@ CCASimulator::print_statistics(std::ofstream& output_file)
 void
 CCASimulator::run_simulation(Address app_terminator)
 {
-    // TODO: later we can remove this and implement the termination detection itself. But for
-    // now this works.
     this->total_cycles = 0;
 
     bool is_system_active = true;
@@ -437,8 +446,8 @@ CCASimulator::run_simulation(Address app_terminator)
             100.0 * static_cast<double>(sum_global_active_htree) /
             static_cast<double>(htree_network.htree_all_nodes.size());
 
-        /* std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
-                  << "%, htree Active: " << percent_htree_active << "%\n"; */
+        std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
+                  << "%, htree Active: " << percent_htree_active << "%\n";
 
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         total_cycles++;

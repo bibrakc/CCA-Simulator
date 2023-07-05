@@ -41,6 +41,13 @@ Terminator::is_active() -> bool
     return (this->deficit == 0) ? false : true;
 }
 
+void
+Terminator::reset()
+{
+    this->deficit = 0;
+    this->parent = std::nullopt;
+}
+
 // Recieved an action. Increament my deficit.
 void
 Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
@@ -76,6 +83,10 @@ Terminator::unsignal(ComputeCell& cc)
             auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
+            // Count this act as an "action" and increament the action statistics.
+            cc.statistics.actions_acknowledgement_created++;
+            cc.statistics.actions_acknowledgement_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
@@ -125,6 +136,12 @@ Terminator::acknowledgement(ComputeCell& cc)
             auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
+
+            // Count this act as an "action" and increament the action statistics.
+            cc.statistics.actions_acknowledgement_created++;
+            cc.statistics.actions_acknowledgement_invoked++;
+
+            std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
             // Create an special acknowledgement action towards the parent in the
@@ -157,6 +174,13 @@ Terminator::acknowledgement(ComputeCell& cc)
             auto* obj = static_cast<Object*>(cc.get_object(this->parent.value()));
             obj->terminator.host_acknowledgement();
             this->parent = std::nullopt;
+
+            // Count this act as an "action" and increament the action statistics.
+            cc.statistics.actions_acknowledgement_created++;
+            cc.statistics.actions_acknowledgement_invoked++;
+
+            std::cout << "Host Terminator Acknowledgement Sent!\n";
+
         } else {
 
             // Create an special acknowledgement action towards the parent in the
