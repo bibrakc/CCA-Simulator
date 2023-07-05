@@ -68,10 +68,18 @@ class Graph
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        bool success = vertex->insert_edge(dst_vertex_addr, edge_weight);
 
+        // Increament the `inbound_degree` of the destination vertex
+        if (success) {
+            auto* vertex =
+                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
+
+            vertex->inbound_degree++;
+        }
         // Check if edges are not full
         // TODO: Later implement the hierarical parallel vertex object
-        return vertex->insert_edge(dst_vertex_addr, edge_weight);
+        return success;
     }
 
     template<class VertexTypeOfAddress>
@@ -80,7 +88,7 @@ class Graph
     {
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
-        VertexTypeOfAddress vertex_(0);
+        VertexTypeOfAddress vertex_(0, this->total_vertices);
         for (int i = 0; i < this->total_vertices; i++) {
 
             // Put a vertex in memory with id = i

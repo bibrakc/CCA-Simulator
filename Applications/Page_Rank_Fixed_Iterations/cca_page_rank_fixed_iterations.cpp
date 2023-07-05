@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_bfs.hpp"
+#include "cca_page_rank_fixed_iterations.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -40,38 +40,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <omp.h>
 
-// Declare the function event ids for the BFS action functions of predicate, work, and diffuse.
-// In the main register the functions and get their ids
-CCAFunctionEvent bfs_predicate;
-CCAFunctionEvent bfs_work;
-CCAFunctionEvent bfs_diffuse;
+// Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate,
+// work, and diffuse. In the main register the functions and get their ids
+CCAFunctionEvent page_rank_fixed_iterations_predicate;
+CCAFunctionEvent page_rank_fixed_iterations_work;
+CCAFunctionEvent page_rank_fixed_iterations_diffuse;
+
+#define PRINT_RESULTS_FOR_ALL_VERTICES false
 
 auto
 main(int argc, char** argv) -> int
 {
-    // Parse the commandline input
+    // Parse the commandline input.
     cli::Parser parser(argc, argv);
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
-    // BFS root vertex
+    // Page Rank Fixed Iterations root vertex where to germinate action and start the computation.
+    // Makes no difference to the end result.
     auto root_vertex = parser.get<u_int32_t>("root");
 
-    // Test vertex to print its distance from the root
+    // Test vertex to print its score
     auto test_vertex = parser.get<u_int32_t>("tv");
 
-    // Configuration related to the input data graph
+    // Configuration related to the input data graph.
     auto input_graph_path = parser.get<std::string>("f");
     auto graph_name = parser.get<std::string>("g");
 
-    // Optional output directory path
+    // Optional output directory path.
     auto output_file_directory = parser.get<std::string>("od");
 
     // Get the depth of Htree
     auto hdepth = parser.get<u_int32_t>("hdepth");
 
     // Get the rows and columbs of cells that are served by a single end Htree node. This will help
-    // in construction of the CCA chip, Htree, and routing
+    // in construction of the CCA chip, Htree, and routing.
     auto hx = parser.get<u_int32_t>("hx");
     auto hy = parser.get<u_int32_t>("hy");
     if (hdepth != 0) {
@@ -90,7 +93,7 @@ main(int argc, char** argv) -> int
     if (hdepth == 0) {
         hbandwidth_max = 0;
     }
-    // Configuration related to the CCA Chip
+    // Configuration related to the CCA Chip.
     auto shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;
 
@@ -101,15 +104,15 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
-    // Get the memory per cc or use the default
+    // Get the memory per cc or use the default.
     auto memory_per_cc = parser.get<u_int32_t>("m");
 
-    // Get the routing policy to use
+    // Get the routing policy to use.
     auto routing_policy = parser.get<u_int32_t>("route");
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
 
-    // Create the simulation environment
+    // Create the simulation environment.
     CCASimulator cca_square_simulator(
         shape_of_compute_cells, hx, hy, hdepth, hbandwidth_max, memory_per_cc, routing_policy);
 
@@ -117,7 +120,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<BFSSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<PageRankFixedIterationsSimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -125,70 +128,97 @@ main(int argc, char** argv) -> int
     // vertices (or objects) one per compute cell in round-robin fashion.
     std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
 
-    // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
-    // the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<BFSSimpleVertex<Address>>(cca_square_simulator,
-                                                                     allocator);
+    // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
+    // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
+    input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsSimpleVertex<Address>>(
+        cca_square_simulator, allocator);
 
-    // Only put the BFS seed action on a single vertex.
-    // In this case BFS root = root_vertex
+    // Only put the PageRankFixedIterationsAction seed action on a single vertex.
+    // In this case Page Rank Fixed Iterations root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
-    // Register the BFS action functions for predicate, work, and diffuse.
-    bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);
-    bfs_work = cca_square_simulator.register_function_event(bfs_work_func);
-    bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
+    // Register the Page Rank Fixed Iterations action functions for predicate, work, and diffuse.
+    page_rank_fixed_iterations_predicate =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_predicate_func);
+    page_rank_fixed_iterations_work =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_work_func);
+    page_rank_fixed_iterations_diffuse =
+        cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
 
-    BFSArguments root_level_to_send;
-    root_level_to_send.level = 0;
-    // Origin vertex from where this action came. Host not used. Put any value;
-    root_level_to_send.src_vertex_id = 99999;
+    // Prepare the arguments (payload) for the actions.
+    PageRankFixedIterationsArguments root_score_to_send;
+    root_score_to_send.score = -10;
+    root_score_to_send.src_vertex_id = 99999;
+    ActionArgumentType const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
+                                    std::default_delete<char[]>());
+    memcpy(args_x.get(), &root_score_to_send, sizeof(PageRankFixedIterationsArguments));
 
-    ActionArgumentType const args_x(new char[sizeof(BFSArguments)],
-                                         std::default_delete<char[]>());
-    memcpy(args_x.get(), &root_level_to_send, sizeof(BFSArguments));
-
-    std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
-    if (!bfs_terminator) {
-        std::cerr << "Error! Memory not allocated for bfs_terminator \n";
+    std::optional<Address> page_rank_fixed_iterations_terminator =
+        cca_square_simulator.create_terminator();
+    if (!page_rank_fixed_iterations_terminator) {
+        std::cerr << "Error! Memory not allocated for page_rank_fixed_iterations_terminator \n";
         exit(0);
     }
 
-    // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(BFSAction(vertex_addr,
-                                                    bfs_terminator.value(),
-                                                    actionType::germinate_action,
-                                                    true,
-                                                    args_x,
-                                                    bfs_predicate,
-                                                    bfs_work,
-                                                    bfs_diffuse));
-
-    std::cout << "\nStarting Execution on the CCA Chip:\n\n";
+    u_int32_t total_program_cycles = 0;
+    u_int32_t constexpr total_iterations = 30;
     auto start = std::chrono::steady_clock::now();
-    cca_square_simulator.run_simulation(bfs_terminator.value());
+    for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
+
+        // Insert a seed action into the CCA chip that will help start the diffusion.
+        cca_square_simulator.germinate_action(
+            PageRankFixedIterationsAction(vertex_addr,
+                                          page_rank_fixed_iterations_terminator.value(),
+                                          actionType::germinate_action,
+                                          true,
+                                          /* 2, */
+                                          args_x,
+                                          page_rank_fixed_iterations_predicate,
+                                          page_rank_fixed_iterations_work,
+                                          page_rank_fixed_iterations_diffuse));
+
+        std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
+
+        cca_square_simulator.run_simulation(page_rank_fixed_iterations_terminator.value());
+
+        std::cout << "\nIteration: " << iterations
+                  << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
+        total_program_cycles += cca_square_simulator.total_cycles;
+        // Reset the terminator for the next iteration.
+        cca_square_simulator.reset_terminator(page_rank_fixed_iterations_terminator.value());
+    }
+
     auto end = std::chrono::steady_clock::now();
-
-    std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
-
     std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
                  "itself): "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    // Check for correctness. Print the distance to a target test vertex.
-    Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
+    std::cout << "\nTotal Iterations: " << total_iterations
+              << ", Total Program Cycles: " << total_program_cycles << "\n";
 
-    auto* v_test =
-        static_cast<BFSSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+    std::cout << "\nPage Rank Fixed Iterations score: \n";
+    {
+        u_int32_t i = test_vertex;
+#if PRINT_RESULTS_FOR_ALL_VERTICES
+        for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
+#endif
+            // Check for correctness. Print the distance to a target test vertex. test_vertex
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-    std::cout << "\nBFS distance from vertex: " << root_vertex << " to vertex: " << v_test->id
-              << " is: " << v_test->bfs_level << "\n";
+            auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
+                cca_square_simulator.get_object(test_vertex_addr));
 
+            std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
+                      << "\n";
+#if PRINT_RESULTS_FOR_ALL_VERTICES
+        }
+#endif
+    }
     // Write simulation statistics to a file
     std::string const output_file_name =
-        "bfs_square_x_" + std::to_string(cca_square_simulator.dim_x) + "_y_" +
-        std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
+        "page_rank_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
+        "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(hbandwidth_max);
 

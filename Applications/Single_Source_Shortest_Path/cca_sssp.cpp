@@ -139,12 +139,12 @@ main(int argc, char** argv) -> int
     sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
     sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
 
-    // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-    std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
-    // Set distance to 0
-    args_x[0] = 0;
-    // Origin vertex from where this action came
-    args_x[1] = root_vertex;
+    SSSPArguments root_distance_to_send;
+    root_distance_to_send.distance = 0;
+    root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
+
+    ActionArgumentType const args_x(new char[sizeof(SSSPArguments)], std::default_delete<char[]>());
+    memcpy(args_x.get(), &root_distance_to_send, sizeof(SSSPArguments));
 
     std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
     if (!sssp_terminator) {
@@ -155,9 +155,8 @@ main(int argc, char** argv) -> int
     // Insert a seed action into the CCA chip that will help start the diffusion.
     cca_square_simulator.germinate_action(SSSPAction(vertex_addr,
                                                      sssp_terminator.value(),
-                                                     actionType::application_action,
+                                                     actionType::germinate_action,
                                                      true,
-                                                     2,
                                                      args_x,
                                                      sssp_predicate,
                                                      sssp_work,

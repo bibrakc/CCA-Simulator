@@ -34,9 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_BFS_HPP
 
 #include "CCASimulator.hpp"
+#include "Enums.hpp"
 #include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"
+
+// For memcpy()
+#include <cstring>
 
 inline constexpr u_int32_t max_level = 999999;
 
@@ -45,11 +49,12 @@ struct BFSSimpleVertex : SimpleVertex<Address_T>
 {
     u_int32_t bfs_level;
 
-    BFSSimpleVertex(u_int32_t id_in)
+    BFSSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
         : bfs_level(max_level)
     {
         this->id = id_in;
         this->number_of_edges = 0;
+        this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
     BFSSimpleVertex() {}
@@ -62,6 +67,13 @@ extern CCAFunctionEvent bfs_predicate;
 extern CCAFunctionEvent bfs_work;
 extern CCAFunctionEvent bfs_diffuse;
 
+// This is what the action carries as payload.
+struct BFSArguments
+{
+    u_int32_t level;
+    u_int32_t src_vertex_id;
+};
+
 // Action for the BFS program.
 class BFSAction : public Action
 {
@@ -70,8 +82,7 @@ class BFSAction : public Action
               const Address origin_vertex_addr_in,
               actionType type,
               const bool ready,
-              const int nargs_in,
-              const std::shared_ptr<int[]>& args_in,
+              const ActionArgumentType& args_in,
               CCAFunctionEvent predicate_in,
               CCAFunctionEvent work_in,
               CCAFunctionEvent diffuse_in)
@@ -82,7 +93,6 @@ class BFSAction : public Action
         this->action_type = type;
         this->is_ready = ready;
 
-        this->nargs = nargs_in;
         this->args = args_in;
 
         this->predicate = predicate_in;
@@ -96,11 +106,15 @@ class BFSAction : public Action
 inline auto
 bfs_predicate_func(ComputeCell& cc,
                    const Address& addr,
-                   int nargs,
-                   const std::shared_ptr<int[]>& args) -> int
+                   actionType /* action_type_in */,
+                   const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-    int const incoming_level = args[0];
+
+    BFSArguments bfs_args{};
+    memcpy(&bfs_args, args.get(), sizeof(BFSArguments));
+
+    u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level > incoming_level) {
         return 1;
@@ -109,11 +123,17 @@ bfs_predicate_func(ComputeCell& cc,
 }
 
 inline auto
-bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared_ptr<int[]>& args)
-    -> int
+bfs_work_func(ComputeCell& cc,
+              const Address& addr,
+              actionType /* action_type_in */,
+              const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
-    int const incoming_level = args[0];
+
+    BFSArguments bfs_args{};
+    memcpy(&bfs_args, args.get(), sizeof(BFSArguments));
+
+    u_int32_t const incoming_level = bfs_args.level;
 
     // Update level with the new level
     v->bfs_level = incoming_level;
@@ -123,22 +143,27 @@ bfs_work_func(ComputeCell& cc, const Address& addr, int nargs, const std::shared
 inline auto
 bfs_diffuse_func(ComputeCell& cc,
                  const Address& addr,
-                 int nargs,
-                 const std::shared_ptr<int[]>& args) -> int
+                 actionType /* action_type_in */,
+                 const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+
+    BFSArguments level_to_send;
+    level_to_send.src_vertex_id = v->id;
+
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
-        args_x[0] = static_cast<int>(v->bfs_level + 1);
-        args_x[1] = static_cast<int>(v->id);
+        level_to_send.level = v->bfs_level + 1;
+
+        ActionArgumentType const args_x(new char[sizeof(BFSArguments)],
+                                        std::default_delete<char[]>());
+
+        memcpy(args_x.get(), &level_to_send, sizeof(BFSArguments));
 
         cc.diffuse(BFSAction(v->edges[i].edge,
                              addr,
                              actionType::application_action,
                              true,
-                             2,
                              args_x,
                              bfs_predicate,
                              bfs_work,

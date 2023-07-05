@@ -30,52 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TERMINATOR_HPP
-#define TERMINATOR_HPP
+#ifndef ENUMS_HPP
+#define ENUMS_HPP
 
-#include "TerminatorAction.hpp"
-
-#include <optional>
-
-// Forward declare.
-class ComputeCell;
-
-// Dijkstra–Scholten algorithm for termination detection
-struct Terminator
+enum class actionType : u_int32_t
 {
-    u_int32_t deficit;
-    std::optional<Address> parent;
-
-    // The address of the object of which this terminator is part of.
-    Address my_object;
-
-    auto is_active() -> bool;
-
-    // Recieved an action. Increament my deficit.
-    void signal(ComputeCell& cc, Address origin_addr_in);
-
-    // Make the object (vertex) inactive
-    void unsignal(ComputeCell& cc);
-
-    // Only when the terminator is created at the host and is used as root terminator for an
-    // application.
-    void host_signal();
-    void host_acknowledgement();
-
-    // Recieved an acknowledgement message back. Decreament my deficit.
-    void acknowledgement(ComputeCell& cc);
-
-    // Reset the terminator to be used again. Useful in iterative algorithms like Page Rank.
-    void reset();
-
-    Terminator()
-    {
-        /* std::cout << "Terminator Constructor\n"; */
-        this->deficit = 0;
-        this->parent = std::nullopt;
-
-        // this->my_object = std::nullopt;
-    }
+    terminator_acknowledgement_action = 0,
+    application_action,
+    germinate_action,
+    actionType_count
 };
 
-#endif // TERMINATOR_HPP
+#endif // ENUMS_HPP
