@@ -145,7 +145,8 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         for (int i = 0; i < v->number_of_edges; i++) {
 
             ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(my_score_to_send);
+                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+                    my_score_to_send);
 
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
@@ -173,7 +174,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         v->has_current_iteration_diffused = false;
 
         // Increament the global iteration count.
-        // v->page_rank_current_iteration++;
+        v->page_rank_current_iteration++;
     }
 
     return 0;
