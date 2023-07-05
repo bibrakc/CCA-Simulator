@@ -52,9 +52,6 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // same results everytime the vertex gets activated for a given iteration.
     bool has_current_iteration_diffused{};
 
-    // Used in the calculation with the damping factor.
-    u_int32_t total_number_of_vertices;
-
     // The page rank score for this vertex.
     double page_rank_current_rank_score{};
 
@@ -67,11 +64,11 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     u_int32_t current_iteration_incoming_count{};
 
     PageRankFixedIterationsSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : total_number_of_vertices(total_number_of_vertices_in)
-        , page_rank_current_rank_score(1.0 / total_number_of_vertices_in)
+        : page_rank_current_rank_score(1.0 / total_number_of_vertices_in)
     {
         this->id = id_in;
         this->number_of_edges = 0;
+        this->total_number_of_vertices = total_number_of_vertices_in;
 
         std::cout << "PageRankFixedIterationsSimpleVertex, v: " << this->id
                   << ", page_rank_current_rank_score: " << this->page_rank_current_rank_score
@@ -109,8 +106,8 @@ class PageRankFixedIterationsAction : public Action
                                   const Address origin_vertex_addr_in,
                                   actionType type,
                                   const bool ready,
-                                  const int nargs_in,
-                                  const std::shared_ptr<char[]>& args_in,
+                                  /* const int nargs_in, */
+                                  const ActionArgumentType& args_in,
                                   CCAFunctionEvent predicate_in,
                                   CCAFunctionEvent work_in,
                                   CCAFunctionEvent diffuse_in)
@@ -121,7 +118,7 @@ class PageRankFixedIterationsAction : public Action
         this->action_type = type;
         this->is_ready = ready;
 
-        this->nargs = nargs_in;
+        /* this->nargs = nargs_in; */
         this->args = args_in;
 
         this->predicate = predicate_in;
@@ -136,7 +133,7 @@ inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address& addr,
                                           actionType /* action_type_in */,
-                                          const std::shared_ptr<char[]>& args) -> int
+                                          const ActionArgumentType& args) -> int
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
     // vertices.
@@ -147,7 +144,7 @@ inline auto
 page_rank_fixed_iterations_work_func(ComputeCell& cc,
                                      const Address& addr,
                                      actionType action_type_in,
-                                     const std::shared_ptr<char[]>& args) -> int
+                                     const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
@@ -179,7 +176,7 @@ inline auto
 page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const Address& addr,
                                         actionType /* action_type_in */,
-                                        const std::shared_ptr<char[]>& /*args*/) -> int
+                                        const ActionArgumentType& /*args*/) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
@@ -194,8 +191,8 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         for (int i = 0; i < v->number_of_edges; i++) {
 
             // Prepare arguments (paylaod) of the action.
-            std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
-                                                 std::default_delete<char[]>());
+            ActionArgumentType const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
+                                            std::default_delete<char[]>());
             memcpy(args_x.get(), &my_score_to_send, sizeof(PageRankFixedIterationsArguments));
             /*  if (v->id == 8 || v->id == 0 || true) {
                  std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
@@ -210,7 +207,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                      addr,
                                                      actionType::application_action,
                                                      true,
-                                                     2,
+                                                     /*  2, */
                                                      args_x,
                                                      page_rank_fixed_iterations_predicate,
                                                      page_rank_fixed_iterations_work,

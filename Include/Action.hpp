@@ -49,10 +49,11 @@ class Action
     bool is_ready;
 
     // Number of arguments to the action function
-    int nargs;
+    // Not needed anymore.
+    /* int nargs; */
 
     // Payload that contains the data like the arguments to the action function
-    std::shared_ptr<char[]> args;
+    ActionArgumentType args;
 
     // Memory location of the object for which this action is destined
     Address obj_addr;

@@ -139,12 +139,14 @@ main(int argc, char** argv) -> int
     bfs_work = cca_square_simulator.register_function_event(bfs_work_func);
     bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
 
-    // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-    std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
-    // Set distance to 0
-    args_x[0] = 0;
-    // Origin vertex from where this action came
-    args_x[1] = root_vertex;
+    BFSArguments root_level_to_send;
+    root_level_to_send.level = 0;
+    // Origin vertex from where this action came. Host not used. Put any value;
+    root_level_to_send.src_vertex_id = 99999;
+
+    ActionArgumentType const args_x(new char[sizeof(BFSArguments)],
+                                         std::default_delete<char[]>());
+    memcpy(args_x.get(), &root_level_to_send, sizeof(BFSArguments));
 
     std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
     if (!bfs_terminator) {
@@ -155,9 +157,8 @@ main(int argc, char** argv) -> int
     // Insert a seed action into the CCA chip that will help start the diffusion.
     cca_square_simulator.germinate_action(BFSAction(vertex_addr,
                                                     bfs_terminator.value(),
-                                                    actionType::application_action,
+                                                    actionType::germinate_action,
                                                     true,
-                                                    2,
                                                     args_x,
                                                     bfs_predicate,
                                                     bfs_work,

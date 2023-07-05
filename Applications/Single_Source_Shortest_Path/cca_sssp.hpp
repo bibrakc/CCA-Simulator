@@ -34,9 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_SSSP_HPP
 
 #include "CCASimulator.hpp"
+#include "Enums.hpp"
 #include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"
+
+// For memcpy()
+#include <cstring>
 
 inline constexpr u_int32_t max_level = 999999;
 
@@ -45,11 +49,12 @@ struct SSSPSimpleVertex : SimpleVertex<Address_T>
 {
     u_int32_t sssp_distance;
 
-    SSSPSimpleVertex(u_int32_t id_in)
+    SSSPSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
         : sssp_distance(max_level)
     {
         this->id = id_in;
         this->number_of_edges = 0;
+        this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
     SSSPSimpleVertex() = default;
@@ -62,6 +67,13 @@ extern CCAFunctionEvent sssp_predicate;
 extern CCAFunctionEvent sssp_work;
 extern CCAFunctionEvent sssp_diffuse;
 
+// This is what the action carries as payload.
+struct SSSPArguments
+{
+    u_int32_t distance;
+    u_int32_t src_vertex_id;
+};
+
 // Action for the SSSP program.
 class SSSPAction : public Action
 {
@@ -70,8 +82,7 @@ class SSSPAction : public Action
                const Address origin_vertex_addr_in,
                actionType type,
                const bool ready,
-               const int nargs_in,
-               const std::shared_ptr<int[]>& args_in,
+               const ActionArgumentType& args_in,
                CCAFunctionEvent predicate_in,
                CCAFunctionEvent work_in,
                CCAFunctionEvent diffuse_in)
@@ -82,7 +93,6 @@ class SSSPAction : public Action
         this->action_type = type;
         this->is_ready = ready;
 
-        this->nargs = nargs_in;
         this->args = args_in;
 
         this->predicate = predicate_in;
@@ -96,11 +106,14 @@ class SSSPAction : public Action
 inline auto
 sssp_predicate_func(ComputeCell& cc,
                     const Address& addr,
-                    int /*nargs*/,
-                    const std::shared_ptr<int[]>& args) -> int
+                    actionType /* action_type_in */,
+                    const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int const incoming_distance = args[0];
+    SSSPArguments sssp_args{};
+    memcpy(&sssp_args, args.get(), sizeof(SSSPArguments));
+
+    u_int32_t const incoming_distance = sssp_args.distance;
 
     if (v->sssp_distance > incoming_distance) {
         return 1;
@@ -111,11 +124,14 @@ sssp_predicate_func(ComputeCell& cc,
 inline auto
 sssp_work_func(ComputeCell& cc,
                const Address& addr,
-               int /*nargs*/,
-               const std::shared_ptr<int[]>& args) -> int
+               actionType /* action_type_in */,
+               const ActionArgumentType& args) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
-    int const incoming_distance = args[0];
+
+    SSSPArguments sssp_args{};
+    memcpy(&sssp_args, args.get(), sizeof(SSSPArguments));
+    u_int32_t const incoming_distance = sssp_args.distance;
 
     // Update distance with the new distance
     v->sssp_distance = incoming_distance;
@@ -125,22 +141,27 @@ sssp_work_func(ComputeCell& cc,
 inline auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
-                  int /*nargs*/,
-                  const std::shared_ptr<int[]>& /*args*/) -> int
+                  actionType /* action_type_in */,
+                  const ActionArgumentType& /*args*/) -> int
 {
     auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
+
+    SSSPArguments distance_to_send;
+    distance_to_send.src_vertex_id = v->id;
+
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        // std::shared_ptr<int[]> args_x = std::make_shared<int[]>(2);
-        std::shared_ptr<int[]> const args_x(new int[2], std::default_delete<int[]>());
-        args_x[0] = static_cast<int>(v->sssp_distance + v->edges[i].weight);
-        args_x[1] = static_cast<int>(v->id);
+        distance_to_send.distance = v->sssp_distance + v->edges[i].weight;
+
+        ActionArgumentType const args_x(new char[sizeof(SSSPArguments)],
+                                        std::default_delete<char[]>());
+
+        memcpy(args_x.get(), &distance_to_send, sizeof(SSSPArguments));
 
         cc.diffuse(SSSPAction(v->edges[i].edge,
                               addr,
                               actionType::application_action,
                               true,
-                              2,
                               args_x,
                               sssp_predicate,
                               sssp_work,

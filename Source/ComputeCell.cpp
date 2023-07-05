@@ -42,7 +42,7 @@ auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type_in,
-                                const std::shared_ptr<char[]>& /*args*/) -> int
+                                const ActionArgumentType& /*args*/) -> int
 {
     assert(action_type_in == actionType::terminator_acknowledgement_action);
 

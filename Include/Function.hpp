@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // runtime events like termination detection.
 using CCAFunctionEvent = u_int32_t;
 
+using ActionArgumentType = std::shared_ptr<char[]>;
+
 // Forward declare.
 class ComputeCell;
 
@@ -49,13 +51,13 @@ class ComputeCell;
 using handler_func = int (*)(ComputeCell& cc,
                              const Address& addr,
                              actionType action_type,
-                             const std::shared_ptr<char[]>& args);
+                             const ActionArgumentType& args);
 
 // Recieved an acknowledgement message back. Decreament my deficit.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type,
-                                const std::shared_ptr<char[]>& args) -> int;
+                                const ActionArgumentType& args) -> int;
 
 #endif // FUNCTION_HPP

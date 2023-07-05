@@ -58,6 +58,11 @@ struct SimpleVertex : Object
     // Total inbound edges to this vertex.
     u_int32_t inbound_degree{};
 
+    // Used in the calculation with the damping factor in page rank. Or can be used in other
+    // algorithms. Right now putting is here in the parent class since this might be used for many
+    // algorithms. TODO: Think of ways how this changes in dynamic graphs
+    u_int32_t total_number_of_vertices;
+
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {

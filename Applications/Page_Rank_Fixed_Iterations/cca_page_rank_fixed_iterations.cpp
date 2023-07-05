@@ -149,8 +149,8 @@ main(int argc, char** argv) -> int
     PageRankFixedIterationsArguments root_score_to_send;
     root_score_to_send.score = -10;
     root_score_to_send.src_vertex_id = 99999;
-    std::shared_ptr<char[]> const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
-                                         std::default_delete<char[]>());
+    ActionArgumentType const args_x(new char[sizeof(PageRankFixedIterationsArguments)],
+                                    std::default_delete<char[]>());
     memcpy(args_x.get(), &root_score_to_send, sizeof(PageRankFixedIterationsArguments));
 
     std::optional<Address> page_rank_fixed_iterations_terminator =
@@ -171,7 +171,7 @@ main(int argc, char** argv) -> int
                                           page_rank_fixed_iterations_terminator.value(),
                                           actionType::germinate_action,
                                           true,
-                                          2,
+                                          /* 2, */
                                           args_x,
                                           page_rank_fixed_iterations_predicate,
                                           page_rank_fixed_iterations_work,
