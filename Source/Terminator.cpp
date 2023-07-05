@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ComputeCell.hpp"
-#include "TerminatorAction.hpp"
+// #include "TerminatorAction.hpp"
 
 #include <cassert>
 
@@ -59,8 +59,14 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
         this->parent = origin_addr_in;
     } else {
         // Send acknowledgement back to where the action came from
-        TerminatorAction const acknowledgement_action(
-            origin_addr_in, this->my_object, actionType::terminator_acknowledgement_action);
+        Action const acknowledgement_action(origin_addr_in,
+                                            this->my_object,
+                                            actionType::terminator_acknowledgement_action,
+                                            true,
+                                            nullptr,
+                                            0,
+                                            0,
+                                            0);
 
         // TODO: put this counter in its own and separate betweek ack and nornal action
         cc.statistics.actions_created++;
@@ -92,10 +98,14 @@ Terminator::unsignal(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction const acknowledgement_action(
-                this->parent.value(),
-                this->my_object,
-                actionType::terminator_acknowledgement_action);
+            Action const acknowledgement_action(this->parent.value(),
+                                                this->my_object,
+                                                actionType::terminator_acknowledgement_action,
+                                                true,
+                                                nullptr,
+                                                0,  // null event
+                                                0,  // null event
+                                                0); // null event
 
             // TODO: put this counter in its own and separate betweek ack and nornal action
             cc.statistics.actions_created++;
@@ -146,10 +156,14 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction const acknowledgement_action(
-                this->parent.value(),
-                this->my_object,
-                actionType::terminator_acknowledgement_action);
+            Action const acknowledgement_action(this->parent.value(),
+                                                this->my_object,
+                                                actionType::terminator_acknowledgement_action,
+                                                true,
+                                                nullptr,
+                                                0,  // null event
+                                                0,  // null event
+                                                0); // null event
 
             // TODO: put this counter in its own and separate betweek ack and nornal action
             cc.statistics.actions_created++;
@@ -185,10 +199,14 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // Create an special acknowledgement action towards the parent in the
             // Dijkstra–Scholten spanning tree.
-            TerminatorAction const acknowledgement_action(
-                this->parent.value(),
-                this->my_object,
-                actionType::terminator_acknowledgement_action);
+            Action const acknowledgement_action(this->parent.value(),
+                                                this->my_object,
+                                                actionType::terminator_acknowledgement_action,
+                                                true,
+                                                nullptr,
+                                                0,  // null event
+                                                0,  // null event
+                                                0); // null event
 
             // TODO: put this counter in its own and separate between ack and nornal action
             cc.statistics.actions_created++;

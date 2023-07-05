@@ -169,7 +169,7 @@ main(int argc, char** argv) -> int
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
         cca_square_simulator.germinate_action(
-            PageRankFixedIterationsAction(vertex_addr,
+            Action(vertex_addr,
                                           page_rank_fixed_iterations_terminator.value(),
                                           actionType::germinate_action,
                                           true,

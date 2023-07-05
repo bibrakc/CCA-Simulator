@@ -38,6 +38,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cassert>
 #include <vector>
 
+// null event.
+auto
+null_func(ComputeCell& /* cc */,
+          const Address& /* addr */,
+          actionType /* action_type_in */,
+          const ActionArgumentType& /*args*/) -> int
+{
+    return 0;
+}
+
 handler_func
 FunctionEventManager::get_acknowledgement_event_handler()
 {

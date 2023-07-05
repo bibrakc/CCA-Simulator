@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include <vector>
 
+
 struct FunctionEventManager
 {
     // Stores the functions that are called from within an action invokation. These may include
@@ -44,7 +45,10 @@ struct FunctionEventManager
 
     // Each event gets its unique id that is used by the end user or runtime to create actions that
     // will call events.
-    CCAFunctionEvent next_available_event_id{0};
+    CCAFunctionEvent next_available_event_id{ 0 };
+
+    // Used for special actions such as terminator that don't call predicate, work, and diffuse.
+    CCAFunctionEvent null_event_id;
 
     // Special system events:
     // Acknowledgement event id for termination detection.
@@ -58,8 +62,8 @@ struct FunctionEventManager
 
     FunctionEventManager()
         : event_handlers()
-        , 
-         acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
+        , null_event_id(register_function_event(null_func))
+        , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
     }
 };

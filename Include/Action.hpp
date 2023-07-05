@@ -72,7 +72,29 @@ class Action
     // Generate actions along the edges for the diffusion
     CCAFunctionEvent diffuse;
 
-    virtual ~Action()
+    Action(const Address destination_vertex_addr_in,
+           const Address origin_vertex_addr_in,
+           actionType type,
+           const bool ready,
+           const ActionArgumentType& args_in,
+           CCAFunctionEvent predicate_in,
+           CCAFunctionEvent work_in,
+           CCAFunctionEvent diffuse_in)
+    {
+        this->obj_addr = destination_vertex_addr_in;
+        this->origin_addr = origin_vertex_addr_in;
+
+        this->action_type = type;
+        this->is_ready = ready;
+
+        this->args = args_in;
+
+        this->predicate = predicate_in;
+        this->work = work_in;
+        this->diffuse = diffuse_in;
+    }
+
+    ~Action()
     { /* std::cout << "Action class destructor" << std::endl;  */
     }
 };

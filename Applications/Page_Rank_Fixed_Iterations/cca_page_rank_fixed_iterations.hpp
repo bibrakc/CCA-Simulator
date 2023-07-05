@@ -99,7 +99,7 @@ struct PageRankFixedIterationsArguments
 };
 
 // Action for the Page Rank Fixed Iterations program.
-class PageRankFixedIterationsAction : public Action
+/* class PageRankFixedIterationsAction : public Action
 {
   public:
     PageRankFixedIterationsAction(const Address destination_vertex_addr_in,
@@ -125,7 +125,7 @@ class PageRankFixedIterationsAction : public Action
     }
 
     ~PageRankFixedIterationsAction() override = default;
-};
+}; */
 
 inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
@@ -201,14 +201,14 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                            << v->page_rank_current_rank_score << "\n";
              } */
             // Diffuse.
-            cc.diffuse(PageRankFixedIterationsAction(v->edges[i].edge,
-                                                     addr,
-                                                     actionType::application_action,
-                                                     true,
-                                                     args_x,
-                                                     page_rank_fixed_iterations_predicate,
-                                                     page_rank_fixed_iterations_work,
-                                                     page_rank_fixed_iterations_diffuse));
+            cc.diffuse(Action(v->edges[i].edge,
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args_x,
+                              page_rank_fixed_iterations_predicate,
+                              page_rank_fixed_iterations_work,
+                              page_rank_fixed_iterations_diffuse));
         }
 
         v->has_current_iteration_diffused = true;

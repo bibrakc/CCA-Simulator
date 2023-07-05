@@ -60,4 +60,11 @@ terminator_acknowledgement_func(ComputeCell& cc,
                                 actionType action_type,
                                 const ActionArgumentType& args) -> int;
 
+// null event.
+auto
+null_func(ComputeCell& /* cc */,
+          const Address& /* addr */,
+          actionType /* action_type_in */,
+          const ActionArgumentType& /*args*/) -> int;
+
 #endif // FUNCTION_HPP

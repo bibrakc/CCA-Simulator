@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TERMINATOR_HPP
 #define TERMINATOR_HPP
 
-#include "TerminatorAction.hpp"
+//#include "TerminatorAction.hpp"
 
 #include <optional>
 
