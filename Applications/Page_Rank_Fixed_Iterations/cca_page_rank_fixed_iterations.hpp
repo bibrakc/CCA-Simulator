@@ -154,11 +154,11 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     PageRankFixedIterationsArguments page_rank_args{};
     memcpy(&page_rank_args, args.get(), sizeof(PageRankFixedIterationsArguments));
 
-   /*  std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
-              << ", outbound: " << v->number_of_edges
-              << ", recieved from v: " << page_rank_args.src_vertex_id
-              << ", with score value: " << page_rank_args.score
-              << ", current_iteration_rank_score: " << v->current_iteration_rank_score << "\n"; */
+    /*  std::cout << "v: " << v->id << ", inbound: " << v->inbound_degree
+               << ", outbound: " << v->number_of_edges
+               << ", recieved from v: " << page_rank_args.src_vertex_id
+               << ", with score value: " << page_rank_args.score
+               << ", current_iteration_rank_score: " << v->current_iteration_rank_score << "\n"; */
 
     // FIX ME: Adhoc way to distinguish between a diffusion action and one that same from the host
     // to germinate.
@@ -245,11 +245,11 @@ configure_parser(cli::Parser& parser)
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     parser.set_required<u_int32_t>(
-        "tv", "testvertex", "test vertex to print its page_rank_fixed_iterations distance");
-    parser.set_required<u_int32_t>(
-        "root",
-        "page_rank_fixed_iterationsroot",
-        "Root vertex for Single Source Shortest Path (Page Rank Fixed Iterations)");
+        "tv", "testvertex", "test vertex to print its page_rank_fixed_iterations score");
+    parser.set_required<u_int32_t>("root",
+                                   "page_rank_fixed_iterations_root",
+                                   "Root vertex where to germinate action for Page Rank (Page Rank "
+                                   "Fixed Iterations). Makes no difference to the results.");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,

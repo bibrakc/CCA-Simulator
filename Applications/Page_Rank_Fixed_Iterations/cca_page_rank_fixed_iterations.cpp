@@ -46,6 +46,8 @@ CCAFunctionEvent page_rank_fixed_iterations_predicate;
 CCAFunctionEvent page_rank_fixed_iterations_work;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 
+#define PRINT_RESULTS_FOR_ALL_VERTICES false
+
 auto
 main(int argc, char** argv) -> int
 {
@@ -54,10 +56,11 @@ main(int argc, char** argv) -> int
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
-    // Page Rank Fixed Iterations root vertex
+    // Page Rank Fixed Iterations root vertex where to germinate action and start the computation.
+    // Makes no difference to the end result.
     auto root_vertex = parser.get<u_int32_t>("root");
 
-    // Test vertex to print its distance from the root
+    // Test vertex to print its score
     auto test_vertex = parser.get<u_int32_t>("tv");
 
     // Configuration related to the input data graph
@@ -130,7 +133,7 @@ main(int argc, char** argv) -> int
     input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsSimpleVertex<Address>>(
         cca_square_simulator, allocator);
 
-    // Only put the Page Rank Fixed Iterations seed action on a single vertex.
+    // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
@@ -195,18 +198,23 @@ main(int argc, char** argv) -> int
               << ", Total Program Cycles: " << total_program_cycles << "\n";
 
     std::cout << "\nPage Rank Fixed Iterations score: \n";
-    for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
+    {
+        u_int32_t i = test_vertex;
+#if PRINT_RESULTS_FOR_ALL_VERTICES
+        for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
+#endif
+            // Check for correctness. Print the distance to a target test vertex. test_vertex
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-        // Check for correctness. Print the distance to a target test vertex. test_vertex
-        Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+            auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
+                cca_square_simulator.get_object(test_vertex_addr));
 
-        auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
-            cca_square_simulator.get_object(test_vertex_addr));
-
-        std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
-                  << "\n";
+            std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
+                      << "\n";
+#if PRINT_RESULTS_FOR_ALL_VERTICES
+        }
+#endif
     }
-
     // Write simulation statistics to a file
     std::string const output_file_name =
         "page_rank_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
