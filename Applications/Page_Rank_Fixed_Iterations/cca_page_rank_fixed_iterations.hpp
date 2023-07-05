@@ -135,7 +135,7 @@ class PageRankFixedIterationsAction : public Action
 inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address& addr,
-                                          int /*nargs*/,
+                                          actionType /* action_type_in */,
                                           const std::shared_ptr<char[]>& args) -> int
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
@@ -146,7 +146,7 @@ page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
 inline auto
 page_rank_fixed_iterations_work_func(ComputeCell& cc,
                                      const Address& addr,
-                                     int /*nargs*/,
+                                     actionType action_type_in,
                                      const std::shared_ptr<char[]>& args) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
@@ -160,9 +160,9 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
                << ", with score value: " << page_rank_args.score
                << ", current_iteration_rank_score: " << v->current_iteration_rank_score << "\n"; */
 
-    // FIX ME: Adhoc way to distinguish between a diffusion action and one that same from the host
-    // to germinate.
-    if (page_rank_args.score >= 0) {
+    // If the action comes from the host and is germinate action then don't update scores and just
+    // treat it as a purely diffusive action.
+    if (action_type_in != actionType::germinate_action) {
         // Update partial new score with the new incoming score.
         v->current_iteration_rank_score += page_rank_args.score;
         v->current_iteration_incoming_count++;
@@ -178,7 +178,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 inline auto
 page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const Address& addr,
-                                        int /*nargs*/,
+                                        actionType /* action_type_in */,
                                         const std::shared_ptr<char[]>& /*args*/) -> int
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));

@@ -41,9 +41,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
-                                int /*nargs*/,
+                                actionType action_type_in,
                                 const std::shared_ptr<char[]>& /*args*/) -> int
 {
+    assert(action_type_in == actionType::terminator_acknowledgement_action);
+
     auto* obj = static_cast<Object*>(cc.get_object(addr));
 
     obj->terminator.acknowledgement(cc);
@@ -211,7 +213,8 @@ ComputeCell::execute_action(void* function_events)
             print_SimpleVertex(vertex, action.obj_addr); */
         }
 
-        if (action.action_type == actionType::application_action) {
+        if (action.action_type == actionType::application_action ||
+            action.action_type == actionType::germinate_action) {
 
             auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
 
@@ -221,18 +224,18 @@ ComputeCell::execute_action(void* function_events)
 
             // if predicate
             int const predicate_resolution = function_events_manager->get_function_event_handler(
-                action.predicate)(*this, action.obj_addr, action.nargs, action.args);
+                action.predicate)(*this, action.obj_addr, action.action_type, action.args);
 
             if (predicate_resolution == 1) {
 
                 // work
                 function_events_manager->get_function_event_handler(action.work)(
-                    *this, action.obj_addr, action.nargs, action.args);
+                    *this, action.obj_addr, action.action_type, action.args);
                 this->statistics.actions_performed_work++;
 
                 // diffuse
                 function_events_manager->get_function_event_handler(action.diffuse)(
-                    *this, action.obj_addr, action.nargs, action.args);
+                    *this, action.obj_addr, action.action_type, action.args);
             } else {
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
@@ -241,7 +244,7 @@ ComputeCell::execute_action(void* function_events)
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
             function_events_manager->get_acknowledgement_event_handler()(
-                *this, action.obj_addr, action.nargs, action.args);
+                *this, action.obj_addr, action.action_type, action.args); // nullptr
 
             this->statistics.actions_acknowledgement_invoked++;
         } else {

@@ -30,32 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef FUNCTION_HPP
-#define FUNCTION_HPP
+#ifndef ENUMS_HPP
+#define ENUMS_HPP
 
-#include "Address.hpp"
-#include "Enums.hpp"
+enum class actionType : u_int32_t
+{
+    terminator_acknowledgement_action = 0,
+    application_action,
+    germinate_action,
+    actionType_count
+};
 
-#include <memory>
-
-// Event Id of the function that is registered with the CCA: predicate, work, diffuse, and other
-// runtime events like termination detection.
-using CCAFunctionEvent = u_int32_t;
-
-// Forward declare.
-class ComputeCell;
-
-// TODO: Maybe later convert these to `std::function`
-using handler_func = int (*)(ComputeCell& cc,
-                             const Address& addr,
-                             actionType action_type,
-                             const std::shared_ptr<char[]>& args);
-
-// Recieved an acknowledgement message back. Decreament my deficit.
-auto
-terminator_acknowledgement_func(ComputeCell& cc,
-                                const Address& addr,
-                                actionType action_type,
-                                const std::shared_ptr<char[]>& args) -> int;
-
-#endif // FUNCTION_HPP
+#endif // ENUMS_HPP

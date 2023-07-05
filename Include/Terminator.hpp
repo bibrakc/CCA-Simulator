@@ -37,6 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <optional>
 
+// Forward declare.
+class ComputeCell;
+
 // Dijkstra–Scholten algorithm for termination detection
 struct Terminator
 {

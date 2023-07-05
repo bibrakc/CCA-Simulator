@@ -36,18 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Address.hpp"
 #include "Function.hpp"
 
-enum class actionType : u_int32_t
-{
-    terminator_acknowledgement_action = 0,
-    application_action,
-    actionType_count
-};
-
 class Action
 {
   public:
     // Type of the action: application type, internal runtime work action like terminator_action,
-    // or any other
+    // host type like germinate, or any other
     actionType action_type;
 
     // Sets to `true` when all dependencies for this action are satisfied

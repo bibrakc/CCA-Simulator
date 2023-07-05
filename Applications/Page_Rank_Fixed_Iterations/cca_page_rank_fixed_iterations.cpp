@@ -51,7 +51,7 @@ CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 auto
 main(int argc, char** argv) -> int
 {
-    // Parse the commandline input
+    // Parse the commandline input.
     cli::Parser parser(argc, argv);
     configure_parser(parser);
     parser.run_and_exit_if_error();
@@ -63,18 +63,18 @@ main(int argc, char** argv) -> int
     // Test vertex to print its score
     auto test_vertex = parser.get<u_int32_t>("tv");
 
-    // Configuration related to the input data graph
+    // Configuration related to the input data graph.
     auto input_graph_path = parser.get<std::string>("f");
     auto graph_name = parser.get<std::string>("g");
 
-    // Optional output directory path
+    // Optional output directory path.
     auto output_file_directory = parser.get<std::string>("od");
 
     // Get the depth of Htree
     auto hdepth = parser.get<u_int32_t>("hdepth");
 
     // Get the rows and columbs of cells that are served by a single end Htree node. This will help
-    // in construction of the CCA chip, Htree, and routing
+    // in construction of the CCA chip, Htree, and routing.
     auto hx = parser.get<u_int32_t>("hx");
     auto hy = parser.get<u_int32_t>("hy");
     if (hdepth != 0) {
@@ -93,7 +93,7 @@ main(int argc, char** argv) -> int
     if (hdepth == 0) {
         hbandwidth_max = 0;
     }
-    // Configuration related to the CCA Chip
+    // Configuration related to the CCA Chip.
     auto shape_arg = parser.get<std::string>("s");
     computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;
 
@@ -104,15 +104,15 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
-    // Get the memory per cc or use the default
+    // Get the memory per cc or use the default.
     auto memory_per_cc = parser.get<u_int32_t>("m");
 
-    // Get the routing policy to use
+    // Get the routing policy to use.
     auto routing_policy = parser.get<u_int32_t>("route");
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
 
-    // Create the simulation environment
+    // Create the simulation environment.
     CCASimulator cca_square_simulator(
         shape_of_compute_cells, hx, hy, hdepth, hbandwidth_max, memory_per_cc, routing_policy);
 
@@ -169,7 +169,7 @@ main(int argc, char** argv) -> int
         cca_square_simulator.germinate_action(
             PageRankFixedIterationsAction(vertex_addr,
                                           page_rank_fixed_iterations_terminator.value(),
-                                          actionType::application_action,
+                                          actionType::germinate_action,
                                           true,
                                           2,
                                           args_x,
