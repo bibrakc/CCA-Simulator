@@ -74,35 +74,6 @@ struct SSSPArguments
     u_int32_t src_vertex_id;
 };
 
-// Action for the SSSP program.
-class SSSPAction : public Action
-{
-  public:
-    SSSPAction(const Address destination_vertex_addr_in,
-               const Address origin_vertex_addr_in,
-               actionType type,
-               const bool ready,
-               const ActionArgumentType& args_in,
-               CCAFunctionEvent predicate_in,
-               CCAFunctionEvent work_in,
-               CCAFunctionEvent diffuse_in)
-    {
-        this->obj_addr = destination_vertex_addr_in;
-        this->origin_addr = origin_vertex_addr_in;
-
-        this->action_type = type;
-        this->is_ready = ready;
-
-        this->args = args_in;
-
-        this->predicate = predicate_in;
-        this->work = work_in;
-        this->diffuse = diffuse_in;
-    }
-
-    ~SSSPAction() override = default;
-};
-
 inline auto
 sssp_predicate_func(ComputeCell& cc,
                     const Address& addr,
@@ -158,14 +129,14 @@ sssp_diffuse_func(ComputeCell& cc,
 
         memcpy(args_x.get(), &distance_to_send, sizeof(SSSPArguments));
 
-        cc.diffuse(SSSPAction(v->edges[i].edge,
-                              addr,
-                              actionType::application_action,
-                              true,
-                              args_x,
-                              sssp_predicate,
-                              sssp_work,
-                              sssp_diffuse));
+        cc.diffuse(Action(v->edges[i].edge,
+                          addr,
+                          actionType::application_action,
+                          true,
+                          args_x,
+                          sssp_predicate,
+                          sssp_work,
+                          sssp_diffuse));
     }
 
     return 0;

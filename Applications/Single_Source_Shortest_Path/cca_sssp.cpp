@@ -153,14 +153,14 @@ main(int argc, char** argv) -> int
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(SSSPAction(vertex_addr,
-                                                     sssp_terminator.value(),
-                                                     actionType::germinate_action,
-                                                     true,
-                                                     args_x,
-                                                     sssp_predicate,
-                                                     sssp_work,
-                                                     sssp_diffuse));
+    cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                 sssp_terminator.value(),
+                                                 actionType::germinate_action,
+                                                 true,
+                                                 args_x,
+                                                 sssp_predicate,
+                                                 sssp_work,
+                                                 sssp_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();

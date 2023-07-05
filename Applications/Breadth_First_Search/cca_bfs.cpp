@@ -144,8 +144,7 @@ main(int argc, char** argv) -> int
     // Origin vertex from where this action came. Host not used. Put any value;
     root_level_to_send.src_vertex_id = 99999;
 
-    ActionArgumentType const args_x(new char[sizeof(BFSArguments)],
-                                         std::default_delete<char[]>());
+    ActionArgumentType const args_x(new char[sizeof(BFSArguments)], std::default_delete<char[]>());
     memcpy(args_x.get(), &root_level_to_send, sizeof(BFSArguments));
 
     std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
@@ -155,14 +154,14 @@ main(int argc, char** argv) -> int
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(BFSAction(vertex_addr,
-                                                    bfs_terminator.value(),
-                                                    actionType::germinate_action,
-                                                    true,
-                                                    args_x,
-                                                    bfs_predicate,
-                                                    bfs_work,
-                                                    bfs_diffuse));
+    cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                 bfs_terminator.value(),
+                                                 actionType::germinate_action,
+                                                 true,
+                                                 args_x,
+                                                 bfs_predicate,
+                                                 bfs_work,
+                                                 bfs_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
