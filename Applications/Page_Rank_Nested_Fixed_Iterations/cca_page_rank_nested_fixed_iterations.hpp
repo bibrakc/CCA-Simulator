@@ -54,6 +54,9 @@ struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // same results everytime the vertex gets activated for a given iteration.
     bool has_current_iteration_diffused{};
 
+    // Check to see if finished with all the nested iterations for this epoch.
+    bool nested_epoch_completed{};
+
     // The page rank score for this vertex.
     double page_rank_current_rank_score{};
 
@@ -118,15 +121,21 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                                             actionType action_type_in,
                                             const ActionArgumentType& args) -> int
 {
+    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
     if (action_type_in == actionType::application_action) {
-        auto* v =
-            static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
         PageRankNestedFixedIterationsArguments const page_rank_args =
             cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
+
+        if (page_rank_args.nested_iteration >= nested_iterations) {
+            std::cerr << "Bug! Incoming Exeeds nested_iterations: "
+                      << page_rank_args.nested_iteration
+                      << ", from v-id: " << page_rank_args.src_vertex_id << "\n";
+            exit(0);
+        }
 
         // Update partial new score with the new incoming score.
         v->current_iteration_rank_score[page_rank_args.nested_iteration] += page_rank_args.score;
@@ -142,6 +151,13 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                const ActionArgumentType& /*args*/) -> int
 {
     auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+
+    if (v->id == 3) {
+        std::cout << "v: " << v->id
+                  << ", v->page_rank_current_nested_iteration: " << v->page_rank_current_nested_iteration
+                  << ", v->has_current_iteration_diffused: " << v->has_current_iteration_diffused
+                  << "\n";
+    }
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
@@ -183,17 +199,26 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
         // Reset.
         v->current_iteration_rank_score[v->page_rank_current_nested_iteration] = 0.0;
         v->current_iteration_incoming_count[v->page_rank_current_nested_iteration] = 0;
-        v->has_current_iteration_diffused = false;
+        // v->has_current_iteration_diffused = false;
 
         // Increament the global iteration count.
         v->page_rank_current_iteration++;
 
         // Go to the next nested iteration.
         v->page_rank_current_nested_iteration++;
+
         if (v->page_rank_current_nested_iteration == nested_iterations) {
-            // Reset and done with all the nested iterations.
+            v->nested_epoch_completed = true;
+            // Reset
             v->page_rank_current_nested_iteration = 0;
-        } else {
+            v->has_current_iteration_diffused = false;
+        }
+
+        /* std::cout << "v->id: " << v->id << ", v->page_rank_current_nested_iteration: "
+                  << v->page_rank_current_nested_iteration << "\n"; */
+
+        if (v->page_rank_current_nested_iteration < nested_iterations &&
+            !v->nested_epoch_completed) {
 
             // Reset
             v->has_current_iteration_diffused = false;
