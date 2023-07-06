@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 2;
+inline constexpr u_int32_t nested_iterations = 1;
 
 template<typename Address_T>
 struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
@@ -152,12 +152,12 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
 {
     auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
-    if (v->id == 3) {
+    /* if (v->id == 3) {
         std::cout << "v: " << v->id
                   << ", v->page_rank_current_nested_iteration: " << v->page_rank_current_nested_iteration
                   << ", v->has_current_iteration_diffused: " << v->has_current_iteration_diffused
                   << "\n";
-    }
+    } */
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {

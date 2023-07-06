@@ -358,7 +358,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
 void
 CCASimulator::run_simulation(Address app_terminator)
 {
-    this->total_cycles = 0;
+    this->total_current_run_cycles = 0;
 
     bool is_system_active = true;
 
@@ -446,11 +446,13 @@ CCASimulator::run_simulation(Address app_terminator)
             100.0 * static_cast<double>(sum_global_active_htree) /
             static_cast<double>(htree_network.htree_all_nodes.size());
 
-        std::cout << "End of cycle # " << total_cycles << " CCs Active: " << percent_CCs_active
+        std::cout << "End of current run cycle # " << this->total_current_run_cycles
+                  << ", Total cycles: " << this->total_cycles << " CCs Active: " << percent_CCs_active
                   << "%, htree Active: " << percent_htree_active << "%\n";
 
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
-        total_cycles++;
+        this->total_cycles++;
+        this->total_current_run_cycles++;
 
 // Set new cycle # for every Cell: Experimental
 #pragma omp parallel for

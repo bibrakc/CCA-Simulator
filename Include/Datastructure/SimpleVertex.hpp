@@ -44,7 +44,7 @@ struct Edge
     u_int32_t weight;
 };
 
-inline constexpr u_int32_t edges_max = 2000;
+inline constexpr u_int32_t edges_max = 400;
 
 template<typename Address_T>
 struct SimpleVertex : Object

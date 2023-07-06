@@ -184,8 +184,8 @@ main(int argc, char** argv) -> int
         cca_square_simulator.run_simulation(page_rank_nested_fixed_iterations_terminator.value());
 
         std::cout << "\nIteration: " << iterations
-                  << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
-        total_program_cycles += cca_square_simulator.total_cycles;
+                  << ", Total Cycles: " << cca_square_simulator.total_current_run_cycles << "\n";
+        total_program_cycles += cca_square_simulator.total_current_run_cycles;
         // Reset the terminator for the next iteration.
         cca_square_simulator.reset_terminator(page_rank_nested_fixed_iterations_terminator.value());
     }
