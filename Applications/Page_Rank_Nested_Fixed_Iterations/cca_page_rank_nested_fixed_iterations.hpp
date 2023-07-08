@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 3;
+inline constexpr u_int32_t nested_iterations = 1;
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
@@ -239,6 +239,9 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
             v->page_rank_current_nested_iteration = 0;
             std::fill(std::begin(v->current_iteration_incoming_count),
                       std::end(v->current_iteration_incoming_count),
+                      0);
+            std::fill(std::begin(v->current_iteration_rank_score),
+                      std::end(v->current_iteration_rank_score),
                       0);
             std::fill(std::begin(v->has_current_iteration_diffused),
                       std::end(v->has_current_iteration_diffused),
