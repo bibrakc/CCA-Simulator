@@ -156,23 +156,30 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         ((v->current_iteration_incoming_count[0] == 0) && (page_rank_args.nested_iteration == 0));
 
     if (is_germinate || is_first_message_of_the_epoch) {
+
+        if (v->id == 255) {
+            std::cout << "is_first_message_of_the_epoch = " << is_first_message_of_the_epoch
+                      << ", is_germinate: " << is_germinate
+                      << ", v->page_rank_current_nested_iteration: "
+                      << v->page_rank_current_nested_iteration
+                      << ", v->page_rank_current_rank_score: " << v->page_rank_current_rank_score
+                      << ", my sending score: "
+                      << v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges)
+                      << "\n";
+        }
+
         // Store the score of this iteration, which maybe used for diffusion.
         v->args_for_diffusion.score =
             v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
         v->args_for_diffusion.src_vertex_id = v->id;
         v->args_for_diffusion.nested_iteration =
-            v->page_rank_current_nested_iteration; // page_rank_args.nested_iteration;
-
-        /* if (v->id == 195) {
-            std::cout << "is_first_message_of_the_epoch = " << is_first_message_of_the_epoch
-                      << ", is_germinate: " << is_germinate
-                      << ", v->page_rank_current_nested_iteration: "
-                      << v->page_rank_current_nested_iteration
-                      << " YES NOW Setting the has_current_iteration_diffused to FALSE\n";
-        } */
+            page_rank_args.nested_iteration; //  v->page_rank_current_nested_iteration;
 
         // v->has_current_iteration_diffused[page_rank_args.nested_iteration] = false;
         v->start_next_iteration = false;
+    }
+    if (is_first_message_of_the_epoch) {
+        v->nested_epoch_completed = false;
     }
 
     // If the action comes from the host and is germinate action then don't update scores and
