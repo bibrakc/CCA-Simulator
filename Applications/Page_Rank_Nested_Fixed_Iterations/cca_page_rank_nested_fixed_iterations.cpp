@@ -211,7 +211,7 @@ main(int argc, char** argv) -> int
             auto* v_test = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(
                 cca_square_simulator.get_object(test_vertex_addr));
 
-            std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
+            std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_score
                       << ", v_test->page_rank_current_iteration: "
                       << v_test->page_rank_current_iteration << "\n";
 #if PRINT_RESULTS_FOR_ALL_VERTICES
