@@ -1,0 +1,23 @@
+Erdos
+
+In Degree Distribution Statistics
+count    2048.00000
+mean       16.00000
+std         4.00476
+min         3.00000
+25%        13.00000
+50%        16.00000
+75%        19.00000
+max        33.00000
+dtype: float64
+Degree Distribution Statistics
+count    2048.000000
+mean       32.000000
+std         5.598433
+min        16.000000
+25%        28.000000
+50%        32.000000
+75%        36.000000
+max        55.000000
+dtype: float64
+Erdos-Renyi_directed_ef_16_v_11 Directed: Number of vertices: 2048, Number of edges: 32768, Edge Factor: 16, Scale: 11

@@ -1,0 +1,13 @@
+Erdos
+
+Degree Distribution Statistics
+count    512.000000
+mean      10.000000
+std        3.131808
+min        3.000000
+25%        8.000000
+50%       10.000000
+75%       12.000000
+max       23.000000
+dtype: float64
+Erdos-Renyi_ef_5_v_9 Directed: Number of vertices: 512, Number of edges: 5120, Edge Factor: 5, Scale: 9
