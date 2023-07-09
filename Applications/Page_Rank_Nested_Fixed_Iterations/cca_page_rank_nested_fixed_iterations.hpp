@@ -184,11 +184,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                   << ", messages_received_count[" << iteration
                   << "]: " << v->iterations[iteration].messages_received_count << " >  inbound "
                   << v->inbound_degree << "\n";
-                 
 
-
-
-                  if (v->id == DEBUG_VERTEX) {
+        if (v->id == DEBUG_VERTEX) {
             std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
                       << v->page_rank_current_nested_iteration
                       << ", page_rank_args.nested_iteration: " << iteration << std::endl;
@@ -205,8 +202,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
             }
             std::cout << std::endl;
 
-             exit(0);
-        } 
+            exit(0);
+        }
     }
 
     if (is_germinate || is_first_message_of_the_epoch) {
@@ -263,23 +260,23 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         // TODO: Such a logic can be used to store state of how many msg have been received in the
         // next iteration. Therefore action overlap or iterative overlap due to asynchrony.
 
-         if (v->id == DEBUG_VERTEX) {
-            std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
-                      << v->page_rank_current_nested_iteration
-                      << ", page_rank_args.nested_iteration: " << iteration << std::endl;
-            // Print values before setting to zero
-            for (int i = 0; i < nested_iterations; i++) {
+        /*   if (v->id == DEBUG_VERTEX) {
+             std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
+                       << v->page_rank_current_nested_iteration
+                       << ", page_rank_args.nested_iteration: " << iteration << std::endl;
+             // Print values before setting to zero
+             for (int i = 0; i < nested_iterations; i++) {
 
-                std::cout << "v->id: " << v->id << ", messages_received_count[" << i
-                          << "]: " << v->iterations[i].messages_received_count
-                          << ", iteration_page_rank_score[" << i
-                          << "]: " << v->iterations[i].iteration_page_rank_score
-                          << ", v->iterations_received_this_epoch: "
-                          << v->iterations_received_this_epoch
-                          << ", v->inbound_degree: " << v->inbound_degree << "\n";
-            }
-            std::cout << std::endl;
-        } 
+                 std::cout << "v->id: " << v->id << ", messages_received_count[" << i
+                           << "]: " << v->iterations[i].messages_received_count
+                           << ", iteration_page_rank_score[" << i
+                           << "]: " << v->iterations[i].iteration_page_rank_score
+                           << ", v->iterations_received_this_epoch: "
+                           << v->iterations_received_this_epoch
+                           << ", v->inbound_degree: " << v->inbound_degree << "\n";
+             }
+             std::cout << std::endl;
+         }  */
 
         // Go to the next nested iteration.
         v->page_rank_current_nested_iteration++;
@@ -380,12 +377,15 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>(
-        "tv", "testvertex", "test vertex to print its page_rank_nested_fixed_iterations score");
     parser.set_required<u_int32_t>("root",
                                    "page_rank_nested_fixed_iterations_root",
                                    "Root vertex where to germinate action for Page Rank (Page Rank "
                                    "Fixed Iterations). Makes no difference to the results.");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated score with the score provided "
+                              "in the accompanying .pagerank file");
     parser.set_optional<u_int32_t>(
         "iter", "iterations", 20, "Number of fixed iterations to perform");
     parser.set_optional<u_int32_t>("m",
