@@ -140,7 +140,8 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
     // Increament the deficit for termination detection if actionType !=
     // terminator_acknowledgement_action
     actionType const action_type = operon_in.second.action_type;
-    if (action_type == actionType::application_action) {
+    if (action_type == actionType::application_action ||
+        action_type == actionType::germinate_action) {
         Address const addr = operon_in.second.origin_addr;
         auto* obj = static_cast<Object*>(this->get_object(addr));
 

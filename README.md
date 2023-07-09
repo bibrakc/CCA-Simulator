@@ -30,12 +30,20 @@ Assuming the current directory is `/Applications/Breadth_First_Search`
 > `$ ./build/BFS_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0`
 
 ### Page Rank Fixed Iterations Application
-Assuming the current directory is `/Applications/Page_Rank_Fixed_Iterations`, and 100 iterations to perform.
+Assuming the current directory is `/Applications/Page_Rank_Fixed_Iterations`, and 100 iterations to perform. `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file.
 #### Using Low-Latency Network (Htree)
-> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0 -iter 100`
+> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0 -iter 5 -verify`
 
 #### Using Pure Mesh Netowrk
-> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_8_v_14.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 96 -hy 96 -hdepth 0 -hb 0 -route 0 -iter 100`
+> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ../Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ../../Output -s square -root 3 -m 90000 -hx 46 -hy 46 -hdepth 0 -hb 0 -route 0 -iter 5 -verify`
+
+### Page Rank Nested Fixed Iterations Application
+Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iterations`, and 100 iterations to perform. `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file. To change the number of nested iterations edit `inline constexpr u_int32_t nested_iterations` in the `.hpp`. 
+#### Using Low-Latency Network (Htree)
+> `$ ./build/PageRank_Nested_Fixed_Iterations_CCASimulator -f ./Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ./Output -s square -root 0 -tv 35 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 256 -route 0 -iter 5 -verify`
+
+#### Using Pure Mesh Netowrk
+> `$ ./build/PageRank_Nested_Fixed_Iterations_CCASimulator -f ../Generated_Graphs/Erdos-Renyi_ef_9_v_12.edgelist -g Erdos -od ../../Output -s square -root 3 -m 90000 -hx 46 -hy 46 -hdepth 0 -hb 0 -route 0 -iter 5 -verify`
 
 ## Using clang-tidy
 Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`

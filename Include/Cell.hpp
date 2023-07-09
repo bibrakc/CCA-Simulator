@@ -48,7 +48,7 @@ constexpr u_int32_t congestion_threshold_3 = 30;
 constexpr u_int32_t congestion_threshold_4 = 60;
 
 // Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
-constexpr u_int32_t curently_congested_threshold = 30; // cycles
+constexpr u_int32_t curently_congested_threshold = 60; // cycles
 
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t

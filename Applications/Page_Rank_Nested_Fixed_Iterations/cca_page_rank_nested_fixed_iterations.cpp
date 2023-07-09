@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_page_rank_fixed_iterations.hpp"
+#include "cca_page_rank_nested_fixed_iterations.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -42,11 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate,
 // work, and diffuse. In the main register the functions and get their ids
-CCAFunctionEvent page_rank_fixed_iterations_predicate;
-CCAFunctionEvent page_rank_fixed_iterations_work;
-CCAFunctionEvent page_rank_fixed_iterations_diffuse;
-
-#define PRINT_RESULTS_FOR_ALL_VERTICES false
+CCAFunctionEvent page_rank_nested_fixed_iterations_predicate;
+CCAFunctionEvent page_rank_nested_fixed_iterations_work;
+CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse;
 
 auto
 main(int argc, char** argv) -> int
@@ -123,7 +121,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<PageRankFixedIterationsSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<PageRankNestedFixedIterationsSimpleVertex<u_int32_t>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -133,7 +131,7 @@ main(int argc, char** argv) -> int
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsSimpleVertex<Address>>(
+    input_graph.transfer_graph_host_to_cca<PageRankNestedFixedIterationsSimpleVertex<Address>>(
         cca_square_simulator, allocator);
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
@@ -141,52 +139,53 @@ main(int argc, char** argv) -> int
     auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
 
     // Register the Page Rank Fixed Iterations action functions for predicate, work, and diffuse.
-    page_rank_fixed_iterations_predicate =
-        cca_square_simulator.register_function_event(page_rank_fixed_iterations_predicate_func);
-    page_rank_fixed_iterations_work =
-        cca_square_simulator.register_function_event(page_rank_fixed_iterations_work_func);
-    page_rank_fixed_iterations_diffuse =
-        cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
+    page_rank_nested_fixed_iterations_predicate = cca_square_simulator.register_function_event(
+        page_rank_nested_fixed_iterations_predicate_func);
+    page_rank_nested_fixed_iterations_work =
+        cca_square_simulator.register_function_event(page_rank_nested_fixed_iterations_work_func);
+    page_rank_nested_fixed_iterations_diffuse = cca_square_simulator.register_function_event(
+        page_rank_nested_fixed_iterations_diffuse_func);
 
-    // Prepare the arguments (payload) for the actions.
-    PageRankNestedFixedIterationsArguments root_score_to_send;
-    root_score_to_send.score = -10;
-    root_score_to_send.src_vertex_id = 99999;
-
-    ActionArgumentType const args_x =
-        cca_create_action_argument<PageRankNestedFixedIterationsArguments>(root_score_to_send);
-
-    std::optional<Address> page_rank_fixed_iterations_terminator =
+    std::optional<Address> page_rank_nested_fixed_iterations_terminator =
         cca_square_simulator.create_terminator();
-    if (!page_rank_fixed_iterations_terminator) {
-        std::cerr << "Error! Memory not allocated for page_rank_fixed_iterations_terminator \n";
+    if (!page_rank_nested_fixed_iterations_terminator) {
+        std::cerr
+            << "Error! Memory not allocated for page_rank_nested_fixed_iterations_terminator \n";
         exit(0);
     }
+
+    PageRankNestedFixedIterationsArguments germinate_arg_to_send;
+    germinate_arg_to_send.nested_iteration = 0;
+    germinate_arg_to_send.score = 0;
+    germinate_arg_to_send.src_vertex_id = 999999;
+
+    ActionArgumentType const args_x =
+        cca_create_action_argument<PageRankNestedFixedIterationsArguments>(germinate_arg_to_send);
 
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(Action(vertex_addr,
-                                                     page_rank_fixed_iterations_terminator.value(),
-                                                     actionType::germinate_action,
-                                                     true,
-                                                     /* 2, */
-                                                     args_x,
-                                                     page_rank_fixed_iterations_predicate,
-                                                     page_rank_fixed_iterations_work,
-                                                     page_rank_fixed_iterations_diffuse));
+        cca_square_simulator.germinate_action(
+            Action(vertex_addr,
+                   page_rank_nested_fixed_iterations_terminator.value(),
+                   actionType::germinate_action,
+                   true,
+                   args_x,
+                   page_rank_nested_fixed_iterations_predicate,
+                   page_rank_nested_fixed_iterations_work,
+                   page_rank_nested_fixed_iterations_diffuse));
 
         std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
 
-        cca_square_simulator.run_simulation(page_rank_fixed_iterations_terminator.value());
+        cca_square_simulator.run_simulation(page_rank_nested_fixed_iterations_terminator.value());
 
         std::cout << "\nIteration: " << iterations
                   << ", Total Cycles: " << cca_square_simulator.total_current_run_cycles << "\n";
         total_program_cycles += cca_square_simulator.total_current_run_cycles;
         // Reset the terminator for the next iteration.
-        cca_square_simulator.reset_terminator(page_rank_fixed_iterations_terminator.value());
+        cca_square_simulator.reset_terminator(page_rank_nested_fixed_iterations_terminator.value());
     }
 
     auto end = std::chrono::steady_clock::now();
@@ -199,12 +198,11 @@ main(int argc, char** argv) -> int
               << ", Total Program Cycles: " << total_program_cycles << "\n";
 
     /* std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_score
-                  << ", v_test->page_rank_current_iteration: " <<
-       v_test->page_rank_current_iteration
-                  << "\n"; */
+              << ", v_test->page_rank_current_iteration: " << v_test->page_rank_current_iteration
+              << "\n"; */
 
     if (verify_results) {
-        std::cout << "\nPage Rank Fixed Iterations Verification: \n";
+        std::cout << "\nPage Rank Nested Fixed Iterations Verification: \n";
 
         // Open the file containing pagerank results for verification.
         std::string verfication_file_path = input_graph_path + ".pagerank";
@@ -239,13 +237,12 @@ main(int argc, char** argv) -> int
                 // Check for correctness. Print the distance to a target test vertex. test_vertex
                 Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-                auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
+                auto* v_test = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(
                     cca_square_simulator.get_object(test_vertex_addr));
-                double difference =
-                    std::fabs(control_results[i] - v_test->page_rank_current_rank_score);
+                double difference = std::fabs(control_results[i] - v_test->page_rank_score);
                 if (difference > tolerance) {
                     std::cout << "Vertex: " << i
-                              << ", Computed Pagerank: " << v_test->page_rank_current_rank_score
+                              << ", Computed Pagerank: " << v_test->page_rank_score
                               << ", Control Value: " << control_results[i]
                               << ", Exceeds tolerance. Difference: " << difference << "\n";
 
@@ -263,7 +260,7 @@ main(int argc, char** argv) -> int
     }
     // Write simulation statistics to a file
     std::string const output_file_name =
-        "page_rank_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
+        "page_rank_nested_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
         "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(hbandwidth_max);

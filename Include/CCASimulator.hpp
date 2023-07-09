@@ -136,7 +136,8 @@ class CCASimulator
 
     // For statistics
     bool global_active_cc;
-    u_long total_cycles;
+    u_long total_current_run_cycles{};
+    u_long total_cycles{};
 
     // Seconds layer network
     HtreeNetwork htree_network;

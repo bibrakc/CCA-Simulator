@@ -88,7 +88,7 @@ extern CCAFunctionEvent page_rank_fixed_iterations_work;
 extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 
 // This is what the action carries as payload.
-struct PageRankFixedIterationsArguments
+struct PageRankNestedFixedIterationsArguments
 {
     double score;
     u_int32_t src_vertex_id;
@@ -113,8 +113,8 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
-    PageRankFixedIterationsArguments const page_rank_args =
-        cca_get_action_argument<PageRankFixedIterationsArguments>(args);
+    PageRankNestedFixedIterationsArguments const page_rank_args =
+        cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
@@ -136,7 +136,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
-        PageRankFixedIterationsArguments my_score_to_send;
+        PageRankNestedFixedIterationsArguments my_score_to_send;
         my_score_to_send.score =
             v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
 
@@ -145,7 +145,8 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         for (int i = 0; i < v->number_of_edges; i++) {
 
             ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send);
+                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+                    my_score_to_send);
 
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
@@ -171,6 +172,9 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         v->current_iteration_rank_score = 0.0;
         v->current_iteration_incoming_count = 0;
         v->has_current_iteration_diffused = false;
+
+        // Increament the global iteration count.
+        v->page_rank_current_iteration++;
     }
 
     return 0;
@@ -185,12 +189,15 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>(
-        "tv", "testvertex", "test vertex to print its page_rank_fixed_iterations score");
     parser.set_required<u_int32_t>("root",
                                    "page_rank_fixed_iterations_root",
                                    "Root vertex where to germinate action for Page Rank (Page Rank "
                                    "Fixed Iterations). Makes no difference to the results.");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated score with the score provided "
+                              "in the accompanying .pagerank file");
     parser.set_optional<u_int32_t>(
         "iter", "iterations", 20, "Number of fixed iterations to perform");
     parser.set_optional<u_int32_t>("m",
