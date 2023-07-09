@@ -43,9 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 10;
+inline constexpr u_int32_t nested_iterations = 5;
 
-inline constexpr u_int32_t DEBUG_VERTEX = 255;
+inline constexpr u_int32_t DEBUG_VERTEX = 695;
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
@@ -174,8 +174,40 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 
     assert(iteration < nested_iterations && "Bug! Incoming Exceeds nested_iterations");
 
-    assert(v->iterations[iteration].messages_received_count < v->inbound_degree ||
-           is_germinate && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree");
+    /*     assert(v->iterations[iteration].messages_received_count < v->inbound_degree ||
+               is_germinate && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree");
+     */
+
+    if (v->iterations[iteration].messages_received_count >= v->inbound_degree && !is_germinate) {
+
+        std::cout << "v->id: " << v->id << ", Bug! "
+                  << ", messages_received_count[" << iteration
+                  << "]: " << v->iterations[iteration].messages_received_count << " >  inbound "
+                  << v->inbound_degree << "\n";
+                 
+
+
+
+                  if (v->id == DEBUG_VERTEX) {
+            std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
+                      << v->page_rank_current_nested_iteration
+                      << ", page_rank_args.nested_iteration: " << iteration << std::endl;
+            // Print values before setting to zero
+            for (int i = 0; i < nested_iterations; i++) {
+
+                std::cout << "v->id: " << v->id << ", messages_received_count[" << i
+                          << "]: " << v->iterations[i].messages_received_count
+                          << ", iteration_page_rank_score[" << i
+                          << "]: " << v->iterations[i].iteration_page_rank_score
+                          << ", v->iterations_received_this_epoch: "
+                          << v->iterations_received_this_epoch
+                          << ", v->inbound_degree: " << v->inbound_degree << "\n";
+            }
+            std::cout << std::endl;
+
+             exit(0);
+        } 
+    }
 
     if (is_germinate || is_first_message_of_the_epoch) {
 
@@ -231,7 +263,7 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         // TODO: Such a logic can be used to store state of how many msg have been received in the
         // next iteration. Therefore action overlap or iterative overlap due to asynchrony.
 
-        /* if (v->id == DEBUG_VERTEX) {
+         if (v->id == DEBUG_VERTEX) {
             std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
                       << v->page_rank_current_nested_iteration
                       << ", page_rank_args.nested_iteration: " << iteration << std::endl;
@@ -247,7 +279,7 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                           << ", v->inbound_degree: " << v->inbound_degree << "\n";
             }
             std::cout << std::endl;
-        } */
+        } 
 
         // Go to the next nested iteration.
         v->page_rank_current_nested_iteration++;
