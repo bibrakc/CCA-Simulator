@@ -202,7 +202,7 @@ main(int argc, char** argv) -> int
               << "\n"; */
 
     if (verify_results) {
-        std::cout << "\nPage Rank Fixed Iterations Verification: \n";
+        std::cout << "\nPage Rank Nested Fixed Iterations Verification: \n";
 
         // Open the file containing pagerank results for verification.
         std::string verfication_file_path = input_graph_path + ".pagerank";

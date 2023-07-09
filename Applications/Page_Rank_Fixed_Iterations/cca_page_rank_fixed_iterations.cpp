@@ -63,8 +63,8 @@ main(int argc, char** argv) -> int
     // Makes no difference to the end result.
     auto root_vertex = parser.get<u_int32_t>("root");
 
-    // Test vertex to print its score
-    auto test_vertex = parser.get<u_int32_t>("tv");
+    // Cross check the calculated pagerank score with the score provided in .pagerank file
+    auto verify_results = parser.get<bool>("verify");
 
     // Configuration related to the input data graph.
     auto input_graph_path = parser.get<std::string>("f");
@@ -198,23 +198,68 @@ main(int argc, char** argv) -> int
     std::cout << "\nTotal Iterations: " << total_iterations
               << ", Total Program Cycles: " << total_program_cycles << "\n";
 
-    std::cout << "\nPage Rank Fixed Iterations score: \n";
-    {
-        u_int32_t i = test_vertex;
-#if PRINT_RESULTS_FOR_ALL_VERTICES
-        for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
-#endif
-            // Check for correctness. Print the distance to a target test vertex. test_vertex
-            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+    /* std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_score
+                  << ", v_test->page_rank_current_iteration: " <<
+       v_test->page_rank_current_iteration
+                  << "\n"; */
 
-            auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
-                cca_square_simulator.get_object(test_vertex_addr));
+    if (verify_results) {
+        std::cout << "\nPage Rank Fixed Iterations Verification: \n";
 
-            std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_current_rank_score
-                      << "\n";
-#if PRINT_RESULTS_FOR_ALL_VERTICES
+        // Open the file containing pagerank results for verification.
+        std::string verfication_file_path = input_graph_path + ".pagerank";
+        std::ifstream file(verfication_file_path);
+
+        if (!file.is_open()) {
+            std::cout << "Failed to open the verification file: " << verfication_file_path << "\n";
+
+        } else {
+
+            std::vector<double> control_results;
+            std::string line;
+            int node_id;
+            double pagerank_value;
+            while (std::getline(file, line)) {
+
+                if (std::sscanf(line.c_str(), "%d\t%lf", &node_id, &pagerank_value) == 2) {
+                    control_results.emplace_back(pagerank_value);
+                }
+            }
+
+            file.close();
+
+            // Print the stored node and rank values
+            /*  for (u_int32_t i = 0; i < control_results.size(); i++) {
+                 std::cout << "Node: " << i << ", Pagerank: " << control_results[i] << "\n";
+             } */
+            double tolerance = 0.00001;
+            u_int32_t total_values_exceeding_tolerance = 0;
+            for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
+
+                // Check for correctness. Print the distance to a target test vertex. test_vertex
+                Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+
+                auto* v_test = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(
+                    cca_square_simulator.get_object(test_vertex_addr));
+                double difference =
+                    std::fabs(control_results[i] - v_test->page_rank_current_rank_score);
+                if (difference > tolerance) {
+                    std::cout << "Vertex: " << i
+                              << ", Computed Pagerank: " << v_test->page_rank_current_rank_score
+                              << ", Control Value: " << control_results[i]
+                              << ", Exceeds tolerance. Difference: " << difference << "\n";
+
+                    total_values_exceeding_tolerance++;
+                }
+            }
+
+            if (total_values_exceeding_tolerance > 0) {
+                std::cout << "Total number values that exceeded tolerance: "
+                          << total_values_exceeding_tolerance << ", Verification Failed\n";
+            } else {
+                std::cout << "All values were within tolerance. Verification Successful.\n";
+            }
         }
-#endif
     }
     // Write simulation statistics to a file
     std::string const output_file_name =

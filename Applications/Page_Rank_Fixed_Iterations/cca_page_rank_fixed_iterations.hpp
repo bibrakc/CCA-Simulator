@@ -189,12 +189,15 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>(
-        "tv", "testvertex", "test vertex to print its page_rank_fixed_iterations score");
     parser.set_required<u_int32_t>("root",
                                    "page_rank_fixed_iterations_root",
                                    "Root vertex where to germinate action for Page Rank (Page Rank "
                                    "Fixed Iterations). Makes no difference to the results.");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated score with the score provided "
+                              "in the accompanying .pagerank file");
     parser.set_optional<u_int32_t>(
         "iter", "iterations", 20, "Number of fixed iterations to perform");
     parser.set_optional<u_int32_t>("m",
