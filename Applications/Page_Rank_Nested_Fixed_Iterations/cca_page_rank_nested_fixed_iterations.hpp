@@ -43,9 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 6;
+inline constexpr u_int32_t nested_iterations = 10;
 
-inline constexpr u_int32_t DEBUG_VERTEX = 126;
+inline constexpr u_int32_t DEBUG_VERTEX = 255;
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
@@ -174,34 +174,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 
     assert(iteration < nested_iterations && "Bug! Incoming Exceeds nested_iterations");
 
-    /*  assert(v->iterations[iteration].messages_received_count < v->inbound_degree && !is_germinate
-       && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree"); */
-
-    /* assert(v->iterations[iteration].messages_received_count < v->inbound_degree ||
-           is_germinate && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree"); */
-
-    if (v->iterations[iteration].messages_received_count >= v->inbound_degree && !is_germinate) {
-        std::cout << "BUIG! v->id: " << v->id << ", messages_received_count[" << iteration
-                  << "]: " << v->iterations[iteration].messages_received_count
-                  << ", v->inbound_degree: " << v->inbound_degree
-                  << ", is_germinate: " << is_germinate << "\n";
-
-        std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
-                  << v->page_rank_current_nested_iteration
-                  << ", page_rank_args.nested_iteration: " << iteration << std::endl;
-        // Print values before setting to zero
-        for (int i = 0; i < nested_iterations; i++) {
-
-            std::cout << "v->id: " << v->id << ", messages_received_count[" << i
-                      << "]: " << v->iterations[i].messages_received_count
-                      << ", iteration_page_rank_score[" << i
-                      << "]: " << v->iterations[i].iteration_page_rank_score
-                      << ", v->inbound_degree: " << v->inbound_degree << "\n";
-        }
-        std::cout << std::endl;
-
-        exit(0);
-    }
+    assert(v->iterations[iteration].messages_received_count < v->inbound_degree ||
+           is_germinate && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree");
 
     if (is_germinate || is_first_message_of_the_epoch) {
 
@@ -217,49 +191,19 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                 static_cast<double>(v->number_of_edges);
         }
 
-        /* if (v->id == DEBUG_VERTEX) {
-            std::cout << "is_first_message_of_the_epoch = " << is_first_message_of_the_epoch
-                      << ", is_germinate: " << is_germinate
-                      << ", v->page_rank_current_nested_iteration: "
-                      << v->page_rank_current_nested_iteration
-                      << ", page_rank_args.nested_iteration: " << page_rank_args.nested_iteration
-                      << ", v->page_rank_score: " << v->page_rank_score
-                      << ", my sending score: " << v->args_for_diffusion.score << "\n";
-        } */
-
         v->args_for_diffusion.src_vertex_id = v->id;
         v->args_for_diffusion.nested_iteration = iteration;
 
         v->iterations[iteration].is_current_iteration_diffusion_ready = true;
-
-        // v->is_current_iteration_diffusion_ready[iteration] = true;
-        // v->start_next_iteration = false;
     }
-    /* if (is_first_message_of_the_epoch) {
-        v->nested_epoch_completed = false;
-    } */
 
     // If the action comes from the host and is germinate action then don't update scores and
     // just treat it as a purely diffusive action.
     if (action_type_in == actionType::application_action) {
 
-        /* if(v->id == 0 && iteration == nested_iterations-1){
-            std::cout << page_rank_args.src_vertex_id << "\n";
-        } */
-
         // Update partial new score with the new incoming score.
         v->iterations[iteration].iteration_page_rank_score += page_rank_args.score;
         v->iterations[iteration].messages_received_count++;
-
-        /* if (v->id == 255) {
-            std::cout << "v->id: " << v->id << ", current_iteration_incoming_count["
-                      << page_rank_args.nested_iteration << "]: "
-                      << v->current_iteration_incoming_count[page_rank_args.nested_iteration]
-                      << ", partial score[" << page_rank_args.nested_iteration
-                      << "]: " << v->current_iteration_rank_score[page_rank_args.nested_iteration]
-                      << ", v->inbound_degree: " << v->inbound_degree
-                      << ", from: " << page_rank_args.src_vertex_id << "\n";
-        } */
     }
 
     // If this is the last message for this iteration then update the score. And set the stage for
@@ -284,7 +228,10 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         // Increament the global iteration count.
         v->page_rank_current_iteration++;
 
-        if (v->id == DEBUG_VERTEX) {
+        // TODO: Such a logic can be used to store state of how many msg have been received in the
+        // next iteration. Therefore action overlap or iterative overlap due to asynchrony.
+
+        /* if (v->id == DEBUG_VERTEX) {
             std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
                       << v->page_rank_current_nested_iteration
                       << ", page_rank_args.nested_iteration: " << iteration << std::endl;
@@ -300,7 +247,7 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                           << ", v->inbound_degree: " << v->inbound_degree << "\n";
             }
             std::cout << std::endl;
-        }
+        } */
 
         // Go to the next nested iteration.
         v->page_rank_current_nested_iteration++;
@@ -324,48 +271,10 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
     u_int32_t const iteration = page_rank_args.nested_iteration;
     // v->args_for_diffusion.nested_iteration; //;
 
-    if (v->id == 126 && iteration == 5) {
-        std::cout << "DIFFUSION: v->id: " << v->id << ", iteration: " << iteration
-                  << "\n, has_diff_bool: "
-                  << v->iterations[iteration].has_current_iteration_diffused
-                  << "\n, v->page_rank_current_nested_iteration: "
-                  << v->page_rank_current_nested_iteration
-                  << ", nested_iterations: " << nested_iterations
-                  << "\n, v->number_of_edges: " << v->number_of_edges
-                  << ", v->nested_epoch_completed: " << v->nested_epoch_completed
-                  << ", v->start_next_iteration: " << v->start_next_iteration
-                  << ", v->args_for_diffusion.score: " << v->args_for_diffusion.score << std::endl;
-
-        std::cout << "v->id: " << v->id << ", messages_received_count[" << iteration
-                  << "]: " << v->iterations[iteration].messages_received_count
-                  << ", iteration_page_rank_score[" << iteration
-                  << "]: " << v->iterations[iteration].iteration_page_rank_score
-                  << ", v->iterations_received_this_epoch: " << v->iterations_received_this_epoch
-                  << ", v->inbound_degree: " << v->inbound_degree << "\n";
-    }
-
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->iterations[iteration].has_current_iteration_diffused &&
         v->iterations[iteration].is_current_iteration_diffusion_ready &&
         !v->nested_epoch_completed) {
-
-        if (v->id == 126 && iteration == 5) {
-            std::cout << "v->id: " << v->id << "Is in iteration 5 diffusion\n";
-        }
-
-        if (v->id == 126 && iteration == 5) {
-            std::cout << "DIFFUSION: v->id: " << v->id << ", iteration: " << iteration
-                      << "\n, has_diff_bool: "
-                      << v->iterations[iteration].has_current_iteration_diffused
-                      << "\n, v->page_rank_current_nested_iteration: "
-                      << v->page_rank_current_nested_iteration
-                      << ", nested_iterations: " << nested_iterations
-                      << "\n, v->number_of_edges: " << v->number_of_edges
-                      << ", v->nested_epoch_completed: " << v->nested_epoch_completed
-                      << ", v->start_next_iteration: " << v->start_next_iteration
-                      << ", v->args_for_diffusion.score: " << v->args_for_diffusion.score
-                      << std::endl;
-        }
 
         for (int i = 0; i < v->number_of_edges; i++) {
             // v->args_for_diffusion.nested_iteration = iteration;
@@ -394,21 +303,6 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
 
         v->start_next_iteration = false;
 
-        if (next_iteration == 5) {
-            if (v->id == DEBUG_VERTEX) {
-                std::cout << "GERMINATE: v->id: " << v->id
-                          << "\n, v->page_rank_current_nested_iteration: "
-                          << v->page_rank_current_nested_iteration
-                          << "\n, next_iteration: " << next_iteration
-                          << ", nested_iterations: " << nested_iterations
-                          << ", v->iterations_received_this_epoch: "
-                          << v->iterations_received_this_epoch
-                          << "\n, v->nested_epoch_completed: " << v->nested_epoch_completed
-                          << ", v->start_next_iteration: " << v->start_next_iteration << std::endl;
-            }
-            // exit(0);
-        }
-
         // Germinate action onto ownself.
         v->args_for_diffusion.nested_iteration = next_iteration;
         v->args_for_diffusion.score = 0;             // This wont be used.
@@ -428,10 +322,9 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                           page_rank_nested_fixed_iterations_diffuse));
     }
 
- 
     // Finish the epoch. Reset environment for the next epoch.
-    if (v->iterations_received_this_epoch == nested_iterations && v->iterations[nested_iterations-1].has_current_iteration_diffused) {
-   
+    if (v->iterations_received_this_epoch == nested_iterations &&
+        v->iterations[nested_iterations - 1].has_current_iteration_diffused) {
 
         v->nested_epoch_completed = true;
         for (u_int32_t i = 0; i < nested_iterations; i++) {
