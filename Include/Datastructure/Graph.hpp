@@ -37,6 +37,12 @@ template<class VertexType>
 class Graph
 {
   public:
+    // Checking to see whether the user has mistakenly used this for device side allocation. If they
+    // donot provide VertexType `SimpleVertex` type then it means they are intenting to allocate on
+    // the device. This Graph class is used as a utility to load and store the graph from file at
+    // the host side. Then it is used to transfer the loaded graph to the device.
+    // static_assert(std::is_same_v<VertexType, SimpleVertex<u_int32_t>>);
+
     u_int32_t total_vertices;
     u_int32_t total_edges;
     std::shared_ptr<VertexType[]> vertices;
@@ -52,6 +58,7 @@ class Graph
 
     void add_edge(VertexType& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
+        // Add the edge on the host allocated graph.
         if (!vertex.insert_edge(dst_vertex_id, weight)) {
             std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
                       << ") cannot be inserted\n";
@@ -68,7 +75,7 @@ class Graph
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(dst_vertex_addr, edge_weight);
+        bool success = vertex->insert_edge(cca_simulator, dst_vertex_addr, edge_weight);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {

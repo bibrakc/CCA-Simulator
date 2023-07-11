@@ -46,7 +46,8 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     static_assert(std::is_same_v<Address_T, Address>);
 
     // Insert an edge with weight
-    auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
+    auto insert_edge(CCASimulator& cca_simulator, Address_T dst_vertex_addr, u_int32_t edge_weight)
+        -> bool
     {
         std::cout << "RecursiveParallelVertex insert_edge\n";
 
@@ -60,6 +61,15 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
         this->number_of_edges++;
 
         return true;
+    }
+
+    // Insert an edge with weight on the host.
+    auto insert_edge(host_edge_type dst_vertex_addr, u_int32_t edge_weight) -> bool
+    {
+        std::cerr << "Not a valid use of this type of Vertex!\n";
+        exit(0);
+
+        return false;
     }
 
     RecursiveParallelVertex() = default;

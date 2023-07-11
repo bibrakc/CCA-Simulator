@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Constants.hpp"
 #include "Object.hpp"
 
+using host_edge_type = u_int32_t;
+
 template<typename Address_T>
 struct Edge
 {
@@ -72,8 +74,9 @@ struct SimpleVertex : Object
     // algorithms. TODO: Think of ways how this changes in dynamic graphs
     u_int32_t total_number_of_vertices;
 
-    // Insert an edge with weight
-    auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
+    // Insert an edge with weight on the device.
+    auto insert_edge(CCASimulator& /* cca_simulator */, Address_T dst_vertex_addr, u_int32_t edge_weight)
+        -> bool
     {
         // std::cout << "SimpleVertex insert_edge\n";
         if constexpr (this->is_vertex_allocated_on_cca_device) {
@@ -90,6 +93,18 @@ struct SimpleVertex : Object
             this->edges.emplace_back(dst_vertex_addr, edge_weight);
             this->number_of_edges++;
         }
+
+        return true;
+    }
+
+    // Insert an edge with weight on the host.
+    auto insert_edge(host_edge_type dst_vertex_addr, u_int32_t edge_weight) -> bool
+    {
+        // std::cout << "SimpleVertex insert_edge\n";
+        static_assert(!this->is_vertex_allocated_on_cca_device);
+
+        this->edges.emplace_back(dst_vertex_addr, edge_weight);
+        this->number_of_edges++;
 
         return true;
     }
