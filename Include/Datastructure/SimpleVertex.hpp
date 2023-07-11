@@ -74,7 +74,7 @@ struct SimpleVertex : Object
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
-
+        // std::cout << "SimpleVertex insert_edge\n";
         if constexpr (this->is_vertex_allocated_on_cca_device) {
 
             if (this->number_of_edges >= edges_max) {
@@ -92,7 +92,7 @@ struct SimpleVertex : Object
 
         return true;
     }
-
+    
     SimpleVertex() = default;
     ~SimpleVertex() = default;
 };

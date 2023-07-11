@@ -38,18 +38,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
-   
+
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
-        if (this->number_of_edges >= edges_max) {
-            std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
-            return false;
-        }
+        std::cout << "RecursiveParallelVertex insert_edge\n";
+        if constexpr (this->is_vertex_allocated_on_cca_device) {
 
-        this->edges[this->number_of_edges].edge = dst_vertex_addr;
-        this->edges[this->number_of_edges].weight = edge_weight;
-        this->number_of_edges++;
+            if (this->number_of_edges >= edges_max) {
+                std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
+                return false;
+            }
+
+            this->edges[this->number_of_edges].edge = dst_vertex_addr;
+            this->edges[this->number_of_edges].weight = edge_weight;
+            this->number_of_edges++;
+        } else {
+            this->edges.emplace_back(dst_vertex_addr, edge_weight);
+            this->number_of_edges++;
+        }
 
         return true;
     }
@@ -60,7 +67,8 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
 // Print the SimpleVertex vertex
 inline void
-print_RecursiveParallelVertex(const RecursiveParallelVertex<Address>* vertex, const Address& vertex_addr)
+print_RecursiveParallelVertex(const RecursiveParallelVertex<Address>* vertex,
+                              const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "
               << vertex_addr
