@@ -48,7 +48,7 @@ struct Edge
 
 // Used when the vertex is allocated on the CCA device. There we just create an edge list of size
 // `edges_mas`.
-inline constexpr u_int32_t edges_max = 100;
+inline constexpr u_int32_t edges_max = 10;
 
 template<typename Address_T>
 struct SimpleVertex : Object
@@ -75,8 +75,10 @@ struct SimpleVertex : Object
     u_int32_t total_number_of_vertices;
 
     // Insert an edge with weight on the device.
-    auto insert_edge(CCASimulator& /* cca_simulator */, Address_T dst_vertex_addr, u_int32_t edge_weight)
-        -> bool
+    auto insert_edge(CCASimulator& /* cca_simulator */,
+                     std::unique_ptr<MemoryAllocator>& /* allocator */,
+                     Address_T dst_vertex_addr,
+                     u_int32_t edge_weight) -> bool
     {
         // std::cout << "SimpleVertex insert_edge\n";
         if constexpr (this->is_vertex_allocated_on_cca_device) {
