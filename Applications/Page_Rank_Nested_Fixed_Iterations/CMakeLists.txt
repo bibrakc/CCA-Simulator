@@ -34,7 +34,16 @@ project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
+
+if(NOT DEFINED VERTEX_TYPE)
+    set(THROTTLE "true")
+endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
+
+if(NOT DEFINED VERTEX_TYPE)
+    set(VERTEX_TYPE "SimpleVertex")
+endif()
+add_definitions(-DVERTEX_TYPE=${VERTEX_TYPE})
 
 find_package(OpenMP REQUIRED)
 

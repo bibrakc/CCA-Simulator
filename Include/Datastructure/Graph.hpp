@@ -86,6 +86,11 @@ class Graph
     void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
                                     std::unique_ptr<MemoryAllocator>& allocator)
     {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);

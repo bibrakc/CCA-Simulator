@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_Page_Rank_Fixed_Iterations_HPP
 
 #include "CCASimulator.hpp"
+#include "RecursiveParallelVertex.hpp"
 #include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"
@@ -55,8 +56,12 @@ struct PageRankNestedFixedIterationsArguments
     u_int32_t src_vertex_id;
 };
 
+// VERTEX_TYPE comes from the compiler -DVERTEX_TYPE argument.
 template<typename Address_T>
-struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
+using Vertex_Type = VERTEX_TYPE<Address_T>;
+
+template<typename Vertex_T>
+struct PageRankNestedFixedIterationsVertex : Vertex_T
 {
     // This is the global iteration
     u_int32_t page_rank_current_iteration{};
@@ -117,8 +122,7 @@ struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // current_iteration_incoming_count == inbound_degree
     // u_int32_t current_iteration_incoming_count[nested_iterations]{};
 
-    PageRankNestedFixedIterationsSimpleVertex(u_int32_t id_in,
-                                              u_int32_t total_number_of_vertices_in)
+    PageRankNestedFixedIterationsVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
     {
         this->id = id_in;
         this->number_of_edges = 0;
@@ -133,8 +137,8 @@ struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->page_rank_score = initial_page_rank_score;
     }
 
-    PageRankNestedFixedIterationsSimpleVertex() = default;
-    ~PageRankNestedFixedIterationsSimpleVertex() = default;
+    PageRankNestedFixedIterationsVertex() = default;
+    ~PageRankNestedFixedIterationsVertex() = default;
 };
 
 // CCAFunctionEvent ids for the Page Rank Fixed Iterations action: predicate, work, and diffuse.
@@ -160,7 +164,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                                             actionType action_type_in,
                                             const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+    auto* v = static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
+        cc.get_object(addr));
 
     PageRankNestedFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
@@ -292,7 +297,8 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                actionType /* action_type_in */,
                                                const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+    auto* v = static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
+        cc.get_object(addr));
 
     PageRankNestedFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);

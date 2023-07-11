@@ -30,76 +30,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef SimpleVertex_HPP
-#define SimpleVertex_HPP
+#ifndef RECURSIVE_PARALLEL_Vertex_HPP
+#define RECURSIVE_PARALLEL_Vertex_HPP
 
-#include "Address.hpp"
-#include "Constants.hpp"
-#include "Object.hpp"
+#include "SimpleVertex.hpp"
 
 template<typename Address_T>
-struct Edge
+struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
-    Address_T edge;
-    u_int32_t weight;
-};
-
-inline constexpr u_int32_t edges_max = 400;
-
-template<typename Address_T>
-struct SimpleVertex : Object
-{
-    u_int32_t id{};
-
-    // If the graph is located on the host then simply store the edges as a `std::vector` but if the
-    // graph is stored on the CCA then store it as a smaller edges[] array.
-    static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
-    using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
-                                       Edge<Address>[edges_max],
-                                       /* Edge<u_int32_t>[edges_max]>; */
-                                       std::vector<Edge<u_int32_t>>>;
-    Edges_t edges{};
-
-    // Outbound degree.
-    u_int32_t number_of_edges{};
-
-    // Total inbound edges to this vertex.
-    u_int32_t inbound_degree{};
-
-    // Used in the calculation with the damping factor in page rank. Or can be used in other
-    // algorithms. Right now putting is here in the parent class since this might be used for many
-    // algorithms. TODO: Think of ways how this changes in dynamic graphs
-    u_int32_t total_number_of_vertices;
-
+   
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
-
-        if constexpr (this->is_vertex_allocated_on_cca_device) {
-
-            if (this->number_of_edges >= edges_max) {
-                std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
-                return false;
-            }
-
-            this->edges[this->number_of_edges].edge = dst_vertex_addr;
-            this->edges[this->number_of_edges].weight = edge_weight;
-            this->number_of_edges++;
-        } else {
-            this->edges.emplace_back(dst_vertex_addr, edge_weight);
-            this->number_of_edges++;
+        if (this->number_of_edges >= edges_max) {
+            std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
+            return false;
         }
+
+        this->edges[this->number_of_edges].edge = dst_vertex_addr;
+        this->edges[this->number_of_edges].weight = edge_weight;
+        this->number_of_edges++;
 
         return true;
     }
 
-    SimpleVertex() = default;
-    ~SimpleVertex() = default;
+    RecursiveParallelVertex() = default;
+    ~RecursiveParallelVertex() = default;
 };
 
 // Print the SimpleVertex vertex
 inline void
-print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_addr)
+print_RecursiveParallelVertex(const RecursiveParallelVertex<Address>* vertex, const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "
               << vertex_addr
@@ -113,4 +74,4 @@ print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_ad
     std::cout << std::endl;
 }
 
-#endif // SimpleVertex_HPP
+#endif // RECURSIVE_PARALLEL_Vertex_HPP
