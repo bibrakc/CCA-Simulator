@@ -55,30 +55,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     // Balance adding into the ghost vertices by having this iterator that goes in round-robin.
     u_int32_t next_insertion_in_ghost_iterator{};
 
+    u_int32_t number_of_edges_in_this_recurssive_tree{};
+
     // Recurssively add edge into the ghost vertex
-    // Insert edge by `Address` type src and dst
-    inline auto insert_edge_in_ghost_vertex(CCASimulator& cca_simulator,
-                                            std::unique_ptr<MemoryAllocator>& allocator,
-                                            Address src_vertex_addr,
-                                            Address dst_vertex_addr,
-                                            u_int32_t edge_weight) -> bool
-    {
-
-        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(cca_simulator, allocator, dst_vertex_addr, edge_weight);
-
-        // Increament the `inbound_degree` of the destination vertex
-        if (success) {
-            auto* vertex =
-                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
-
-            vertex->inbound_degree++;
-        }
-        // Check if edges are not full
-        // TODO: Later implement the hierarical parallel vertex object
-        return success;
-    }
-
     // Insert an edge with weight
     auto insert_edge(CCASimulator& cca_simulator,
                      std::unique_ptr<MemoryAllocator>& allocator,
@@ -89,10 +68,12 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
         if (this->number_of_edges == edges_max) {
             std::cerr << "this->number_of_edges: " << this->number_of_edges
-                      << " max edge list limit reached. Using ghost vertex now.\n";
+                      << " max edge list limit reached. Using ghost vertex now. dst: "
+                      << dst_vertex_addr << "\n";
 
             if (!this->ghost_vertices[0].has_value()) {
-                std::cout << "No ghost vertex. Need to allocate one!\n";
+                std::cout << "No ghost vertex. Need to allocate one! dst: " << dst_vertex_addr
+                          << "\n";
 
                 // Knowingly using the basic class RecursiveParallelVertex<> and not the application
                 // specialized class that derives from this class. Since the ghost vertices are only
@@ -100,7 +81,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 // appplication specific information. Also, use a different diffuse function that
                 // specializes only in diffusing and nothing about application in it.
                 RecursiveParallelVertex<Address_T> new_ghost_vertex;
-                new_ghost_vertex.id = this->id;
+                new_ghost_vertex.id = this->id * 10000;
                 new_ghost_vertex.total_number_of_vertices = this->total_number_of_vertices;
                 new_ghost_vertex.is_ghost_vertex = true;
 
@@ -108,18 +89,37 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                     cca_simulator.allocate_and_insert_object_on_cc(
                         allocator, &new_ghost_vertex, sizeof(RecursiveParallelVertex<Address_T>));
                 if (ghost_vertex_addr == std::nullopt) {
-                    std::cerr << "Error: Not able to allocate ghost vertex\n";
+                    std::cerr << "Error: Not able to allocate ghost vertex dst: << "
+                              << dst_vertex_addr << "\n";
                     exit(0);
                 }
+
+                this->ghost_vertices[0] = ghost_vertex_addr;
             }
-            std::cout << "There is ghost vertex. Now sending there!\n";
-            return ghost_vertex_addr.insert_edgeXXXX(cca_simulator, allocator, );
+            std::cout << "There is ghost vertex. Now sending there! dst: " << dst_vertex_addr
+                      << "\n";
+
+            auto* ghost_vertex_accessor = static_cast<RecursiveParallelVertex<Address_T>*>(
+                cca_simulator.get_object(this->ghost_vertices[0].value()));
+            bool success = ghost_vertex_accessor->insert_edge(
+                cca_simulator, allocator, dst_vertex_addr, edge_weight);
+
+            if (success) {
+                // Increment the global edges count for this vertex.
+                this->number_of_edges_in_this_recurssive_tree++;
+                return true;
+            } else {
+                return false; // insertion failed.
+            }
 
         } else {
 
             this->edges[this->number_of_edges].edge = dst_vertex_addr;
             this->edges[this->number_of_edges].weight = edge_weight;
+            // Only increments the currect ghost/root vertex edges.
             this->number_of_edges++;
+            // Increment the global edges count for this vertex.
+            this->number_of_edges_in_this_recurssive_tree++;
         }
         return true;
     }

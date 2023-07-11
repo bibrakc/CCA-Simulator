@@ -63,13 +63,13 @@ scalar_to_rgb = {
     0: (0, 0, 0),       # black
     1: (0, 255, 255),   # cyan
     2: (0, 255, 0),     # green
-    3: (255, 255, 255), # white
-    4: (255, 255, 214), # yellow level 1
-    5: (255, 255, 163), # yellow level 2
+    3: (255, 255, 255),  # white
+    4: (255, 255, 214),  # yellow level 1
+    5: (255, 255, 163),  # yellow level 2
     6: (255, 255, 61),  # yellow level 3
     7: (255, 255, 0),   # yellow level 4 pure
-    8: (255, 204, 214), # red level 1
-    9: (255, 153, 163), # red level 2
+    8: (255, 204, 214),  # red level 1
+    9: (255, 153, 163),  # red level 2
     10: (255, 51, 61),  # red level 3
     11: (255, 0, 0),    # red level 4 pure
 }
@@ -165,7 +165,7 @@ def update(frame):
     grid.set_array(grid_data[frame+start_from])
     # Set the title for each frame
     ax.set_title(
-        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame+start_from), fontsize=16)
+        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame+start_from), fontsize=14)
 
     if frame == 1 and htree_draw == True:
         draw_h_tree(x_htree, y_htree, length_htree, depth_htree)
@@ -177,7 +177,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=30)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=40)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -191,16 +191,17 @@ ax.set_xlabel('Columns of Compute Cells', fontsize=16)
 ax.set_ylabel('Rows of Compute Cells', fontsize=16)
 # Add a larger second title
 routing_algorithm = 'Dimension Ordered Horizontal First Routing'
-plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
-             str(dim_x)+' x '+str(dim_y)+'\n'+routing_algorithm, fontsize=20)
+graph_size = 'Random Graph V=2048 and E=32768'
+plt.suptitle('Asynchronous Page Rank on a CCA Chip of ' +
+             str(dim_x)+' x '+str(dim_y)+'\n'+routing_algorithm+'\n'+graph_size, fontsize=16)
 
 
-output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
+output_filename = 'PageRank_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=220) """
+ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520)
 
 # Save the animation as a GIF file
-""" ani.save(output_filename+'.gif', writer='pillow', dpi=120) """
+""" ani.save(output_filename+'.gif', writer='pillow', dpi=75) """
 # ani.save(output_filename, writer='pillow', dpi=70, interval=50)
 
 # Display the plot
