@@ -44,7 +44,9 @@ struct Edge
     u_int32_t weight;
 };
 
-inline constexpr u_int32_t edges_max = 400;
+// Used when the vertex is allocated on the CCA device. There we just create an edge list of size
+// `edges_mas`.
+inline constexpr u_int32_t edges_max = 100;
 
 template<typename Address_T>
 struct SimpleVertex : Object
@@ -56,8 +58,7 @@ struct SimpleVertex : Object
     static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
     using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
                                        Edge<Address>[edges_max],
-                                       /* Edge<u_int32_t>[edges_max]>; */
-                                       std::vector<Edge<u_int32_t>>>;
+                                       std::vector<Edge<Address_T>>>;
     Edges_t edges{};
 
     // Outbound degree.
@@ -92,7 +93,7 @@ struct SimpleVertex : Object
 
         return true;
     }
-    
+
     SimpleVertex() = default;
     ~SimpleVertex() = default;
 };

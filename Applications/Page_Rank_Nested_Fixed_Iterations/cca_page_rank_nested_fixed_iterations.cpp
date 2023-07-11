@@ -121,7 +121,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<PageRankNestedFixedIterationsVertex<Vertex_Type<u_int32_t>>> input_graph(
+    Graph<PageRankNestedFixedIterationsVertex<SimpleVertex<u_int32_t>>> input_graph(
         input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";

@@ -39,24 +39,25 @@ template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
 
+    // Checking to see whether the user has mistakenly used this for host side allocation. If they
+    // give `Edge.edge` type other than `Address` then it means they are intenting to allocate on
+    // the host. This vertex object is not supposed to be allocated on the host. For that purpose
+    // use the `SimpleVertex`.
+    static_assert(std::is_same_v<Address_T, Address>);
+
     // Insert an edge with weight
     auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
         std::cout << "RecursiveParallelVertex insert_edge\n";
-        if constexpr (this->is_vertex_allocated_on_cca_device) {
 
-            if (this->number_of_edges >= edges_max) {
-                std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
-                return false;
-            }
-
-            this->edges[this->number_of_edges].edge = dst_vertex_addr;
-            this->edges[this->number_of_edges].weight = edge_weight;
-            this->number_of_edges++;
-        } else {
-            this->edges.emplace_back(dst_vertex_addr, edge_weight);
-            this->number_of_edges++;
+        if (this->number_of_edges >= edges_max) {
+            std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
+            return false;
         }
+
+        this->edges[this->number_of_edges].edge = dst_vertex_addr;
+        this->edges[this->number_of_edges].weight = edge_weight;
+        this->number_of_edges++;
 
         return true;
     }
