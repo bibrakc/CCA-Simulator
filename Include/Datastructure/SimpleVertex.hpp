@@ -63,8 +63,11 @@ struct SimpleVertex : Object
                                        std::vector<Edge<Address_T>>>;
     Edges_t edges{};
 
-    // Outbound degree.
+    // Note: For the SimpleVertex both `number_of_edges` and `outbound_degree` mean the same.
+    // Edges in the edge list.
     u_int32_t number_of_edges{};
+    // Outbound degree. Number of vertices that this vertex points to.
+    u_int32_t outbound_degree{};
 
     // Total inbound edges to this vertex.
     u_int32_t inbound_degree{};
@@ -91,9 +94,11 @@ struct SimpleVertex : Object
             this->edges[this->number_of_edges].edge = dst_vertex_addr;
             this->edges[this->number_of_edges].weight = edge_weight;
             this->number_of_edges++;
+            this->outbound_degree++;
         } else {
             this->edges.emplace_back(dst_vertex_addr, edge_weight);
             this->number_of_edges++;
+            this->outbound_degree++;
         }
 
         return true;
@@ -107,6 +112,7 @@ struct SimpleVertex : Object
 
         this->edges.emplace_back(dst_vertex_addr, edge_weight);
         this->number_of_edges++;
+        this->outbound_degree++;
 
         return true;
     }

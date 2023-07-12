@@ -446,10 +446,10 @@ CCASimulator::run_simulation(Address app_terminator)
             100.0 * static_cast<double>(sum_global_active_htree) /
             static_cast<double>(htree_network.htree_all_nodes.size());
 
-        /* std::cout << "End of current run cycle # " << this->total_current_run_cycles
+        std::cout << "End of current run cycle # " << this->total_current_run_cycles
                   << ", Total cycles: " << this->total_cycles
                   << ", CCs Active: " << percent_CCs_active
-                  << "%, htree Active: " << percent_htree_active << "%\n"; */
+                  << "%, htree Active: " << percent_htree_active << "%\n";
 
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         this->total_cycles++;

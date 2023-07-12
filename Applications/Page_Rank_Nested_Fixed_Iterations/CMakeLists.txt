@@ -41,7 +41,7 @@ endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
 
 if(NOT DEFINED VERTEX_TYPE)
-    set(VERTEX_TYPE "SimpleVertex")
+    set(VERTEX_TYPE "RecursiveParallelVertex")
 endif()
 add_definitions(-DVERTEX_TYPE=${VERTEX_TYPE})
 
