@@ -37,6 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 inline constexpr u_int32_t ghost_vertices_max = 1;
 
+// TODO remove
+#define DEBUG_VERTEXXX 1457
+
 template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
@@ -64,16 +67,18 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                      Address_T dst_vertex_addr,
                      u_int32_t edge_weight) -> bool
     {
-        std::cout << "RecursiveParallelVertex insert_edge\n";
-
+        /* if (this->id == DEBUG_VERTEXXX) {
+            std::cout << this->id << ", RecursiveParallelVertex insert_edge\n";
+        } */
         if (this->number_of_edges == edges_max) {
-            std::cerr << "this->number_of_edges: " << this->number_of_edges
-                      << " max edge list limit reached. Using ghost vertex now. dst: "
-                      << dst_vertex_addr << "\n";
-
+            /* if (this->id == DEBUG_VERTEXXX) {
+                std::cerr << "this->number_of_edges: " << this->number_of_edges
+                          << " max edge list limit reached. Using ghost vertex now. dst: "
+                          << dst_vertex_addr << "\n";
+            } */
             if (!this->ghost_vertices[0].has_value()) {
-                std::cout << "No ghost vertex. Need to allocate one! dst: " << dst_vertex_addr
-                          << "\n";
+                /*    std::cout << "No ghost vertex. Need to allocate one! dst: " << dst_vertex_addr
+                             << "\n"; */
 
                 // Knowingly using the basic class RecursiveParallelVertex<> and not the application
                 // specialized class that derives from this class. Since the ghost vertices are only
@@ -96,8 +101,8 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
                 this->ghost_vertices[0] = ghost_vertex_addr;
             }
-            std::cout << "There is ghost vertex. Now sending there! dst: " << dst_vertex_addr
-                      << "\n";
+            /*  std::cout << "There is ghost vertex. Now sending there! dst: " << dst_vertex_addr
+                       << "\n"; */
 
             auto* ghost_vertex_accessor = static_cast<RecursiveParallelVertex<Address_T>*>(
                 cca_simulator.get_object(this->ghost_vertices[0].value()));
@@ -107,6 +112,13 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
             if (success) {
                 // Increment the global edges count for this vertex.
                 this->number_of_edges_in_this_recurssive_tree++;
+
+                /*    auto* vertexxx = static_cast<RecursiveParallelVertex<Address_T>*>(
+                       cca_simulator.get_object(dst_vertex_addr));
+                   if (vertexxx->id == 17) {
+                       std::cout << "\t\tdst: id " << vertexxx->id << "\n";
+                   } */
+
                 return true;
             } else {
                 return false; // insertion failed.

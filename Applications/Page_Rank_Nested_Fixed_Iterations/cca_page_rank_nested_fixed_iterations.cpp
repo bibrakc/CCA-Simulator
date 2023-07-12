@@ -132,9 +132,9 @@ main(int argc, char** argv) -> int
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<
-        PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(cca_square_simulator,
-                                                                          allocator);
+    input_graph
+        .transfer_graph_host_to_cca<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(
+            cca_square_simulator, allocator);
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
@@ -247,7 +247,9 @@ main(int argc, char** argv) -> int
                     std::cout << "Vertex: " << i
                               << ", Computed Pagerank: " << v_test->page_rank_score
                               << ", Control Value: " << control_results[i]
-                              << ", Exceeds tolerance. Difference: " << difference << "\n";
+                              << ", Exceeds tolerance. Difference: " << difference
+                              << ", page_rank_current_iteration: "
+                              << v_test->page_rank_current_iteration << "\n";
 
                     total_values_exceeding_tolerance++;
                 }
