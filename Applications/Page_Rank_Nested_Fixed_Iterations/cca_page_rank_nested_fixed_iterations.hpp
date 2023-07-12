@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_Page_Rank_Fixed_Iterations_HPP
 
 #include "CCASimulator.hpp"
+#include "RecursiveParallelVertex.hpp"
 #include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"
@@ -42,10 +43,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // For memcpy()
 #include <cstring>
 
-inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 5;
+// TODO Remove
+#include <iomanip>
 
-inline constexpr u_int32_t DEBUG_VERTEX = 695;
+inline constexpr double damping_factor = 0.85;
+inline constexpr u_int32_t nested_iterations = 1;
+
+/* inline constexpr u_int32_t DEBUG_VERTEX = 17; */
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
@@ -55,8 +59,14 @@ struct PageRankNestedFixedIterationsArguments
     u_int32_t src_vertex_id;
 };
 
+/* #define VERTEX_TYPE RecursiveParallelVertex */
+
+// VERTEX_TYPE comes from the compiler -DVERTEX_TYPE argument.
 template<typename Address_T>
-struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
+using Vertex_Type = VERTEX_TYPE<Address_T>;
+
+template<typename Vertex_T>
+struct PageRankNestedFixedIterationsVertex : Vertex_T
 {
     // This is the global iteration
     u_int32_t page_rank_current_iteration{};
@@ -117,8 +127,7 @@ struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // current_iteration_incoming_count == inbound_degree
     // u_int32_t current_iteration_incoming_count[nested_iterations]{};
 
-    PageRankNestedFixedIterationsSimpleVertex(u_int32_t id_in,
-                                              u_int32_t total_number_of_vertices_in)
+    PageRankNestedFixedIterationsVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
     {
         this->id = id_in;
         this->number_of_edges = 0;
@@ -133,8 +142,8 @@ struct PageRankNestedFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->page_rank_score = initial_page_rank_score;
     }
 
-    PageRankNestedFixedIterationsSimpleVertex() = default;
-    ~PageRankNestedFixedIterationsSimpleVertex() = default;
+    PageRankNestedFixedIterationsVertex() = default;
+    ~PageRankNestedFixedIterationsVertex() = default;
 };
 
 // CCAFunctionEvent ids for the Page Rank Fixed Iterations action: predicate, work, and diffuse.
@@ -160,8 +169,17 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                                             actionType action_type_in,
                                             const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
+    // First check whether this is a ghost vertex. If it is then don't perform any work.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<Vertex_Type<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 0;
+    }
+
+    auto* v = static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
+        cc.get_object(addr));
     PageRankNestedFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
 
@@ -185,25 +203,24 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                   << "]: " << v->iterations[iteration].messages_received_count << " >  inbound "
                   << v->inbound_degree << "\n";
 
-        if (v->id == DEBUG_VERTEX) {
-            std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
-                      << v->page_rank_current_nested_iteration
-                      << ", page_rank_args.nested_iteration: " << iteration << std::endl;
-            // Print values before setting to zero
-            for (int i = 0; i < nested_iterations; i++) {
+        /*   if (v->id == DEBUG_VERTEX) {
+              std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
+                        << v->page_rank_current_nested_iteration
+                        << ", page_rank_args.nested_iteration: " << iteration << std::endl;
+              // Print values before setting to zero
+              for (int i = 0; i < nested_iterations; i++) {
 
-                std::cout << "v->id: " << v->id << ", messages_received_count[" << i
-                          << "]: " << v->iterations[i].messages_received_count
-                          << ", iteration_page_rank_score[" << i
-                          << "]: " << v->iterations[i].iteration_page_rank_score
-                          << ", v->iterations_received_this_epoch: "
-                          << v->iterations_received_this_epoch
-                          << ", v->inbound_degree: " << v->inbound_degree << "\n";
-            }
-            std::cout << std::endl;
-
-            exit(0);
-        }
+                  std::cout << "v->id: " << v->id << ", messages_received_count[" << i
+                            << "]: " << v->iterations[i].messages_received_count
+                            << ", iteration_page_rank_score[" << i
+                            << "]: " << v->iterations[i].iteration_page_rank_score
+                            << ", v->iterations_received_this_epoch: "
+                            << v->iterations_received_this_epoch
+                            << ", v->inbound_degree: " << v->inbound_degree << "\n";
+              }
+              std::cout << std::endl;
+          } */
+        exit(0);
     }
 
     if (is_germinate || is_first_message_of_the_epoch) {
@@ -212,12 +229,12 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         if (is_first_message_of_the_epoch) {
             v->nested_epoch_completed = false;
             v->args_for_diffusion.score =
-                v->page_rank_score / static_cast<double>(v->number_of_edges);
+                v->page_rank_score / static_cast<double>(v->outbound_degree);
         } else {
             u_int32_t const previous_iteration = iteration - 1;
             v->args_for_diffusion.score =
                 v->iterations[previous_iteration].iteration_page_rank_score /
-                static_cast<double>(v->number_of_edges);
+                static_cast<double>(v->outbound_degree);
         }
 
         v->args_for_diffusion.src_vertex_id = v->id;
@@ -257,26 +274,29 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         // Increament the global iteration count.
         v->page_rank_current_iteration++;
 
-        // TODO: Such a logic can be used to store state of how many msg have been received in the
-        // next iteration. Therefore action overlap or iterative overlap due to asynchrony.
+        // TODO: Such a logic can be used to store the state of how many msg have been received in
+        // the next iteration. Therefore action overlap or iterative overlap due to asynchrony.
 
         /*   if (v->id == DEBUG_VERTEX) {
-             std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
-                       << v->page_rank_current_nested_iteration
-                       << ", page_rank_args.nested_iteration: " << iteration << std::endl;
-             // Print values before setting to zero
-             for (int i = 0; i < nested_iterations; i++) {
+              std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
+                        << v->page_rank_current_nested_iteration
+                        << ", page_rank_args.nested_iteration: " << iteration << std::endl;
+              // Print values before setting to zero
+              for (int i = 0; i < nested_iterations; i++) {
 
-                 std::cout << "v->id: " << v->id << ", messages_received_count[" << i
-                           << "]: " << v->iterations[i].messages_received_count
-                           << ", iteration_page_rank_score[" << i
-                           << "]: " << v->iterations[i].iteration_page_rank_score
-                           << ", v->iterations_received_this_epoch: "
-                           << v->iterations_received_this_epoch
-                           << ", v->inbound_degree: " << v->inbound_degree << "\n";
-             }
-             std::cout << std::endl;
-         }  */
+                  std::cout << "v->id: " << v->id << ", messages_received_count[" << i
+                            << "]: " << v->iterations[i].messages_received_count
+                            << ", iteration_page_rank_score[" << i
+                            << "]: " << v->iterations[i].iteration_page_rank_score
+                            << ", v->iterations_received_this_epoch: "
+                            << v->iterations_received_this_epoch
+                            << ", v->inbound_degree: " << v->inbound_degree
+                            << ", number_of_edges: " << v->number_of_edges
+                            << ", number_of_edges_in_this_recurssive_tree: "
+                            << v->number_of_edges_in_this_recurssive_tree << "\n";
+              }
+              std::cout << std::endl;
+          } */
 
         // Go to the next nested iteration.
         v->page_rank_current_nested_iteration++;
@@ -292,7 +312,8 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                actionType /* action_type_in */,
                                                const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+    auto* v = static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
+        cc.get_object(addr));
 
     PageRankNestedFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
@@ -301,15 +322,63 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
     // v->args_for_diffusion.nested_iteration; //;
 
     // If the diffusion has not occured for the current iteration then diffuse.
-    if (!v->iterations[iteration].has_current_iteration_diffused &&
-        v->iterations[iteration].is_current_iteration_diffusion_ready &&
-        !v->nested_epoch_completed) {
+    bool should_diffuse = !v->iterations[iteration].has_current_iteration_diffused &&
+                          v->iterations[iteration].is_current_iteration_diffusion_ready &&
+                          !v->nested_epoch_completed;
 
+    // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<Vertex_Type<Address>*>(cc.get_object(addr));
+
+    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+
+    ActionArgumentType args_x = nullptr;
+    if (this_is_ghost_vertex) {
+        // Just relay what parent gave.
+        args_x = args;
+    } else {
+        // This is the parent non-ghost vertex so it makes its arguments.
+        args_x = cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+            v->args_for_diffusion);
+    }
+
+    if (should_diffuse || this_is_ghost_vertex) {
+
+        // Note: The application vertex type is derived from the parent `Vertex_Type` therefore
+        // using the derived pointer. It works for both.
+        // First diffuse to the ghost vertices.
+        for (u_int32_t ghosts_iterator = 0;
+             ghosts_iterator < Vertex_Type<Address>::ghost_vertices_max_degree;
+             ghosts_iterator++) {
+            if (v->ghost_vertices[ghosts_iterator].has_value()) {
+
+                cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
+                                  addr,
+                                  actionType::application_action,
+                                  true,
+                                  args_x,
+                                  page_rank_nested_fixed_iterations_predicate,
+                                  page_rank_nested_fixed_iterations_work,
+                                  page_rank_nested_fixed_iterations_diffuse));
+            }
+        }
+
+        // Now diffuse along the edges.
         for (int i = 0; i < v->number_of_edges; i++) {
+
+            /*   if (this_is_ghost_vertex) {
+                  if (v->edges[i].edge.cc_id == 17)
+                      std::cout << "\t" << v->id
+                                << ": is ghost and is diffusing edge: " << v->edges[i].edge
+                                << ", CC id: " << v->edges[i].edge.cc_id << "\n";
+              } else {
+
+                  if (v->edges[i].edge.cc_id == 17)
+                      std::cout << "\t" << v->id
+                                << ": is parent and is diffusing edge: " << v->edges[i].edge
+                                << ", CC id: " << v->edges[i].edge.cc_id << "\n";
+              } */
             // v->args_for_diffusion.nested_iteration = iteration;
-            ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
-                    v->args_for_diffusion);
 
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
@@ -322,7 +391,13 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                               page_rank_nested_fixed_iterations_diffuse));
         }
 
-        v->iterations[iteration].has_current_iteration_diffused = true;
+        if (!this_is_ghost_vertex) {
+            v->iterations[iteration].has_current_iteration_diffused = true;
+        }
+    }
+
+    if (this_is_ghost_vertex) {
+        return 0;
     }
 
     // If this is germinate then prepare and germinate the next iteration.
@@ -354,6 +429,10 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
     // Finish the epoch. Reset environment for the next epoch.
     if (v->iterations_received_this_epoch == nested_iterations &&
         v->iterations[nested_iterations - 1].has_current_iteration_diffused) {
+
+        /* if (v->id == 17) {
+            std::cout << "\t" << v->id << ": is terminating epoch:\n";
+        } */
 
         v->nested_epoch_completed = true;
         for (u_int32_t i = 0; i < nested_iterations; i++) {

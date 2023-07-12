@@ -37,6 +37,12 @@ template<class VertexType>
 class Graph
 {
   public:
+    // Checking to see whether the user has mistakenly used this for device side allocation. If they
+    // donot provide VertexType `SimpleVertex` type then it means they are intenting to allocate on
+    // the device. This Graph class is used as a utility to load and store the graph from file at
+    // the host side. Then it is used to transfer the loaded graph to the device.
+    // static_assert(std::is_same_v<VertexType, SimpleVertex<u_int32_t>>);
+
     u_int32_t total_vertices;
     u_int32_t total_edges;
     std::shared_ptr<VertexType[]> vertices;
@@ -52,6 +58,7 @@ class Graph
 
     void add_edge(VertexType& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
+        // Add the edge on the host allocated graph.
         if (!vertex.insert_edge(dst_vertex_id, weight)) {
             std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
                       << ") cannot be inserted\n";
@@ -62,13 +69,14 @@ class Graph
     // Insert edge by `Address` type src and dst
     template<class VertexTypeOfAddress>
     inline auto insert_edge_by_address(CCASimulator& cca_simulator,
+                                       std::unique_ptr<MemoryAllocator>& allocator,
                                        Address src_vertex_addr,
                                        Address dst_vertex_addr,
                                        u_int32_t edge_weight) -> bool
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(dst_vertex_addr, edge_weight);
+        bool success = vertex->insert_edge(cca_simulator, allocator, dst_vertex_addr, edge_weight);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {
@@ -86,6 +94,11 @@ class Graph
     void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
                                     std::unique_ptr<MemoryAllocator>& allocator)
     {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
@@ -121,6 +134,7 @@ class Graph
 
                 if (!this->insert_edge_by_address<VertexTypeOfAddress>(
                         cca_simulator,
+                        allocator,
                         this->vertex_addresses[src_vertex_id],
                         this->vertex_addresses[dst_vertex_id],
                         edge_weight)) {

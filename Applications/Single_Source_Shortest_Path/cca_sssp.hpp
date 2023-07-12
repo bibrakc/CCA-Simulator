@@ -146,7 +146,11 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its sssp distance");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated paths with the paths provided "
+                              "in the accompanying .sssp file");
     parser.set_required<u_int32_t>(
         "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
     parser.set_optional<u_int32_t>("m",

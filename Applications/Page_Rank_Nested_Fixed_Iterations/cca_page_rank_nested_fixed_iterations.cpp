@@ -121,7 +121,8 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<PageRankNestedFixedIterationsSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<PageRankNestedFixedIterationsVertex<SimpleVertex<host_edge_type>>> input_graph(
+        input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -131,8 +132,9 @@ main(int argc, char** argv) -> int
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<PageRankNestedFixedIterationsSimpleVertex<Address>>(
-        cca_square_simulator, allocator);
+    input_graph
+        .transfer_graph_host_to_cca<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(
+            cca_square_simulator, allocator);
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
@@ -237,14 +239,17 @@ main(int argc, char** argv) -> int
                 // Check for correctness. Print the distance to a target test vertex. test_vertex
                 Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-                auto* v_test = static_cast<PageRankNestedFixedIterationsSimpleVertex<Address>*>(
-                    cca_square_simulator.get_object(test_vertex_addr));
+                auto* v_test =
+                    static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
+                        cca_square_simulator.get_object(test_vertex_addr));
                 double difference = std::fabs(control_results[i] - v_test->page_rank_score);
                 if (difference > tolerance) {
                     std::cout << "Vertex: " << i
                               << ", Computed Pagerank: " << v_test->page_rank_score
                               << ", Control Value: " << control_results[i]
-                              << ", Exceeds tolerance. Difference: " << difference << "\n";
+                              << ", Exceeds tolerance. Difference: " << difference
+                              << ", page_rank_current_iteration: "
+                              << v_test->page_rank_current_iteration << "\n";
 
                     total_values_exceeding_tolerance++;
                 }

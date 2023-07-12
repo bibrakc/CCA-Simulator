@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Constants.hpp"
 #include "Object.hpp"
 
+using host_edge_type = u_int32_t;
+
 template<typename Address_T>
 struct Edge
 {
@@ -44,16 +46,28 @@ struct Edge
     u_int32_t weight;
 };
 
-inline constexpr u_int32_t edges_max = 400;
+// Used when the vertex is allocated on the CCA device. There we just create an edge list of size
+// `edges_max`.
+inline constexpr u_int32_t edges_max = 50;
 
 template<typename Address_T>
 struct SimpleVertex : Object
 {
     u_int32_t id{};
-    Edge<Address_T> edges[edges_max]{};
 
-    // Outbound degree.
+    // If the graph is located on the host then simply store the edges as a `std::vector` but if the
+    // graph is stored on the CCA then store it as a smaller edges[] array.
+    static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
+    using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
+                                       Edge<Address>[edges_max],
+                                       std::vector<Edge<Address_T>>>;
+    Edges_t edges{};
+
+    // Note: For the SimpleVertex both `number_of_edges` and `outbound_degree` mean the same.
+    // Edges in the edge list.
     u_int32_t number_of_edges{};
+    // Outbound degree. Number of vertices that this vertex points to.
+    u_int32_t outbound_degree{};
 
     // Total inbound edges to this vertex.
     u_int32_t inbound_degree{};
@@ -63,17 +77,42 @@ struct SimpleVertex : Object
     // algorithms. TODO: Think of ways how this changes in dynamic graphs
     u_int32_t total_number_of_vertices;
 
-    // Insert an edge with weight
-    auto insert_edge(Address_T dst_vertex_addr, u_int32_t edge_weight) -> bool
+    // Insert an edge with weight on the device.
+    auto insert_edge(CCASimulator& /* cca_simulator */,
+                     std::unique_ptr<MemoryAllocator>& /* allocator */,
+                     Address_T dst_vertex_addr,
+                     u_int32_t edge_weight) -> bool
     {
-        if (this->number_of_edges >= edges_max) {
-            std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
-            return false;
+        // std::cout << "SimpleVertex insert_edge\n";
+        if constexpr (this->is_vertex_allocated_on_cca_device) {
+
+            if (this->number_of_edges >= edges_max) {
+                std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
+                return false;
+            }
+
+            this->edges[this->number_of_edges].edge = dst_vertex_addr;
+            this->edges[this->number_of_edges].weight = edge_weight;
+            this->number_of_edges++;
+            this->outbound_degree++;
+        } else {
+            this->edges.emplace_back(dst_vertex_addr, edge_weight);
+            this->number_of_edges++;
+            this->outbound_degree++;
         }
 
-        this->edges[this->number_of_edges].edge = dst_vertex_addr;
-        this->edges[this->number_of_edges].weight = edge_weight;
+        return true;
+    }
+
+    // Insert an edge with weight on the host.
+    auto insert_edge(host_edge_type dst_vertex_addr, u_int32_t edge_weight) -> bool
+    {
+        // std::cout << "SimpleVertex insert_edge\n";
+        static_assert(!this->is_vertex_allocated_on_cca_device);
+
+        this->edges.emplace_back(dst_vertex_addr, edge_weight);
         this->number_of_edges++;
+        this->outbound_degree++;
 
         return true;
     }
