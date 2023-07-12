@@ -247,18 +247,25 @@ def bfs(graph, source, Output_filename):
                 level[neighbor] = node_level + 1
                 queue.append((neighbor, node_level + 1))
 
+    # Sort the level dictionary based on keys
+    sorted_level = sorted(level.items(), key=lambda x: x[0])
+
     # Open a file for writing the SSSP values
     with open(Output_filename, "w") as file:
         file.write(f"# Source\n")
         file.write(f"{source}\n")
         # Write the BFS values to the file
-        for vertex, level in level.items():
+        for vertex, level in sorted_level:
             file.write(f"{vertex}\t{level}\n")
 
 
 # Perform SSSP using nx.single_source_dijkstra
 def sssp(graph, source, Output_filename):
     sssp = nx.single_source_dijkstra(graph, source=source)
+    
+    # Sort the vertices based on their keys
+    sorted_vertices = sorted(sssp[0].items(), key=lambda x: x[0])
+
     write_to_file(Output_filename, "# Source")
     write_to_file(Output_filename, str(source))
 
@@ -267,7 +274,7 @@ def sssp(graph, source, Output_filename):
         file.write(f"# Source\n")
         file.write(f"{source}\n")
         # Write the SSSP values to the file
-        for vertex, length in sssp[0].items():
+        for vertex, length in sorted_vertices:
             file.write(f"{vertex}\t{length}\n")
 
 # Perform pagerank using nx.pagerank

@@ -57,8 +57,8 @@ main(int argc, char** argv) -> int
     // BFS root vertex
     auto root_vertex = parser.get<u_int32_t>("root");
 
-    // Test vertex to print its distance from the root
-    auto test_vertex = parser.get<u_int32_t>("tv");
+    // Cross check the calculated bfs levels from root with the levels provided in .bfs file
+    auto verify_results = parser.get<bool>("verify");
 
     // Configuration related to the input data graph
     auto input_graph_path = parser.get<std::string>("f");
@@ -174,14 +174,76 @@ main(int argc, char** argv) -> int
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    // Check for correctness. Print the distance to a target test vertex.
-    Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(test_vertex);
+    if (verify_results) {
+        std::cout << "\nBreadth First Search Verification: \n";
 
-    auto* v_test =
-        static_cast<BFSSimpleVertex<Address>*>(cca_square_simulator.get_object(test_vertex_addr));
+        // Open the file containing sssp results for verification.
+        std::string verfication_file_path = input_graph_path + ".bfs";
+        std::ifstream file(verfication_file_path);
 
-    std::cout << "\nBFS distance from vertex: " << root_vertex << " to vertex: " << v_test->id
-              << " is: " << v_test->bfs_level << "\n";
+        if (!file.is_open()) {
+            std::cout << "Failed to open the verification file: " << verfication_file_path << "\n";
+
+        } else {
+
+            std::vector<u_int32_t> control_results;
+            std::string line;
+            // Read the header.
+            std::getline(file, line);
+            // Read the root (source) of bfs that was used for results in the .bfs file. Initialize
+            // it to an invalid value first.
+            u_int32_t root_in_file = input_graph.total_vertices + 1;
+            std::getline(file, line);
+            if (!(std::istringstream(line) >> root_in_file)) {
+                std::cerr << "Invalid root (source) value.\n";
+                exit(0);
+            }
+
+            if (root_in_file != root_vertex) {
+                std::cerr << "root vertex in file and root vertex used to run the program mistach. "
+                             "Please use the same root in both for verification. Failed!\n";
+                exit(0);
+            }
+
+            u_int32_t node_id;
+            u_int32_t bfs_value;
+            while (std::getline(file, line)) {
+
+                if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &bfs_value) == 2) {
+                    control_results.emplace_back(bfs_value);
+                }
+            }
+
+            file.close();
+
+            u_int32_t total_errors = 0;
+            for (u_int32_t i = 0; i < control_results.size(); i++) {
+
+                // Check for correctness. Print the distance to a target test vertex. test_vertex
+
+                Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+
+                auto* v_test = static_cast<BFSSimpleVertex<Address>*>(
+                    cca_square_simulator.get_object(test_vertex_addr));
+
+                // Assumes the result .sssp file is sorted.
+                bool equal = control_results[i] == v_test->bfs_level;
+                if (!equal) {
+                    std::cout << "Vertex: " << i << ", Computed BFS: " << v_test->bfs_level
+                              << ", Control Value: " << control_results[i]
+                              << ", Not equal! Error\n";
+                    total_errors++;
+                }
+            }
+
+            if (total_errors > 0) {
+                std::cout << "Total number values error: " << total_errors
+                          << ", Verification Failed\n";
+            } else {
+                std::cout << "All values were correct. Verification Successful.\n";
+            }
+        }
+    }
 
     // Write simulation statistics to a file
     std::string const output_file_name =

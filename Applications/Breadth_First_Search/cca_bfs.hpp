@@ -145,8 +145,12 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("tv", "testvertex", "test vertex to print its bfs level");
     parser.set_required<u_int32_t>("root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated levels with the levels provided "
+                              "in the accompanying .bfs file");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,

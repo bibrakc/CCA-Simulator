@@ -48,7 +48,7 @@ struct Edge
 
 // Used when the vertex is allocated on the CCA device. There we just create an edge list of size
 // `edges_max`.
-inline constexpr u_int32_t edges_max = 13;
+inline constexpr u_int32_t edges_max = 50;
 
 template<typename Address_T>
 struct SimpleVertex : Object
