@@ -35,30 +35,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
-#include "SimpleVertex.hpp"
+#include "RecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
 // For memcpy()
 #include <cstring>
 
-inline constexpr u_int32_t max_level = 999999;
-
-template<typename Address_T>
-struct BFSSimpleVertex : SimpleVertex<Address_T>
+template<typename Vertex_T>
+struct BFSVertex : Vertex_T
 {
+    inline static constexpr u_int32_t max_level = 999999;
     u_int32_t bfs_level;
 
-    BFSSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : bfs_level(max_level)
+    BFSVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+        : bfs_level(BFSVertex::max_level)
     {
         this->id = id_in;
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
-    BFSSimpleVertex() {}
-    ~BFSSimpleVertex() {}
+    BFSVertex() {}
+    ~BFSVertex() {}
 };
 
 // CCAFunctionEvent ids for the BFS action: predicate, work, and diffuse.
@@ -80,7 +79,17 @@ bfs_predicate_func(ComputeCell& cc,
                    actionType /* action_type_in */,
                    const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 1;
+    }
+
+    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
@@ -97,7 +106,16 @@ bfs_work_func(ComputeCell& cc,
               actionType /* action_type_in */,
               const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+    // First check whether this is a ghost vertex. If it is then don't perform any work.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 0;
+    }
+
+    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
@@ -113,14 +131,50 @@ bfs_diffuse_func(ComputeCell& cc,
                  actionType /* action_type_in */,
                  const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<BFSSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+
+    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+
+    u_int32_t current_level = BFSVertex<RecursiveParallelVertex<Address>>::max_level;
+    if (this_is_ghost_vertex) {
+        BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+        current_level = bfs_args.level;
+    } else {
+        current_level = v->bfs_level;
+    }
 
     BFSArguments level_to_send;
+    level_to_send.level = current_level;
     level_to_send.src_vertex_id = v->id;
+
+    ActionArgumentType const args_for_ghost_vertices =
+        cca_create_action_argument<BFSArguments>(level_to_send);
+
+    // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
+    // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
+    for (u_int32_t ghosts_iterator = 0;
+         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator++) {
+        if (v->ghost_vertices[ghosts_iterator].has_value()) {
+
+            cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args_for_ghost_vertices,
+                              bfs_predicate,
+                              bfs_work,
+                              bfs_diffuse));
+        }
+    }
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        level_to_send.level = v->bfs_level + 1;
+        level_to_send.level = current_level + 1;
         ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
 
         cc.diffuse(Action(v->edges[i].edge,
@@ -146,11 +200,12 @@ configure_parser(cli::Parser& parser)
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
     parser.set_required<u_int32_t>("root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
-    parser.set_optional<bool>("verify",
-                              "verification",
-                              0,
-                              "Enable verification of the calculated levels with the levels provided "
-                              "in the accompanying .bfs file");
+    parser.set_optional<bool>(
+        "verify",
+        "verification",
+        0,
+        "Enable verification of the calculated levels with the levels provided "
+        "in the accompanying .bfs file");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,
