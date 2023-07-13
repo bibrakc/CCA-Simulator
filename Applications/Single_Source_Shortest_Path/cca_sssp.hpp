@@ -35,30 +35,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
-#include "SimpleVertex.hpp"
+#include "RecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
 // For memcpy()
 #include <cstring>
 
-inline constexpr u_int32_t max_level = 999999;
-
-template<typename Address_T>
-struct SSSPSimpleVertex : SimpleVertex<Address_T>
+template<typename Vertex_T>
+struct SSSPVertex : Vertex_T
 {
+    inline static constexpr u_int32_t max_distance = 999999;
     u_int32_t sssp_distance;
 
-    SSSPSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : sssp_distance(max_level)
+    SSSPVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+        : sssp_distance(SSSPVertex::max_distance)
     {
         this->id = id_in;
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
-    SSSPSimpleVertex() = default;
-    ~SSSPSimpleVertex() = default;
+    SSSPVertex() = default;
+    ~SSSPVertex() = default;
 };
 
 // CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
@@ -80,7 +79,17 @@ sssp_predicate_func(ComputeCell& cc,
                     actionType /* action_type_in */,
                     const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 1;
+    }
+
+    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
     SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
@@ -97,7 +106,17 @@ sssp_work_func(ComputeCell& cc,
                actionType /* action_type_in */,
                const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // First check whether this is a ghost vertex. If it is then don't perform any work.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 0;
+    }
+
+    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
     SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
@@ -111,16 +130,53 @@ inline auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   actionType /* action_type_in */,
-                  const ActionArgumentType& /*args*/) -> int
+                  const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<SSSPSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+
+    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+
+    u_int32_t current_distance = SSSPVertex<RecursiveParallelVertex<Address>>::max_distance;
+    if (this_is_ghost_vertex) {
+        SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+        current_distance = sssp_args.distance;
+    } else {
+        current_distance = v->sssp_distance;
+    }
 
     SSSPArguments distance_to_send;
+    // To be potentially sent to ghost vertices.
+    distance_to_send.distance = current_distance;
     distance_to_send.src_vertex_id = v->id;
+
+    ActionArgumentType const args_for_ghost_vertices =
+        cca_create_action_argument<SSSPArguments>(distance_to_send);
+
+    // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
+    // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
+    for (u_int32_t ghosts_iterator = 0;
+         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator++) {
+        if (v->ghost_vertices[ghosts_iterator].has_value()) {
+
+            cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args_for_ghost_vertices,
+                              sssp_predicate,
+                              sssp_work,
+                              sssp_diffuse));
+        }
+    }
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        distance_to_send.distance = v->sssp_distance + v->edges[i].weight;
+        distance_to_send.distance = current_distance + v->edges[i].weight;
         ActionArgumentType const args_x =
             cca_create_action_argument<SSSPArguments>(distance_to_send);
 

@@ -117,7 +117,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<SSSPSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<SSSPVertex<SimpleVertex<host_edge_type>>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -127,8 +127,8 @@ main(int argc, char** argv) -> int
 
     // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
     // to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<SSSPSimpleVertex<Address>>(cca_square_simulator,
-                                                                      allocator);
+    input_graph.transfer_graph_host_to_cca<SSSPVertex<RecursiveParallelVertex<Address>>>(
+        cca_square_simulator, allocator);
 
     // Only put the SSSP seed action on a single vertex.
     // In this case SSSP root = root_vertex
@@ -200,7 +200,7 @@ main(int argc, char** argv) -> int
             }
 
             if (root_in_file != root_vertex) {
-                std::cerr << "root vertex in file and root vertex used to run the program mistach. "
+                std::cerr << "root vertex in file and root vertex used to run the program miss match. "
                              "Please use the same root in both for verification. Failed!\n";
                 exit(0);
             }
@@ -223,7 +223,7 @@ main(int argc, char** argv) -> int
 
                 Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-                auto* v_test = static_cast<SSSPSimpleVertex<Address>*>(
+                auto* v_test = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(
                     cca_square_simulator.get_object(test_vertex_addr));
 
                 // Assumes the result .sssp file is sorted.
