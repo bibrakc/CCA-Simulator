@@ -150,14 +150,24 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
+    // Create the iteration space by eponentially increasing depth.
+    std::vector<u_int32_t> iteration_deeepening_space;
+    for (u_int32_t i = 1; i <= sssp_iterative_deepening_max; i *= 2) {
+        iteration_deeepening_space.push_back(i);
+    }
+    // Check if sssp_iterative_deepening_max is not already in the sequence. If not then add it.
+    if (iteration_deeepening_space.back() != sssp_iterative_deepening_max) {
+        iteration_deeepening_space.push_back(sssp_iterative_deepening_max);
+    }
+
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
-    for (u_int32_t iterations = 0; iterations < sssp_iterative_deepening_max; iterations++) {
+    for (const auto& iterations : iteration_deeepening_space) {
 
         SSSPIterativeArguments root_distance_to_send;
         root_distance_to_send.distance = 0;
         root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
-        root_distance_to_send.depth_max = iterations + 1;
+        root_distance_to_send.depth_max = iterations;
         root_distance_to_send.depth_current = 0;
         root_distance_to_send.src_vertex_addr = Address(0, 0, adressType::host_address);
 

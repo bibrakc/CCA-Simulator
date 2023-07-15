@@ -34,6 +34,10 @@ project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
+
+if(NOT DEFINED THROTTLE)
+    set(THROTTLE "true")
+endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
 
 find_package(OpenMP REQUIRED)
