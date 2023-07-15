@@ -72,8 +72,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 // Knowingly using the basic class RecursiveParallelVertex<> and not the application
                 // specialized class that derives from this class. Since the ghost vertices are only
                 // there to store edges and be able to diffuse in parallel. They donot contain any
-                // appplication specific information. Also, use a different diffuse function that
-                // specializes only in diffusing and nothing about application in it.
+                // appplication specific information. Also, in the future perhaps refactor to use a
+                // different diffuse function that specializes only in diffusing and nothing about
+                // application in it.
                 RecursiveParallelVertex<Address_T> new_ghost_vertex;
 
                 // This won't really be used just giving the ghost the same id as parent.
