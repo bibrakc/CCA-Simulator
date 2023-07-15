@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <chrono>
 #include <fstream>
-#include <omp.h>
 
 // Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate,
 // work, and diffuse. In the main register the functions and get their ids
@@ -123,7 +122,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<PageRankFixedIterationsSimpleVertex<u_int32_t>> input_graph(input_graph_path);
+    Graph<PageRankFixedIterationsSimpleVertex<host_edge_type>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -149,12 +148,12 @@ main(int argc, char** argv) -> int
         cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
 
     // Prepare the arguments (payload) for the actions.
-    PageRankNestedFixedIterationsArguments root_score_to_send;
+    PageRankFixedIterationsArguments root_score_to_send;
     root_score_to_send.score = -10;
     root_score_to_send.src_vertex_id = 99999;
 
     ActionArgumentType const args_x =
-        cca_create_action_argument<PageRankNestedFixedIterationsArguments>(root_score_to_send);
+        cca_create_action_argument<PageRankFixedIterationsArguments>(root_score_to_send);
 
     std::optional<Address> page_rank_fixed_iterations_terminator =
         cca_square_simulator.create_terminator();

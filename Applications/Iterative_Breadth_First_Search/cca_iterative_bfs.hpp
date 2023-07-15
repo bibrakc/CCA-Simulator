@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_BFS_HPP
-#define CCA_BFS_HPP
+#ifndef CCA_ITERATIVE_BFS_HPP
+#define CCA_ITERATIVE_BFS_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
@@ -48,44 +48,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 
 template<typename Vertex_T>
-struct BFSVertex : Vertex_T
+struct BFSIterativeVertex : Vertex_T
 {
+
     inline static constexpr u_int32_t max_level = 999999;
     u_int32_t bfs_level;
 
-    BFSVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : bfs_level(BFSVertex::max_level)
+    // The vertex from which my current ditance comes from.
+    Address parent;
+    u_int32_t depth{};
+
+    BFSIterativeVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+        : bfs_level(BFSIterativeVertex::max_level)
+        , parent(0, 0, adressType::invalid_address)
     {
         this->id = id_in;
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
-    BFSVertex() {}
-    ~BFSVertex() {}
+    BFSIterativeVertex() = default;
+    ~BFSIterativeVertex() = default;
 };
 
 // CCAFunctionEvent ids for the BFS action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
-extern CCAFunctionEvent bfs_predicate;
-extern CCAFunctionEvent bfs_work;
-extern CCAFunctionEvent bfs_diffuse;
+extern CCAFunctionEvent bfs_iterative_predicate;
+extern CCAFunctionEvent bfs_iterative_work;
+extern CCAFunctionEvent bfs_iterative_diffuse;
 
 // This is what the action carries as payload.
-struct BFSArguments
+struct BFSIterativeArguments
 {
     u_int32_t level;
     u_int32_t src_vertex_id;
+
+    // These are needed for iterative deepening implementation.
+    Address src_vertex_addr;
+    u_int32_t depth_max;
+    u_int32_t depth_current;
 };
 
 inline auto
-bfs_predicate_func(ComputeCell& cc,
-                   const Address& addr,
-                   actionType /* action_type_in */,
-                   const ActionArgumentType& args) -> int
+bfs_iterative_predicate_func(ComputeCell& cc,
+                             const Address& addr,
+                             actionType /* action_type_in */,
+                             const ActionArgumentType& args) -> int
 {
-
-    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
@@ -94,23 +104,56 @@ bfs_predicate_func(ComputeCell& cc,
         return 1;
     }
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+    auto* v =
+        static_cast<BFSIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    BFSIterativeArguments const bfs_args = cca_get_action_argument<BFSIterativeArguments>(args);
+
+    const bool greater_than_max_depth = bfs_args.depth_current > bfs_args.depth_max;
+    if (greater_than_max_depth) {
+        return 0;
+    }
+
+    // This is the first time that this vertex has received an action. Predicate is true and update
+    // the level for the first time.
+    if (v->parent.type == adressType::invalid_address) {
+        /* std::cout << v->id
+                  << ": in predicate: parent adressType::invalid_address, bfs_args.depth_current: "
+                  << bfs_args.depth_current << ", bfs_args.depth_max: " << bfs_args.depth_max
+                  << ", bfs_args.src_vertex_id: " << bfs_args.src_vertex_id << "\n"; */
+        return 1;
+    }
+
+    const bool same_parent = v->parent == bfs_args.src_vertex_addr;
+    const bool same_level = v->bfs_level == bfs_args.level;
+    const bool less_than_max_depth = bfs_args.depth_current <= bfs_args.depth_max;
+    if (same_parent && same_level && less_than_max_depth) {
+        // It means that is this a new iteration and the vertex has to diffuse its level from the
+        // pervious relaxation/iterations to other vertices in the next depth so as to achieve
+        // iterative deepening. Otherwise how can it? It will just halt and we don't want that. We
+        // want to force it to go in the next depth as long as it is less than the current
+        // deepening.
+        return 1;
+    }
 
     u_int32_t const incoming_level = bfs_args.level;
-
-    if (v->bfs_level > incoming_level) {
+    // The main part. It is relaxes then update and diffuse.
+    const bool greater_than_incoming_level = v->bfs_level > incoming_level;
+    if (greater_than_incoming_level && less_than_max_depth) {
+        /* std::cout << v->id << ": in predicate: relaxed!, bfs_args.depth_current: "
+                  << bfs_args.depth_current << ", bfs_args.depth_max: " << bfs_args.depth_max
+                  << ", bfs_args.src_vertex_id: " << bfs_args.src_vertex_id << "\n"; */
         return 1;
     }
     return 0;
 }
 
 inline auto
-bfs_work_func(ComputeCell& cc,
-              const Address& addr,
-              actionType /* action_type_in */,
-              const ActionArgumentType& args) -> int
+bfs_iterative_work_func(ComputeCell& cc,
+                        const Address& addr,
+                        actionType /* action_type_in */,
+                        const ActionArgumentType& args) -> int
 {
+
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
@@ -120,44 +163,65 @@ bfs_work_func(ComputeCell& cc,
         return 0;
     }
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+    auto* v =
+        static_cast<BFSIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    BFSIterativeArguments const bfs_args = cca_get_action_argument<BFSIterativeArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
 
-    // Update level with the new level
+    // Update level with the new level.
     v->bfs_level = incoming_level;
+
+    // Update the parent.
+    v->parent = bfs_args.src_vertex_addr;
+
+    // To be used when diffusing.
+    v->depth = bfs_args.depth_current;
     return 0;
 }
 
 inline auto
-bfs_diffuse_func(ComputeCell& cc,
-                 const Address& addr,
-                 actionType /* action_type_in */,
-                 const ActionArgumentType& args) -> int
+bfs_iterative_diffuse_func(ComputeCell& cc,
+                           const Address& addr,
+                           actionType /* action_type_in */,
+                           const ActionArgumentType& args) -> int
 {
+
+    BFSIterativeArguments const bfs_args = cca_get_action_argument<BFSIterativeArguments>(args);
+
+    if (bfs_args.depth_current > bfs_args.depth_max) {
+        return 0;
+    }
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
     auto* parent_recursive_parralel_vertex =
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
     bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    u_int32_t current_level = BFSIterativeVertex<RecursiveParallelVertex<Address>>::max_level;
 
-    u_int32_t current_level = BFSVertex<RecursiveParallelVertex<Address>>::max_level;
+    auto* v =
+        static_cast<BFSIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+
+    BFSIterativeArguments level_to_send;
+
+    level_to_send.depth_max = bfs_args.depth_max;
+    level_to_send.src_vertex_addr = addr; // My address.
+
     if (this_is_ghost_vertex) {
-        BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
         current_level = bfs_args.level;
+        level_to_send.src_vertex_id = parent_recursive_parralel_vertex->id;
+        level_to_send.depth_current = bfs_args.depth_current;
     } else {
         current_level = v->bfs_level;
+        level_to_send.src_vertex_id = v->id;
+        level_to_send.depth_current = bfs_args.depth_current + 1;
     }
 
-    BFSArguments level_to_send;
     level_to_send.level = current_level;
-    level_to_send.src_vertex_id = v->id;
 
     ActionArgumentType const args_for_ghost_vertices =
-        cca_create_action_argument<BFSArguments>(level_to_send);
+        cca_create_action_argument<BFSIterativeArguments>(level_to_send);
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
@@ -171,25 +235,26 @@ bfs_diffuse_func(ComputeCell& cc,
                               actionType::application_action,
                               true,
                               args_for_ghost_vertices,
-                              bfs_predicate,
-                              bfs_work,
-                              bfs_diffuse));
+                              bfs_iterative_predicate,
+                              bfs_iterative_work,
+                              bfs_iterative_diffuse));
         }
     }
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
         level_to_send.level = current_level + 1;
-        ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
+        ActionArgumentType const args_x =
+            cca_create_action_argument<BFSIterativeArguments>(level_to_send);
 
         cc.diffuse(Action(v->edges[i].edge,
                           addr,
                           actionType::application_action,
                           true,
                           args_x,
-                          bfs_predicate,
-                          bfs_work,
-                          bfs_diffuse));
+                          bfs_iterative_predicate,
+                          bfs_iterative_work,
+                          bfs_iterative_diffuse));
     }
 
     return 0;
@@ -204,13 +269,17 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
-    parser.set_optional<bool>(
-        "verify",
-        "verification",
-        0,
-        "Enable verification of the calculated levels with the levels provided "
-        "in the accompanying .bfs file");
+
+    parser.set_required<u_int32_t>(
+        "root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated paths with the paths provided "
+                              "in the accompanying .bfs file");
+    parser.set_optional<u_int32_t>(
+        "iter", "iterations", 20, "Number of fixed iterations to perform");
+
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,
@@ -247,8 +316,10 @@ configure_parser(cli::Parser& parser)
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
 }
 
-struct BFSCommandLineArguments
+struct BFSIterativeCommandLineArguments
 {
+    // Total max depth iterations to perform.
+    u_int32_t bfs_iterative_deepening_max{};
     // BFS root vertex
     u_int32_t root_vertex{};
     // Cross check the calculated bfs lengths from root with the lengths provided in .bfs file
@@ -278,8 +349,9 @@ struct BFSCommandLineArguments
     // Get the routing policy to use
     u_int32_t routing_policy{};
 
-    BFSCommandLineArguments(cli::Parser& parser)
-        : root_vertex(parser.get<u_int32_t>("root"))
+    BFSIterativeCommandLineArguments(cli::Parser& parser)
+        : bfs_iterative_deepening_max(parser.get<u_int32_t>("iter"))
+        , root_vertex(parser.get<u_int32_t>("root"))
         , verify_results(parser.get<bool>("verify"))
         , input_graph_path(parser.get<std::string>("f"))
         , graph_name(parser.get<std::string>("g"))
@@ -321,7 +393,7 @@ struct BFSCommandLineArguments
 
 template<typename NodeType>
 inline void
-verify_results(const BFSCommandLineArguments& cmd_args,
+verify_results(const BFSIterativeCommandLineArguments& cmd_args,
                Graph<NodeType>& input_graph,
                const CCASimulator& cca_simulator)
 {
@@ -373,7 +445,7 @@ verify_results(const BFSCommandLineArguments& cmd_args,
 
             Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-            auto* v_test = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(
+            auto* v_test = static_cast<BFSIterativeVertex<RecursiveParallelVertex<Address>>*>(
                 cca_simulator.get_object(test_vertex_addr));
 
             // Assumes the result .bfs file is sorted.
@@ -395,7 +467,7 @@ verify_results(const BFSCommandLineArguments& cmd_args,
 
 template<typename NodeType>
 inline void
-write_results(const BFSCommandLineArguments& cmd_args,
+write_results(const BFSIterativeCommandLineArguments& cmd_args,
               Graph<NodeType>& input_graph,
               CCASimulator& cca_simulator)
 {
@@ -444,4 +516,4 @@ write_results(const BFSCommandLineArguments& cmd_args,
     output_file_animation.close();
 }
 
-#endif // CCA_BFS_HPP
+#endif // CCA_ITERATIVE_BFS_HPP

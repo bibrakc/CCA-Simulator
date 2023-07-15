@@ -88,7 +88,7 @@ extern CCAFunctionEvent page_rank_fixed_iterations_work;
 extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 
 // This is what the action carries as payload.
-struct PageRankNestedFixedIterationsArguments
+struct PageRankFixedIterationsArguments
 {
     double score;
     u_int32_t src_vertex_id;
@@ -113,8 +113,8 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 {
     auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
-    PageRankNestedFixedIterationsArguments const page_rank_args =
-        cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
+    PageRankFixedIterationsArguments const page_rank_args =
+        cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
@@ -136,16 +136,16 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
-        PageRankNestedFixedIterationsArguments my_score_to_send;
+        PageRankFixedIterationsArguments my_score_to_send;
         my_score_to_send.score =
-            v->page_rank_current_rank_score / static_cast<double>(v->number_of_edges);
+            v->page_rank_current_rank_score / static_cast<double>(v->outbound_degree);
 
         my_score_to_send.src_vertex_id = v->id;
 
         for (int i = 0; i < v->number_of_edges; i++) {
 
             ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+                cca_create_action_argument<PageRankFixedIterationsArguments>(
                     my_score_to_send);
 
             // Diffuse.

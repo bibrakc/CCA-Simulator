@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name SSSP_CCASimulator)
+set(executable_name Iterative_BFS_CCASimulator)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -89,8 +89,8 @@ target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-pa
 
 target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
-# Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_sssp.cpp)
+# Add the executable for the cca_iterative_bfs.cpp source file
+add_executable(${executable_name} cca_iterative_bfs.cpp)
 
 target_include_directories(${executable_name} PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}
@@ -102,5 +102,5 @@ target_include_directories(${executable_name} PUBLIC
 # Enable debugging
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
+set_source_files_properties(cca_iterative_bfs.cpp PROPERTIES LANGUAGE CXX)
 target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
