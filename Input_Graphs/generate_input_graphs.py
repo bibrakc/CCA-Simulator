@@ -352,7 +352,7 @@ write_to_file(Output_filename, graph+"\n")
 # write_to_file(Output_filename, A+ ": Number of vertices:"+ str(G_gen.number_of_nodes())+ ", Number of edges: "+ str(G_gen.number_of_edges()))
 
 for (u, v) in G_gen.edges():
-    G_gen.edges[u, v]['weight'] = random.randint(1, 1)
+    G_gen.edges[u, v]['weight'] = random.randint(1, 5)
 
 print("Graph generated with weights\n")
 

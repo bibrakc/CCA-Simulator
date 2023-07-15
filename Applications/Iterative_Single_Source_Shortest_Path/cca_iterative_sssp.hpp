@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_SSSP_HPP
-#define CCA_SSSP_HPP
+#ifndef CCA_ITERATIVE_SSSP_HPP
+#define CCA_ITERATIVE_SSSP_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
@@ -83,6 +83,8 @@ struct SSSPIterativeArguments
 {
     u_int32_t distance;
     u_int32_t src_vertex_id;
+
+    // These are needed for iterative deepening implementation.
     Address src_vertex_addr;
     u_int32_t depth_max;
     u_int32_t depth_current;
@@ -94,7 +96,6 @@ sssp_iterative_predicate_func(ComputeCell& cc,
                               actionType /* action_type_in */,
                               const ActionArgumentType& args) -> int
 {
-
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
@@ -521,4 +522,4 @@ write_results(const SSSPIterativeCommandLineArguments& cmd_args,
     output_file_animation.close();
 }
 
-#endif // CCA_SSSP_HPP
+#endif // CCA_ITERATIVE_SSSP_HPP
