@@ -35,12 +35,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
+
+// Datastructures
+#include "Graph.hpp"
 #include "RecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
 // For memcpy()
 #include <cstring>
+
+#include <fstream>
 
 template<typename Vertex_T>
 struct SSSPIterativeVertex : Vertex_T
@@ -113,10 +118,10 @@ sssp_iterative_predicate_func(ComputeCell& cc,
     // This is the first time that this vertex has received an action. Predicate is true and update
     // the distance for the first time.
     if (v->parent.type == adressType::invalid_address) {
-        std::cout << v->id
+        /* std::cout << v->id
                   << ": in predicate: parent adressType::invalid_address, sssp_args.depth_current: "
                   << sssp_args.depth_current << ", sssp_args.depth_max: " << sssp_args.depth_max
-                  << ", sssp_args.src_vertex_id: " << sssp_args.src_vertex_id << "\n";
+                  << ", sssp_args.src_vertex_id: " << sssp_args.src_vertex_id << "\n"; */
         return 1;
     }
 
@@ -124,12 +129,20 @@ sssp_iterative_predicate_func(ComputeCell& cc,
     const bool same_distance = v->sssp_distance == sssp_args.distance;
     const bool less_than_max_depth = sssp_args.depth_current <= sssp_args.depth_max;
     if (same_parent && same_distance && less_than_max_depth) {
+        // It means that is this a new iteration and the vertex has to diffuse its distance from the
+        // pervious relaxation/iterations to other vertices in the next depth so as to achieve
+        // iterative deepening. Otherwise how can it? It will just halt and we don't want that. We
+        // want to force it to go in the next depth as long as it is less than the current
+        // deepening.
         return 1;
     }
 
-    // TODO: check this < or <= for depth??
+    // The main part. It is relaxes then update and diffuse.
     const bool greater_than_incoming_distance = v->sssp_distance > incoming_distance;
     if (greater_than_incoming_distance && less_than_max_depth) {
+        /* std::cout << v->id << ": in predicate: relaxed!, sssp_args.depth_current: "
+                  << sssp_args.depth_current << ", sssp_args.depth_max: " << sssp_args.depth_max
+                  << ", sssp_args.src_vertex_id: " << sssp_args.src_vertex_id << "\n"; */
         return 1;
     }
     return 0;
@@ -177,10 +190,10 @@ sssp_iterative_diffuse_func(ComputeCell& cc,
 
     SSSPIterativeArguments const sssp_args = cca_get_action_argument<SSSPIterativeArguments>(args);
 
-    u_int32_t const current_depth = sssp_args.depth_current;
-    u_int32_t const depth_max = sssp_args.depth_max;
+    /*  u_int32_t const current_depth = sssp_args.depth_current;
+     u_int32_t const depth_max = sssp_args.depth_max; */
 
-    if (current_depth > depth_max) {
+    if (sssp_args.depth_current > sssp_args.depth_max) {
         return 0;
     }
 
@@ -197,16 +210,17 @@ sssp_iterative_diffuse_func(ComputeCell& cc,
 
     SSSPIterativeArguments distance_to_send;
 
-    distance_to_send.depth_max = depth_max;
-    distance_to_send.depth_current = current_depth + 1;
+    distance_to_send.depth_max = sssp_args.depth_max;
     distance_to_send.src_vertex_addr = addr; // My address.
 
     if (this_is_ghost_vertex) {
         current_distance = sssp_args.distance;
         distance_to_send.src_vertex_id = parent_recursive_parralel_vertex->id;
+        distance_to_send.depth_current = sssp_args.depth_current;
     } else {
         current_distance = v->sssp_distance;
         distance_to_send.src_vertex_id = v->id;
+        distance_to_send.depth_current = sssp_args.depth_current + 1;
     }
 
     distance_to_send.distance = current_distance;
@@ -305,6 +319,206 @@ configure_parser(cli::Parser& parser)
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
+}
+
+struct SSSPIterativeCommandLineArguments
+{
+    // Total max depth iterations to perform.
+    u_int32_t sssp_iterative_deepening_max{};
+    // SSSP root vertex
+    u_int32_t root_vertex{};
+    // Cross check the calculated sssp lengths from root with the lengths provided in .sssp file
+    bool verify_results{};
+    // Configuration related to the input data graph
+    std::string input_graph_path;
+    std::string graph_name;
+    // Optional output directory path
+    std::string output_file_directory;
+    // Get the depth of Htree
+    u_int32_t hdepth{};
+
+    // Get the rows and columbs of cells that are served by a single end Htree node. This will
+    // help in construction of the CCA chip, Htree, and routing
+    u_int32_t hx{};
+    u_int32_t hy{};
+
+    // Get the max bandwidth of Htree
+    u_int32_t hbandwidth_max{};
+
+    // Configuration related to the CCA Chip
+    std::string shape_arg;
+    computeCellShape shape_of_compute_cells;
+
+    // Get the memory per cc or use the default
+    u_int32_t memory_per_cc{};
+    // Get the routing policy to use
+    u_int32_t routing_policy{};
+
+    SSSPIterativeCommandLineArguments(cli::Parser& parser)
+        : sssp_iterative_deepening_max(parser.get<u_int32_t>("iter"))
+        , root_vertex(parser.get<u_int32_t>("root"))
+        , verify_results(parser.get<bool>("verify"))
+        , input_graph_path(parser.get<std::string>("f"))
+        , graph_name(parser.get<std::string>("g"))
+        , output_file_directory(parser.get<std::string>("od"))
+        , hdepth(parser.get<u_int32_t>("hdepth"))
+        , hx(parser.get<u_int32_t>("hx"))
+        , hy(parser.get<u_int32_t>("hy"))
+        , hbandwidth_max(parser.get<u_int32_t>("hb"))
+        , shape_arg(parser.get<std::string>("s"))
+        , shape_of_compute_cells(computeCellShape::computeCellShape_invalid)
+        , memory_per_cc(parser.get<u_int32_t>("m"))
+        , routing_policy(parser.get<u_int32_t>("route"))
+
+    {
+
+        if (hdepth != 0) {
+            if (!(hx % 2)) {
+                std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
+                exit(0);
+            }
+            if (!(hy % 2)) {
+                std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
+                exit(0);
+            }
+        }
+
+        if (hdepth == 0) {
+            hbandwidth_max = 0;
+        }
+
+        if (shape_arg == "square") {
+            shape_of_compute_cells = computeCellShape::square;
+        } else {
+            std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
+            exit(0);
+        }
+    }
+};
+
+template<typename NodeType>
+inline void
+verify_results(const SSSPIterativeCommandLineArguments& cmd_args,
+               Graph<NodeType>& input_graph,
+               const CCASimulator& cca_simulator)
+{
+    std::cout << "\nSingle Source Shortest Path Verification: \n";
+
+    // Open the file containing sssp results for verification.
+    std::string verfication_file_path = cmd_args.input_graph_path + ".sssp";
+    std::ifstream file(verfication_file_path);
+
+    if (!file.is_open()) {
+        std::cout << "Failed to open the verification file: " << verfication_file_path << "\n";
+
+    } else {
+
+        std::vector<u_int32_t> control_results;
+        std::string line;
+        // Read the header.
+        std::getline(file, line);
+        // Read the root (source) of sssp that was used for results in the .sssp file.
+        // Initialize it to an invalid value first.
+        u_int32_t root_in_file = input_graph.total_vertices + 1;
+        std::getline(file, line);
+        if (!(std::istringstream(line) >> root_in_file)) {
+            std::cerr << "Invalid root (source) value.\n";
+            exit(0);
+        }
+
+        if (root_in_file != cmd_args.root_vertex) {
+            std::cerr << "root vertex in file and root vertex used to run the program miss match. "
+                         "Please use the same root in both for verification. Failed!\n";
+            exit(0);
+        }
+
+        u_int32_t node_id;
+        u_int32_t sssp_iterative_value;
+        while (std::getline(file, line)) {
+
+            if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &sssp_iterative_value) == 2) {
+                control_results.emplace_back(sssp_iterative_value);
+            }
+        }
+
+        file.close();
+
+        u_int32_t total_errors = 0;
+        for (u_int32_t i = 0; i < control_results.size(); i++) {
+
+            // Check for correctness. Print the distance to a target test vertex. test_vertex
+
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+
+            auto* v_test = static_cast<SSSPIterativeVertex<RecursiveParallelVertex<Address>>*>(
+                cca_simulator.get_object(test_vertex_addr));
+
+            // Assumes the result .sssp file is sorted.
+            bool equal = control_results[i] == v_test->sssp_distance;
+            if (!equal) {
+                std::cout << "Vertex: " << i << ", Computed SSSP: " << v_test->sssp_distance
+                          << ", Control Value: " << control_results[i] << ", Not equal! Error\n";
+                total_errors++;
+            }
+        }
+
+        if (total_errors > 0) {
+            std::cout << "Total number values error: " << total_errors << ", Verification Failed\n";
+        } else {
+            std::cout << "All values were correct. Verification Successful.\n";
+        }
+    }
+}
+
+template<typename NodeType>
+inline void
+write_results(const SSSPIterativeCommandLineArguments& cmd_args,
+              Graph<NodeType>& input_graph,
+              CCASimulator& cca_simulator)
+{
+    // Write simulation statistics to a file
+    std::string const output_file_name =
+        "sssp_iterative_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
+        std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
+        std::to_string(input_graph.total_vertices) + "_e_" +
+        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max);
+
+    std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
+    std::cout << "\nWriting results to output file: " << output_file_path << "\n";
+
+    std::ofstream output_file(output_file_path);
+    if (!output_file) {
+        std::cerr << "Error! Output file not created\n";
+    }
+
+    // Output input graph details in the header of the statistics for us to know which input graph
+    // it operated on.
+    output_file << "graph_file\tvertices\tedges\troot_vertex\n"
+                << cmd_args.input_graph_path << "\t" << input_graph.total_vertices << "\t"
+                << input_graph.total_edges << "\t" << cmd_args.root_vertex << "\n";
+
+    // Ask the simulator to print its statistics to the `output_file`.
+    cca_simulator.print_statistics(output_file);
+
+    // Close the output file
+    output_file.close();
+
+    // Write the active status animation data in a separate file.
+    std::string const output_file_path_animation = output_file_path + "_active_animation";
+    std::cout << "\nWriting active status animation data to output file: "
+              << output_file_path_animation << "\n";
+
+    std::ofstream output_file_animation(output_file_path_animation);
+    if (!output_file_animation) {
+        std::cerr << "Error! Output file not created\n";
+    }
+
+    // Ask the simulator to print cell active status information per cycle to the
+    // `output_file_animation`. This will be used mostly for animation purposes.
+    cca_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
+
+    // Close the output file
+    output_file_animation.close();
 }
 
 #endif // CCA_SSSP_HPP
