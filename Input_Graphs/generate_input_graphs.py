@@ -262,7 +262,7 @@ def bfs(graph, source, Output_filename):
 # Perform SSSP using nx.single_source_dijkstra
 def sssp(graph, source, Output_filename):
     sssp = nx.single_source_dijkstra(graph, source=source)
-    
+
     # Sort the vertices based on their keys
     sorted_vertices = sorted(sssp[0].items(), key=lambda x: x[0])
 
@@ -277,12 +277,10 @@ def sssp(graph, source, Output_filename):
         for vertex, length in sorted_vertices:
             file.write(f"{vertex}\t{length}\n")
 
-# Perform pagerank using nx.pagerank
-
-
+# Perform pagerank using nx.pagerank ignore weights.
 def pagerank(graph, Output_filename):
     # Calculate PageRank
-    pagerank = nx.pagerank(graph, max_iter=100)
+    pagerank = nx.pagerank(graph, max_iter=100, weight=None)
 
     # Open a file for writing the PageRank values
     with open(Output_filename, "w") as file:
@@ -436,9 +434,9 @@ if directed != "directed":
 else:
     G = G_gen
 
-# nx.draw(G, with_labels=True)
+""" nx.draw(G, with_labels=True)
 # Show the graph
-# plt.show()
+plt.show() """
 
 
 nx.write_weighted_edgelist(G, filename_to_write, delimiter='\t')

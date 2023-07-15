@@ -153,6 +153,7 @@ class Graph
         FILE* input_graph_file_handler = nullptr;
 
         if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == nullptr) {
+            std::cout << "The graph: " << input_graph_path << " failed to openn\n";
             exit(0);
         }
 
