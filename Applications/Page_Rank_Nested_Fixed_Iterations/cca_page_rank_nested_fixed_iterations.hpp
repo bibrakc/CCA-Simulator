@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CCASimulator.hpp"
 #include "RecursiveParallelVertex.hpp"
-#include "SimpleVertex.hpp"
 
 #include "cmdparser.hpp"
 
@@ -47,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 1;
+inline constexpr u_int32_t nested_iterations = 5;
 
 /* inline constexpr u_int32_t DEBUG_VERTEX = 17; */
 

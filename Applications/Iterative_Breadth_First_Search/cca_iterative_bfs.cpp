@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CyclicMemoryAllocator.hpp"
 
 #include <chrono>
-#include <omp.h>
 
 // Declare the function event ids for the BFS action functions of predicate, work, and diffuse.
 // In the main register the functions and get their ids
