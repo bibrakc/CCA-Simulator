@@ -40,47 +40,50 @@ enum class adressType : u_int32_t
 {
     host_address = 0,
     cca_address,
-    adressType_count
+    invalid_address
 };
 
 struct Address
 {
-public:
-  // CCA address or Host address? Default is CCA address.
-  adressType type;
+  public:
+    // CCA address or Host address? Default is CCA address.
+    adressType type;
 
-  // Global ID of the compute cell where the address resides
-  u_int32_t cc_id;
-  // The offset to the memory of the compute cell
-  u_int32_t addr;
+    // Global ID of the compute cell where the address resides
+    u_int32_t cc_id;
+    // The offset to the memory of the compute cell
+    u_int32_t addr;
 
-  // Is true when this address is not pointing to any valid object
-  // TODO: later can be used for garbage collection
-  // bool is_valid;
+    // Is true when this address is not pointing to any valid object
+    // TODO: later can be used for garbage collection
+    // bool is_valid;
 
-  Address()
-  = default;
+    Address() = default;
 
-  Address(const u_int32_t id, const u_int32_t address_in)
-      : type(adressType::cca_address)
-      , cc_id(id)
-      , addr(address_in)
-  {
-  }
+    Address(const u_int32_t id, const u_int32_t address_in)
+        : type(adressType::cca_address)
+        , cc_id(id)
+        , addr(address_in)
+    {
+    }
 
-  Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
-      : type(address_type_in)
-      , cc_id(id)
-      , addr(address_in)
-  {
-  }
+    Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
+        : type(address_type_in)
+        , cc_id(id)
+        , addr(address_in)
+    {
+    }
 
-  friend auto operator<<(std::ostream& os, const Address& ad) -> std::ostream&
-  {
-    os << "(" << ad.cc_id << ", " << ad.addr << ")";
-    return os;
-  }
+    friend auto operator<<(std::ostream& os, const Address& ad) -> std::ostream&
+    {
+        os << "(" << ad.cc_id << ", " << ad.addr << ")";
+        return os;
+    }
+
+    friend auto operator==(const Address& lhs, const Address& rhs) -> bool
+    {
+        return (lhs.type == rhs.type && lhs.cc_id == rhs.cc_id && lhs.addr == rhs.addr);
+    }
 };
-
 
 #endif // ADDRESS_HPP
