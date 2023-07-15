@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
-#include "Graph.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -53,75 +52,25 @@ main(int argc, char** argv) -> int
     configure_parser(parser);
     parser.run_and_exit_if_error();
 
-    // Total fixed iterations to perform.
-    auto total_iterations = parser.get<u_int32_t>("iter");
-
-    // Page Rank Fixed Iterations root vertex where to germinate action and start the computation.
-    // Makes no difference to the end result.
-    auto root_vertex = parser.get<u_int32_t>("root");
-
-    // Cross check the calculated pagerank score with the score provided in .pagerank file
-    auto verify_results = parser.get<bool>("verify");
-
-    // Configuration related to the input data graph.
-    auto input_graph_path = parser.get<std::string>("f");
-    auto graph_name = parser.get<std::string>("g");
-
-    // Optional output directory path.
-    auto output_file_directory = parser.get<std::string>("od");
-
-    // Get the depth of Htree
-    auto hdepth = parser.get<u_int32_t>("hdepth");
-
-    // Get the rows and columbs of cells that are served by a single end Htree node. This will help
-    // in construction of the CCA chip, Htree, and routing.
-    auto hx = parser.get<u_int32_t>("hx");
-    auto hy = parser.get<u_int32_t>("hy");
-    if (hdepth != 0) {
-        if (!(hx % 2)) {
-            std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-            exit(0);
-        }
-        if (!(hy % 2)) {
-            std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-            exit(0);
-        }
-    }
-
-    // Get the max bandwidth of Htree
-    auto hbandwidth_max = parser.get<u_int32_t>("hb");
-    if (hdepth == 0) {
-        hbandwidth_max = 0;
-    }
-    // Configuration related to the CCA Chip.
-    auto shape_arg = parser.get<std::string>("s");
-    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;
-
-    if (shape_arg == "square") {
-        shape_of_compute_cells = computeCellShape::square;
-    } else {
-        std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-        exit(0);
-    }
-
-    // Get the memory per cc or use the default.
-    auto memory_per_cc = parser.get<u_int32_t>("m");
-
-    // Get the routing policy to use.
-    auto routing_policy = parser.get<u_int32_t>("route");
+    std::cout << "Parsing Commandline Arguments: \n";
+    PageRankNestedIterationCommandLineArguments cmd_args(parser);
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
 
-    // Create the simulation environment.
-    CCASimulator cca_square_simulator(
-        shape_of_compute_cells, hx, hy, hdepth, hbandwidth_max, memory_per_cc, routing_policy);
-
+    // Create the simulation environment
+    CCASimulator cca_square_simulator(cmd_args.shape_of_compute_cells,
+                                      cmd_args.hx,
+                                      cmd_args.hy,
+                                      cmd_args.hdepth,
+                                      cmd_args.hbandwidth_max,
+                                      cmd_args.memory_per_cc,
+                                      cmd_args.routing_policy);
     // Print details of the CCA Chip.
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
     Graph<PageRankNestedFixedIterationsVertex<SimpleVertex<host_edge_type>>> input_graph(
-        input_graph_path);
+        cmd_args.input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -137,7 +86,7 @@ main(int argc, char** argv) -> int
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
-    auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);
+    auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
 
     // Register the Page Rank Fixed Iterations action functions for predicate, work, and diffuse.
     page_rank_nested_fixed_iterations_predicate = cca_square_simulator.register_function_event(
@@ -165,7 +114,7 @@ main(int argc, char** argv) -> int
 
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
-    for (u_int32_t iterations = 0; iterations < total_iterations; iterations++) {
+    for (u_int32_t iterations = 0; iterations < cmd_args.total_iterations; iterations++) {
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
         cca_square_simulator.germinate_action(
@@ -195,116 +144,14 @@ main(int argc, char** argv) -> int
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
-    std::cout << "\nTotal Iterations: " << total_iterations
+    std::cout << "\nTotal Iterations: " << cmd_args.total_iterations
               << ", Total Program Cycles: " << total_program_cycles << "\n";
 
-    /* std::cout << "Vertex: " << v_test->id << ": " << v_test->page_rank_score
-              << ", v_test->page_rank_current_iteration: " << v_test->page_rank_current_iteration
-              << "\n"; */
-
-    if (verify_results) {
-        std::cout << "\nPage Rank Nested Fixed Iterations Verification: \n";
-
-        // Open the file containing pagerank results for verification.
-        std::string verfication_file_path = input_graph_path + ".pagerank";
-        std::ifstream file(verfication_file_path);
-
-        if (!file.is_open()) {
-            std::cout << "Failed to open the verification file: " << verfication_file_path << "\n";
-
-        } else {
-
-            std::vector<double> control_results;
-            std::string line;
-            int node_id;
-            double pagerank_value;
-            while (std::getline(file, line)) {
-
-                if (std::sscanf(line.c_str(), "%d\t%lf", &node_id, &pagerank_value) == 2) {
-                    control_results.emplace_back(pagerank_value);
-                }
-            }
-
-            file.close();
-
-            // Print the stored node and rank values
-            /*  for (u_int32_t i = 0; i < control_results.size(); i++) {
-                 std::cout << "Node: " << i << ", Pagerank: " << control_results[i] << "\n";
-             } */
-            double tolerance = 0.00001;
-            u_int32_t total_values_exceeding_tolerance = 0;
-            for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
-
-                // Check for correctness. Print the distance to a target test vertex. test_vertex
-                Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
-
-                auto* v_test =
-                    static_cast<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>*>(
-                        cca_square_simulator.get_object(test_vertex_addr));
-                double difference = std::fabs(control_results[i] - v_test->page_rank_score);
-                if (difference > tolerance) {
-                    std::cout << "Vertex: " << i
-                              << ", Computed Pagerank: " << v_test->page_rank_score
-                              << ", Control Value: " << control_results[i]
-                              << ", Exceeds tolerance. Difference: " << difference
-                              << ", page_rank_current_iteration: "
-                              << v_test->page_rank_current_iteration << "\n";
-
-                    total_values_exceeding_tolerance++;
-                }
-            }
-
-            if (total_values_exceeding_tolerance > 0) {
-                std::cout << "Total number values that exceeded tolerance: "
-                          << total_values_exceeding_tolerance << ", Verification Failed\n";
-            } else {
-                std::cout << "All values were within tolerance. Verification Successful.\n";
-            }
-        }
+    if (cmd_args.verify_results) {
+        verify_results<PageRankNestedFixedIterationsVertex<SimpleVertex<host_edge_type>>>(
+            cmd_args, input_graph, cca_square_simulator);
     }
-    // Write simulation statistics to a file
-    std::string const output_file_name =
-        "page_rank_nested_fixed_iterations_square_x_" + std::to_string(cca_square_simulator.dim_x) +
-        "_y_" + std::to_string(cca_square_simulator.dim_y) + "_graph_" + graph_name + "_v_" +
-        std::to_string(input_graph.total_vertices) + "_e_" +
-        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(hbandwidth_max);
-
-    std::string const output_file_path = output_file_directory + "/" + output_file_name;
-    std::cout << "\nWriting results to output file: " << output_file_path << "\n";
-
-    std::ofstream output_file(output_file_path);
-    if (!output_file) {
-        std::cerr << "Error! Output file not created\n";
-    }
-
-    // Output input graph details in the header of the statistics for us to know which input graph
-    // it operated on.
-    output_file << "graph_file\tvertices\tedges\troot_vertex\n"
-                << input_graph_path << "\t" << input_graph.total_vertices << "\t"
-                << input_graph.total_edges << "\t" << root_vertex << "\n";
-
-    // Ask the simulator to print its statistics to the `output_file`.
-    cca_square_simulator.print_statistics(output_file);
-
-    // Close the output file
-    output_file.close();
-
-    // Write the active status animation data in a separate file.
-    std::string const output_file_path_animation = output_file_path + "_active_animation";
-    std::cout << "\nWriting active status animation data to output file: "
-              << output_file_path_animation << "\n";
-
-    std::ofstream output_file_animation(output_file_path_animation);
-    if (!output_file_animation) {
-        std::cerr << "Error! Output file not created\n";
-    }
-
-    // Ask the simulator to print cell active status information per cycle to the
-    // `output_file_animation`. This will be used mostly for animation purposes.
-    cca_square_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
-
-    // Close the output file
-    output_file_animation.close();
-
+    write_results<PageRankNestedFixedIterationsVertex<SimpleVertex<host_edge_type>>>(
+        cmd_args, input_graph, cca_square_simulator);
     return 0;
 }
