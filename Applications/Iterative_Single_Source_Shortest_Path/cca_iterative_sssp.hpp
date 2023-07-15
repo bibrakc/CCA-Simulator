@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 template<typename Vertex_T>
-struct SSSPVertex : Vertex_T
+struct SSSPIterativeVertex : Vertex_T
 {
     inline static constexpr u_int32_t max_distance = 999999;
 
@@ -54,8 +54,8 @@ struct SSSPVertex : Vertex_T
     Address parent;
     u_int32_t depth{};
 
-    SSSPVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : sssp_distance(SSSPVertex::max_distance)
+    SSSPIterativeVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+        : sssp_distance(SSSPIterativeVertex::max_distance)
         , parent(0, 0, adressType::invalid_address)
     {
         this->id = id_in;
@@ -63,8 +63,8 @@ struct SSSPVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
-    SSSPVertex() = default;
-    ~SSSPVertex() = default;
+    SSSPIterativeVertex() = default;
+    ~SSSPIterativeVertex() = default;
 };
 
 // CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
@@ -99,20 +99,30 @@ sssp_iterative_predicate_func(ComputeCell& cc,
         return 1;
     }
 
-    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v =
+        static_cast<SSSPIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
     SSSPIterativeArguments const sssp_args = cca_get_action_argument<SSSPIterativeArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
+    const bool greater_than_max_depth = sssp_args.depth_current > sssp_args.depth_max;
+    if (greater_than_max_depth) {
+        return 0;
+    }
+
     // This is the first time that this vertex has received an action. Predicate is true and update
     // the distance for the first time.
     if (v->parent.type == adressType::invalid_address) {
+        std::cout << v->id
+                  << ": in predicate: parent adressType::invalid_address, sssp_args.depth_current: "
+                  << sssp_args.depth_current << ", sssp_args.depth_max: " << sssp_args.depth_max
+                  << ", sssp_args.src_vertex_id: " << sssp_args.src_vertex_id << "\n";
         return 1;
     }
 
     const bool same_parent = v->parent == sssp_args.src_vertex_addr;
     const bool same_distance = v->sssp_distance == sssp_args.distance;
-    const bool less_than_max_depth = sssp_args.depth_current < sssp_args.depth_max;
+    const bool less_than_max_depth = sssp_args.depth_current <= sssp_args.depth_max;
     if (same_parent && same_distance && less_than_max_depth) {
         return 1;
     }
@@ -141,7 +151,8 @@ sssp_iterative_work_func(ComputeCell& cc,
         return 0;
     }
 
-    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v =
+        static_cast<SSSPIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
     SSSPIterativeArguments const sssp_args = cca_get_action_argument<SSSPIterativeArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
@@ -164,34 +175,41 @@ sssp_iterative_diffuse_func(ComputeCell& cc,
                             const ActionArgumentType& args) -> int
 {
 
+    SSSPIterativeArguments const sssp_args = cca_get_action_argument<SSSPIterativeArguments>(args);
+
+    u_int32_t const current_depth = sssp_args.depth_current;
+    u_int32_t const depth_max = sssp_args.depth_max;
+
+    if (current_depth > depth_max) {
+        return 0;
+    }
+
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
     auto* parent_recursive_parralel_vertex =
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
     bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
 
-    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    u_int32_t current_distance =
+        SSSPIterativeVertex<RecursiveParallelVertex<Address>>::max_distance;
 
-    SSSPIterativeArguments const sssp_args = cca_get_action_argument<SSSPIterativeArguments>(args);
-
-    u_int32_t current_distance = SSSPVertex<RecursiveParallelVertex<Address>>::max_distance;
-    u_int32_t const current_depth = sssp_args.depth_current;
-    u_int32_t const depth_max = sssp_args.depth_max;
-
-    if (this_is_ghost_vertex) {
-        current_distance = sssp_args.distance;
-    } else {
-        current_distance = v->sssp_distance;
-    }
+    auto* v =
+        static_cast<SSSPIterativeVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
     SSSPIterativeArguments distance_to_send;
 
-    // To be potentially sent to ghost vertices.
-    distance_to_send.distance = current_distance;
-    distance_to_send.src_vertex_id = v->id;
     distance_to_send.depth_max = depth_max;
-    distance_to_send.depth_current = v->depth + 1;
-    // My address.
-    distance_to_send.src_vertex_addr = addr;
+    distance_to_send.depth_current = current_depth + 1;
+    distance_to_send.src_vertex_addr = addr; // My address.
+
+    if (this_is_ghost_vertex) {
+        current_distance = sssp_args.distance;
+        distance_to_send.src_vertex_id = parent_recursive_parralel_vertex->id;
+    } else {
+        current_distance = v->sssp_distance;
+        distance_to_send.src_vertex_id = v->id;
+    }
+
+    distance_to_send.distance = current_distance;
 
     ActionArgumentType const args_for_ghost_vertices =
         cca_create_action_argument<SSSPIterativeArguments>(distance_to_send);

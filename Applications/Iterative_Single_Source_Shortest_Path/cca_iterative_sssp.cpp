@@ -120,7 +120,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<SSSPVertex<SimpleVertex<host_edge_type>>> input_graph(input_graph_path);
+    Graph<SSSPIterativeVertex<SimpleVertex<host_edge_type>>> input_graph(input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -130,7 +130,7 @@ main(int argc, char** argv) -> int
 
     // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
     // to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<SSSPVertex<RecursiveParallelVertex<Address>>>(
+    input_graph.transfer_graph_host_to_cca<SSSPIterativeVertex<RecursiveParallelVertex<Address>>>(
         cca_square_simulator, allocator);
 
     // Only put the SSSP seed action on a single vertex.
@@ -144,16 +144,6 @@ main(int argc, char** argv) -> int
     sssp_iterative_diffuse =
         cca_square_simulator.register_function_event(sssp_iterative_diffuse_func);
 
-    SSSPIterativeArguments root_distance_to_send;
-    root_distance_to_send.distance = 0;
-    root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
-    root_distance_to_send.depth_max = sssp_iterative_deepening_max;
-    root_distance_to_send.depth_current = 0;
-    root_distance_to_send.src_vertex_addr = Address(0, 0, adressType::host_address);
-
-    ActionArgumentType const args_x =
-        cca_create_action_argument<SSSPIterativeArguments>(root_distance_to_send);
-
     std::optional<Address> sssp_iterative_terminator = cca_square_simulator.create_terminator();
     if (!sssp_iterative_terminator) {
         std::cerr << "Error! Memory not allocated for sssp_iterative_terminator \n";
@@ -163,6 +153,16 @@ main(int argc, char** argv) -> int
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < sssp_iterative_deepening_max; iterations++) {
+
+        SSSPIterativeArguments root_distance_to_send;
+        root_distance_to_send.distance = 0;
+        root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
+        root_distance_to_send.depth_max = iterations + 1;
+        root_distance_to_send.depth_current = 0;
+        root_distance_to_send.src_vertex_addr = Address(0, 0, adressType::host_address);
+
+        ActionArgumentType const args_x =
+            cca_create_action_argument<SSSPIterativeArguments>(root_distance_to_send);
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
         cca_square_simulator.germinate_action(Action(vertex_addr,
@@ -243,7 +243,7 @@ main(int argc, char** argv) -> int
 
                 Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-                auto* v_test = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(
+                auto* v_test = static_cast<SSSPIterativeVertex<RecursiveParallelVertex<Address>>*>(
                     cca_square_simulator.get_object(test_vertex_addr));
 
                 // Assumes the result .sssp file is sorted.
