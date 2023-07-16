@@ -68,9 +68,6 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
                                             0,
                                             0);
 
-        // TODO: put this counter in its own and separate betweek ack and nornal action
-        cc.statistics.actions_created++;
-
         cc.statistics.actions_acknowledgement_created++;
         // Create Operon and put it in the task queue
         Operon const operon_to_send =
@@ -93,6 +90,9 @@ Terminator::unsignal(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
 
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
@@ -106,9 +106,6 @@ Terminator::unsignal(ComputeCell& cc)
                                                 0,  // null event
                                                 0,  // null event
                                                 0); // null event
-
-            // TODO: put this counter in its own and separate betweek ack and nornal action
-            cc.statistics.actions_created++;
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
@@ -151,6 +148,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
 
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
@@ -164,9 +164,6 @@ Terminator::acknowledgement(ComputeCell& cc)
                                                 0,  // null event
                                                 0,  // null event
                                                 0); // null event
-
-            // TODO: put this counter in its own and separate betweek ack and nornal action
-            cc.statistics.actions_created++;
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue
@@ -193,6 +190,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
 
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
 
         } else {
@@ -207,9 +207,6 @@ Terminator::acknowledgement(ComputeCell& cc)
                                                 0,  // null event
                                                 0,  // null event
                                                 0); // null event
-
-            // TODO: put this counter in its own and separate between ack and nornal action
-            cc.statistics.actions_created++;
 
             cc.statistics.actions_acknowledgement_created++;
             // Create Operon and put it in the task queue

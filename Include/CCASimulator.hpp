@@ -224,7 +224,7 @@ class CCASimulator
     static inline void generate_label(std::ostream& os)
     {
         os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_compute_cells\ttotal_"
-              "chip_memory(byes)\n";
+              "chip_memory(bytes)\n";
     }
 
     inline void output_description_in_a_single_line(std::ostream& os)

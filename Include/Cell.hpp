@@ -70,8 +70,8 @@ enum class computeCellShape : u_int32_t
 
 struct ComputeCellStatistics
 {
-    // Total actions created includes both application actions and termination acknowledgement
-    // actions.
+    // Total actions created includes both application actions and system actions such as
+    // termination acknowledgement actions.
     u_int32_t actions_created{};
 
     // Count of ack actions created.
@@ -79,8 +79,8 @@ struct ComputeCellStatistics
 
     // Both application actions and termination acknowledgement actions.
     u_int32_t actions_pushed{};
-
     u_int32_t actions_invoked{};
+
     u_int32_t actions_acknowledgement_invoked{};
 
     u_int32_t actions_performed_work{};

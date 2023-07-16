@@ -301,23 +301,22 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
     auto compute_cell =
         std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[action_to_germinate.obj_addr.cc_id]);
 
-    if (compute_cell) {
-        compute_cell->insert_action(action_to_germinate);
-
-        // Get the host terminator object for signal.
-        auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
-        obj->terminator.host_signal();
-
-        // TODO: make these separate counter for different kind of actions. FIXME
-        compute_cell->statistics.actions_created++;
-
-    } else {
+    if (!compute_cell) {
         std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
         exit(0);
     }
+
+    compute_cell->insert_action(action_to_germinate);
+
+    // Get the host terminator object for signal.
+    auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
+    obj->terminator.host_signal();
+
+    // TODO: make these separate counter for different kind of actions. FIXME
+    compute_cell->statistics.actions_created++;
 }
 
-// Output simulation statistics and details
+// Output simulation statistics and details.
 void
 CCASimulator::print_statistics(std::ofstream& output_file)
 {
