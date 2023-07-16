@@ -90,6 +90,9 @@ Terminator::unsignal(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
 
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
@@ -145,6 +148,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
 
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
+
             std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
@@ -183,6 +189,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             // Count this act as an "action" and increament the action statistics.
             cc.statistics.actions_acknowledgement_created++;
             cc.statistics.actions_acknowledgement_invoked++;
+
+            cc.statistics.actions_pushed++;
+            cc.statistics.actions_invoked++;
 
             std::cout << "Host Terminator Acknowledgement Sent!\n";
 
