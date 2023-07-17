@@ -43,7 +43,7 @@ class CyclicMemoryAllocator : public MemoryAllocator
 
     CyclicMemoryAllocator(u_int32_t source_cc_id, u_int32_t total_number_of_cc)
     {
-        this->next_cc_id = (this->next_cc_id + 1) % total_number_of_cc;
+        this->next_cc_id = (source_cc_id + 1) % total_number_of_cc;
     }
 
     CyclicMemoryAllocator() = default;

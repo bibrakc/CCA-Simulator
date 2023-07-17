@@ -76,7 +76,7 @@ class Graph
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(cca_simulator,allocator, dst_vertex_addr, edge_weight);
+        bool success = vertex->insert_edge(cca_simulator, allocator, dst_vertex_addr, edge_weight);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {
@@ -85,9 +85,17 @@ class Graph
 
             vertex->inbound_degree++;
         }
-        // Check if edges are not full
-        // TODO: Later implement the hierarical parallel vertex object
+
         return success;
+    }
+
+    // Initialize a newly created vertex in the CCA memory.
+    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    template<class VertexTypeOfAddress>
+    inline auto init_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
+    {
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        return vertex->init(cca_simulator, src_vertex_addr.cc_id);
     }
 
     template<class VertexTypeOfAddress>
@@ -115,6 +123,12 @@ class Graph
             if (!vertex_addr) {
                 std::cerr << "Error! Memory not allocated for Vertex ID: " << this->vertices[i].id
                           << "\n";
+                exit(0);
+            }
+
+            if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
+                std::cerr << "Error! Vertex initialization failed for Vertex ID: "
+                          << this->vertices[i].id << "\n";
                 exit(0);
             }
 

@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #include "VicinityMemoryAllocator.hpp"
 #include "CyclicMemoryAllocator.hpp"
 
+using Allocator_T = CyclicMemoryAllocator;
+
 template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
@@ -58,7 +60,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     u_int32_t next_insertion_in_ghost_iterator{};
 
     // Used to allocate the ghost vertices.
-    // MemoryAllocator& ghost_vertex_allocator;
+    Allocator_T ghost_vertex_allocator;
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
@@ -89,7 +91,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
                 std::optional<Address> ghost_vertex_addr =
                     cca_simulator.allocate_and_insert_object_on_cc(
-                        allocator, &new_ghost_vertex, sizeof(RecursiveParallelVertex<Address_T>));
+                        this->ghost_vertex_allocator,
+                        &new_ghost_vertex,
+                        sizeof(RecursiveParallelVertex<Address_T>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -103,7 +107,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 static_cast<RecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
                     this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
             bool success = ghost_vertex_accessor->insert_edge_recurssively(
-                cca_simulator, allocator, dst_vertex_addr, edge_weight);
+                cca_simulator, this->ghost_vertex_allocator, dst_vertex_addr, edge_weight);
 
             if (success) {
                 // Increment the global edges count for this vertex.
@@ -153,11 +157,13 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
         return false;
     }
 
-    /* RecursiveParallelVertex(MemoryAllocator& allocator)
+    auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id) -> bool
     {
         this->ghost_vertex_allocator =
-            std::make_unique<CyclicMemoryAllocator>(source_cc_id, total_number_of_cc);
-    } */
+            Allocator_T(source_cc_id, cca_simulator.total_compute_cells);
+
+        return true;
+    }
     RecursiveParallelVertex() = default;
     ~RecursiveParallelVertex() = default;
 };
