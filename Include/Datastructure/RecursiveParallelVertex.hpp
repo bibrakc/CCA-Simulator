@@ -58,7 +58,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     u_int32_t next_insertion_in_ghost_iterator{};
 
     // Used to allocate the ghost vertices.
-    //MemoryAllocator& ghost_vertex_allocator;
+    // MemoryAllocator& ghost_vertex_allocator;
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
@@ -102,7 +102,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
             auto* ghost_vertex_accessor =
                 static_cast<RecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
                     this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
-            bool success = ghost_vertex_accessor->insert_edge(
+            bool success = ghost_vertex_accessor->insert_edge_recurssively(
                 cca_simulator, allocator, dst_vertex_addr, edge_weight);
 
             if (success) {
