@@ -34,8 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RECURSIVE_PARALLEL_Vertex_HPP
 
 #include "SimpleVertex.hpp"
+#include "VicinityMemoryAllocator.hpp"
 
-template<typename Address_T>
+template<typename Address_T, typename MemoryAllocator_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
 {
 
@@ -55,15 +56,20 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     // Balance adding into the ghost vertices by having this iterator that goes in round-robin.
     u_int32_t next_insertion_in_ghost_iterator{};
 
-    // u_int32_t number_of_edges_in_this_recurssive_tree{};
+    // Used to allocate the ghost vertices.
+    MemoryAllocator_T ghost_vertex_allocator;
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
     auto insert_edge(CCASimulator& cca_simulator,
-                     std::unique_ptr<MemoryAllocator>& allocator,
+                     MemoryAllocator_T& allocator_in,
                      Address_T dst_vertex_addr,
                      u_int32_t edge_weight) -> bool
     {
+        MemoryAllocator_T& allocator_to_use = this->ghost_vertex_allocator;
+        if (this->is_ghost_vertex) {
+            allocator_to_use = allocator_in;
+        }
 
         if (this->number_of_edges == edges_max) {
 
@@ -86,7 +92,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
                 std::optional<Address> ghost_vertex_addr =
                     cca_simulator.allocate_and_insert_object_on_cc(
-                        allocator, &new_ghost_vertex, sizeof(RecursiveParallelVertex<Address_T>));
+                        allocator_to_use,
+                        &new_ghost_vertex,
+                        sizeof(RecursiveParallelVertex<Address_T>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -100,7 +108,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 static_cast<RecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
                     this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
             bool success = ghost_vertex_accessor->insert_edge(
-                cca_simulator, allocator, dst_vertex_addr, edge_weight);
+                cca_simulator, allocator_to_use, dst_vertex_addr, edge_weight);
 
             if (success) {
                 // Increment the global edges count for this vertex.

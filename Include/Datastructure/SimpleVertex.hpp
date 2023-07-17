@@ -79,7 +79,7 @@ struct SimpleVertex : Object
 
     // Insert an edge with weight on the device.
     auto insert_edge(CCASimulator& /* cca_simulator */,
-                     std::unique_ptr<MemoryAllocator>& /* allocator */,
+                     //std::unique_ptr<MemoryAllocator>& /* allocator */,
                      Address_T dst_vertex_addr,
                      u_int32_t edge_weight) -> bool
     {
