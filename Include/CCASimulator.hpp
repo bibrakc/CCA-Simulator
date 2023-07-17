@@ -45,7 +45,6 @@ using u_long = unsigned long;
 // `Terminator`.
 using CCATerminator = Object;
 
-
 // Utility function to create action arguments.
 // TODO: Later maybe move these to some CCAUtils header class?
 template<typename ApplicationArgumentType>
@@ -299,9 +298,8 @@ class CCASimulator
     // Utility to set a terminator.
     void reset_terminator(Address terminator_in);
 
-    auto allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
-                                          void* obj,
-                                          size_t size_of_obj) -> std::optional<Address>;
+    auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator, void* obj, size_t size_of_obj)
+        -> std::optional<Address>;
 
     void germinate_action(const Action& action_to_germinate);
 

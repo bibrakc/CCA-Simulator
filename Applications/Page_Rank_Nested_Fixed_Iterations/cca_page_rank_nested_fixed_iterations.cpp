@@ -76,10 +76,11 @@ main(int argc, char** argv) -> int
 
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion.
-    std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
-
-    // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
-    // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
+    // std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
+    CyclicMemoryAllocator allocator;
+    // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is
+    // now going to be sent to the CCA chip and there the address type is Address (not u_int32_t
+    // ID).
     input_graph
         .transfer_graph_host_to_cca<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(
             cca_square_simulator, allocator);

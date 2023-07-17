@@ -69,14 +69,14 @@ class Graph
     // Insert edge by `Address` type src and dst
     template<class VertexTypeOfAddress>
     inline auto insert_edge_by_address(CCASimulator& cca_simulator,
-                                       std::unique_ptr<MemoryAllocator>& allocator,
+                                       MemoryAllocator& allocator,
                                        Address src_vertex_addr,
                                        Address dst_vertex_addr,
                                        u_int32_t edge_weight) -> bool
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(cca_simulator, allocator, dst_vertex_addr, edge_weight);
+        bool success = vertex->insert_edge(cca_simulator,allocator, dst_vertex_addr, edge_weight);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {
@@ -91,8 +91,7 @@ class Graph
     }
 
     template<class VertexTypeOfAddress>
-    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
-                                    std::unique_ptr<MemoryAllocator>& allocator)
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator, MemoryAllocator& allocator)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.

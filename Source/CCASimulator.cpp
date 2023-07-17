@@ -283,12 +283,12 @@ CCASimulator::reset_terminator(Address terminator_in)
 }
 
 auto
-CCASimulator::allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
+CCASimulator::allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
                                                void* obj,
                                                size_t size_of_obj) -> std::optional<Address>
 {
     // Get the ID of the compute cell where this vertex is to be allocated.
-    u_int32_t const cc_id = allocator->get_next_available_cc(*this);
+    u_int32_t const cc_id = allocator.get_next_available_cc(*this);
 
     auto cc_ptr = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
     return cc_ptr->create_object_in_memory(obj, size_of_obj);
