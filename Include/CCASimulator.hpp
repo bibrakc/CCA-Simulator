@@ -163,6 +163,10 @@ class CCASimulator
         , mesh_routing_policy_id(mesh_routing_policy_id_in)
         , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
+
+        // Seed the random generator. Right now rand is being used in the VicinityMemoryAllocator.
+        std::srand(1989);
+
         // Currently using Low-Latency Network as Htree therefore just by default using it to
         // prepare the CCA chip.
         this->dim_x = HtreeNetwork::get_htree_dims(this->hx, this->hdepth);

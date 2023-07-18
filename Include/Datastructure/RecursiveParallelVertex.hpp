@@ -34,10 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RECURSIVE_PARALLEL_Vertex_HPP
 
 #include "SimpleVertex.hpp"
-// #include "VicinityMemoryAllocator.hpp"
-#include "CyclicMemoryAllocator.hpp"
+#include "VicinityMemoryAllocator.hpp"
+using Allocator_T = VicinityMemoryAllocator;
 
-using Allocator_T = CyclicMemoryAllocator;
+#include "CyclicMemoryAllocator.hpp"
+// using Allocator_T = CyclicMemoryAllocator;
 
 template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
@@ -159,10 +160,32 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
     auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id) -> bool
     {
-        this->ghost_vertex_allocator =
-            Allocator_T(source_cc_id, cca_simulator.total_compute_cells);
+        if constexpr (std::is_same_v<Allocator_T, CyclicMemoryAllocator>) {
+            this->ghost_vertex_allocator =
+                CyclicMemoryAllocator(source_cc_id, cca_simulator.total_compute_cells);
+            return true;
+        } else if constexpr (std::is_same_v<Allocator_T, VicinityMemoryAllocator>) {
+            // Right now defining the vicinity boundary as constant but later this can be made
+            // sophisticated by using some measure like the outbound edges and then for each
+            // vertex spread its vicinity of allcation such that large vertices have a larger
+            // vicinity.
+            constexpr u_int32_t vicinity_rows = 2;
+            constexpr u_int32_t vicinity_cols = 2;
 
-        return true;
+            this->ghost_vertex_allocator = VicinityMemoryAllocator(
+                Cell::cc_id_to_cooridinate(
+                    source_cc_id, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y),
+                vicinity_rows,
+                vicinity_cols,
+                cca_simulator.dim_x,
+                cca_simulator.dim_y,
+                cca_simulator.shape_of_compute_cells);
+
+            return true;
+        } else {
+            std::cerr << "Allocator type not supported: " << typeid(Allocator_T).name() << "\n";
+            exit(0);
+        }
     }
     RecursiveParallelVertex() = default;
     ~RecursiveParallelVertex() = default;

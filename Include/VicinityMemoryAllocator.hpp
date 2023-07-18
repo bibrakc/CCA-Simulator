@@ -33,9 +33,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef VICINITY_MEMORY_ALLOCATOR_HPP
 #define VICINITY_MEMORY_ALLOCATOR_HPP
 
+#include "Cell.hpp"
 #include "MemoryAllocator.hpp"
 
 #include "types.hpp"
+
+#include <cassert>
+
+// Right now defining the vicinity boundary as constant but later this can be made sophisticated by
+// using some measure like the outbound edges and then for each vertex spread its vicinity of
+// allcation such that large vertices have a larger vicinity.
+u_int32_t constexpr vicinity_rows = 2;
+u_int32_t constexpr vicinity_cols = 2;
 
 // Vicinity allocator across Compute Cells that are nearby a source Compute Cell.
 class VicinityMemoryAllocator : public MemoryAllocator
@@ -49,64 +58,41 @@ class VicinityMemoryAllocator : public MemoryAllocator
     u_int32_t spread_rows;
     u_int32_t spread_cols;
 
-    /* auto candidate_cc_exists(SignedCoordinates candidate_next_cc,
-                         u_int32_t CCA_dim_x,
-                         u_int32_t CCA_dim_y) -> bool
-{
-    auto [cc_coordinate_x, cc_coordinate_y] = candidate_next_cc;
-    int const zero = 0;
-    if ((cc_coordinate_x < zero) || (cc_coordinate_x >= static_cast<int>(CCA_dim_y)) ||
-        (cc_coordinate_y < zero) || (cc_coordinate_y >= static_cast<int>(CCA_dim_x))) {
-        return false;
-    }
-    return true;
-} */
+    // Dimensions of the CCA chip.
+    u_int32_t cca_dim_x;
+    u_int32_t cca_dim_y;
 
     VicinityMemoryAllocator(Coordinates source_cc_in,
                             u_int32_t spread_rows_in,
                             u_int32_t spread_cols_in,
-                            computeCellShape shape_of_cc,
-                            u_int32_t CCA_dim_x,
-                            u_int32_t CCA_dim_y)
+                            u_int32_t cca_dim_x_in,
+                            u_int32_t cca_dim_y_in,
+                            computeCellShape shape_of_cc)
         : source_cc(source_cc_in)
         , spread_rows(spread_rows_in)
         , spread_cols(spread_cols_in)
+        , cca_dim_x(cca_dim_x_in)
+        , cca_dim_y(cca_dim_y_in)
     {
-        assert(this->shape_of_cc == computeCellShape::square);
-
-        // Make sure they are odd.
-        assert(this->spread_rows % 2);
-        assert(this->spread_cols % 2);
+        assert(shape_of_cc == computeCellShape::square);
 
         // Make sure to put reasonable values.
-        assert(this->spread_rows > 2);
-        assert(this->spread_cols > 2);
-        assert(this->spread_rows < CCA_dim_y / 2);
-        assert(this->spread_cols < CCA_dim_x / 2);
+        assert(this->spread_rows > 1);
+        assert(this->spread_cols > 1);
+        assert(this->spread_rows <= this->cca_dim_y / 2);
+        assert(this->spread_cols <= this->cca_dim_x / 2);
 
         // Initialize `next_cc_id`
-        // How much can it move
-        u_int32_t left_right_freedom = this->spread_cols / 2;
-        u_int32_t up_down_freedom = this->spread_rows / 2;
-
-        auto [source_col, source_row] = this->source_cc;
-
-        u_int32_t next_cc_col = source_col + 1;
-        u_int32_t next_cc_row = source_row;
-        if (next_cc_col == CCA_dim_y) {
-            next_cc_col = source_col - left_right_freedom;
-            next_cc_row++;
-            if (next_cc_row == CCA_dim_x) {
-                next_cc_row = source_row - up_down_freedom;
-            }
-        }
-        Coordinates next_cc(next_cc_col, next_cc_row);
-
-        // Finally initialize `next_cc_id`
-        this->next_cc_id = Cell::cc_cooridinate_to_id(next_cc, shape_of_cc, CCA_dim_y);
+        this->next_cc_id = Cell::cc_cooridinate_to_id(
+            this->generate_random_coordinates(), shape_of_cc, this->cca_dim_y);
     }
 
     auto get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t override;
+
+    VicinityMemoryAllocator() = default;
+
+  private:
+    auto generate_random_coordinates() -> Coordinates;
 };
 
 #endif // VICINITY_MEMORY_ALLOCATOR_HPP

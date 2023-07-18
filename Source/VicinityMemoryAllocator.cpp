@@ -38,30 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 auto
 VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t
 {
-
-    auto get_next_cc_id = []() {
-        // How much can it move
-        u_int32_t left_right_freedom = this->spread_cols / 2;
-        u_int32_t up_down_freedom = this->spread_rows / 2;
-
-        auto [col, row] = Cell::cc_id_to_cooridinate(this->next_cc_id);
-
-        u_int32_t next_cc_col = col + 1;
-        u_int32_t next_cc_row = row;
-        if (next_cc_col == cca_simulator.dim_y) {
-            next_cc_col = col - left_right_freedom;
-            next_cc_row++;
-            if (next_cc_row == cca_simulator.dim_x) {
-                next_cc_row = row - up_down_freedom;
-            }
-        }
-        Coordinates next_cc(next_cc_col, next_cc_row);
-
-        // Finally return the `next_cc_id`
-        return Cell::cc_cooridinate_to_id(
-            next_cc, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y);
-    };
-
     u_int32_t source_cc_id = Cell::cc_cooridinate_to_id(
         this->source_cc, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y);
 
@@ -69,11 +45,56 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
     while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell ||
            this->next_cc_id == source_cc_id) {
         // Get next `next_cc_id`
-
-        // Finally get the `next_cc_id`
-        this->next_cc_id = get_next_cc_id();
+        this->next_cc_id = Cell::cc_cooridinate_to_id(this->generate_random_coordinates(),
+                                                      cca_simulator.shape_of_compute_cells,
+                                                      this->cca_dim_y);
     }
     u_int32_t const cc_available = this->next_cc_id;
-    this->next_cc_id = get_next_cc_id();
+    this->next_cc_id = Cell::cc_cooridinate_to_id(
+        this->generate_random_coordinates(), cca_simulator.shape_of_compute_cells, this->cca_dim_y);
+
+    // cols
+    auto source_cols = static_cast<int>(this->source_cc.first);
+    // rows
+    auto source_rows = static_cast<int>(this->source_cc.second);
+
+    auto [random_x, random_y] = Cell::cc_id_to_cooridinate(
+        cc_available, cca_simulator.shape_of_compute_cells, this->cca_dim_y);
+    std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
+              << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"
+              << std::endl;
+
     return cc_available;
+}
+
+auto
+VicinityMemoryAllocator::generate_random_coordinates() -> Coordinates
+{
+
+    // cols
+    auto source_cols = static_cast<int>(this->source_cc.first);
+    // rows
+    auto source_rows = static_cast<int>(this->source_cc.second);
+
+    auto vicinity_spread_cols = static_cast<int>(this->spread_cols);
+    auto vicinity_spread_rows = static_cast<int>(this->spread_rows);
+
+    // Calculate the boundaries for random coordinates.
+    int const min_x = std::max(source_cols - vicinity_spread_cols, 0);
+    int const max_x =
+        std::min(source_cols + vicinity_spread_cols, static_cast<int>(this->cca_dim_y) - 1);
+    int const min_y = std::max(source_rows - vicinity_spread_rows, 0);
+    int const max_y =
+        std::min(source_rows + vicinity_spread_rows, static_cast<int>(this->cca_dim_x) - 1);
+
+    // Generate random x and y coordinates within the boundaries.
+    u_int32_t random_x = min_x + (std::rand() % (max_x - min_x + 1));
+    u_int32_t random_y = min_y + (std::rand() % (max_y - min_y + 1));
+
+    /*  std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
+               << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"
+               << std::endl; */
+
+    // Return the random coordinates.
+    return Coordinates(random_x, random_y);
 }
