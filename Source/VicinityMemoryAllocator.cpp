@@ -53,16 +53,19 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
     this->next_cc_id = Cell::cc_cooridinate_to_id(
         this->generate_random_coordinates(), cca_simulator.shape_of_compute_cells, this->cca_dim_y);
 
-    // cols
-    auto source_cols = static_cast<int>(this->source_cc.first);
-    // rows
-    auto source_rows = static_cast<int>(this->source_cc.second);
+    /*
+      // For debugging.s
+      // cols
+      auto source_cols = static_cast<int>(this->source_cc.first);
+      // rows
+      auto source_rows = static_cast<int>(this->source_cc.second);
 
-    auto [random_x, random_y] = Cell::cc_id_to_cooridinate(
-        cc_available, cca_simulator.shape_of_compute_cells, this->cca_dim_y);
-    std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
-              << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"
-              << std::endl;
+      auto [random_x, random_y] = Cell::cc_id_to_cooridinate(
+          cc_available, cca_simulator.shape_of_compute_cells, this->cca_dim_y);
+      std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
+                << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"
+                << std::endl;
+    */
 
     return cc_available;
 }

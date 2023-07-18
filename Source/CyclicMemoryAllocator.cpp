@@ -45,6 +45,6 @@ CyclicMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_i
     u_int32_t const cc_available = this->next_cc_id;
     this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
 
-    std::cout << "next_cc_id: " << cc_available << "\n";
+    /* std::cout << "next_cc_id: " << cc_available << "\n"; */
     return cc_available;
 }

@@ -74,8 +74,9 @@ main(int argc, char** argv) -> int
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
-    // vertices (or objects) one per compute cell in round-robin fashion.
-    std::unique_ptr<MemoryAllocator> allocator = std::make_unique<CyclicMemoryAllocator>();
+    // vertices (or objects) one per compute cell in round-robin fashion. This is different from
+    // when the `RecursiveParallelVertex` allocates ghost vertices.
+    CyclicMemoryAllocator allocator;
 
     // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
     // to the CCA chip and there the address type is Address (not u_int32_t ID).

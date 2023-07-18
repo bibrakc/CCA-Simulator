@@ -48,7 +48,7 @@ struct Edge
 
 // Used when the vertex is allocated on the CCA device. There we just create an edge list of size
 // `edges_max`.
-inline constexpr u_int32_t edges_max = 40;
+inline constexpr u_int32_t edges_max = 18;
 
 template<typename Address_T>
 struct SimpleVertex : Object
@@ -79,7 +79,7 @@ struct SimpleVertex : Object
 
     // Insert an edge with weight on the device.
     auto insert_edge(CCASimulator& /* cca_simulator */,
-                     MemoryAllocator& /* allocator */,
+                     u_int32_t /* source_vertex_cc_id */,
                      Address_T dst_vertex_addr,
                      u_int32_t edge_weight) -> bool
     {
@@ -114,6 +114,13 @@ struct SimpleVertex : Object
         this->number_of_edges++;
         this->outbound_degree++;
 
+        return true;
+    }
+
+    auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id) -> bool
+    {
+        // Do nothing. Here just to make it compatible with the RecurssiveParallelVertex since it
+        // uses the `init` to initialize `ghost_vertex_allocator`.
         return true;
     }
 

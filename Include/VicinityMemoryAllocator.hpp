@@ -40,12 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
-// Right now defining the vicinity boundary as constant but later this can be made sophisticated by
-// using some measure like the outbound edges and then for each vertex spread its vicinity of
-// allcation such that large vertices have a larger vicinity.
-u_int32_t constexpr vicinity_rows = 2;
-u_int32_t constexpr vicinity_cols = 2;
-
 // Vicinity allocator across Compute Cells that are nearby a source Compute Cell.
 class VicinityMemoryAllocator : public MemoryAllocator
 {
