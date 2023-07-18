@@ -34,6 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RECURSIVE_PARALLEL_Vertex_HPP
 
 #include "SimpleVertex.hpp"
+#include "VicinityMemoryAllocator.hpp"
+using Allocator_T = VicinityMemoryAllocator;
+
+#include "CyclicMemoryAllocator.hpp"
+// using Allocator_T = CyclicMemoryAllocator;
 
 template<typename Address_T>
 struct RecursiveParallelVertex : SimpleVertex<Address_T>
@@ -55,14 +60,15 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     // Balance adding into the ghost vertices by having this iterator that goes in round-robin.
     u_int32_t next_insertion_in_ghost_iterator{};
 
-    // u_int32_t number_of_edges_in_this_recurssive_tree{};
+    // Used to allocate the ghost vertices.
+    Allocator_T ghost_vertex_allocator;
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
-    auto insert_edge(CCASimulator& cca_simulator,
-                     std::unique_ptr<MemoryAllocator>& allocator,
-                     Address_T dst_vertex_addr,
-                     u_int32_t edge_weight) -> bool
+    auto insert_edge_recurssively(CCASimulator& cca_simulator,
+                                  u_int32_t src_vertex_cc_id,
+                                  Address_T dst_vertex_addr,
+                                  u_int32_t edge_weight) -> bool
     {
 
         if (this->number_of_edges == edges_max) {
@@ -86,7 +92,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
 
                 std::optional<Address> ghost_vertex_addr =
                     cca_simulator.allocate_and_insert_object_on_cc(
-                        allocator, &new_ghost_vertex, sizeof(RecursiveParallelVertex<Address_T>));
+                        this->ghost_vertex_allocator,
+                        &new_ghost_vertex,
+                        sizeof(RecursiveParallelVertex<Address_T>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -99,8 +107,18 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
             auto* ghost_vertex_accessor =
                 static_cast<RecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
                     this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
-            bool success = ghost_vertex_accessor->insert_edge(
-                cca_simulator, allocator, dst_vertex_addr, edge_weight);
+
+            // This defines the center of vicinity for allocation. Currently, using the ghost_vertex
+            // itself as the center of vicinity. That makes more sense than to have the root
+            // non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is currently not
+            // used but keeping it for future use for benchmarking.
+            const u_int32_t source_vertex_cc_id_to_use =
+                this->ghost_vertices[next_insertion_in_ghost_iterator].value().cc_id;
+
+            ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
+
+            bool success = ghost_vertex_accessor->insert_edge_recurssively(
+                cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight);
 
             if (success) {
                 // Increment the global edges count for this vertex.
@@ -129,6 +147,18 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
         return true;
     }
 
+    // Insert an edge with weight
+    auto insert_edge(CCASimulator& cca_simulator,
+                     u_int32_t src_vertex_cc_id,
+                     Address_T dst_vertex_addr,
+                     u_int32_t edge_weight) -> bool
+    {
+        assert(!this->is_ghost_vertex);
+
+        return this->insert_edge_recurssively(
+            cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight);
+    }
+
     // Insert an edge with weight on the host.
     auto insert_edge(host_edge_type dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
@@ -138,6 +168,35 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
         return false;
     }
 
+    auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id) -> bool
+    {
+        if constexpr (std::is_same_v<Allocator_T, CyclicMemoryAllocator>) {
+            this->ghost_vertex_allocator =
+                CyclicMemoryAllocator(source_cc_id, cca_simulator.total_compute_cells);
+            return true;
+        } else if constexpr (std::is_same_v<Allocator_T, VicinityMemoryAllocator>) {
+            // Right now defining the vicinity boundary as constant but later this can be made
+            // sophisticated by using some measure like the outbound edges and then for each
+            // vertex spread its vicinity of allocation such that large vertices have a larger
+            // vicinity.
+            constexpr u_int32_t vicinity_rows = 2;
+            constexpr u_int32_t vicinity_cols = 2;
+
+            this->ghost_vertex_allocator = VicinityMemoryAllocator(
+                Cell::cc_id_to_cooridinate(
+                    source_cc_id, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y),
+                vicinity_rows,
+                vicinity_cols,
+                cca_simulator.dim_x,
+                cca_simulator.dim_y,
+                cca_simulator.shape_of_compute_cells);
+
+            return true;
+        } else {
+            std::cerr << "Allocator type not supported: " << typeid(Allocator_T).name() << "\n";
+            exit(0);
+        }
+    }
     RecursiveParallelVertex() = default;
     ~RecursiveParallelVertex() = default;
 };

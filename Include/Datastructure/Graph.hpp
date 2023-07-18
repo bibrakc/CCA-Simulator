@@ -69,14 +69,15 @@ class Graph
     // Insert edge by `Address` type src and dst
     template<class VertexTypeOfAddress>
     inline auto insert_edge_by_address(CCASimulator& cca_simulator,
-                                       std::unique_ptr<MemoryAllocator>& allocator,
+                                       /* MemoryAllocator& allocator, */
                                        Address src_vertex_addr,
                                        Address dst_vertex_addr,
                                        u_int32_t edge_weight) -> bool
     {
 
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        bool success = vertex->insert_edge(cca_simulator, allocator, dst_vertex_addr, edge_weight);
+        bool success =
+            vertex->insert_edge(cca_simulator, src_vertex_addr.cc_id, dst_vertex_addr, edge_weight);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {
@@ -85,14 +86,21 @@ class Graph
 
             vertex->inbound_degree++;
         }
-        // Check if edges are not full
-        // TODO: Later implement the hierarical parallel vertex object
+
         return success;
     }
 
+    // Initialize a newly created vertex in the CCA memory.
+    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
     template<class VertexTypeOfAddress>
-    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
-                                    std::unique_ptr<MemoryAllocator>& allocator)
+    inline auto init_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
+    {
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        return vertex->init(cca_simulator, src_vertex_addr.cc_id);
+    }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator, MemoryAllocator& allocator)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.
@@ -119,6 +127,12 @@ class Graph
                 exit(0);
             }
 
+            if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
+                std::cerr << "Error! Vertex initialization failed for Vertex ID: "
+                          << this->vertices[i].id << "\n";
+                exit(0);
+            }
+
             // Insert into the vertex_addresses map
             vertex_addresses[i] = vertex_addr.value();
         }
@@ -134,7 +148,7 @@ class Graph
 
                 if (!this->insert_edge_by_address<VertexTypeOfAddress>(
                         cca_simulator,
-                        allocator,
+                        /*  allocator, */
                         this->vertex_addresses[src_vertex_id],
                         this->vertex_addresses[dst_vertex_id],
                         edge_weight)) {

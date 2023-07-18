@@ -45,7 +45,6 @@ using u_long = unsigned long;
 // `Terminator`.
 using CCATerminator = Object;
 
-
 // Utility function to create action arguments.
 // TODO: Later maybe move these to some CCAUtils header class?
 template<typename ApplicationArgumentType>
@@ -164,6 +163,10 @@ class CCASimulator
         , mesh_routing_policy_id(mesh_routing_policy_id_in)
         , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
+
+        // Seed the random generator. Right now rand is being used in the VicinityMemoryAllocator.
+        std::srand(1989);
+
         // Currently using Low-Latency Network as Htree therefore just by default using it to
         // prepare the CCA chip.
         this->dim_x = HtreeNetwork::get_htree_dims(this->hx, this->hdepth);
@@ -299,9 +302,8 @@ class CCASimulator
     // Utility to set a terminator.
     void reset_terminator(Address terminator_in);
 
-    auto allocate_and_insert_object_on_cc(std::unique_ptr<MemoryAllocator>& allocator,
-                                          void* obj,
-                                          size_t size_of_obj) -> std::optional<Address>;
+    auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator, void* obj, size_t size_of_obj)
+        -> std::optional<Address>;
 
     void germinate_action(const Action& action_to_germinate);
 
