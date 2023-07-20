@@ -183,7 +183,8 @@ class CCASimulator
 
         this->global_active_cc = false;
         this->total_cycles = 0;
-        this->total_chip_memory = this->total_compute_cells * this->memory_per_cc;
+        this->total_chip_memory =
+            (this->total_compute_cells - this->total_sink_cells) * this->memory_per_cc;
 
         this->host_id = this->dim_x * this->dim_y;
 

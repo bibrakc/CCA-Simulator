@@ -359,11 +359,11 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
         }
 
         u_int32_t node_id;
-        u_int32_t sssp_iterative_value;
+        u_int32_t sssp_value;
         while (std::getline(file, line)) {
 
-            if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &sssp_iterative_value) == 2) {
-                control_results.emplace_back(sssp_iterative_value);
+            if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &sssp_value) == 2) {
+                control_results.emplace_back(sssp_value);
             }
         }
 
@@ -404,7 +404,7 @@ write_results(const SSSPCommandLineArguments& cmd_args,
 {
     // Write simulation statistics to a file
     std::string const output_file_name =
-        "sssp_iterative_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
+        "sssp_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
         std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max);

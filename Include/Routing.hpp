@@ -136,7 +136,8 @@ struct Routing
         }
 
         // This means that SinkCell returns std::nullptr, which means it will send the operon to
-        // the low latency Htree network.
+        // the low latency Htree network. And if by any programming bug the ComputeCell returns this
+        // then program will crash on bad access to optional.
         return std::nullopt;
     }
 

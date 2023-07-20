@@ -291,29 +291,102 @@ auto
 Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool
 {
     if (this->shape == computeCellShape::square) {
+
+        /*    bool isWithinBounds(int n_cols,
+                               int n_rows,
+                               int src_col,
+                               int src_row,
+                               int dst_col,
+                               int dst_row,
+                               int bound_cols,
+                               int bound_rows) */
+
         auto [src_col, src_row] = src_cc_cooridinate;
         auto [dst_col, dst_row] = dst_cc_cooridinate;
 
-        double num_unit_h_in_row = std::pow(2, this->hdepth - 1);
-        num_unit_h_in_row = num_unit_h_in_row + (num_unit_h_in_row / 2);
-        u_int32_t const mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
-        u_int32_t const mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
+        int const src_col_int = static_cast<int>(src_col);
+        int const src_row_int = static_cast<int>(src_row);
 
-        // TODO: later make this distance customizable, either at compile time or runtime.
-        // TODO: Look at narrow_cast and see if we should use that.
-        if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
-             static_cast<int>(mesh_usage_region_length_cols)) &&
-            (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
-             static_cast<int>(mesh_usage_region_length_rows))) {
+        int const dst_col_int = static_cast<int>(dst_col);
+        int const dst_row_int = static_cast<int>(dst_row);
+
+        /*   const double percent = 0.80; */
+
+        // Exponential decay function to calculate the percentage based on the distance
+        // from the center
+        double const center_col = (this->dim_y - 1) / 2.0;
+        double const center_row = (this->dim_x - 1) / 2.0;
+
+        // Calculate the distance from the center
+        double const distance = std::sqrt((src_col_int - center_col) * (src_col_int - center_col) +
+                                          (src_row_int - center_row) * (src_row_int - center_row));
+
+        // Define the scaling factor (you can adjust this value to control the growth rate)
+        double scaling_factor = 0.008;
+
+        // Calculate the adjusted percentage based on the distance from the center
+        double center_percent = 0.45; // Center percentage fixed at 40%
+        double percentage = center_percent + scaling_factor * distance;
+
+        // Apply clamping to ensure the percentage stays within the desired range (55%
+        // to 75%)
+        percentage = std::max(center_percent, percentage); // Minimum 45%
+        percentage = std::min(0.95, percentage);           // Maximum 75%
+
+        int const bound_cols = static_cast<int>(static_cast<double>(this->dim_y) * percentage);
+        int const bound_rows = static_cast<int>(static_cast<double>(this->dim_x) * percentage);
+
+        // Calculate the minimum and maximum allowed coordinates for the bounding region
+        int min_col_bound = std::max(src_col_int - bound_cols, 0);
+        int max_col_bound = std::min(src_col_int + bound_cols, static_cast<int>(this->dim_y) - 1);
+        int min_row_bound = std::max(src_row_int - bound_rows, 0);
+        int max_row_bound = std::min(src_row_int + bound_rows, static_cast<int>(this->dim_x) - 1);
+
+        // Check if the destination coordinates are within the bounded region
+        if (dst_col_int >= min_col_bound && dst_col_int <= max_col_bound &&
+            dst_row_int >= min_row_bound && dst_row_int <= max_row_bound) {
             return true;
-        } /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
+        }
+
+        /*   int const max_hops_before_switching_to_low_latency_network = bound_cols + bound_rows;
+          int const hops_to_destination = abs(src_col - dst_col) + abs(src_row - dst_row);
+
+          if (hops_to_destination < max_hops_before_switching_to_low_latency_network) {
+              return true;
+          } */
+        /* std::cout << "CC: " << this->id << ", src = " << src_cc_cooridinate
+                  << ", dst = " << dst_cc_cooridinate
+                  << ", max_hops_before_switching_to_low_latency_network: "
+                  << max_hops_before_switching_to_low_latency_network
+                  << ", hops_to_destination: " << hops_to_destination << ", predicate: "
+                  << (hops_to_destination < max_hops_before_switching_to_low_latency_network)
+                  << "\n"; */
+
+        return false;
+
+        /*
+                double num_unit_h_in_row = std::pow(2, this->hdepth - 1);
+                num_unit_h_in_row = num_unit_h_in_row + (num_unit_h_in_row / 2);
+                u_int32_t const mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
+                u_int32_t const mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
+
+                // TODO: later make this distance customizable, either at compile time or runtime.
+                // TODO: Look at narrow_cast and see if we should use that.
+                if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
+                     static_cast<int>(mesh_usage_region_length_cols)) &&
+                    (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
+                     static_cast<int>(mesh_usage_region_length_rows))) {
+                    return true;
+                }
+         */
+        /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
            << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
            << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
            << "\n";
  std::cout << "CC: " << this->id << ", src: " << src_cc_cooridinate
            << ", dst: " << dst_cc_cooridinate << "\n"; */
 
-        return false;
+        /*   return false; */
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";

@@ -335,9 +335,9 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     // Output total cycles, total actions, total actions performed work, total actions false on
     // predicate. TODO: Somehow put the resource usage as a percentage...?
     output_file
-        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
+        << "total_cycles\ttotal_actions_created\ttotal_actions_performed_work\ttotal_actions_"
            "false_on_predicate\n"
-        << this->total_cycles << "\t" << simulation_statistics.actions_invoked << "\t"
+        << this->total_cycles << "\t" << simulation_statistics.actions_created << "\t"
         << simulation_statistics.actions_performed_work << "\t"
         << simulation_statistics.actions_false_on_predicate << "\n";
 
@@ -362,10 +362,10 @@ CCASimulator::run_simulation(Address app_terminator)
     bool is_system_active = true;
 
     // while (is_system_active) {
-    while (this->is_diffusion_active(app_terminator)) {
-        //     u_int32_t count_temp = 0;
-        //        while (count_temp < 2) {
-        //          count_temp++;
+    //while (this->is_diffusion_active(app_terminator)) {
+               u_int32_t count_temp = 0;
+                while (count_temp < 850) {
+                  count_temp++;  
 
         is_system_active = false;
 

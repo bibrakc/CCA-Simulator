@@ -177,7 +177,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=40)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=55)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -191,17 +191,17 @@ ax.set_xlabel('Columns of Compute Cells', fontsize=16)
 ax.set_ylabel('Rows of Compute Cells', fontsize=16)
 # Add a larger second title
 routing_algorithm = 'Dimension Ordered Horizontal First Routing'
-graph_size = 'Random Graph V=2048 and E=32768'
-plt.suptitle('Asynchronous Page Rank on a CCA Chip of ' +
+graph_size = 'Random Graph V=16384 and E=262144'
+plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
              str(dim_x)+' x '+str(dim_y)+'\n'+routing_algorithm+'\n'+graph_size, fontsize=16)
 
 
-output_filename = 'PageRank_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
+output_filename = 'SSSP_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
 # Save the animation as an MP4 file
-ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520)
+""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520) """
 
 # Save the animation as a GIF file
-""" ani.save(output_filename+'.gif', writer='pillow', dpi=75) """
+ani.save(output_filename+'.gif', writer='pillow', dpi=85)
 # ani.save(output_filename, writer='pillow', dpi=70, interval=50)
 
 # Display the plot
