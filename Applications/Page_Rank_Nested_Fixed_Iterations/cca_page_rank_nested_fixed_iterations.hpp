@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 1;
+inline constexpr u_int32_t nested_iterations = 5;
 
 /* inline constexpr u_int32_t DEBUG_VERTEX = 17; */
 

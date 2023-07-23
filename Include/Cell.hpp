@@ -48,7 +48,7 @@ constexpr u_int32_t congestion_threshold_3 = 30;
 constexpr u_int32_t congestion_threshold_4 = 60;
 
 // Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
-constexpr u_int32_t curently_congested_threshold = 120; // cycles
+constexpr u_int32_t curently_congested_threshold = 35; // cycles
 
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t
@@ -90,12 +90,15 @@ struct ComputeCellStatistics
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
 
+    // # of objects allocated
+    u_int32_t objects_allocated{};
+
     // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
     CellType type;
 
     static inline void generate_label(std::ostream& os)
     {
-        os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y"
+        os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tobjects_allocated"
               "\tactions_created\tactions_acknowledgement_created"
               "\tactions_pushed\tactions_invoked\tactions_performed_work"
               "\tactions_acknoledgement_invoked\tactions_false_on_predicate"
@@ -114,6 +117,7 @@ struct ComputeCellStatistics
     friend auto operator<<(std::ostream& os, const ComputeCellStatistics& stat) -> std::ostream&
     {
         os << "Statistics:"
+           << "\n\tobjects_allocated: " << stat.objects_allocated
            << "\n\tactions_created: " << stat.actions_created
            << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
            << "\n\tactions_pushed: " << stat.actions_pushed
@@ -126,6 +130,7 @@ struct ComputeCellStatistics
 
     auto operator+=(const ComputeCellStatistics& rhs) -> ComputeCellStatistics&
     {
+        this->objects_allocated += rhs.objects_allocated;
         this->actions_created += rhs.actions_created;
         this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
         this->actions_pushed += rhs.actions_pushed;

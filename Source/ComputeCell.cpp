@@ -103,6 +103,9 @@ ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj) -> std::o
     memcpy(this->memory_curr_ptr, obj_in, size_of_obj);
     this->memory_curr_ptr += size_of_obj;
 
+    // Increment statistics for objects allocated on this cc.
+    this->statistics.objects_allocated++;
+
     return obj_addr;
 }
 

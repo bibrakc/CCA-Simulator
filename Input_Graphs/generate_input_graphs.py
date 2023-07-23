@@ -299,7 +299,7 @@ directed = args[2]
 
 edge_factor = int(args[3])
 scale_factor = int(args[4])
-vertices_needed = 2**scale_factor
+vertices_needed = 600 #2**scale_factor
 edges_needed = vertices_needed * edge_factor
 
 
@@ -332,7 +332,7 @@ if graph == "Smallworld" and directed == "not_directed":
 if graph == "Erdos" and directed == "directed":
     G_gen = nx.gnm_random_graph(
         vertices_needed, edges_needed, directed=True, seed=133)
-    A = "Erdos-Renyi_directed_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
+    A = "Custom_Erdos-Renyi_directed_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 if graph == "Erdos" and directed == "not_directed":
     G_gen = nx.gnm_random_graph(

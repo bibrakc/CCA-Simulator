@@ -227,8 +227,8 @@ class CCASimulator
 
     static inline void generate_label(std::ostream& os)
     {
-        os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_compute_cells\ttotal_"
-              "chip_memory(bytes)\n";
+        os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_cells\ttotal_compute_"
+              "cells\ttotal_sink_cells\ttotal_chip_memory(bytes)\n";
     }
 
     inline void output_description_in_a_single_line(std::ostream& os)
@@ -236,7 +236,8 @@ class CCASimulator
         os << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells) << "\t"
            << this->dim_x << "\t" << this->dim_y << "\t" << this->hx << "\t" << this->hy << "\t"
            << this->hdepth << "\t" << this->hbandwidth_max << "\t" << this->total_compute_cells
-           << "\t" << this->total_chip_memory << "\n";
+           << "\t" << this->total_compute_cells - this->total_sink_cells << "\t"
+           << this->total_sink_cells << "\t" << this->total_chip_memory << "\n";
     }
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)

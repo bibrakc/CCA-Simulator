@@ -161,10 +161,11 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
                                                        Coordinates cc_cooridinates)
 {
     os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
-       << "\t" << cc_cooridinates.second << "\t" << this->actions_created << "\t"
-       << this->actions_acknowledgement_created << "\t" << this->actions_pushed << "\t"
-       << this->actions_invoked << "\t" << this->actions_performed_work << "\t"
-       << this->actions_acknowledgement_invoked << "\t" << this->actions_false_on_predicate
+       << "\t" << cc_cooridinates.second << "\t" << this->objects_allocated << "\t"
+       << this->actions_created << "\t" << this->actions_acknowledgement_created << "\t"
+       << this->actions_pushed << "\t" << this->actions_invoked << "\t"
+       << this->actions_performed_work << "\t" << this->actions_acknowledgement_invoked << "\t"
+       << this->actions_false_on_predicate
 
        << "\t" << this->send_channel_per_neighbor_contention_count_record[0].get_max_count() << "\t"
        << this->send_channel_per_neighbor_contention_count_record[0].get_total_count()

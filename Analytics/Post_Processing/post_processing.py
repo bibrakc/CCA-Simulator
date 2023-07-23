@@ -62,21 +62,21 @@ with open(output_file, 'r') as file:
     header = file.readline()
 
     # read the next line and split it into variables
-    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = file.readline().strip().split()
+    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory = file.readline().strip().split()
 
     # convert dim_x, dim_y, cells, and memory to integers
-    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory = map(
-        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, memory])
+    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory = map(
+        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory])
 
     # read the header line for the table and discard it
     header = file.readline()
 
     # read the next line and split it into variables
-    total_cycles, total_actions_created, total_actions_performed, total_actions_false_pred = file.readline().strip().split()
+    total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred = file.readline().strip().split()
 
     # convert cycles, invoked, performed and false_pred to integers
-    cycles, actions_created, actions_performed, actions_false_pred = map(
-        int, [total_cycles, total_actions_created, total_actions_performed, total_actions_false_pred])
+    cycles, objects_created, actions_created, actions_performed, actions_false_pred = map(
+        int, [total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred])
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -99,7 +99,7 @@ with open(output_file, 'r') as file:
 # print the values to check if they were read correctly
 print(shape, dim_x, dim_y, cells, memory)
 print(graph_file, vertices, edges, root_vertex)
-print(total_cycles, total_actions_created,
+print(total_cycles, total_objects_created, total_actions_created,
       total_actions_performed, total_actions_false_pred)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
