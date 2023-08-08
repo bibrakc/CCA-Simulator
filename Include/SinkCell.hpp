@@ -37,6 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <utility>
 
+// How many operons can the sink cell receive and send in a single cycle.
+inline u_int32_t constexpr sink_cell_bandwidth = 4;
+
 // Forward declaring to solve the circular dependency.
 struct HtreeNode;
 
@@ -83,8 +86,8 @@ class SinkCell : public Cell
              u_int32_t hy_in,
              u_int32_t hdepth_in,
              u_int32_t mesh_routing_policy_id_in)
-        : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(4))
-        , recv_channel_to_htree_node(FixedSizeQueue<Operon>(4))
+        : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(sink_cell_bandwidth))
+        , recv_channel_to_htree_node(FixedSizeQueue<Operon>(sink_cell_bandwidth))
 
     {
         this->id = id_in;
@@ -115,10 +118,12 @@ class SinkCell : public Cell
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
             std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
-                                                FixedSizeQueue<Operon>(lane_width)));
+                                                FixedSizeQueue<Operon>(buffer_size)));
 
+        // send channel buffer can only hold one operon since its there to put send (put) in the
+        // recv channel of the neighbor.
         this->send_channel_per_neighbor.resize(this->number_of_neighbors,
-                                               FixedSizeQueue<Operon>(lane_width));
+                                               FixedSizeQueue<Operon>(1));
 
         this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,

@@ -223,7 +223,7 @@ create_horizontal(int hx,
     if (depth == 0) {
         // TODO: Later instead of hardcoding `4` use the shape of the sink cell to determine
         // the value. Or some other initial thickness of the link
-        out_bandwidth_value = 4;
+        out_bandwidth_value = sink_cell_bandwidth; //4;
         in_bandwidth_value = 0;
     } else {
         out_bandwidth_value = right->out_bandwidth * BANDWIDTH_SCALE_FACTOR;

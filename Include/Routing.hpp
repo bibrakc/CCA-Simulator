@@ -47,7 +47,8 @@ struct Routing
                                                  u_int32_t current_cc_id)
         -> std::optional<u_int32_t>
     {
-        // Routing 1: Aggresively use the mesh. This is a static routing algrithm.
+        // Routing 0: Aggresively use the htree if it exists. If its pure mesh then it defaults to
+        // sending in the mesh. This is a static routing algrithm.
 
         // u_int32_t src_cc_id = operon.first.src_cc_id;
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
@@ -76,6 +77,7 @@ struct Routing
             // If it is not nearby AND not in the same sinkcell (Htree block) then
             // route it in second layer network
             if (!use_mesh_network && src_dst_are_on_different_sink_cells) {
+                assert(current_compute_cell->sink_cell != std::nullopt);
                 return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
                                                   current_compute_cell->shape,
                                                   current_compute_cell->dim_y);

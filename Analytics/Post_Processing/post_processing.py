@@ -36,6 +36,7 @@ import sys
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib
 
 import pandas as pd
 import math
@@ -164,7 +165,7 @@ def congestion_charts():
     if hdepth != 0:
         # Add a main title to the figure
         plt.suptitle(chip_config+'\nMesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
-            hbandwidth_max)+'\nContention Per Channel Histograms with Bins ='+str(bins),
+            hbandwidth_max)+'\nContention Per Channel Histograms with Bins = '+str(bins),
             fontsize=16, fontweight='bold')
     else:
         # Add a main title to the figure
@@ -226,9 +227,11 @@ def active_status_chart():
             'Pure Mesh Network\nPercentage of Compute Cells Active per Cycle', fontsize=16)
 
     # Add a larger second title
-    plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
+    plt.suptitle('Asynchronous BFS on a CCA Chip of ' +
                  str(dim_x)+' x '+str(dim_y)+' Cells, with '+routing_algorithm+' Routing', fontsize=16, fontweight='bold')
 
+
+# print(matplotlib.matplotlib_fname())
 
 # Main
 congestion_charts()

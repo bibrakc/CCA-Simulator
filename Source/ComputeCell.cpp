@@ -276,27 +276,39 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     this->prepare_a_communication_cycle(CCA_chip);
 
     // Used for fairness. So that the channels don't get priority over others based on iterator
-    // u_int32_t recv_channel_index = 0; // this->current_recv_channel_to_start_a_cycle;
+    u_int32_t recv_channel_index = this->current_recv_channel_to_start_a_cycle;
 
     // Move the operon from previous cycle recv channel to thier destination: action queue or
     // send channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        for (int j = this->recv_channel_per_neighbor[i].size() - 1; j >= 0; j--) {
+        // Distance Class
+        for (int j = this->recv_channel_per_neighbor[recv_channel_index].size() - 1; j >= 0; j--) {
             // for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
-            if (this->recv_channel_per_neighbor[i][j].size()) {
+            // Buffers in the recv channel
+            if (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
 
-                // If this is greater them it is a bug
+                // If this is greater then it is a bug
                 assert(j <= static_cast<int>(this->distance_class_length));
 
                 std::vector<Operon> recv_operons;
-                while (this->recv_channel_per_neighbor[i][j].size()) {
-                    recv_operons.push_back(this->recv_channel_per_neighbor[i][j].front());
-                    this->recv_channel_per_neighbor[i][j].pop();
+                while (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
+                    recv_operons.push_back(
+                        this->recv_channel_per_neighbor[recv_channel_index][j].front());
+                    this->recv_channel_per_neighbor[recv_channel_index][j].pop();
                 }
 
                 std::vector<Operon> left_over_operons;
+                bool operon_was_inserted_or_sent = false;
                 for (Operon operon : recv_operons) {
+
+                    // This means that in this cycle an operon from the buffer (in recv_operons) was
+                    // either inserted in this CC or sent to the neighbor CC. Therefore, just put
+                    // this operon now in the left overs to be put back into the buffer.
+                    if (operon_was_inserted_or_sent) {
+                        left_over_operons.push_back(operon);
+                        continue;
+                    }
 
                     u_int32_t const dst_cc_id = operon.first.dst_cc_id;
                     // Bug check: Make sure the destination is not a Sink Cell
@@ -305,6 +317,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
                         this->insert_action(operon.second);
+                        operon_was_inserted_or_sent = true;
                     } else {
 
                         // Get the route using Routing 0
@@ -316,7 +329,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             this->get_route_towards_cc_id(operon.first.src_cc_id,
                                                           routing_cell_id.value());
 
-                        bool pushed = false;
+                        // bool pushed = false;
                         for (auto channel_to_send : channels_to_send) {
                             if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
 
@@ -325,29 +338,26 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                     [channel_to_send] = 0; // j + 1;
 
                                 // Break out of the for loop. Discard other paths.
-                                pushed = true;
+                                operon_was_inserted_or_sent = true;
                                 break;
                             }
                         }
-
-                        if (!pushed) {
-                            left_over_operons.push_back(operon);
-                        }
+                    }
+                    if (!operon_was_inserted_or_sent) {
+                        left_over_operons.push_back(operon);
                     }
                 }
 
                 for (Operon const& operon : left_over_operons) {
-                    this->recv_channel_per_neighbor[i][j].push(operon);
+                    this->recv_channel_per_neighbor[recv_channel_index][j].push(operon);
                 }
-
-                //  recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
             }
         }
-        // Update the index of the starting channel for the next cycle
-        // TODO: Make use of this
-        /*    this->current_recv_channel_to_start_a_cycle =
-               (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors; */
+        recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
     }
+    // Update the index of the starting channel for the next cycle.
+    this->current_recv_channel_to_start_a_cycle =
+        (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors;
 }
 
 void

@@ -323,7 +323,7 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
                                           (src_row_int - center_row) * (src_row_int - center_row));
 
         // Define the scaling factor (you can adjust this value to control the growth rate)
-        double scaling_factor = 0.008;
+        double scaling_factor = 0.007;
 
         // Calculate the adjusted percentage based on the distance from the center
         double center_percent = 0.45; // Center percentage fixed at 40%
