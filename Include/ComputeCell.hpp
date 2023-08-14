@@ -174,10 +174,12 @@ class ComputeCell : public Cell
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
             std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
-                                                FixedSizeQueue<Operon>(lane_width)));
+                                                FixedSizeQueue<Operon>(buffer_size)));
 
+        // send channel buffer can only hold one operon since its there to put send (put) in the
+        // recv channel of the neighbor.
         this->send_channel_per_neighbor.resize(this->number_of_neighbors,
-                                               FixedSizeQueue<Operon>(lane_width));
+                                               FixedSizeQueue<Operon>(1));
 
         this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,

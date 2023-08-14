@@ -69,6 +69,104 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
        *this
               << "\n"; */
 
+    // From the regular mesh recv channel to regular send channels
+    // Move the operon from previous cycle recv channel to their destination: action queue or
+    // send channel of a neighbor
+
+    // Used for fairness. So that the channels don't get priority over others based on iterator
+    u_int32_t recv_channel_index = this->current_recv_channel_to_start_a_cycle;
+
+    for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
+        // Distance Class
+        for (int j = this->recv_channel_per_neighbor[recv_channel_index].size() - 1; j >= 0; j--) {
+            // for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
+
+            if (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
+
+                // If this is greater then it is a bug
+                assert(j <= static_cast<int>(this->distance_class_length));
+
+                std::vector<Operon> recv_operons;
+                while (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
+                    recv_operons.push_back(
+                        this->recv_channel_per_neighbor[recv_channel_index][j].front());
+                    this->recv_channel_per_neighbor[recv_channel_index][j].pop();
+                }
+
+                std::vector<Operon> left_over_operons;
+                bool operon_was_inserted_or_sent = false;
+                for (Operon operon : recv_operons) {
+
+                    // This means that in this cycle an operon from the buffer (in recv_operons) was
+                    // either inserted in this CC or sent to the neighbor CC. Therefore, just put
+                    // this operon now in the left overs to be put back into the buffer.
+                    if (operon_was_inserted_or_sent) {
+                        left_over_operons.push_back(operon);
+                        continue;
+                    }
+
+                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+
+                    // Check if this operon is destined for this compute cell
+                    // Bug check with assert: A SinkCell cannot invoke an action
+                    assert(this->id != dst_cc_id);
+
+                    // It means the operon needs to be sent/passed to some neighbor. Find whether it
+                    // needs to be sent in the mesh network or second layer/htree network?
+
+                    // Get the route using Routing `mesh_routing_policy`
+                    std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<SinkCell>(
+                        CCA_chip, operon, this->id, this->mesh_routing_policy);
+
+                    if (routing_cell_id != std::nullopt) {
+                        // Pass it on within the mesh network since the destination is close by.
+
+                        std::vector<u_int32_t> const channels_to_send =
+                            this->get_route_towards_cc_id(operon.first.src_cc_id,
+                                                          routing_cell_id.value());
+
+                        for (auto channel_to_send : channels_to_send) {
+                            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+
+                                // Set the distance class for this operon
+                                this->send_channel_per_neighbor_current_distance_class
+                                    [channel_to_send] = 0; // j + 1;
+
+                                // Break out of the for loop. Discard other paths.
+                                operon_was_inserted_or_sent = true;
+                                break;
+                            }
+                        }
+
+                    } else {
+
+                        Coordinates const dst_cc_coordinates =
+                            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+                        // Send to the second layer Htree network using the sink hole
+                        // First form a CooridiantedOperon to send
+                        CoordinatedOperon const coordinated_operon(dst_cc_coordinates, operon);
+
+                        operon_was_inserted_or_sent =
+                            this->send_channel_to_htree_node.push(coordinated_operon);
+                    }
+
+                    // not sent in this cycle due to the send_channel being full
+                    if (!operon_was_inserted_or_sent) {
+                        left_over_operons.push_back(operon);
+                    }
+                }
+
+                for (Operon const& operon : left_over_operons) {
+                    this->recv_channel_per_neighbor[recv_channel_index][j].push(operon);
+                }
+            }
+        }
+        recv_channel_index = (recv_channel_index + 1) % this->number_of_neighbors;
+    }
+    // Update the index of the starting channel for the next cycle.
+    this->current_recv_channel_to_start_a_cycle =
+        (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors;
+
     // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
     // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
     // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?
@@ -119,90 +217,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     for (Operon const& operon : left_over_operons) {
         this->recv_channel_to_htree_node.push(operon);
     }
-
-    // From the regular mesh recv channel to regular send channels
-    // Move the operon from previous cycle recv channel to their destination: action queue or
-    // send channel of a neighbor
-
-    // Used for fairness. So that the channels don't get priority over others based on iterator
-    // u_int32_t recv_channel_index = 0; // this->current_recv_channel_to_start_a_cycle;
-    for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-
-        for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
-
-            if (this->recv_channel_per_neighbor[i][j].size()) {
-
-                // If this is greater them it is a bug
-                assert(j <= this->distance_class_length);
-
-                std::vector<Operon> recv_operons;
-                while (this->recv_channel_per_neighbor[i][j].size()) {
-                    recv_operons.push_back(this->recv_channel_per_neighbor[i][j].front());
-                    this->recv_channel_per_neighbor[i][j].pop();
-                }
-
-                std::vector<Operon> left_over_operons;
-                for (Operon operon : recv_operons) {
-
-                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
-
-                    // Check if this operon is destined for this compute cell
-                    // Bug check with assert: A SinkCell cannot invoke an action
-                    assert(this->id != dst_cc_id);
-
-                    // It means the operon needs to be sent/passed to some neighbor. Find whether it
-                    // needs to be sent in the mesh network or second layer/htree network?
-
-                    // Get the route using Routing 0
-                    std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<SinkCell>(
-                        CCA_chip, operon, this->id, this->mesh_routing_policy);
-
-                    if (routing_cell_id != std::nullopt) {
-                        // Pass it on within the mesh network since the destination is close by.
-
-                        std::vector<u_int32_t> const channels_to_send =
-                            this->get_route_towards_cc_id(operon.first.src_cc_id,
-                                                          routing_cell_id.value());
-
-                        bool pushed = false;
-                        for (auto channel_to_send : channels_to_send) {
-                            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
-
-                                // Set the distance class for this operon
-                                this->send_channel_per_neighbor_current_distance_class
-                                    [channel_to_send] = 0; // j + 1;
-
-                                // Break out of the for loop. Discard other paths.
-                                pushed = true;
-                                break;
-                            }
-                        }
-
-                        if (!pushed) {
-                            left_over_operons.push_back(operon);
-                        }
-
-                    } else {
-
-                        Coordinates const dst_cc_coordinates =
-                            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
-                        // Send to the second layer Htree network using the sink hole
-                        // First form a CooridiantedOperon to send
-                        CoordinatedOperon const coordinated_operon(dst_cc_coordinates, operon);
-
-                        if (!this->send_channel_to_htree_node.push(coordinated_operon)) {
-
-                            // not sent in this cycle due to the send_channel being full
-                            left_over_operons.push_back(operon);
-                        }
-                    }
-                }
-                for (Operon const& operon : left_over_operons) {
-                    this->recv_channel_per_neighbor[i][j].push(operon);
-                }
-            }
-        }
-    }
 }
 
 void
@@ -234,6 +248,7 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CC
     // Prepare the operons recieved from the htree end node and down and up CCs into the staging
     // buffer or the regular send channels of the CCA mesh
 
+    // Note: Not all points in this comment maybe implemented.
     // Pop all operons into a vector to avoid deadlock on the send_channel if it is full. In
     // case a send_channel is full: 1: then just push back that recv_operons vector 2: Check if
     // any of the remaining operons from the recv_operons can be sent to an asymetric neighbor?

@@ -327,6 +327,9 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     }
 
     std::cout << simulation_statistics;
+    std::cout << "Avg Objects per Compute Cell: "
+              << static_cast<double>(simulation_statistics.objects_allocated) /
+                     static_cast<double>(this->total_compute_cells - this->total_sink_cells);
 
     // Output CCA Chip details
     CCASimulator::generate_label(output_file);
@@ -334,12 +337,12 @@ CCASimulator::print_statistics(std::ofstream& output_file)
 
     // Output total cycles, total actions, total actions performed work, total actions false on
     // predicate. TODO: Somehow put the resource usage as a percentage...?
-    output_file
-        << "total_cycles\ttotal_actions_invoked\ttotal_actions_performed_work\ttotal_actions_"
-           "false_on_predicate\n"
-        << this->total_cycles << "\t" << simulation_statistics.actions_invoked << "\t"
-        << simulation_statistics.actions_performed_work << "\t"
-        << simulation_statistics.actions_false_on_predicate << "\n";
+    output_file << "total_cycles\ttotal_objects_created\ttotal_actions_created\ttotal_actions_"
+                   "performed_work\ttotal_actions_false_on_predicate\n"
+                << this->total_cycles << "\t" << simulation_statistics.objects_allocated << "\t"
+                << simulation_statistics.actions_created << "\t"
+                << simulation_statistics.actions_performed_work << "\t"
+                << simulation_statistics.actions_false_on_predicate << "\n";
 
     // Output the active status of the individual cells and htree per cycle
     this->output_CCA_active_status_per_cycle(output_file);
@@ -363,9 +366,9 @@ CCASimulator::run_simulation(Address app_terminator)
 
     // while (is_system_active) {
     while (this->is_diffusion_active(app_terminator)) {
-        //     u_int32_t count_temp = 0;
-        //        while (count_temp < 2) {
-        //          count_temp++;
+        /*          u_int32_t count_temp = 0;
+                  while (count_temp < 850) {
+                    count_temp++;   */
 
         is_system_active = false;
 
