@@ -40,6 +40,11 @@ if(NOT DEFINED THROTTLE)
 endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
 
+if(NOT DEFINED RECVBUFFSIZE)
+    set(RECVBUFFSIZE 1)
+endif()
+add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
+
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)

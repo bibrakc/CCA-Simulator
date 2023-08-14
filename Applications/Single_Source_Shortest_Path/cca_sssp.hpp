@@ -403,12 +403,17 @@ write_results(const SSSPCommandLineArguments& cmd_args,
               CCASimulator& cca_simulator)
 {
     // Write simulation statistics to a file
+    std::string throttle_text = "OFF";
+    if (THROTTLE) {
+        throttle_text = "ON";
+    }
     std::string const output_file_name =
         "sssp_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
         std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
-        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max);
-
+        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
+        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE);
+        
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
 
