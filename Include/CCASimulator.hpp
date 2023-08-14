@@ -241,7 +241,8 @@ class CCASimulator
         this->output_description_in_a_single_line(os);
 
         os << "congestion_policy\n"
-           << "constant_threshold\n";
+           << "constant_threshold"
+           << "\t" << curently_congested_threshold << "\n ";
     }
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)

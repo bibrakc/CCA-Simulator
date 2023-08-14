@@ -71,7 +71,7 @@ with open(output_file, 'r') as file:
 
     # read the header line for the table and discard it
     header = file.readline()
-    congestion_policy = file.readline().strip()
+    congestion_policy, congestion_threshold_value = file.readline().strip().split()
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -110,7 +110,8 @@ print(shape, dim_x, dim_y, cells, memory)
 print(graph_file, vertices, edges, root_vertex)
 print(total_cycles, total_objects_created, total_actions_created,
       total_actions_performed, total_actions_false_pred)
-print("congestion_policy: ", congestion_policy)
+print("congestion_policy: ", congestion_policy,
+      ", value: ", congestion_threshold_value)
 print("avg_objects_per_cc: ", avg_objects_per_cc)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
