@@ -63,11 +63,15 @@ with open(output_file, 'r') as file:
     header = file.readline()
 
     # read the next line and split it into variables
-    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory = file.readline().strip().split()
+    shape, dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory, throttle, recv_buff_size = file.readline().strip().split()
 
     # convert dim_x, dim_y, cells, and memory to integers
-    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory = map(
-        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory])
+    dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory, throttle, recv_buff_size = map(
+        int, [dim_x, dim_y, hx, hy, hdepth, hbandwidth_max, cells, compute_cells, sink_cells, memory, throttle, recv_buff_size])
+
+    # read the header line for the table and discard it
+    header = file.readline()
+    congestion_policy, congestion_threshold_value = file.readline().strip().split()
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -78,6 +82,10 @@ with open(output_file, 'r') as file:
     # convert cycles, invoked, performed and false_pred to integers
     cycles, objects_created, actions_created, actions_performed, actions_false_pred = map(
         int, [total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred])
+
+    # read the header line for the table and discard it
+    header = file.readline()
+    avg_objects_per_cc = file.readline().strip()
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -102,6 +110,9 @@ print(shape, dim_x, dim_y, cells, memory)
 print(graph_file, vertices, edges, root_vertex)
 print(total_cycles, total_objects_created, total_actions_created,
       total_actions_performed, total_actions_false_pred)
+print("congestion_policy: ", congestion_policy,
+      ", value: ", congestion_threshold_value)
+print("avg_objects_per_cc: ", avg_objects_per_cc)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
@@ -109,7 +120,7 @@ print(total_cycles, total_objects_created, total_actions_created,
 print(stats.describe())
 
 chip_config = "Chip of " + \
-    str(dim_x)+" x "+str(dim_y)+" Cells, "+routing_algorithm+" Routing"
+    str(dim_x)+" x "+str(dim_y)+" Cells"
 
 print(chip_config)
 
@@ -162,14 +173,18 @@ def congestion_charts():
         ax.tick_params(axis='y', labelsize=14)
         ax.set_ylabel('Count of Cells', fontsize=14)
 
+    throttle_text = 'OFF'
+    if throttle == 1:
+        throttle_text = 'ON'
+
     if hdepth != 0:
         # Add a main title to the figure
         plt.suptitle(chip_config+'\nMesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
-            hbandwidth_max)+'\nContention Per Channel Histograms with Bins = '+str(bins),
+            hbandwidth_max)+', Routing: '+routing_algorithm+', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size)+'\nContention Per Channel Histograms with Bins = '+str(bins),
             fontsize=16, fontweight='bold')
     else:
         # Add a main title to the figure
-        plt.suptitle(chip_config+'\nPure Mesh Network\nContention Per Channel Histograms with Bins = '+str(bins),
+        plt.suptitle(chip_config+'\nPure Mesh Network'+', Routing: '+routing_algorithm+', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size) + '\nContention Per Channel Histograms with Bins= '+str(bins),
                      fontsize=16, fontweight='bold')
 
     # Adjust spacing between subplots
@@ -219,16 +234,20 @@ def active_status_chart():
     ax.tick_params(axis='x', labelsize=14)
     ax.tick_params(axis='y', labelsize=14)
 
+    throttle_text = 'OFF'
+    if throttle == 1:
+        throttle_text = 'ON'
+
     if hdepth != 0:
         ax.set_title('Mesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
-            hbandwidth_max)+'\nPercentage of Cells and Htree Active per Cycle', fontsize=16)
+            hbandwidth_max)+', Routing: '+routing_algorithm+', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size)+'\nPercentage of Cells and Htree Active per Cycle', fontsize=16)
     else:
-        ax.set_title(
-            'Pure Mesh Network\nPercentage of Compute Cells Active per Cycle', fontsize=16)
+        ax.set_title('Routing: '+routing_algorithm + ', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size) +
+                     '\nPure Mesh Network\nPercentage of Compute Cells Active per Cycle', fontsize=16)
 
     # Add a larger second title
     plt.suptitle('Asynchronous BFS on a CCA Chip of ' +
-                 str(dim_x)+' x '+str(dim_y)+' Cells, with '+routing_algorithm+' Routing', fontsize=16, fontweight='bold')
+                 str(dim_x)+' x '+str(dim_y)+' Cells', fontsize=16, fontweight='bold')
 
 
 # print(matplotlib.matplotlib_fname())

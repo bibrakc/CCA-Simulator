@@ -224,20 +224,25 @@ class CCASimulator
            << this->total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
            << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n\n";
     }
-
-    static inline void generate_label(std::ostream& os)
-    {
-        os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_cells\ttotal_compute_"
-              "cells\ttotal_sink_cells\ttotal_chip_memory(bytes)\n";
-    }
-
     inline void output_description_in_a_single_line(std::ostream& os)
     {
         os << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells) << "\t"
            << this->dim_x << "\t" << this->dim_y << "\t" << this->hx << "\t" << this->hy << "\t"
            << this->hdepth << "\t" << this->hbandwidth_max << "\t" << this->total_compute_cells
            << "\t" << this->total_compute_cells - this->total_sink_cells << "\t"
-           << this->total_sink_cells << "\t" << this->total_chip_memory << "\n";
+           << this->total_sink_cells << "\t" << this->total_chip_memory << "\t" << THROTTLE << "\t"
+           << RECVBUFFSIZE << "\n";
+    }
+    inline void write_cca_info(std::ostream& os)
+    {
+        os << "shape\tdim_x\tdim_y\thx\thy\thdepth\thbandwidth_max\ttotal_cells\ttotal_compute_"
+              "cells\ttotal_sink_cells\ttotal_chip_memory(bytes)\tthrottle\trecv_buff_size\n";
+
+        this->output_description_in_a_single_line(os);
+
+        os << "congestion_policy\n"
+           << "constant_threshold"
+           << "\t" << curently_congested_threshold << "\n ";
     }
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)

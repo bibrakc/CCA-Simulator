@@ -327,13 +327,13 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     }
 
     std::cout << simulation_statistics;
-    std::cout << "Avg Objects per Compute Cell: "
-              << static_cast<double>(simulation_statistics.objects_allocated) /
-                     static_cast<double>(this->total_compute_cells - this->total_sink_cells);
+    float avg_objects_per_cc =
+        static_cast<double>(simulation_statistics.objects_allocated) /
+        static_cast<double>(this->total_compute_cells - this->total_sink_cells);
+    std::cout << "Avg Objects per Compute Cell: " << avg_objects_per_cc;
 
     // Output CCA Chip details
-    CCASimulator::generate_label(output_file);
-    this->output_description_in_a_single_line(output_file);
+    this->write_cca_info(output_file);
 
     // Output total cycles, total actions, total actions performed work, total actions false on
     // predicate. TODO: Somehow put the resource usage as a percentage...?
@@ -343,6 +343,8 @@ CCASimulator::print_statistics(std::ofstream& output_file)
                 << simulation_statistics.actions_created << "\t"
                 << simulation_statistics.actions_performed_work << "\t"
                 << simulation_statistics.actions_false_on_predicate << "\n";
+
+    output_file << "avg_objects_per_cc\n" << avg_objects_per_cc << "\n";
 
     // Output the active status of the individual cells and htree per cycle
     this->output_CCA_active_status_per_cycle(output_file);

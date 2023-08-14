@@ -40,6 +40,11 @@ if(NOT DEFINED THROTTLE)
 endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
 
+if(NOT DEFINED RECVBUFFSIZE)
+    set(RECVBUFFSIZE 1)
+endif()
+add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
+
 if(NOT DEFINED VERTEX_TYPE)
     set(VERTEX_TYPE "RecursiveParallelVertex")
 endif()
