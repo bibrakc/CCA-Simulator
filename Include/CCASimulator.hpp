@@ -84,6 +84,7 @@ struct ActiveStatusPerCycle
 struct CCASimulatorStatistics
 {
     std::vector<ActiveStatusPerCycle> active_status;
+    double avg_cells_active_percent{};
 
     // Use for animation of the simulation as the cells in the CCA chip become active and inactive
     std::vector<std::shared_ptr<u_int32_t[]>> individual_cells_active_status_per_cycle;
@@ -247,6 +248,18 @@ class CCASimulator
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)
     {
+
+        for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
+            this->cca_statistics.avg_cells_active_percent +=
+                this->cca_statistics.active_status[i].cells_active_percent;
+        }
+
+        this->cca_statistics.avg_cells_active_percent /= this->cca_statistics.active_status.size();
+
+        std::cout << "\nAvg active cells percent = "
+                  << this->cca_statistics.avg_cells_active_percent << "\n";
+        os << "avg_cells_active_percent\n" << this->cca_statistics.avg_cells_active_percent << "\n";
+
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
         for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
             os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"

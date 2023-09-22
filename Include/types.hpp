@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 constexpr u_int32_t lane_width = 1;
 
 // Size of the recv buffer at each channel.
-constexpr u_int32_t buffer_size = 16;
+constexpr u_int32_t buffer_size = RECVBUFFSIZE;
 
 using Coordinates = std::pair<u_int32_t, u_int32_t>;
 

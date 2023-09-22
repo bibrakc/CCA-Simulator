@@ -89,6 +89,10 @@ with open(output_file, 'r') as file:
 
     # read the header line for the table and discard it
     header = file.readline()
+    avg_cells_active_percent = file.readline().strip()
+
+    # read the header line for the table and discard it
+    header = file.readline()
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
@@ -246,8 +250,9 @@ def active_status_chart():
                      '\nPure Mesh Network\nPercentage of Compute Cells Active per Cycle', fontsize=16)
 
     # Add a larger second title
+    avg_cells_active_percent_num = float(avg_cells_active_percent)
     plt.suptitle('Asynchronous BFS on a CCA Chip of ' +
-                 str(dim_x)+' x '+str(dim_y)+' Cells', fontsize=16, fontweight='bold')
+                 str(dim_x)+' x '+str(dim_y)+' Cells, Average Active Cells: ' + f"{avg_cells_active_percent_num:.3g}" + '%', fontsize=16, fontweight='bold')
 
 
 # print(matplotlib.matplotlib_fname())
