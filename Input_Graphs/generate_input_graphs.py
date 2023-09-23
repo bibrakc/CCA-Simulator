@@ -1,4 +1,5 @@
-# The file was adapted from an assignment during graduate studies at Indiana University Bloomington
+# The file is adapted from a class assignment in Graph Analytics
+# during graduate studies at Indiana University Bloomington.
 # Bibrak Qamar
 
 # Generate Input Graphs
@@ -7,6 +8,7 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 import time
 import networkx as nx
+import networkit as nk
 import random
 from collections import deque
 
@@ -38,9 +40,34 @@ def In_Degree_Distribution(G):
 
     print("In Degree Distribution Statistics")
     s = pd.Series(degree)
-    print(s.describe())
+    print(s.describe(percentiles=[0.10, 0.20,
+          0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]))
     write_to_file(Output_filename, "In Degree Distribution Statistics")
     write_to_file(Output_filename, str(s.describe()))
+
+    sorted_degrees = sorted(G.in_degree, key=lambda x: x[1], reverse=True)
+    print('highest degree vertex: ', sorted_degrees[0][0])
+    write_to_file(Output_filename, "highest degree vertex: " +
+                  str(sorted_degrees[0][0]))
+
+
+def Out_Degree_Distribution(G):
+
+    degree = G.out_degree()
+    degree = [deg for (v, deg) in degree]
+    # avg_degree = sum(degree)/len(degree)
+
+    print("Out Degree Distribution Statistics")
+    s = pd.Series(degree)
+    print(s.describe(percentiles=[0.10, 0.20, 0.30,
+      0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
+    write_to_file(Output_filename, "Out Degree Distribution Statistics")
+    write_to_file(Output_filename, str(s.describe()))
+
+    sorted_degrees = sorted(G.out_degree, key=lambda x: x[1], reverse=True)
+    print('highest degree vertex: ', sorted_degrees[0][0])
+    write_to_file(Output_filename, "highest degree vertex: " +
+                  str(sorted_degrees[0][0]))
 
 
 def Degree_Distribution(G):
@@ -60,9 +87,15 @@ def Degree_Distribution(G):
 
     print("Degree Distribution Statistics")
     s = pd.Series(degree)
-    print(s.describe())
+    print(s.describe(percentiles=[0.10, 0.20,
+          0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]))
     write_to_file(Output_filename, "Degree Distribution Statistics")
     write_to_file(Output_filename, str(s.describe()))
+
+    sorted_degrees = sorted(G.degree, key=lambda x: x[1], reverse=True)
+    print('highest degree vertex: ', sorted_degrees[0][0])
+    write_to_file(Output_filename, "highest degree vertex: " +
+                  str(sorted_degrees[0][0]))
 
 
 # Input: A graph
@@ -278,6 +311,8 @@ def sssp(graph, source, Output_filename):
             file.write(f"{vertex}\t{length}\n")
 
 # Perform pagerank using nx.pagerank ignore weights.
+
+
 def pagerank(graph, Output_filename):
     # Calculate PageRank
     pagerank = nx.pagerank(graph, max_iter=100, weight=None)
@@ -343,6 +378,15 @@ if graph == "Erdos" and directed == "not_directed":
             vertices_needed, edges_needed, directed=True, seed=133)
     A = "Erdos-Renyi_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
+if graph == "RMAT" and directed == "not_directed":
+    rmat = nk.generators.RmatGenerator(scale_factor, edge_factor, 0.1, 0.2, 0.5, 0.2)
+    rmatG = rmat.generate()
+    G_gen = nk.nxadapter.nk2nx(rmatG)
+    while (nx.is_connected(G_gen) == False):
+        print(graph+" was not connected trying again")
+        sys.exit(1)
+        
+    A = "RMAT_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 Output_filename = A+".output"
 write_to_file(Output_filename, graph+"\n")
@@ -356,17 +400,22 @@ print("Graph generated with weights\n")
 
 # Analyze the graph that you have created
 
-# Degree Distribution is time consuming
-if directed != "not_directed":
-    start = time.time()
-    In_Degree_Distribution(G_gen)
-    end = time.time()
-    print("Time in In_Degree_Distribution: ", end-start, "\n")
+""" n = G_gen.number_of_nodes()
+m = G_gen.number_of_edges()
+print('Is directed: ', nx.is_directed(G_gen))
+print(A, "Directed : Number of vertices: ", n, ", Number of edges: ",
+      m, ", Edge Factor: ", edge_factor, ", Scale: ", scale_factor) """
 
-start = time.time()
-Degree_Distribution(G_gen)
-end = time.time()
-print("Time in Degree_Distribution: ", end-start, "\n")
+""" if directed != "not_directed":
+    start = time.time()
+    Out_Degree_Distribution(G_gen)
+    end = time.time()
+    print("Time in Out_Degree_Distribution: ", end-start, "\n")
+else:
+    start = time.time()
+    Degree_Distribution(G_gen)
+    end = time.time()
+    print("Time in Degree_Distribution: ", end-start, "\n") """
 
 
 # These are time consuming therefore commenting them out.
@@ -443,11 +492,17 @@ nx.write_weighted_edgelist(G, filename_to_write, delimiter='\t')
 
 n = G.number_of_nodes()
 m = G.number_of_edges()
+print('Is directed: ', nx.is_directed(G))
 print(A, "Directed : Number of vertices: ", n, ", Number of edges: ",
       m, ", Edge Factor: ", edge_factor, ", Scale: ", scale_factor)
 write_to_file(Output_filename, A+" Directed: Number of vertices: " + str(n)+", Number of edges: " +
               str(m)+", Edge Factor: " + str(edge_factor) + ", Scale: " + str(scale_factor))
 
+
+start = time.time()
+Out_Degree_Distribution(G)
+end = time.time()
+print("Time in Out_Degree_Distribution: ", end-start, "\n")
 
 f = open(filename_to_write, 'r')
 temp = f.read()

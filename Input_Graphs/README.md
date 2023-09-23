@@ -1,8 +1,8 @@
 # Generate Synthetic Graphs Using NetworkX
-`$ python3 generate_input_graphs.py <Powerlaw|Scalefree|Smallworld|Erdos> <directed|not_directed> <edge-factor> <scale-factor>`
+`$ python3 generate_input_graphs.py <Powerlaw|Scalefree|Smallworld|Erdos|RMAT> <directed|not_directed> <edge-factor> <scale-factor>`
 
 Here:
-1. `[Powerlaw, Scalefree, Smallworld, Erdos]` are the graph types.
+1. `[Powerlaw, Scalefree, Smallworld, Erdos, RMAT]` are the graph types.
 2. `directed` or `not_directed`:  If `directed` then use `directed=True` parameter whenever available.
 3. `edge-factor` is the number of edges per vertex (approximately).
 4. `scale-factor` is the 2^n number of vertices, where n is the `scale-factor`.

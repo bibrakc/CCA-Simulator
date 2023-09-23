@@ -1,6 +1,7 @@
 Erdos
 
-Degree Distribution Statistics
+Erdos-Renyi_ef_5_v_8 Directed: Number of vertices: 256, Number of edges: 2560, Edge Factor: 5, Scale: 8
+Out Degree Distribution Statistics
 count    256.000000
 mean      10.000000
 std        3.232191
@@ -10,4 +11,4 @@ min        2.000000
 75%       12.000000
 max       18.000000
 dtype: float64
-Erdos-Renyi_ef_5_v_8 Directed: Number of vertices: 256, Number of edges: 2560, Edge Factor: 5, Scale: 8
+highest degree vertex: 127
