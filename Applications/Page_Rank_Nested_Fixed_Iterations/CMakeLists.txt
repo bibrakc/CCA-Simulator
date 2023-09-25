@@ -45,6 +45,11 @@ if(NOT DEFINED RECVBUFFSIZE)
 endif()
 add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
 
+if(NOT DEFINED ANIMATION)
+    set(ANIMATION "true")
+endif()
+add_definitions(-DANIMATION=${ANIMATION})
+
 if(NOT DEFINED VERTEX_TYPE)
     set(VERTEX_TYPE "RecursiveParallelVertex")
 endif()

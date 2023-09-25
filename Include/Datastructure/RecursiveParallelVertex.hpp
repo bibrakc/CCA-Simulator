@@ -178,7 +178,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
             // Right now defining the vicinity boundary as constant but later this can be made
             // sophisticated by using some measure like the outbound edges and then for each
             // vertex spread its vicinity of allocation such that large vertices have a larger
-            // vicinity. 2 and 2 = 4x4 actually.
+            // vicinity. 2 and 2 = 5x5 actually.
             constexpr u_int32_t vicinity_rows = 2;
             constexpr u_int32_t vicinity_cols = 2;
 

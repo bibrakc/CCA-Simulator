@@ -40,4 +40,8 @@ inline constexpr bool debug_code = false;
 // Compile with: -DTHROTTLE=true/false
 inline constexpr bool throttling_switch = THROTTLE;
 
+// Dumb active status per cycle for all compute cells.
+// Compile with: -DANIMATION=true/false
+inline constexpr bool animation_switch = ANIMATION;
+
 #endif // CONSTANTS_HPP
