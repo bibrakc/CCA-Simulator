@@ -72,6 +72,29 @@ main(int argc, char** argv) -> int
     Graph<PageRankNestedFixedIterationsVertex<SimpleVertex<host_edge_type>>> input_graph(
         cmd_args.input_graph_path);
 
+    // Get the vertices with degree values equal to 0.
+    std::vector<u_int32_t> vertices_inbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_in_degree();
+
+    std::cout << "Vertices with in degree value 0: \n";
+    for (const auto& vertex_id : vertices_inbound_degree_zero) {
+        std::cout << vertex_id
+                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
+    }
+    std::cout << std::endl;
+
+    // Get the vertices with out degree values equal to 0.
+    std::vector<u_int32_t> vertices_outbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_out_degree();
+
+    std::cout << "Vertices with out degree value 0: \n";
+    for (const auto& vertex_id : vertices_outbound_degree_zero) {
+        std::cout << vertex_id
+                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
+    }
+    std::cout << std::endl;
+    // return 0;
+
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
@@ -119,15 +142,52 @@ main(int argc, char** argv) -> int
     for (u_int32_t iterations = 0; iterations < cmd_args.total_iterations; iterations++) {
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(
-            Action(vertex_addr,
-                   page_rank_nested_fixed_iterations_terminator.value(),
-                   actionType::germinate_action,
-                   true,
-                   args_x,
-                   page_rank_nested_fixed_iterations_predicate,
-                   page_rank_nested_fixed_iterations_work,
-                   page_rank_nested_fixed_iterations_diffuse));
+        if (vertices_inbound_degree_zero.size() == 0) {
+            cca_square_simulator.germinate_action(
+                Action(vertex_addr,
+                       page_rank_nested_fixed_iterations_terminator.value(),
+                       actionType::germinate_action,
+                       true,
+                       args_x,
+                       page_rank_nested_fixed_iterations_predicate,
+                       page_rank_nested_fixed_iterations_work,
+                       page_rank_nested_fixed_iterations_diffuse));
+        }
+        // Germinate seed action on the vertices with inbound_degree zero.
+        // This is needed since otherwise they will never be activated and therefore in turn cannot
+        // send their score to other vertices that will be waiting on them.
+        for (const auto vertex_id : vertices_inbound_degree_zero) {
+            // Only put the PageRankFixedIterationsAction seed action on a single vertex.
+            // In this case Page Rank Fixed Iterations root = root_vertex
+            auto vertex_addr_to_zero_in_degree = input_graph.get_vertex_address_in_cca(vertex_id);
+
+            /* for (u_int32_t nested_iteration_i = 0; nested_iteration_i < nested_iterations;
+                 nested_iteration_i++) { */
+
+            PageRankNestedFixedIterationsArguments germinate_arg_to_zero_in_degree;
+            germinate_arg_to_send.nested_iteration = 0; // nested_iteration_i;
+            germinate_arg_to_send.score = 0;
+            germinate_arg_to_send.src_vertex_id = 999999;
+
+            ActionArgumentType const args_to_zero_in_degree =
+                cca_create_action_argument<PageRankNestedFixedIterationsArguments>(
+                    germinate_arg_to_zero_in_degree);
+
+            // Insert a seed action into the CCA chip that will help start the diffusion.
+            cca_square_simulator.germinate_action(
+                Action(vertex_addr_to_zero_in_degree,
+                       page_rank_nested_fixed_iterations_terminator.value(),
+                       actionType::germinate_action,
+                       true,
+                       args_to_zero_in_degree,
+                       page_rank_nested_fixed_iterations_predicate,
+                       page_rank_nested_fixed_iterations_work,
+                       page_rank_nested_fixed_iterations_diffuse));
+            //}
+
+            std::cout << "Germinated Vertices with degree value 0: " << vertex_id << "\n";
+        }
+        // return 0;
 
         std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
 

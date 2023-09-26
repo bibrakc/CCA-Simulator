@@ -428,7 +428,7 @@ CCASimulator::run_simulation(Address app_terminator)
                 sum_global_active_cc_local++;
             }
         }
-        
+
         if constexpr (animation_switch) {
             this->cca_statistics.individual_cells_active_status_per_cycle.push_back(
                 active_status_frame_per_cells);

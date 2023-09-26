@@ -60,7 +60,7 @@ def Out_Degree_Distribution(G):
     print("Out Degree Distribution Statistics")
     s = pd.Series(degree)
     print(s.describe(percentiles=[0.10, 0.20, 0.30,
-      0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
+                                  0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
     write_to_file(Output_filename, "Out Degree Distribution Statistics")
     write_to_file(Output_filename, str(s.describe()))
 
@@ -315,7 +315,7 @@ def sssp(graph, source, Output_filename):
 
 def pagerank(graph, Output_filename):
     # Calculate PageRank
-    pagerank = nx.pagerank(graph, max_iter=100, weight=None)
+    pagerank = nx.pagerank(graph, alpha=0.85, max_iter=100, weight=None, dangling=None)
 
     # Open a file for writing the PageRank values
     with open(Output_filename, "w") as file:
@@ -379,13 +379,14 @@ if graph == "Erdos" and directed == "not_directed":
     A = "Erdos-Renyi_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 if graph == "RMAT" and directed == "not_directed":
-    rmat = nk.generators.RmatGenerator(scale_factor, edge_factor, 0.1, 0.2, 0.5, 0.2)
+    rmat = nk.generators.RmatGenerator(
+        scale_factor, edge_factor, 0.1, 0.2, 0.5, 0.2)
     rmatG = rmat.generate()
     G_gen = nk.nxadapter.nk2nx(rmatG)
     while (nx.is_connected(G_gen) == False):
         print(graph+" was not connected trying again")
         sys.exit(1)
-        
+
     A = "RMAT_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 Output_filename = A+".output"

@@ -64,6 +64,8 @@ class Graph
                       << ") cannot be inserted\n";
             exit(0);
         }
+        // Increment the in degree of the dst vertex.
+        this->vertices[dst_vertex_id].inbound_degree++;
     }
 
     // Insert edge by `Address` type src and dst
@@ -88,6 +90,34 @@ class Graph
         }
 
         return success;
+    }
+
+    auto get_vertices_ids_with_zero_in_degree() -> std::vector<u_int32_t>
+    {
+        // Find vertices with inbound_degree equal to 0.
+        std::vector<u_int32_t> vertices_inbound_degree_zero;
+        for (u_int32_t i = 0; i < this->total_vertices; i++) {
+            // std::cout << this->vertices[i].inbound_degree << "\n";
+            if (this->vertices[i].inbound_degree == 0) {
+                vertices_inbound_degree_zero.push_back(this->vertices[i].id);
+            }
+        }
+        // std::cout << "\n";
+        return vertices_inbound_degree_zero;
+    }
+
+    auto get_vertices_ids_with_zero_out_degree() -> std::vector<u_int32_t>
+    {
+        // Find vertices with inbound_degree equal to 0.
+        std::vector<u_int32_t> vertices_outbound_degree_zero;
+        for (u_int32_t i = 0; i < this->total_vertices; i++) {
+            // std::cout << this->vertices[i].outbound_degree << "\n";
+            if (this->vertices[i].outbound_degree == 0) {
+                vertices_outbound_degree_zero.push_back(this->vertices[i].id);
+            }
+        }
+        // std::cout << "\n";
+        return vertices_outbound_degree_zero;
     }
 
     // Initialize a newly created vertex in the CCA memory.
