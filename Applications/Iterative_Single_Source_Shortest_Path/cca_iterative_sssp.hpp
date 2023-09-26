@@ -47,10 +47,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
 
+inline static constexpr u_int32_t undefined_distance = 999999;
+
 template<typename Vertex_T>
 struct SSSPIterativeVertex : Vertex_T
 {
-    inline static constexpr u_int32_t max_distance = 999999;
+    inline static constexpr u_int32_t max_distance = undefined_distance;
 
     // The distance from root.
     u_int32_t sssp_distance;
@@ -437,8 +439,20 @@ verify_results(const SSSPIterativeCommandLineArguments& cmd_args,
         u_int32_t sssp_iterative_value;
         while (std::getline(file, line)) {
 
-            if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &sssp_iterative_value) == 2) {
+            std::istringstream iss(line);
+
+            if (iss >> node_id >> sssp_iterative_value) {
+                // When there are vertices with in-degree zero then they are not present in the
+                // .sssp file. Therefore, we have to substitute its value with the undefined of
+                // `max_distance` for the verification to work.
+                while (node_id != control_results.size()) {
+                    control_results.emplace_back(undefined_distance);
+                }
                 control_results.emplace_back(sssp_iterative_value);
+            } else {
+                // Parsing failed.
+                std::cerr << "Error parsing line: " << line
+                          << ", in file: " << verfication_file_path << std::endl;
             }
         }
 

@@ -50,6 +50,11 @@ if(NOT DEFINED ANIMATION)
 endif()
 add_definitions(-DANIMATION=${ANIMATION})
 
+if(NOT DEFINED VICINITY)
+    set(VICINITY 3)
+endif()
+add_definitions(-DVICINITY=${VICINITY})
+
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)

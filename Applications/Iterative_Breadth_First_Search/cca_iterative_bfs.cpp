@@ -106,9 +106,18 @@ main(int argc, char** argv) -> int
         iteration_deeepening_space.push_back(i);
     }
     // Check if bfs_iterative_deepening_max is not already in the sequence. If not then add it.
-    if (iteration_deeepening_space.back() != cmd_args.bfs_iterative_deepening_max) {
+    if (iteration_deeepening_space.back() < cmd_args.bfs_iterative_deepening_max) {
         iteration_deeepening_space.push_back(cmd_args.bfs_iterative_deepening_max);
     }
+    /* std::cout << "iteration_deeepening_space: \n";
+    for (auto x : iteration_deeepening_space) {
+        std::cout << x << ", ";
+    }
+    std::cout << "\n\n"; */
+
+        // Get the vertices with degree values equal to 0.
+    std::vector<u_int32_t> vertices_inbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_in_degree();    
 
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();

@@ -50,6 +50,11 @@ if(NOT DEFINED ANIMATION)
 endif()
 add_definitions(-DANIMATION=${ANIMATION})
 
+if(NOT DEFINED VICINITY)
+    set(VICINITY 3)
+endif()
+add_definitions(-DVICINITY=${VICINITY})
+
 if(NOT DEFINED VERTEX_TYPE)
     set(VERTEX_TYPE "RecursiveParallelVertex")
 endif()

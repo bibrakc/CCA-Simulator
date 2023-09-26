@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef RECURSIVE_PARALLEL_Vertex_HPP
 #define RECURSIVE_PARALLEL_Vertex_HPP
 
+#include "Constants.hpp"
 #include "SimpleVertex.hpp"
 #include "VicinityMemoryAllocator.hpp"
 using Allocator_T = VicinityMemoryAllocator;
@@ -179,9 +180,9 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
             // sophisticated by using some measure like the outbound edges and then for each
             // vertex spread its vicinity of allocation such that large vertices have a larger
             // vicinity. 2 and 2 = 5x5 actually.
-            constexpr u_int32_t vicinity_rows = 2;
-            constexpr u_int32_t vicinity_cols = 2;
-
+            constexpr u_int32_t vicinity_rows = vicinity_radius; // 2;
+            constexpr u_int32_t vicinity_cols = vicinity_radius; // 2;
+            
             this->ghost_vertex_allocator = VicinityMemoryAllocator(
                 Cell::cc_id_to_cooridinate(
                     source_cc_id, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y),

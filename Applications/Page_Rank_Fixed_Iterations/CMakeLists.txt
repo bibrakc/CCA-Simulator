@@ -45,6 +45,16 @@ if(NOT DEFINED RECVBUFFSIZE)
 endif()
 add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
 
+if(NOT DEFINED ANIMATION)
+    set(ANIMATION "true")
+endif()
+add_definitions(-DANIMATION=${ANIMATION})
+
+if(NOT DEFINED VICINITY)
+    set(VICINITY 3)
+endif()
+add_definitions(-DVICINITY=${VICINITY})
+
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)

@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include <stdint.h>
+
 // Set it to true/false
 inline constexpr bool debug_code = false;
 
@@ -40,8 +42,11 @@ inline constexpr bool debug_code = false;
 // Compile with: -DTHROTTLE=true/false
 inline constexpr bool throttling_switch = THROTTLE;
 
-// Dumb active status per cycle for all compute cells.
+// Dump active status per cycle for all compute cells.
 // Compile with: -DANIMATION=true/false
 inline constexpr bool animation_switch = ANIMATION;
+
+// Compile with: -DVICINITY=<int value>
+inline constexpr u_int32_t vicinity_radius = VICINITY;
 
 #endif // CONSTANTS_HPP

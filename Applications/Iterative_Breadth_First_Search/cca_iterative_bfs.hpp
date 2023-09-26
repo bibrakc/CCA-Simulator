@@ -430,8 +430,20 @@ verify_results(const BFSIterativeCommandLineArguments& cmd_args,
         u_int32_t bfs_iterative_value;
         while (std::getline(file, line)) {
 
-            if (std::sscanf(line.c_str(), "%zu\t%zu", &node_id, &bfs_iterative_value) == 2) {
+            std::istringstream iss(line);
+
+            if (iss >> node_id >> bfs_iterative_value) {
+                // When there are vertices with in-degree zero then they are not present in the .bfs
+                // file. Therefore, we have to substitute its value with the undefined of
+                // `max_level` for the verification to work.
+                while (node_id != control_results.size()) {
+                    control_results.emplace_back(undefined_level);
+                }
                 control_results.emplace_back(bfs_iterative_value);
+            } else {
+                // Parsing failed.
+                std::cerr << "Error parsing line: " << line
+                          << ", in file: " << verfication_file_path << std::endl;
             }
         }
 

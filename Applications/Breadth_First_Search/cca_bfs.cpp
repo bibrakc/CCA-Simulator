@@ -85,6 +85,30 @@ main(int argc, char** argv) -> int
     input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address>>>(
         cca_square_simulator, allocator);
 
+    std::vector<u_int32_t> vertices_inbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_in_degree();
+
+    std::cout << "Vertices with in degree value 0: \n";
+    for (const auto& vertex_id : vertices_inbound_degree_zero) {
+        std::cout << vertex_id
+                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
+    }
+    std::cout << std::endl;
+
+    // Get the vertices with out degree values equal to 0.
+    std::vector<u_int32_t> vertices_outbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_out_degree();
+
+    std::cout << "Vertices with out degree value 0: \n";
+    for (const auto& vertex_id : vertices_outbound_degree_zero) {
+        std::cout << vertex_id
+                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
+    }
+    std::cout << std::endl;
+    //return 0;
+
+
+
     // Only put the BFS seed action on a single vertex.
     // In this case BFS root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);

@@ -181,7 +181,8 @@ def Avg_ShortestPaths_Analysis(G):
 # Find shortest paths in the largest 5 componets and plot distribution
 def ShortestPaths_Analysis(G):
     cc_sorted = sorted(nx.connected_components(G), key=len, reverse=True)
-    # print(cc_sorted)
+    for i in cc_sorted:
+        print("Length of component: ", len(i))
     # find shortest paths in top 1 components
     topcc = min(len(cc_sorted), 1)
     for i in range(topcc):
@@ -422,13 +423,13 @@ Avg_ShortestPaths_Analysis(G_gen)
 end = time.time()
 print("Time in SSSP: ", end-start, "\n") """
 
-""" start = time.time()
+start = time.time()
 if directed == "directed":
     ShortestPaths_Analysis(G_gen.to_undirected())
 else:
     ShortestPaths_Analysis(G_gen)
 end = time.time()
-print("Time in SSSP: ", end-start, "\n") """
+print("Time in SSSP: ", end-start, "\n") 
 
 for (u, v) in G_gen.edges():
     G_gen.edges[u, v]['weight'] = random.randint(1, 5)
