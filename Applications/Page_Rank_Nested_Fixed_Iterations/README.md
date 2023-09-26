@@ -19,6 +19,7 @@ Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iteratio
 > `$ ./build/PageRank_Nested_Fixed_Iterations_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 3 -m 90000 -hx 48 -hy 48 -hdepth 0 -hb 0 -route 0 -iter 5 -verify`
 
 - Make sure to have the output `-od ./Output` directory created before runing the application.
+- The `root` will only be used if there are no vertices with `in degree` of zero. The application will try to find if there are any vertices with zero `in degre` and if it finds then it will germinate the page rank action on all those vertices.
 
 ## Limitations
-For a directed graph there must not be any vertex with zero inbound degree. If such a case arises, the vertex will remain inactive and consequently not contribute to the score. Moreover, this inactive vertex might hinder the update of scores for other vertices, as they depend on the activation of this vertex.
+For a directed graph if there is any vertex with zero outbound degree then the networkx calculated .pagerank score might no match since perhaps networkx uses some form of dandling calculations that this version does not. It needs to be investigated further. Right now it shouldn't be an issue as far as the performance and understanding of the behaviour is concerned.
