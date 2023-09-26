@@ -8,6 +8,7 @@ To compile the application, execute the following `cmake` commands to generate t
 > `$ cmake --build build`
 
 - `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
+- `-D ANIMATION=true/false`: for recording and writing the simulation animation data.
 
 ## Executing
 Assuming the current directory is `/Applications/Iterative_Breadth_First_Search`

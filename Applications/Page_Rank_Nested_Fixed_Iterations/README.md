@@ -9,6 +9,7 @@ To compile the application, execute the following `cmake` commands to generate t
 > `$ cmake --build build`
 
 - `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
+- `-D ANIMATION=true/false`: for recording and writing the simulation animation data.
 
 ## Executing
 Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iterations`, and `-iter 5` iterations to perform. `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file.
