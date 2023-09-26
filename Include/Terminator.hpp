@@ -43,7 +43,7 @@ class ComputeCell;
 // Dijkstra–Scholten algorithm for termination detection
 struct Terminator
 {
-    u_int32_t deficit;
+    u_int32_t deficit{};
     std::optional<Address> parent;
 
     // The address of the object of which this terminator is part of.

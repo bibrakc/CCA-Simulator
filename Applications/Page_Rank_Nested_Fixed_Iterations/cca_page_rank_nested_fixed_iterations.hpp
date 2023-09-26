@@ -186,6 +186,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 
     u_int32_t const iteration = page_rank_args.nested_iteration;
 
+    // std::cout << "v->id: " << v->id << ", start work\n";
+
     bool const is_germinate = action_type_in == actionType::germinate_action;
 
     bool const is_first_message_of_the_epoch =
@@ -232,6 +234,7 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
             v->args_for_diffusion.score =
                 v->page_rank_score / static_cast<double>(v->outbound_degree);
         } else {
+
             u_int32_t const previous_iteration = iteration - 1;
             v->args_for_diffusion.score =
                 v->iterations[previous_iteration].iteration_page_rank_score /
@@ -255,7 +258,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 
     // If this is the last message for this iteration then update the score. And set the stage for
     // the germination of the next iteration.
-    if ((v->iterations[iteration].messages_received_count == v->inbound_degree) && !is_germinate) {
+    if ((v->iterations[iteration].messages_received_count == v->inbound_degree) &&
+        (!is_germinate || (v->inbound_degree == 0))) {
 
         // Update the page rank score.
         v->iterations[iteration].iteration_page_rank_score =
@@ -265,9 +269,14 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         assert(iteration >= v->page_rank_score_which_iteration_set_it &&
                "BUG! Lower iteration setting score but a higher iteration already set it!");
         // Update the score to the current iteration score.
+
         v->page_rank_score = v->iterations[iteration].iteration_page_rank_score;
         v->page_rank_score_which_iteration_set_it = iteration;
         v->iterations[iteration].score_is_valid = true;
+        if (v->inbound_degree == 0) {
+            v->page_rank_score =
+                ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices));
+        }
 
         // Update the count for how many total iterations have been received and scores set for this
         // iterative epoch.
@@ -304,6 +313,8 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 
         v->start_next_iteration = true;
     }
+
+    // std::cout << "v->id: " << v->id << ", end work\n";
     return 0;
 }
 
@@ -321,6 +332,8 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     u_int32_t const iteration = page_rank_args.nested_iteration;
     // v->args_for_diffusion.nested_iteration; //;
+
+    // std::cout << "v->id: " << v->id << ", start diffuse\n";
 
     // If the diffusion has not occured for the current iteration then diffuse.
     bool should_diffuse = !v->iterations[iteration].has_current_iteration_diffused &&
@@ -445,6 +458,8 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
         v->page_rank_score_which_iteration_set_it = 0;
         v->start_next_iteration = false;
     }
+
+    // std::cout << "v->id: " << v->id << ", end diffuse\n";
     return 0;
 }
 

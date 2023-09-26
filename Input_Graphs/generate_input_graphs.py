@@ -14,6 +14,8 @@ from collections import deque
 
 # For statistics
 import pandas as pd
+# suppress scientific notation by setting float_format
+pd.options.display.float_format = '{:.2f}'.format
 
 # For argument parsing
 import sys
@@ -40,14 +42,15 @@ def In_Degree_Distribution(G):
 
     print("In Degree Distribution Statistics")
     s = pd.Series(degree)
-    print(s.describe(percentiles=[0.10, 0.20,
-          0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]))
+    print(s.describe(percentiles=[0.10, 0.20, 0.30,
+                                  0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
     write_to_file(Output_filename, "In Degree Distribution Statistics")
-    write_to_file(Output_filename, str(s.describe()))
+    write_to_file(Output_filename, str(s.describe(percentiles=[0.10, 0.20, 0.30,
+                                                               0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99])))
 
     sorted_degrees = sorted(G.in_degree, key=lambda x: x[1], reverse=True)
-    print('highest degree vertex: ', sorted_degrees[0][0])
-    write_to_file(Output_filename, "highest degree vertex: " +
+    print('highest in degree vertex: ', sorted_degrees[0][0])
+    write_to_file(Output_filename, "highest in degree vertex: " +
                   str(sorted_degrees[0][0]))
 
 
@@ -60,14 +63,16 @@ def Out_Degree_Distribution(G):
     print("Out Degree Distribution Statistics")
     s = pd.Series(degree)
     print(s.describe(percentiles=[0.10, 0.20, 0.30,
-      0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
+                                  0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
     write_to_file(Output_filename, "Out Degree Distribution Statistics")
-    write_to_file(Output_filename, str(s.describe()))
+    write_to_file(Output_filename, str(s.describe(percentiles=[0.10, 0.20, 0.30,
+                                                               0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99])))
 
     sorted_degrees = sorted(G.out_degree, key=lambda x: x[1], reverse=True)
-    print('highest degree vertex: ', sorted_degrees[0][0])
-    write_to_file(Output_filename, "highest degree vertex: " +
+    print('highest out degree vertex: ', sorted_degrees[0][0])
+    write_to_file(Output_filename, "highest out degree vertex: " +
                   str(sorted_degrees[0][0]))
+    return sorted_degrees[0][0]
 
 
 def Degree_Distribution(G):
@@ -168,11 +173,15 @@ def Clustering_Analysis(G):
     write_to_file(Output_filename, str(s.describe()))
 
 
+def Avg_ShortestPaths_Analysis(G):
+    print("Avg SSSP Length", nx.average_shortest_path_length(G, weight=None))
+
+
 # Input: A graph
 # Find shortest paths in the largest 5 componets and plot distribution
 def ShortestPaths_Analysis(G):
     cc_sorted = sorted(nx.connected_components(G), key=len, reverse=True)
-
+    # print(cc_sorted)
     # find shortest paths in top 1 components
     topcc = min(len(cc_sorted), 1)
     for i in range(topcc):
@@ -181,13 +190,21 @@ def ShortestPaths_Analysis(G):
 
         if (len(cc) > 100):
             print(
-                "This component is too large. Using fifteen single-source shortest paths.")
+                "This component is too large. Using 100 single-source shortest paths.")
             cc = list(cc)
             cc_graph = G.subgraph(cc)
             shortest_path_lens = []
-            for i in range(15):
-                # print("cc[i] = ", cc[i])
-                length = nx.single_source_shortest_path_length(cc_graph, cc[i])
+            
+            one_way_sample_size = 50
+            begining_vertices = list(range(0, one_way_sample_size))
+            last_vertices = list(
+                range(len(cc)-1, len(cc) - one_way_sample_size - 1, -1))
+            sample_vertices = begining_vertices + last_vertices
+            # print(sample_vertices)
+            
+            for i in sample_vertices:
+                print('Finding SSSP for ', i)
+                length = nx.single_source_shortest_path_length(cc_graph, i)
                 shortest_path_lens += [v for v in length.values()]
         else:
             all_shortest_path_dict = dict(
@@ -201,6 +218,8 @@ def ShortestPaths_Analysis(G):
         avg_shortest_path_lens = sum(
             shortest_path_lens)/len(shortest_path_lens)
         # print("Average shortest_path_lens: ", avg_shortest_path_lens)
+        # print('Len of shortest_path_lens: ', len(shortest_path_lens))
+
         """ plot_distribution(shortest_path_lens, xlabel='Shortest path lengths (hops)',
                           ylabel='Number of paths', title='Shortest path lengths distributions '+A,
                           xlog=False, ylog=False, showLine=True, intAxis=True)
@@ -268,6 +287,7 @@ def plot_degree_bar(G):
 
 # Perform BFS using nx.bfs_tree
 def bfs(graph, source, Output_filename):
+    print("Running BFS with Source: ", source)
     bfs_tree = nx.bfs_tree(graph, source)
     level = {source: 0}  # Dictionary to store the level of each node
     # Queue to keep track of nodes and their levels
@@ -294,6 +314,7 @@ def bfs(graph, source, Output_filename):
 
 # Perform SSSP using nx.single_source_dijkstra
 def sssp(graph, source, Output_filename):
+    print("Running SSSP with Source: ", source)
     sssp = nx.single_source_dijkstra(graph, source=source)
 
     # Sort the vertices based on their keys
@@ -315,7 +336,8 @@ def sssp(graph, source, Output_filename):
 
 def pagerank(graph, Output_filename):
     # Calculate PageRank
-    pagerank = nx.pagerank(graph, max_iter=100, weight=None)
+    pagerank = nx.pagerank(graph, alpha=0.85, max_iter=100,
+                           weight=None, dangling=None)
 
     # Open a file for writing the PageRank values
     with open(Output_filename, "w") as file:
@@ -375,23 +397,38 @@ if graph == "Erdos" and directed == "not_directed":
     while (nx.is_connected(G_gen) == False):
         print(graph+" was not connected trying again")
         G_gen = nx.gnm_random_graph(
-            vertices_needed, edges_needed, directed=True, seed=133)
+            vertices_needed, edges_needed, directed=False, seed=133)
     A = "Erdos-Renyi_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 if graph == "RMAT" and directed == "not_directed":
-    rmat = nk.generators.RmatGenerator(scale_factor, edge_factor, 0.1, 0.2, 0.5, 0.2)
+    rmat = nk.generators.RmatGenerator(
+        scale_factor, edge_factor, 0.1, 0.2, 0.5, 0.2)
     rmatG = rmat.generate()
     G_gen = nk.nxadapter.nk2nx(rmatG)
-    while (nx.is_connected(G_gen) == False):
+    """ while (nx.is_connected(G_gen) == False):
         print(graph+" was not connected trying again")
-        sys.exit(1)
-        
+        sys.exit(1) """
+
     A = "RMAT_ef_"+str(edge_factor)+"_v_"+str(scale_factor)
 
 Output_filename = A+".output"
 write_to_file(Output_filename, graph+"\n")
 # print(A, ": Number of vertices:", G_gen.number_of_nodes(), ", Number of edges: ", G_gen.number_of_edges())
 # write_to_file(Output_filename, A+ ": Number of vertices:"+ str(G_gen.number_of_nodes())+ ", Number of edges: "+ str(G_gen.number_of_edges()))
+
+
+""" start = time.time()
+Avg_ShortestPaths_Analysis(G_gen)
+end = time.time()
+print("Time in SSSP: ", end-start, "\n") """
+
+""" start = time.time()
+if directed == "directed":
+    ShortestPaths_Analysis(G_gen.to_undirected())
+else:
+    ShortestPaths_Analysis(G_gen)
+end = time.time()
+print("Time in SSSP: ", end-start, "\n") """
 
 for (u, v) in G_gen.edges():
     G_gen.edges[u, v]['weight'] = random.randint(1, 5)
@@ -423,37 +460,11 @@ else:
 Clustering_Analysis(G_gen)
 end = time.time()
 print("Time in Clustering_Analysis: ", end-start, "\n")
-
-
-start = time.time()
-ShortestPaths_Analysis(G_gen)
-end = time.time()
-print("Time in SSSP: ", end-start, "\n") """
+"""
 
 
 filename_to_write = A+".edgelist"
 
-""" length, path = nx.single_source_dijkstra(G_gen, 0, 35, weight='weight')
-print("\nSSSP path length with wieghts from Src: 0 to target: 35 = ", length)
-print("SSSP path = ", path)
-write_to_file(Output_filename,
-              "\nSSSP path length with wieghts from Src: 0 to target: 35 = " + str(length))
-write_to_file(Output_filename, "SSSP path = "+str(path)) """
-
-# Call BFS starting from node 0. Write the levels in a file.
-bfs(G_gen, 0, filename_to_write+".bfs")
-
-# Call SSSP starting from node 0. Write the levels in a file.
-sssp(G_gen, 0, filename_to_write+".sssp")
-
-# Perform pagerank using nx.pagerank. Write the values in a file.
-pagerank(G_gen, filename_to_write+".pagerank")
-
-# sssp = nx.shortest_path(G_gen,source=4, target=47, weight=None)#, weight='weight')
-# sssp = nx.shortest_path(G_gen,source=0, target=35,  weight='weight')
-# sss_path = nx.single_source_shortest_path(G_gen, 47)
-# print(sssp)
-# print(path)
 
 
 """ 
@@ -483,10 +494,40 @@ if directed != "directed":
 else:
     G = G_gen
 
-""" nx.draw(G, with_labels=True)
-# Show the graph
-plt.show() """
 
+start = time.time()
+In_Degree_Distribution(G)
+end = time.time()
+print("Time in In_Degree_Distribution: ", end-start, "\n")
+
+start = time.time()
+max_out_degree_vertex = Out_Degree_Distribution(G)
+end = time.time()
+print("Time in Out_Degree_Distribution: ", end-start, "\n")
+
+
+
+""" length, path = nx.single_source_dijkstra(G_gen, 0, 35, weight='weight')
+print("\nSSSP path length with wieghts from Src: 0 to target: 35 = ", length)
+print("SSSP path = ", path)
+write_to_file(Output_filename,
+              "\nSSSP path length with wieghts from Src: 0 to target: 35 = " + str(length))
+write_to_file(Output_filename, "SSSP path = "+str(path)) """
+
+# Call BFS starting from node 0. Write the levels in a file.
+bfs(G_gen, max_out_degree_vertex, filename_to_write+".bfs")
+
+# Call SSSP starting from node 0. Write the levels in a file.
+sssp(G_gen, max_out_degree_vertex, filename_to_write+".sssp")
+
+# Perform pagerank using nx.pagerank. Write the values in a file.
+pagerank(G_gen, filename_to_write+".pagerank")
+
+# sssp = nx.shortest_path(G_gen,source=4, target=47, weight=None)#, weight='weight')
+# sssp = nx.shortest_path(G_gen,source=0, target=35,  weight='weight')
+# sss_path = nx.single_source_shortest_path(G_gen, 47)
+# print(sssp)
+# print(path)
 
 nx.write_weighted_edgelist(G, filename_to_write, delimiter='\t')
 
@@ -497,12 +538,6 @@ print(A, "Directed : Number of vertices: ", n, ", Number of edges: ",
       m, ", Edge Factor: ", edge_factor, ", Scale: ", scale_factor)
 write_to_file(Output_filename, A+" Directed: Number of vertices: " + str(n)+", Number of edges: " +
               str(m)+", Edge Factor: " + str(edge_factor) + ", Scale: " + str(scale_factor))
-
-
-start = time.time()
-Out_Degree_Distribution(G)
-end = time.time()
-print("Time in Out_Degree_Distribution: ", end-start, "\n")
 
 f = open(filename_to_write, 'r')
 temp = f.read()
