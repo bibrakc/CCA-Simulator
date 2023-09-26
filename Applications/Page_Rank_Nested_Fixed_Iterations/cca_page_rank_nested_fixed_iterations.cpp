@@ -76,7 +76,6 @@ main(int argc, char** argv) -> int
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();
 
-    /*
     std::cout << "Vertices with in degree value 0: \n";
     for (const auto& vertex_id : vertices_inbound_degree_zero) {
         std::cout << vertex_id
@@ -93,7 +92,7 @@ main(int argc, char** argv) -> int
         std::cout << vertex_id
                   << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
     }
-    std::cout << std::endl; */
+    std::cout << std::endl;
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -143,17 +142,17 @@ main(int argc, char** argv) -> int
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
         // Only use the root vertex to germinate if there are no vertices with zero `in degree`.
-        if (vertices_inbound_degree_zero.size() == 0) {
-            cca_square_simulator.germinate_action(
-                Action(vertex_addr,
-                       page_rank_nested_fixed_iterations_terminator.value(),
-                       actionType::germinate_action,
-                       true,
-                       args_x,
-                       page_rank_nested_fixed_iterations_predicate,
-                       page_rank_nested_fixed_iterations_work,
-                       page_rank_nested_fixed_iterations_diffuse));
-        }
+
+        cca_square_simulator.germinate_action(
+            Action(vertex_addr,
+                   page_rank_nested_fixed_iterations_terminator.value(),
+                   actionType::germinate_action,
+                   true,
+                   args_x,
+                   page_rank_nested_fixed_iterations_predicate,
+                   page_rank_nested_fixed_iterations_work,
+                   page_rank_nested_fixed_iterations_diffuse));
+
         // Germinate seed action on the vertices with inbound_degree zero.
         // This is needed since otherwise they will never be activated and therefore in turn cannot
         // send their score to other vertices that will be waiting on them.
