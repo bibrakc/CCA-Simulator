@@ -38,7 +38,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
         for TERMINATION in "${TERMINATION_VALUES[@]}"; do
             # Run cmake with the current combination of values
             run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION"
-            ../run_bfs_erdos_small.zsh -dataset "$DATASET_PATH"
+            $REPO_PATH/Papers/IPDPS_2024/Runs/BFS/run_bfs_erdos_small.zsh -dataset "$DATASET_PATH"
         done
     done
 done
