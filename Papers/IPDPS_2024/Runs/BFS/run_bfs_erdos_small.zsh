@@ -5,8 +5,8 @@ EXECUTABLE="./build/BFS_CCASimulator"
 
 
 # Define the input file path
-REPO_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator"
-INPUT_FILE="$REPO_PATH/Papers/IPDPS_2024/Datasets/Synthetic/tmp/Erdos-Renyi_directed_ef_8_v_9.edgelist"
+DATASET_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator/Papers/IPDPS_2024/Datasets"
+INPUT_FILE="$DATASET_PATH/Synthetic/tmp/Erdos-Renyi_directed_ef_8_v_9.edgelist"
 
 # Define other command-line arguments
 GRAPH_TYPE="Erdos"
@@ -36,8 +36,8 @@ while [[ $# -gt 0 ]]; do
             MEMORY_CC="$2"
             shift 2
             ;;
-        -repository)
-            REPO_PATH="$2"
+        -dataset)
+            DATASET_PATH="$2"
             shift 2
             ;;    
         *)
