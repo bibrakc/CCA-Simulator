@@ -6,16 +6,16 @@ EXECUTABLE="./build/BFS_CCASimulator"
 
 # Define the input file path
 REPO_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator"
-INPUT_FILE="$REPO_PATH/Papers/IPDPS_2024/Datasets/Synthetic/RMAT_ef_8_v_16.edgelist"
+INPUT_FILE="$REPO_PATH/Papers/IPDPS_2024/Datasets/Synthetic/tmp/Erdos-Renyi_directed_ef_8_v_9.edgelist"
 
 # Define other command-line arguments
-GRAPH_TYPE="RMAT"
+GRAPH_TYPE="Erdos"
 OUTPUT_DIR="."
 SHAPE="square"
-ROOT_NODE="65535"
-MEMORY_CC="14336"
-HX="128"
-HY="128"
+ROOT_NODE="193"
+MEMORY_CC="10240"
+HX="20"
+HY="20"
 HDEPTH="0"
 HB="0"
 ROUTE="0"
