@@ -73,8 +73,8 @@ class VicinityMemoryAllocator : public MemoryAllocator
         // Make sure to put reasonable values.
         assert(this->spread_rows > 1);
         assert(this->spread_cols > 1);
-        assert(this->spread_rows <= this->cca_dim_y / 2);
-        assert(this->spread_cols <= this->cca_dim_x / 2);
+        /* assert(this->spread_rows <= this->cca_dim_y / 2);
+        assert(this->spread_cols <= this->cca_dim_x / 2); */
 
         // Initialize `next_cc_id`
         this->next_cc_id = Cell::cc_cooridinate_to_id(

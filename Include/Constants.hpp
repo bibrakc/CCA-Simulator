@@ -49,4 +49,7 @@ inline constexpr bool animation_switch = ANIMATION;
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
 
+// Compile with: -DMAXEDGESPERVERTEX=<int value>
+inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;
+
 #endif // CONSTANTS_HPP

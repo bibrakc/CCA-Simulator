@@ -55,6 +55,11 @@ if(NOT DEFINED VICINITY)
 endif()
 add_definitions(-DVICINITY=${VICINITY})
 
+if(NOT DEFINED MAXEDGESPERVERTEX)
+    set(MAXEDGESPERVERTEX 30)
+endif()
+add_definitions(-DMAXEDGESPERVERTEX=${MAXEDGESPERVERTEX})
+
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)

@@ -418,12 +418,14 @@ write_results(const BFSCommandLineArguments& cmd_args,
     if (THROTTLE) {
         throttle_text = "ON";
     }
+
     std::string const output_file_name =
         "bfs_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
         std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
-        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE);
+        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
+        std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max);
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
