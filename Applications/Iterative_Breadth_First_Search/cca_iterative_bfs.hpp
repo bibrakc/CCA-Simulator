@@ -46,12 +46,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 #include <fstream>
+inline static constexpr u_int32_t undefined_level = 999999;
 
 template<typename Vertex_T>
 struct BFSIterativeVertex : Vertex_T
 {
 
-    inline static constexpr u_int32_t max_level = 999999;
+    inline static constexpr u_int32_t max_level = undefined_level;
     u_int32_t bfs_level;
 
     // The vertex from which my current ditance comes from.

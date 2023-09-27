@@ -55,6 +55,16 @@ if(NOT DEFINED VICINITY)
 endif()
 add_definitions(-DVICINITY=${VICINITY})
 
+if(NOT DEFINED MAXEDGESPERVERTEX)
+    set(MAXEDGESPERVERTEX 30)
+endif()
+add_definitions(-DMAXEDGESPERVERTEX=${MAXEDGESPERVERTEX})
+
+if(NOT DEFINED TERMINATION)
+    set(TERMINATION "true")
+endif()
+add_definitions(-DTERMINATION=${TERMINATION})
+
 
 find_package(OpenMP REQUIRED)
 

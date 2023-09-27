@@ -9,6 +9,8 @@ To compile the application, execute the following `cmake` commands to generate t
 
 - `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
 - `-D ANIMATION=true/false`: for recording and writing the simulation animation data.
+- `-D MAXEDGESPERVERTEX=<int value>`: sets the max edges per vertex object before creating a new ghost vertex.
+- `-D TERMINATION=true/false`: for running the termination detection algorithm or not. When it is false there won't be any ack messages for each action recieved and that way the overheads of termination can be calculated. This is for benchmarking purposes normally the termination detection will be on.
 
 ## Executing
 Assuming the current directory is `/Applications/Breadth_First_Search`

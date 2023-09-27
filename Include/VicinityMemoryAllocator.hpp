@@ -71,8 +71,8 @@ class VicinityMemoryAllocator : public MemoryAllocator
         assert(shape_of_cc == computeCellShape::square);
 
         // Make sure to put reasonable values.
-        assert(this->spread_rows > 1);
-        assert(this->spread_cols > 1);
+        assert(this->spread_rows > 0);
+        assert(this->spread_cols > 0);
         /* assert(this->spread_rows <= this->cca_dim_y / 2);
         assert(this->spread_cols <= this->cca_dim_x / 2); */
 
