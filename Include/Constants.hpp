@@ -52,4 +52,9 @@ inline constexpr u_int32_t vicinity_radius = VICINITY;
 // Compile with: -DMAXEDGESPERVERTEX=<int value>
 inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;
 
+// Use termination detection or do it without by only peeking at the active status of the cell
+// queues and network queues.
+// Compile with: -DTERMINATION=true/false
+inline constexpr bool termination_switch = TERMINATION;
+
 #endif // CONSTANTS_HPP

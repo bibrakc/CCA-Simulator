@@ -365,14 +365,17 @@ CCASimulator::run_simulation(Address app_terminator)
     this->total_current_run_cycles = 0;
 
     bool is_system_active = true;
-
+    bool run_next_cycle = true;
     // while (is_system_active) {
-    while (this->is_diffusion_active(app_terminator)) {
+
+    // while (this->is_diffusion_active(app_terminator)) {
+    while (run_next_cycle) {
         /*          u_int32_t count_temp = 0;
                   while (count_temp < 850) {
                     count_temp++;   */
 
         is_system_active = false;
+        run_next_cycle = false;
 
 // Run a cycle: First the computation cycle (that includes the preparation of operons from
 // previous cycle)
@@ -466,6 +469,18 @@ CCASimulator::run_simulation(Address app_terminator)
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->current_cycle++;
+        }
+
+        // Find whether to run the next cycle or not? This is based on the termination method being
+        // used. When termination_switch == true, it uses the ack based Dijkstra–Scholten algorithm
+        // that incurs the overhead of an ack back for every action recieved. When
+        // termination_switch == false, it just peeks at the qeues of cells and network queue to see
+        // if they are empty or not. This is needed to benchmark termination detection overhead. The
+        // termination_switch is set at compile time using -D TERMINATION=true/false.
+        if constexpr (termination_switch) {
+            run_next_cycle = this->is_diffusion_active(app_terminator);
+        } else {
+            run_next_cycle = is_system_active;
         }
     }
     this->global_active_cc = is_system_active;

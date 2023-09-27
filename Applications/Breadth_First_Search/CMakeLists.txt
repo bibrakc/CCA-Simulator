@@ -60,6 +60,11 @@ if(NOT DEFINED MAXEDGESPERVERTEX)
 endif()
 add_definitions(-DMAXEDGESPERVERTEX=${MAXEDGESPERVERTEX})
 
+if(NOT DEFINED TERMINATION)
+    set(TERMINATION "true")
+endif()
+add_definitions(-DTERMINATION=${TERMINATION})
+
 find_package(OpenMP REQUIRED)
 
 set(SourceDirectory ${CMAKE_CURRENT_SOURCE_DIR}/../../Source)

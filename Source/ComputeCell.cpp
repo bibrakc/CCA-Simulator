@@ -222,10 +222,14 @@ ComputeCell::execute_action(void* function_events)
 
             auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
 
-            // Signal that this object is active for termination detection
-            // origin_addr is set to be parent if deficit == 0
-            obj->terminator.signal(*this, action.origin_addr);
-
+            // termination_switch is set at compile time by -D TERMINATION=true/false. It is here to
+            // find overhead of termination detection method in our benchmarks. Normally, the
+            // termination_switch is set to true.
+            if constexpr (termination_switch) {
+                // Signal that this object is active for termination detection
+                // origin_addr is set to be parent if deficit == 0
+                obj->terminator.signal(*this, action.origin_addr);
+            }
             // if predicate
             int const predicate_resolution = function_events_manager->get_function_event_handler(
                 action.predicate)(*this, action.obj_addr, action.action_type, action.args);
@@ -244,7 +248,9 @@ ComputeCell::execute_action(void* function_events)
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
-            obj->terminator.unsignal(*this);
+            if constexpr (termination_switch) {
+                obj->terminator.unsignal(*this);
+            }
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
             function_events_manager->get_acknowledgement_event_handler()(

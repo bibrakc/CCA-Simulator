@@ -125,14 +125,14 @@ void
 Terminator::host_signal()
 {
     this->deficit++;
-    std::cout<<"host_signal: deficit = " << this->deficit << "\n";
+    //std::cout<<"host_signal: deficit = " << this->deficit << "\n";
 }
 void
 Terminator::host_acknowledgement()
 {
     assert(this->deficit != 0);
     this->deficit--;
-    std::cout<<"host_acknowledgement: deficit = " << this->deficit << "\n";
+    //std::cout<<"host_acknowledgement: deficit = " << this->deficit << "\n";
 }
 
 // Recieved an acknowledgement message back. Decreament my deficit.
