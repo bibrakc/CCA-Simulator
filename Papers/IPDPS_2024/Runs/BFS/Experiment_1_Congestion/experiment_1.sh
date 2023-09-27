@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export OMP_NUM_THREADS=32
+
 # Define possible values for each variable
 THROTTLE_VALUES=("true" "false")
 RECVBUFFSIZE_VALUES=("1" "2" "4" "8" "16")

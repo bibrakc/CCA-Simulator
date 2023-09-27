@@ -46,6 +46,11 @@ inline constexpr bool throttling_switch = THROTTLE;
 // Compile with: -DANIMATION=true/false
 inline constexpr bool animation_switch = ANIMATION;
 
+// For older gcc compiler or something.
+#ifndef u_int32_t
+#define u_int32_t uint32_t
+#endif
+
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
 
