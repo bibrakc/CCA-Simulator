@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OMP_NUM_THREADS=32
+# export OMP_NUM_THREADS=32
 
 # Define possible values for each variable
 THROTTLE_VALUES=("true" "false")
@@ -38,7 +38,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
         for TERMINATION in "${TERMINATION_VALUES[@]}"; do
             # Run cmake with the current combination of values
             run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION"
-            $REPO_PATH/Papers/IPDPS_2024/Runs/BFS/run_bfs_erdos_small.zsh -dataset "$DATASET_PATH"
+            $REPO_PATH/Papers/IPDPS_2024/Runs/BFS/run_bfs_rmat_16.zsh -dataset "$DATASET_PATH"
         done
     done
 done
