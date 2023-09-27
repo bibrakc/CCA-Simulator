@@ -36,6 +36,10 @@ while [[ $# -gt 0 ]]; do
             MEMORY_CC="$2"
             shift 2
             ;;
+        -repository)
+            REPO_PATH="$2"
+            shift 2
+            ;;     
         *)
             echo "Unknown argument: $1"
             exit 1

@@ -7,7 +7,8 @@ TERMINATION_VALUES=("true" "false")
 
 # Create a function to run cmake with the given parameters
 run_cmake() {
-    AAP_PATH="../../../../../Applications/Breadth_First_Search"
+    REPO_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator"
+    AAP_PATH="$REPO_PATH/Applications/Breadth_First_Search"
     CC=gcc-13 CXX=g++-13 cmake -S "$AAP_PATH" -B build  -D ANIMATION=false -D VICINITY=8 -D MAXEDGESPERVERTEX=27 -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3"
     cmake --build build -j 6
 }
@@ -18,7 +19,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
         for TERMINATION in "${TERMINATION_VALUES[@]}"; do
             # Run cmake with the current combination of values
             run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION"
-            ../run_bfs_rmat_16.zsh
+            ../run_bfs_erdos_small.zsh -repository "$REPO_PATH"
         done
     done
 done
