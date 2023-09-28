@@ -62,4 +62,7 @@ inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;
 // Compile with: -DTERMINATION=true/false
 inline constexpr bool termination_switch = TERMINATION;
 
+// Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
+constexpr u_int32_t curently_congested_threshold = THROTTLE_CONGESTION_THRESHOLD; // cycles
+
 #endif // CONSTANTS_HPP

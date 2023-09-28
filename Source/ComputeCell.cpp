@@ -395,16 +395,16 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             (current_task.first == taskType::send_operon_task_type)) {
         } else {
             // Apply throttle if enabled.
-            bool was_cerently_congested = false;
+            bool was_recently_congested = false;
             if constexpr (throttling_switch) {
                 if (this->last_congested_cycle) {
-                    was_cerently_congested =
+                    was_recently_congested =
                         (this->current_cycle - this->last_congested_cycle.value()) <
                         curently_congested_threshold;
                 }
             }
 
-            if (!was_cerently_congested) {
+            if (!was_recently_congested) {
                 // Remove the task from the queue and execute it.
                 this->task_queue.pop();
                 // Execute the task

@@ -42,13 +42,10 @@ using SignedCoordinates = std::pair<int32_t, int32_t>;
 
 // Threshold value after which it is considered to be congested. Used for creating active status
 // values for statistics and animation.
-constexpr u_int32_t congestion_threshold_1 = 5;
+constexpr u_int32_t congestion_threshold_1 = 1;
 constexpr u_int32_t congestion_threshold_2 = 15;
 constexpr u_int32_t congestion_threshold_3 = 30;
 constexpr u_int32_t congestion_threshold_4 = 60;
-
-// Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
-constexpr u_int32_t curently_congested_threshold = 181;// cycles
 
 // Type of the Cell: ComputeCell or HtreeNode
 enum class CellType : u_int32_t
