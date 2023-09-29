@@ -76,23 +76,23 @@ main(int argc, char** argv) -> int
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();
 
-    std::cout << "Vertices with in degree value 0: \n";
+    /* std::cout << "Vertices with in degree value 0: \n";
     for (const auto& vertex_id : vertices_inbound_degree_zero) {
         std::cout << vertex_id
                   << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 
     // Get the vertices with out degree values equal to 0.
     std::vector<u_int32_t> vertices_outbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_out_degree();
 
-    std::cout << "Vertices with out degree value 0: \n";
+    /* std::cout << "Vertices with out degree value 0: \n";
     for (const auto& vertex_id : vertices_outbound_degree_zero) {
         std::cout << vertex_id
                   << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -141,8 +141,6 @@ main(int argc, char** argv) -> int
     for (u_int32_t iterations = 0; iterations < cmd_args.total_iterations; iterations++) {
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
-        // Only use the root vertex to germinate if there are no vertices with zero `in degree`.
-
         cca_square_simulator.germinate_action(
             Action(vertex_addr,
                    page_rank_nested_fixed_iterations_terminator.value(),

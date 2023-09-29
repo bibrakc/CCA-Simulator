@@ -10,6 +10,7 @@ To compile the application, execute the following `cmake` commands to generate t
 
 - `THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
 - `-D ANIMATION=true/false`: for recording and writing the simulation animation data.
+- `-D NESTEDITERATIONS=<int value>`: The nested iterations within a single call.
 
 ## Executing
 Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iterations`, and `-iter 5` iterations to perform. `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file.
@@ -23,4 +24,4 @@ Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iteratio
 - The `root` will only be used if there are no vertices with `in degree` of zero. The application will try to find if there are any vertices with zero `in degre` and if it finds then it will germinate the page rank action on all those vertices.
 
 ## Limitations
-For a directed graph if there is any vertex with zero outbound degree then the networkx calculated .pagerank score might no match since perhaps networkx uses some form of dandling calculations that this version does not. It needs to be investigated further. Right now it shouldn't be an issue as far as the performance and understanding of the behaviour is concerned.
+For a directed graph if there is any vertex with zero outbound degree then the networkx calculated .pagerank score might not match since perhaps networkx uses some form of dandling calculations that this version does not. It needs to be investigated further. Right now it shouldn't be an issue as far as the performance and understanding of the behaviour is concerned.

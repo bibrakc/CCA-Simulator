@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 inline constexpr double damping_factor = 0.85;
-inline constexpr u_int32_t nested_iterations = 5;
+inline constexpr u_int32_t nested_iterations = NESTEDITERATIONS; // 10;
 
 /* inline constexpr u_int32_t DEBUG_VERTEX = 17; */
 
@@ -667,15 +667,22 @@ write_results(const PageRankNestedIterationCommandLineArguments& cmd_args,
 
     // Write simulation statistics to a file
     std::string throttle_text = "OFF";
-    if (THROTTLE) {
+    if constexpr (throttling_switch) {
         throttle_text = "ON";
     }
+    std::string termination_text = "OFF";
+    if constexpr (termination_switch) {
+        termination_text = "ON";
+    }
+
     std::string const output_file_name =
         "page_rank_nested_fixed_iterations_square_x_" + std::to_string(cca_simulator.dim_x) +
         "_y_" + std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
-        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE);
+        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
+        std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max) +
+        "_termimation_" + termination_text + "_nested_iter_" + std::to_string(nested_iterations);
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
