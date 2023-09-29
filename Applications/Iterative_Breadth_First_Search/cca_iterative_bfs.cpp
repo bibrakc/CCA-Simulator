@@ -117,8 +117,8 @@ main(int argc, char** argv) -> int
     std::cout << "\n\n"; */
 
     // Get the vertices with degree values equal to 0.
-    std::vector<u_int32_t> vertices_inbound_degree_zero =
-        input_graph.get_vertices_ids_with_zero_in_degree();
+    /* std::vector<u_int32_t> vertices_inbound_degree_zero =
+        input_graph.get_vertices_ids_with_zero_in_degree(); */
 
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
