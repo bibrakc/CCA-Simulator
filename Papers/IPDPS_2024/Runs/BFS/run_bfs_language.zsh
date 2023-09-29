@@ -9,7 +9,7 @@ EXECUTABLE="./build/BFS_CCASimulator"
 # INPUT_FILE="$DATASET_PATH/Synthetic/tmp/Erdos-Renyi_directed_ef_8_v_9.edgelist"
 
 # Define other command-line arguments
-GRAPH_TYPE="Amazon"
+GRAPH_TYPE="Language"
 OUTPUT_DIR="."
 SHAPE="square"
 ROOT_NODE="3"
