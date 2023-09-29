@@ -88,12 +88,12 @@ main(int argc, char** argv) -> int
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();
 
-    std::cout << "Vertices with in degree value 0: \n";
+    /* std::cout << "Vertices with in degree value 0: \n";
     for (const auto& vertex_id : vertices_inbound_degree_zero) {
         std::cout << vertex_id
                   << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
     }
-    std::cout << std::endl;
+    std::cout << std::endl; */
 
     // Get the vertices with out degree values equal to 0.
     std::vector<u_int32_t> vertices_outbound_degree_zero =

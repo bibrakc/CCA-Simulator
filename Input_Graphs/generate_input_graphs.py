@@ -507,7 +507,6 @@ end = time.time()
 print("Time in Out_Degree_Distribution: ", end-start, "\n")
 
 
-
 """ length, path = nx.single_source_dijkstra(G_gen, 0, 35, weight='weight')
 print("\nSSSP path length with wieghts from Src: 0 to target: 35 = ", length)
 print("SSSP path = ", path)
