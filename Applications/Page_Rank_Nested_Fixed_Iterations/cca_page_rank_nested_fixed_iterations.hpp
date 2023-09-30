@@ -704,22 +704,24 @@ write_results(const PageRankNestedIterationCommandLineArguments& cmd_args,
     // Close the output file
     output_file.close();
 
-    // Write the active status animation data in a separate file.
-    std::string const output_file_path_animation = output_file_path + "_active_animation";
-    std::cout << "\nWriting active status animation data to output file: "
-              << output_file_path_animation << "\n";
+    if constexpr (animation_switch) {
+        // Write the active status animation data in a separate file.
+        std::string const output_file_path_animation = output_file_path + "_active_animation";
+        std::cout << "\nWriting active status animation data to output file: "
+                  << output_file_path_animation << "\n";
 
-    std::ofstream output_file_animation(output_file_path_animation);
-    if (!output_file_animation) {
-        std::cerr << "Error! Output file not created\n";
+        std::ofstream output_file_animation(output_file_path_animation);
+        if (!output_file_animation) {
+            std::cerr << "Error! Output file not created\n";
+        }
+
+        // Ask the simulator to print cell active status information per cycle to the
+        // `output_file_animation`. This will be used mostly for animation purposes.
+        cca_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
+
+        // Close the output file
+        output_file_animation.close();
     }
-
-    // Ask the simulator to print cell active status information per cycle to the
-    // `output_file_animation`. This will be used mostly for animation purposes.
-    cca_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
-
-    // Close the output file
-    output_file_animation.close();
 }
 
 #endif // CCA_Page_Rank_Fixed_Iterations_HPP

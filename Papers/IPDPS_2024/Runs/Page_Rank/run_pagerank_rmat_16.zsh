@@ -35,6 +35,10 @@ while [[ $# -gt 0 ]]; do
             MEMORY_CC="$2"
             shift 2
             ;;
+        -iter) 
+            ITER="$2"
+            shift 2
+            ;;    
         -dataset)
             DATASET_PATH="$2"
             shift 2
