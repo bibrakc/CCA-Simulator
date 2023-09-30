@@ -140,16 +140,19 @@ main(int argc, char** argv) -> int
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < cmd_args.total_iterations; iterations++) {
 
-        // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(
-            Action(vertex_addr,
-                   page_rank_nested_fixed_iterations_terminator.value(),
-                   actionType::germinate_action,
-                   true,
-                   args_x,
-                   page_rank_nested_fixed_iterations_predicate,
-                   page_rank_nested_fixed_iterations_work,
-                   page_rank_nested_fixed_iterations_diffuse));
+        // No need to germinate the root since there will be germinations for indegree 0 vertices.
+        if (vertices_inbound_degree_zero.size() == 0) {
+            // Insert a seed action into the CCA chip that will help start the diffusion.
+            cca_square_simulator.germinate_action(
+                Action(vertex_addr,
+                       page_rank_nested_fixed_iterations_terminator.value(),
+                       actionType::germinate_action,
+                       true,
+                       args_x,
+                       page_rank_nested_fixed_iterations_predicate,
+                       page_rank_nested_fixed_iterations_work,
+                       page_rank_nested_fixed_iterations_diffuse));
+        }
 
         // Germinate seed action on the vertices with inbound_degree zero.
         // This is needed since otherwise they will never be activated and therefore in turn cannot
@@ -178,8 +181,10 @@ main(int argc, char** argv) -> int
                        page_rank_nested_fixed_iterations_work,
                        page_rank_nested_fixed_iterations_diffuse));
 
-            std::cout << "Germinated Vertices with degree value 0: " << vertex_id << "\n";
+            // std::cout << "Germinated Vertices with degree value 0: " << vertex_id << "\n";
         }
+        std::cout << "Germinated " << vertices_inbound_degree_zero.size()
+                  << " vertices who have indegree of 0: \n ";
 
         std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
 
