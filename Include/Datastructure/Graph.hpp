@@ -130,20 +130,31 @@ class Graph
     }
 
     template<class VertexTypeOfAddress>
-    void transfer_graph_host_to_cca(CCASimulator& cca_simulator, MemoryAllocator& allocator)
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
+                                    MemoryAllocator& allocator,
+                                    std::optional<u_int32_t> start_vertex_id)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.
         static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
                       "edge type must be of type Address");
 
+        u_int32_t starting_vertex_id = 0;
+        if (start_vertex_id.has_value()) {
+            starting_vertex_id = start_vertex_id.value();
+            std::cout << "Vertex id " << starting_vertex_id
+                      << " will be allocated first by the allocator. Then the rest of the vertices "
+                         "that follow the natural modulo total vertices.\n";
+        }
+
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
-        for (int i = 0; i < this->total_vertices; i++) {
-
-            // Put a vertex in memory with id = i
-            vertex_.id = i;
+        //  for (int i = 0; i < this->total_vertices; i++) {
+        for (int i = starting_vertex_id; i < starting_vertex_id + this->total_vertices; i++) {
+            int current_vertex_id = i % this->total_vertices;
+            // Put a vertex in memory with id = current_vertex_id
+            vertex_.id = current_vertex_id;
 
             // Get the Address of this vertex allocated on the CCA chip. Note here we use
             // VertexType<Address> since the object is now going to be sent to the CCA chip and
@@ -152,19 +163,19 @@ class Graph
                 allocator, &vertex_, sizeof(VertexTypeOfAddress));
 
             if (!vertex_addr) {
-                std::cerr << "Error! Memory not allocated for Vertex ID: " << this->vertices[i].id
+                std::cerr << "Error! Memory not allocated for Vertex ID: " << this->vertices[current_vertex_id].id
                           << "\n";
                 exit(0);
             }
 
             if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
                 std::cerr << "Error! Vertex initialization failed for Vertex ID: "
-                          << this->vertices[i].id << "\n";
+                          << this->vertices[current_vertex_id].id << "\n";
                 exit(0);
             }
 
             // Insert into the vertex_addresses map
-            vertex_addresses[i] = vertex_addr.value();
+            vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
         std::cout << "Populating vertices by inserting edges: \n";

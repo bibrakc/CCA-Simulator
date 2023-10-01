@@ -78,12 +78,16 @@ main(int argc, char** argv) -> int
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion. This is different from
     // when the `RecursiveParallelVertex` allocates ghost vertices.
-    CyclicMemoryAllocator allocator;
+    // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
+    // allocator from the center of the chip and later provide the `root` vertex to the graph
+    // initializer in `transfer_graph_host_to_cca`.
+    u_int32_t center_of_the_chip = cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2);
+    CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address>>>(
-        cca_square_simulator, allocator);
+        cca_square_simulator, allocator, std::optional<u_int32_t>(cmd_args.root_vertex));
 
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();
@@ -105,7 +109,7 @@ main(int argc, char** argv) -> int
                   << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
     }
     std::cout << std::endl; */
-    
+
     // Only put the BFS seed action on a single vertex.
     // In this case BFS root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);

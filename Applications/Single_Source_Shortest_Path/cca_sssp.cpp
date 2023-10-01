@@ -75,12 +75,16 @@ main(int argc, char** argv) -> int
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion. This is different from
     // when the `RecursiveParallelVertex` allocates ghost vertices.
-    CyclicMemoryAllocator allocator;
+    // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
+    // allocator from the center of the chip and later provide the `root` vertex to the graph
+    // initializer in `transfer_graph_host_to_cca`.
+    u_int32_t center_of_the_chip = cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2);
+    CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
     // to the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph.transfer_graph_host_to_cca<SSSPVertex<RecursiveParallelVertex<Address>>>(
-        cca_square_simulator, allocator);
+        cca_square_simulator, allocator, std::optional<u_int32_t>(cmd_args.root_vertex));
 
     // Only put the SSSP seed action on a single vertex.
     // In this case SSSP root = root_vertex

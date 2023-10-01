@@ -99,14 +99,18 @@ main(int argc, char** argv) -> int
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion. This is different from
     // when the `RecursiveParallelVertex` allocates ghost vertices.
-    CyclicMemoryAllocator allocator;
+    // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
+    // allocator from the center of the chip and later provide the `root` vertex to the graph
+    // initializer in `transfer_graph_host_to_cca`.
+    u_int32_t center_of_the_chip = cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2);
+    CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is
     // now going to be sent to the CCA chip and there the address type is Address (not u_int32_t
     // ID).
     input_graph
         .transfer_graph_host_to_cca<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(
-            cca_square_simulator, allocator);
+            cca_square_simulator, allocator, std::optional<u_int32_t>(cmd_args.root_vertex));
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex
@@ -141,18 +145,18 @@ main(int argc, char** argv) -> int
     for (u_int32_t iterations = 0; iterations < cmd_args.total_iterations; iterations++) {
 
         // No need to germinate the root since there will be germinations for indegree 0 vertices.
-        if (vertices_inbound_degree_zero.size() == 0) {
-            // Insert a seed action into the CCA chip that will help start the diffusion.
-            cca_square_simulator.germinate_action(
-                Action(vertex_addr,
-                       page_rank_nested_fixed_iterations_terminator.value(),
-                       actionType::germinate_action,
-                       true,
-                       args_x,
-                       page_rank_nested_fixed_iterations_predicate,
-                       page_rank_nested_fixed_iterations_work,
-                       page_rank_nested_fixed_iterations_diffuse));
-        }
+        // if (vertices_inbound_degree_zero.size() == 0) {
+        // Insert a seed action into the CCA chip that will help start the diffusion.
+        cca_square_simulator.germinate_action(
+            Action(vertex_addr,
+                   page_rank_nested_fixed_iterations_terminator.value(),
+                   actionType::germinate_action,
+                   true,
+                   args_x,
+                   page_rank_nested_fixed_iterations_predicate,
+                   page_rank_nested_fixed_iterations_work,
+                   page_rank_nested_fixed_iterations_diffuse));
+        //}
 
         // Germinate seed action on the vertices with inbound_degree zero.
         // This is needed since otherwise they will never be activated and therefore in turn cannot
