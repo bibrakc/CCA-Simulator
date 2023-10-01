@@ -87,7 +87,10 @@ main(int argc, char** argv) -> int
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address>>>(
-        cca_square_simulator, allocator, std::optional<u_int32_t>(cmd_args.root_vertex));
+        cca_square_simulator,
+        allocator,
+        std::optional<u_int32_t>(cmd_args.root_vertex),
+        cmd_args.shuffle_switch);
 
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();

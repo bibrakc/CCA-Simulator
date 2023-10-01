@@ -247,6 +247,13 @@ configure_parser(cli::Parser& parser)
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
+
+    parser.set_optional<bool>(
+        "shuffle",
+        "shuffle_vertices",
+        0,
+        "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex "
+        "IDs. This appears to be the case for certain RMAT graphs.");
 }
 
 struct BFSCommandLineArguments
@@ -260,25 +267,28 @@ struct BFSCommandLineArguments
     std::string graph_name;
     // Optional output directory path
     std::string output_file_directory;
-    // Get the depth of Htree
+    // Get the depth of Htree.
     u_int32_t hdepth{};
 
     // Get the rows and columbs of cells that are served by a single end Htree node. This will
-    // help in construction of the CCA chip, Htree, and routing
+    // help in construction of the CCA chip, Htree, and routing.
     u_int32_t hx{};
     u_int32_t hy{};
 
-    // Get the max bandwidth of Htree
+    // Get the max bandwidth of Htree.
     u_int32_t hbandwidth_max{};
 
-    // Configuration related to the CCA Chip
+    // Configuration related to the CCA Chip.
     std::string shape_arg;
     computeCellShape shape_of_compute_cells;
 
-    // Get the memory per cc or use the default
+    // Get the memory per cc or use the default.
     u_int32_t memory_per_cc{};
-    // Get the routing policy to use
+    // Get the routing policy to use.
     u_int32_t routing_policy{};
+
+    // To shuffle or to not shuffle the vertex ID list.
+    bool shuffle_switch{};
 
     BFSCommandLineArguments(cli::Parser& parser)
         : root_vertex(parser.get<u_int32_t>("root"))
@@ -294,7 +304,7 @@ struct BFSCommandLineArguments
         , shape_of_compute_cells(computeCellShape::computeCellShape_invalid)
         , memory_per_cc(parser.get<u_int32_t>("m"))
         , routing_policy(parser.get<u_int32_t>("route"))
-
+        , shuffle_switch(parser.get<bool>("shuffle"))
     {
 
         if (hdepth != 0) {

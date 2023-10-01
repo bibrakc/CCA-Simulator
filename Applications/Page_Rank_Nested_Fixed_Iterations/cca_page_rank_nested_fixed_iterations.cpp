@@ -110,7 +110,10 @@ main(int argc, char** argv) -> int
     // ID).
     input_graph
         .transfer_graph_host_to_cca<PageRankNestedFixedIterationsVertex<Vertex_Type<Address>>>(
-            cca_square_simulator, allocator, std::optional<u_int32_t>(cmd_args.root_vertex));
+            cca_square_simulator,
+            allocator,
+            std::optional<u_int32_t>(cmd_args.root_vertex),
+            cmd_args.shuffle_switch);
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex

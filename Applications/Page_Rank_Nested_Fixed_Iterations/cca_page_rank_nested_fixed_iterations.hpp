@@ -517,6 +517,13 @@ configure_parser(cli::Parser& parser)
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
+
+    parser.set_optional<bool>(
+        "shuffle",
+        "shuffle_vertices",
+        0,
+        "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex "
+        "IDs. This appears to be the case for certain RMAT graphs.");
 }
 
 struct PageRankNestedIterationCommandLineArguments
@@ -552,6 +559,9 @@ struct PageRankNestedIterationCommandLineArguments
     // Get the routing policy to use
     u_int32_t routing_policy{};
 
+    // To shuffle or to not shuffle the vertex ID list.
+    bool shuffle_switch{};
+
     PageRankNestedIterationCommandLineArguments(cli::Parser& parser)
         : total_iterations(parser.get<u_int32_t>("iter"))
         , root_vertex(parser.get<u_int32_t>("root"))
@@ -567,7 +577,7 @@ struct PageRankNestedIterationCommandLineArguments
         , shape_of_compute_cells(computeCellShape::computeCellShape_invalid)
         , memory_per_cc(parser.get<u_int32_t>("m"))
         , routing_policy(parser.get<u_int32_t>("route"))
-
+        , shuffle_switch(parser.get<bool>("shuffle"))
     {
 
         if (hdepth != 0) {

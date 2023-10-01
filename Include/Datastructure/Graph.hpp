@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef Graph_HPP
 #define Graph_HPP
 
+#include <random>
+
 template<class VertexType>
 class Graph
 {
@@ -132,7 +134,8 @@ class Graph
     template<class VertexTypeOfAddress>
     void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
                                     MemoryAllocator& allocator,
-                                    std::optional<u_int32_t> start_vertex_id)
+                                    std::optional<u_int32_t> start_vertex_id,
+                                    bool shuffle_enabled)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.
@@ -144,15 +147,45 @@ class Graph
             starting_vertex_id = start_vertex_id.value();
             std::cout << "Vertex id " << starting_vertex_id
                       << " will be allocated first by the allocator. Then the rest of the vertices "
-                         "that follow the natural modulo total vertices.\n";
+                         "will follow based on the allocator type.\n";
+        }
+
+        // Create a vector of ids of all vertices values from root to N cyclically
+        std::vector<int> vertex_ids;
+        for (int i = starting_vertex_id; i <= this->total_vertices; ++i) {
+            vertex_ids.push_back(i);
+        }
+        for (int i = 0; i < starting_vertex_id; ++i) {
+            vertex_ids.push_back(i);
+        }
+
+        if (shuffle_enabled) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::shuffle(vertex_ids.begin(), vertex_ids.end(), gen);
+
+            // Find the position of the root (starting_vertex_id) value in the shuffled vector
+            auto rootPos = std::find(vertex_ids.begin(), vertex_ids.end(), starting_vertex_id);
+
+            // If the root (starting_vertex_id) value is found, swap it with the first element
+            if (rootPos != vertex_ids.end()) {
+                std::swap(*rootPos, vertex_ids[0]);
+            } else {
+                std::cout << "Root value not found in the shuffled array. How is that possible?"
+                          << std::endl;
+                exit(0);
+            }
+            std::cout << "Shuffled the vertex id list for random allocation of vertices. May help "
+                         "with synthetic graphs where the graph generator didn't do a good job.\n";
         }
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
         //  for (int i = 0; i < this->total_vertices; i++) {
-        for (int i = starting_vertex_id; i < starting_vertex_id + this->total_vertices; i++) {
-            int current_vertex_id = i % this->total_vertices;
+        for (int i = 0; i < vertex_ids.size(); i++) {
+            int current_vertex_id = vertex_ids[i];
+
             // Put a vertex in memory with id = current_vertex_id
             vertex_.id = current_vertex_id;
 
@@ -163,8 +196,8 @@ class Graph
                 allocator, &vertex_, sizeof(VertexTypeOfAddress));
 
             if (!vertex_addr) {
-                std::cerr << "Error! Memory not allocated for Vertex ID: " << this->vertices[current_vertex_id].id
-                          << "\n";
+                std::cerr << "Error! Memory not allocated for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
                 exit(0);
             }
 
