@@ -90,7 +90,7 @@ for i, frame in enumerate(frames):
 
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(18, 10))
+fig, ax = plt.subplots(figsize=(7, 7))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -107,9 +107,16 @@ colors = ['black', 'cyan', 'green', 'white', 'yellow', 'red']
 # Create custom legend with color-value mappings
 legend_labels = {0: 'Inactive', 1: 'Only Communicating', 2: 'Only Computing',
                  3: 'Computing & Communicating', 4: 'Congested Communicating', 5: 'Congested Computing & Communicating'}
-legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
+""" legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color)
                    for value, label in legend_labels.items()
-                   for i, color in enumerate(colors) if i == value]
+                   for i, color in enumerate(colors) if i == value] """
+
+# Create legend patches with borders and labels
+legend_patches = []
+for value, label in legend_labels.items():
+    color = colors[value]
+    legend_patch = mpatches.Patch(facecolor=color, edgecolor='black', linewidth=2, label=label)
+    legend_patches.append(legend_patch)
 
 # Add the legend to the plot
 # ax.legend(handles=legend_elements, loc='upper right')
@@ -122,16 +129,21 @@ legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
 
 # Place the legend above the plot
 # ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
-""" ax.legend(handles=legend_elements, bbox_to_anchor=(
-    1.65, 1), loc='upper right', fontsize=14)
-"""
+
+""" legend = ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, 1.16), ncol=2, fontsize=16) """
+
 """ ax.legend(handles=legend_elements, bbox_to_anchor=(
     0.5, -0.3), loc='lower center', fontsize=14) """
 
-# Add the legend elements to the plot
-legend = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2)
+# Add legends with borders
+legend = ax.legend(handles=legend_patches, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2, fontsize=12)
 
+# Add the legend to the plot
+ax.add_artist(legend)
 
+""" # Add a border around the legend
+legend.get_frame().set_edgecolor('black')
+legend.get_frame().set_linewidth(1.5) """
 
 # Recursive function to draw the H-tree
 def draw_h_tree(x, y, length, depth):
@@ -194,8 +206,8 @@ ax.set_yticklabels([])
 ax.tick_params(length=0)
 
 # Label the axes and title the animation
-ax.set_xlabel('Columns of Compute Cells', fontsize=16)
-ax.set_ylabel('Rows of Compute Cells', fontsize=16)
+ax.set_xlabel('Columns of Compute Cells', fontsize=18)
+ax.set_ylabel('Rows of Compute Cells', fontsize=18)
 # Add a larger second title
 routing_algorithm = 'Dimension Ordered Horizontal First Routing'
 graph_size = 'Random Directed Graph V=36K and E=0.66M'

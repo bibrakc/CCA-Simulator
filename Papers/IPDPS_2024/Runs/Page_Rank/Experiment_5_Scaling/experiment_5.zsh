@@ -11,6 +11,8 @@ TERMINATION_VALUES=("false")
 declare -A CHIP_SIZE
 
 # Populate the array with chip dim and congestion threshold value
+CHIP_SIZE[32]=46
+CHIP_SIZE[46]=66
 CHIP_SIZE[64]=90
 CHIP_SIZE[91]=128
 CHIP_SIZE[128]=181
@@ -73,7 +75,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
                 # Run cmake with the current combination of values
                 run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION" "$THROTTLE_CONGESTION_THRESHOLD" 10
                 # Setting memory -m to 200KB because the 64x64 chip won't have enough memory to store large graphs.
-                "$REPO_PATH/Papers/IPDPS_2024/Runs/Page_Rank/$SCRIPT_TO_RUN" -dataset "$DATASET_PATH" -hx "$DIM" -hy "$DIM" -m 204800 -iter 1
+                "$REPO_PATH/Papers/IPDPS_2024/Runs/Page_Rank/$SCRIPT_TO_RUN" -dataset "$DATASET_PATH" -hx "$DIM" -hy "$DIM" -m 334800 -iter 1
             done
         done
     done

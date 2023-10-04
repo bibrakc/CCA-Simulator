@@ -370,9 +370,9 @@ CCASimulator::run_simulation(Address app_terminator)
 
     // while (this->is_diffusion_active(app_terminator)) {
     while (run_next_cycle) {
-        /*          u_int32_t count_temp = 0;
-                  while (count_temp < 850) {
-                    count_temp++;   */
+        /* u_int32_t count_temp = 0;
+        while (count_temp < 100) {
+            count_temp++; */
 
         is_system_active = false;
         run_next_cycle = false;

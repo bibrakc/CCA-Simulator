@@ -41,6 +41,8 @@ import matplotlib
 import pandas as pd
 import math
 
+from matplotlib.ticker import FuncFormatter
+
 args = sys.argv
 
 output_file = args[1]
@@ -128,88 +130,57 @@ chip_config = "Chip of " + \
 
 print(chip_config)
 
+# Create a function to format ticks in thousands with 'K' suffix
+def thousands_formatter(x, pos):
+    return f'{x/1000:.0f}K'
+
 
 def congestion_charts():
 
-    # Create a figure with subplots
-    # fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 
     # Create a figure with subplots using gridspec_kw for shared boundaries
-    fig, axes = plt.subplots(1, 4, figsize=(12.5, 2.8))  # , sharey=True)
-
-    # Use GridSpec to adjust subplot spacings and add borders
-    # gs = gridspec.GridSpec(2, 4, figure=fig, hspace=0.3, wspace=0.2)
+    fig, axes = plt.subplots(1, 4, figsize=(9, 2.5) , sharey=True)
 
     # Flatten the axes array to easily iterate over subplots
     axes = axes.flatten()
 
-    # Plot the displot for each data in the subplots
-    # for i, d in enumerate(data):
-    #    sns.histplot(data=d, kde=True, ax=axes[i])
-
     bins = 20
 
     sns.histplot(data=stats, x='left_send_contention_total',
-                 bins=bins, ax=axes[0], color='#2F5597')
-
+                 bins=bins, ax=axes[0], color='#B00002')
+    axes[0].set_xlabel('')  # Remove x-axis label for the second subplot
     sns.histplot(data=stats, x='up_send_contention_total',
-                 bins=bins, ax=axes[1], color='#2F5597')
-
+                 bins=bins, ax=axes[1], color='#B00002')
+    axes[1].set_xlabel('')  # Remove x-axis label for the second subplot
     sns.histplot(data=stats, x='right_send_contention_total',
-                 bins=bins, ax=axes[2], color='#2F5597')
-
+                 bins=bins, ax=axes[2], color='#B00002')
+    axes[2].set_xlabel('')  # Remove x-axis label for the second subplot
     sns.histplot(data=stats, x='down_send_contention_total',
-                 bins=bins, ax=axes[3], color='#2F5597')
-
+                 bins=bins, ax=axes[3], color='#B00002')
+    axes[3].set_xlabel('')  # Remove x-axis label for the second subplot
+    
     # Set titles for each subplot
     titles = ['West Channel', 'North Channel',
               'East Channel', 'South Channel']
+    axes[0].set_ylabel('Count of Compute Cells', fontsize=12, fontweight='bold')
+    axes[0].tick_params(axis='y', labelsize=12)
     for ax, title in zip(axes, titles):
         ax.set_title(title, fontsize=12, fontweight='bold')
-        ax.tick_params(axis='x', labelsize=11)
-        ax.tick_params(axis='y', labelsize=11)
-        ax.set_ylabel('Count of Compute Cells', fontsize=11, fontweight='bold')
-        ax.set_xlabel('Cycles Spent in Contention', fontsize=11, fontweight='bold')
+        ax.tick_params(axis='x', labelsize=12)
+        #ax.set_xlabel('Cycles Spent in Contention', fontsize=11, fontweight='bold')
+        ax.grid(axis='y', color='gray', linestyle='dashed', linewidth=1)
 
-    throttle_text = 'OFF'
-    if throttle == 1:
-        throttle_text = 'ON'
 
-    """ if hdepth != 0:
-        # Add a main title to the figure
-        plt.suptitle(chip_config+'\nMesh + Htree, Depth: ' + str(hdepth)+', Max Bandwidth: '+str(
-            hbandwidth_max)+', Routing: '+routing_algorithm+', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size)+'\nContention Per Channel Histograms with Bins = '+str(bins),
-            fontsize=16, fontweight='bold')
-    else:
-        # Add a main title to the figure
-        plt.suptitle(chip_config+'\nPure Mesh Network'+', Routing: '+routing_algorithm+', Throttle: '+throttle_text+', Recv_buff_size: '+str(recv_buff_size) + '\nContention Per Channel Histograms with Bins= '+str(bins),
-                     fontsize=16, fontweight='bold') """
+# Format x-axis ticks using the thousands_formatter function
+    for ax in axes:
+        ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+        ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+
 
     # Adjust spacing between subplots
     plt.tight_layout()
-
-
-# Plot the histogram using Seaborn
-# sns.histplot(data=stats, x='actions_invoked', kde=True)
-# sns.histplot(data=stats, x='actions_false_on_predicate', kde=True)
-""" sns.displot(data=stats, x='actions_performed_work', bins=30) """
-
-""" stats['percent_cycles_inactive'] = stats['cycles_inactive'].map(
-    lambda x: (x/cycles)*100)
-
-ax1 = sns.displot(data=stats, x='percent_cycles_inactive',
-                  kind="kde", bw_adjust=.4)
-ax1.set(xlabel='Percentage of Cycles a CC was Inactive')
-
-ax = sns.displot(data=stats, x='percent_cycles_inactive', stat="probability")
-ax.set(xlabel='Percentage of Cycles a CC was Inactive') """
-
-# sns.displot(data=stats, x='percent_cycles_inactive', kind="ecdf")
-
-# sns.displot(data=stats, x='actions_performed_work', kind="kde", bw_adjust=.4)
-
-# sns.displot(data=stats, x="actions_performed_work", kind="ecdf")
-
+    plt.subplots_adjust(wspace=0.1)
+    plt.subplots_adjust(top=0.9)
 
 def active_status_chart():
 

@@ -52,7 +52,7 @@ done
 AAP_PATH="$REPO_PATH/Applications/Breadth_First_Search"
 # Create a function to run cmake with the given parameters
 run_cmake() {
-    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build  -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3"
+    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build  -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3"  -D THROTTLE_CONGESTION_THRESHOLD=181
     cmake --build build -j 6
 }
 
