@@ -117,6 +117,7 @@ CCASimulator::create_square_cell_htree_chip()
                                                this->hx,
                                                this->hy,
                                                this->hdepth,
+                                               this->primary_network_type,
                                                this->mesh_routing_policy_id);
                 this->CCA_chip.push_back(sink_cell);
 
@@ -138,6 +139,7 @@ CCASimulator::create_square_cell_htree_chip()
                                                   this->hdepth,
                                                   this->memory_per_cc,
                                                   this->host_memory,
+                                                  this->primary_network_type,
                                                   this->mesh_routing_policy_id));
             }
             if constexpr (debug_code) {
@@ -174,6 +176,7 @@ CCASimulator::create_square_cell_mesh_only_chip()
                                                                    this->hdepth,
                                                                    this->memory_per_cc,
                                                                    this->host_memory,
+                                                                   this->primary_network_type,
                                                                    this->mesh_routing_policy_id));
 
             if constexpr (debug_code) {
@@ -183,7 +186,6 @@ CCASimulator::create_square_cell_mesh_only_chip()
     }
 }
 
-// The main chip creation function
 void
 CCASimulator::create_the_chip()
 {
@@ -370,10 +372,10 @@ CCASimulator::run_simulation(Address app_terminator)
     // while (is_system_active) {
 
     // while (this->is_diffusion_active(app_terminator)) {
-    while (run_next_cycle) {
-        /* u_int32_t count_temp = 0;
-        while (count_temp < 100) {
-            count_temp++; */
+   // while (run_next_cycle) {
+         u_int32_t count_temp = 0;
+        while (count_temp < 600) {
+            count_temp++;  
 
         is_system_active = false;
         run_next_cycle = false;
@@ -430,6 +432,7 @@ CCASimulator::run_simulation(Address app_terminator)
             active_status_frame_per_cells[i] = this->CCA_chip[i]->is_compute_cell_active();
             if (active_status_frame_per_cells[i]) {
                 sum_global_active_cc_local++;
+                std::cout <<"CC: " << i << " is active\n";
             }
         }
 

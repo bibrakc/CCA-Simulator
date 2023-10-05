@@ -52,6 +52,10 @@ Cell::add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_com
 void
 Cell::add_neighbor_compute_cells()
 {
+    if (this->primary_network_type != 0 && this->primary_network_type != 1) {
+        std::cerr << "primary_network_type: " << primary_network_type << " not supported!\n";
+        exit(0);
+    }
 
     if (this->shape == computeCellShape::square) {
 
@@ -62,9 +66,14 @@ Cell::add_neighbor_compute_cells()
         int32_t const cc_coordinate_y = coordinate_signed.second;
 
         // Left neighbor
-        SignedCoordinates const left_neighbor =
+        SignedCoordinates left_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x - 1, cc_coordinate_y);
-        if (this->cc_exists(left_neighbor)) {
+        if (this->primary_network_type == 1) { // Torus
+            auto [x_id, y_id] = left_neighbor;
+            if (x_id < 0) {
+                x_id = this->dim_y - 1;
+                left_neighbor.first = x_id;
+            }
             auto left_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(left_neighbor);
 
             auto left_neighbor_id =
@@ -72,14 +81,32 @@ Cell::add_neighbor_compute_cells()
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
-        } else {
-            this->add_neighbor(std::nullopt);
+
+        } else { // Mesh
+
+            if (this->cc_exists(left_neighbor)) {
+                auto left_neighbor_unsigned =
+                    convert_internal_type_of_pair<u_int32_t>(left_neighbor);
+
+                auto left_neighbor_id =
+                    Cell::cc_cooridinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
+
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
+            } else {
+                this->add_neighbor(std::nullopt);
+            }
         }
 
         // Up neighbor
-        SignedCoordinates const up_neighbor =
+        SignedCoordinates up_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x, cc_coordinate_y - 1);
-        if (this->cc_exists(up_neighbor)) {
+        if (this->primary_network_type == 1) { // Torus
+            auto [x_id, y_id] = up_neighbor;
+            if (y_id < 0) {
+                y_id = this->dim_x - 1;
+                up_neighbor.second = y_id;
+            }
             auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
 
             auto up_neighbor_id =
@@ -87,13 +114,29 @@ Cell::add_neighbor_compute_cells()
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
-        } else {
-            this->add_neighbor(std::nullopt);
+
+        } else { // Mesh
+            if (this->cc_exists(up_neighbor)) {
+                auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
+
+                auto up_neighbor_id =
+                    Cell::cc_cooridinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
+
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
+            } else {
+                this->add_neighbor(std::nullopt);
+            }
         }
         // Right neighbor
-        SignedCoordinates const right_neighbor =
+        SignedCoordinates right_neighbor =
             std::pair<int32_t, int32_t>(cc_coordinate_x + 1, cc_coordinate_y);
-        if (this->cc_exists(right_neighbor)) {
+        if (this->primary_network_type == 1) { // Torus
+            auto [x_id, y_id] = right_neighbor;
+            if (x_id == static_cast<int32_t>(this->dim_y)) {
+                x_id = 0;
+                right_neighbor.first = x_id;
+            }
             auto right_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(right_neighbor);
 
             auto right_neighbor_id =
@@ -101,12 +144,30 @@ Cell::add_neighbor_compute_cells()
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
-        } else {
-            this->add_neighbor(std::nullopt);
+
+        } else { // Mesh
+            if (this->cc_exists(right_neighbor)) {
+                auto right_neighbor_unsigned =
+                    convert_internal_type_of_pair<u_int32_t>(right_neighbor);
+
+                auto right_neighbor_id =
+                    Cell::cc_cooridinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
+
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
+            } else {
+                this->add_neighbor(std::nullopt);
+            }
         }
+
         // Down neighbor
-        SignedCoordinates const down_neighbor = Coordinates(cc_coordinate_x, cc_coordinate_y + 1);
-        if (this->cc_exists(down_neighbor)) {
+        SignedCoordinates down_neighbor = Coordinates(cc_coordinate_x, cc_coordinate_y + 1);
+        if (this->primary_network_type == 1) { // Torus
+            auto [x_id, y_id] = down_neighbor;
+            if (y_id == static_cast<int32_t>(this->dim_x)) {
+                y_id = 0;
+                down_neighbor.second = y_id;
+            }
             auto down_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
             auto down_neighbor_id =
@@ -114,8 +175,20 @@ Cell::add_neighbor_compute_cells()
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
-        } else {
-            this->add_neighbor(std::nullopt);
+
+        } else { // Mesh
+            if (this->cc_exists(down_neighbor)) {
+                auto down_neighbor_unsigned =
+                    convert_internal_type_of_pair<u_int32_t>(down_neighbor);
+
+                auto down_neighbor_id =
+                    Cell::cc_cooridinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
+
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
+            } else {
+                this->add_neighbor(std::nullopt);
+            }
         }
 
     } else if (this->shape == computeCellShape::block_1D) {
@@ -720,17 +793,100 @@ inline auto
 Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>
 {
     std::vector<u_int32_t> paths;
-    if (this->cooridates.first > dst_cc_coordinates.first) {
-        paths.push_back(0); // Clockwise 0 = left
-    } else if (this->cooridates.first < dst_cc_coordinates.first) {
-        // send to right
-        paths.push_back(2);
-    } else if (this->cooridates.second > dst_cc_coordinates.second) {
-        paths.push_back(1); // Clockwise 1 = up
-    } else if (this->cooridates.second < dst_cc_coordinates.second) {
-        paths.push_back(3); // Clockwise 3 = down
+    if (this->primary_network_type == 0) { // Mesh
+
+        if (this->cooridates.first > dst_cc_coordinates.first) {
+            paths.push_back(0); // Clockwise 0 = left
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            paths.push_back(2);
+        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+            paths.push_back(1); // Clockwise 1 = up
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            paths.push_back(3); // Clockwise 3 = down
+        }
+        return paths;
+    } else if (this->primary_network_type == 1) { // Torus
+
+        if (this->cooridates.first != dst_cc_coordinates.first) {
+
+            if (this->cooridates.first < dst_cc_coordinates.first) {
+                int dst_to_right_edge = this->dim_y - dst_cc_coordinates.first;
+                int wraped_distance_x = dst_to_right_edge + this->cooridates.first;
+
+                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                                              static_cast<int>(dst_cc_coordinates.first));
+
+                /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
+                          << ", wraped_distance: " << wraped_distance_x
+                          << ", abs_distance: " << abs_distance_x << "\n"; */
+
+                if (abs_distance_x <= wraped_distance_x) {
+                    // std::cout << "Move Right!\n";
+                    // send to right
+                    paths.push_back(2);
+                } else {
+                    // std::cout << "Move Left!\n";
+                    paths.push_back(0); // Clockwise 0 = left
+                }
+                return paths;
+            } else {
+                int dst_to_left_edge = dst_cc_coordinates.first;
+                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->cooridates.first;
+
+                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                                              static_cast<int>(dst_cc_coordinates.first));
+                if (abs_distance_x <= wraped_distance_x) {
+                    paths.push_back(0); // Clockwise 0 = left
+                } else {
+                    // send to right
+                    paths.push_back(2);
+                }
+                return paths;
+            }
+
+        } else {
+            if (this->cooridates.second < dst_cc_coordinates.second) {
+                int dst_to_down_edge = this->dim_x - dst_cc_coordinates.second;
+                int wraped_distance_y = dst_to_down_edge + this->cooridates.second;
+
+                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                                              static_cast<int>(dst_cc_coordinates.second));
+
+                /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
+                          << ", wraped_distance_y: " << wraped_distance_y
+                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
+
+                if (abs_distance_y <= wraped_distance_y) {
+                    paths.push_back(3); // Clockwise 3 = down
+                } else {
+                    paths.push_back(1); // Clockwise 1 = up
+                }
+                return paths;
+            } else {
+
+                int dst_to_up_edge = dst_cc_coordinates.second;
+                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->cooridates.second;
+
+                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                                              static_cast<int>(dst_cc_coordinates.second));
+
+                /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
+                          << ", wraped_distance_y: " << wraped_distance_y
+                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
+
+                if (abs_distance_y <= wraped_distance_y) {
+                    paths.push_back(1); // Clockwise 1 = up
+                } else {
+                    paths.push_back(3); // Clockwise 3 = down
+                }
+                return paths;
+            }
+        }
+        
     }
-    return paths;
+    std::cerr <<"horizontal_first_routing returning nothing. This is not OK!!! \n";
+    exit(0);
 }
 
 inline auto
@@ -795,9 +951,8 @@ auto
 Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
-    // Algorithm == mixed first.
-    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
-    // first (up or down).
+    // Algorithm == vertical first
+    // send up or down first
     if (this->shape == computeCellShape::square) {
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
@@ -818,9 +973,7 @@ auto
 Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
-    // Algorithm == mixed first.
-    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
-    // first (up or down).
+    // Algorithm == horizontal X-Y.
     if (this->shape == computeCellShape::square) {
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
@@ -828,7 +981,7 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vect
         Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
 
-        // std::cout << "vertical_first_routing\n";
+        // std::cout << "horizontal_first_routing\n";
         return this->horizontal_first_routing(dst_cc_coordinates);
     }
     // Shape or routing not supported

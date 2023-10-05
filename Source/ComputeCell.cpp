@@ -325,6 +325,21 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         this->insert_action(operon.second);
                         operon_was_inserted_or_sent = true;
                     } else {
+                        //if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                           /*  std::cout << "\n";
+
+                            std::cout
+                                << "inside prepare_a_communication_cycle for: " << this->cooridates
+                                << ", with id: " << this->id << "\n";
+                            std::cout << "operon dst: "
+                                      << this->cc_id_to_cooridinate(
+                                             operon.first.dst_cc_id, this->shape, this->dim_y)
+                                      << ", with id: " << operon.first.dst_cc_id << "\n";
+                            std::cout << "operon src: "
+                                      << this->cc_id_to_cooridinate(
+                                             operon.first.src_cc_id, this->shape, this->dim_y)
+                                      << ", with id: " << operon.first.src_cc_id << "\n"; */
+                        //}
 
                         // Get the route using Routing 0
                         std::optional<u_int32_t> routing_cell_id =
@@ -334,6 +349,11 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         std::vector<u_int32_t> const channels_to_send =
                             this->get_route_towards_cc_id(operon.first.src_cc_id,
                                                           routing_cell_id.value());
+
+                       // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                           /*  std::cout << "\n";
+                            std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
+                        //}
 
                         // bool pushed = false;
                         for (auto channel_to_send : channels_to_send) {
@@ -346,6 +366,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                 // Break out of the for loop. Discard other paths.
                                 operon_was_inserted_or_sent = true;
                                 break;
+                            } else {
+                               // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                                  //  std::cout << "\n";
+                                    /* std::cout
+                                        << "BUSY !! channels_to_send = " << channels_to_send[0]
+                                        << "\n"; */
+                              //  }
                             }
                         }
                     }
@@ -453,7 +480,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                 this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
             for (auto channel_to_send : channels_to_send) {
-                if (this->send_channel_per_neighbor[channel_to_send].push(
+                if (this->send_channel_per_neighbor[channel_to_send][0].push(
                         this->staging_operon_from_logic.value())) {
 
                     // Set to distance class 0 since this operon originates from this CC
@@ -510,14 +537,14 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
                         this->send_channel_per_neighbor_contention_count[i].increment();
 
-                        /*  std::cout
+                          /* std::cout
                              << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
                              << this->neighbor_compute_cells[i].value().second << " i = " << i
                              << ", contention_count: max:"
                              << this->send_channel_per_neighbor_contention_count[i].get_max_count()
                              << ", contention_count: current : "
                              << this->send_channel_per_neighbor_contention_count[i].get_count()
-                             << "\n"; */
+                             << "\n";  */
 
                         left_over_operons.push_back(operon);
                     } else {

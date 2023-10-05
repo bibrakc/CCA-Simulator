@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Cell.hpp"
 
+#include <cassert>
 #include <utility>
 
 // How many operons can the sink cell receive and send in a single cycle.
@@ -85,6 +86,7 @@ class SinkCell : public Cell
              u_int32_t hx_in,
              u_int32_t hy_in,
              u_int32_t hdepth_in,
+             u_int32_t primary_network_type_in,
              u_int32_t mesh_routing_policy_id_in)
         : send_channel_to_htree_node(FixedSizeQueue<CoordinatedOperon>(sink_cell_bandwidth))
         , recv_channel_to_htree_node(FixedSizeQueue<Operon>(sink_cell_bandwidth))
@@ -108,12 +110,16 @@ class SinkCell : public Cell
 
         this->cooridates = Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
 
+        // Torus or Mesh?
+        this->primary_network_type = primary_network_type_in;
+        assert(this->primary_network_type == 0);
+
         // Assign neighbor CCs to this Cell. This is based on the Shape and Dim
         this->add_neighbor_compute_cells();
 
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
-        this->distance_class_length = 1; //(this->hx * 15) + (this->hy * 15);
+        this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
@@ -122,8 +128,10 @@ class SinkCell : public Cell
 
         // send channel buffer can only hold one operon since its there to put send (put) in the
         // recv channel of the neighbor.
-        this->send_channel_per_neighbor.resize(this->number_of_neighbors,
-                                               FixedSizeQueue<Operon>(1));
+        this->send_channel_per_neighbor.resize(
+            this->number_of_neighbors,
+            std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
+                                                FixedSizeQueue<Operon>(1)));
 
         this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,

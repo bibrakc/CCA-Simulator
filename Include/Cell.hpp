@@ -185,7 +185,7 @@ class Cell
     std::vector<std::optional<std::pair<u_int32_t, Coordinates>>> neighbor_compute_cells;
 
     // Per neighbor send channel/link
-    std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
+    std::vector<std::vector<FixedSizeQueue<Operon>>> send_channel_per_neighbor;
     std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
 
     // Use this to detect deadlock
@@ -200,6 +200,13 @@ class Cell
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
     std::vector<std::vector<FixedSizeQueue<Operon>>> recv_channel_per_neighbor;
+
+    // High bandwidth network type. This is the primary network. By default the mesh. But can be
+    // Torus and more.
+    // TODO: Instead of `u_int32_t` put some enum type.
+    // 0: Mesh
+    // 1: Torus
+    u_int32_t primary_network_type{};
 
     // Routing policy
     u_int32_t mesh_routing_policy;
