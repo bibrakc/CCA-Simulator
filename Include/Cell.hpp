@@ -87,6 +87,9 @@ struct ComputeCellStatistics
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
 
+    // Count of operon movements.
+    u_int64_t operons_moved{};
+
     // # of objects allocated
     u_int32_t objects_allocated{};
 
@@ -98,7 +101,7 @@ struct ComputeCellStatistics
         os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tobjects_allocated"
               "\tactions_created\tactions_acknowledgement_created"
               "\tactions_pushed\tactions_invoked\tactions_performed_work"
-              "\tactions_acknoledgement_invoked\tactions_false_on_predicate"
+              "\tactions_acknoledgement_invoked\tactions_false_on_predicate\toperons_moved"
               "\tleft_send_contention_max\tleft_send_contention_total"
               "\tup_send_contention_max\tup_send_contention_total"
               "\tright_send_contention_max\tright_send_contention_total"
@@ -121,7 +124,8 @@ struct ComputeCellStatistics
            << "\n\tactions_invoked: " << stat.actions_invoked
            << "\n\tactions_performed_work: " << stat.actions_performed_work
            << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
-           << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate << "\n";
+           << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
+           << "\n\toperons_moved: " << stat.operons_moved << "\n";
         return os;
     }
 
@@ -135,6 +139,7 @@ struct ComputeCellStatistics
         this->actions_performed_work += rhs.actions_performed_work;
         this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
+        this->operons_moved += rhs.operons_moved;
 
         return *this;
     }

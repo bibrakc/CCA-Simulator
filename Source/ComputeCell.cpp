@@ -522,6 +522,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                         left_over_operons.push_back(operon);
                     } else {
                         this->send_channel_per_neighbor_contention_count[i].reset();
+                        this->statistics.operons_moved++;
                     }
 
                     for (Operon const& operon : left_over_operons) {

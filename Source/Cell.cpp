@@ -167,6 +167,8 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << this->actions_performed_work << "\t" << this->actions_acknowledgement_invoked << "\t"
        << this->actions_false_on_predicate
 
+       << "\t" << this->operons_moved
+
        << "\t" << this->send_channel_per_neighbor_contention_count_record[0].get_max_count() << "\t"
        << this->send_channel_per_neighbor_contention_count_record[0].get_total_count()
 

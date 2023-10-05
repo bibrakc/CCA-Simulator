@@ -363,6 +363,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                                   << "\n"; */
                     } else {
                         this->send_channel_per_neighbor_contention_count[i].reset();
+                        this->statistics.operons_moved++;
                     }
                 }
                 for (Operon const& operon : left_over_operons) {
