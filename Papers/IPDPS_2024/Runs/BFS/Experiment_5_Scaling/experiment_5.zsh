@@ -5,16 +5,20 @@
 # Define possible values for each variable
 THROTTLE_VALUES=("true")
 RECVBUFFSIZE_VALUES=("4")
-TERMINATION_VALUES=("true" "false")
+TERMINATION_VALUES=("false")
 
 # Declare an associative array to store chip sizes and their congestion threshold cool down period for throttle
 declare -A CHIP_SIZE
 
 # Populate the array with chip dim and congestion threshold value
+CHIP_SIZE[16]=23
+CHIP_SIZE[23]=33
+CHIP_SIZE[32]=46
+CHIP_SIZE[46]=66
 CHIP_SIZE[64]=90
-#CHIP_SIZE[91]=128
-#CHIP_SIZE[128]=181
-#CHIP_SIZE[181]=255
+CHIP_SIZE[91]=128
+CHIP_SIZE[128]=181
+CHIP_SIZE[181]=255
 
 # REPO_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator"
 # DATASET_PATH="/Users/bchandio/Documents/work/PhD/git_repos/CCA-Simulator/Papers/IPDPS_2024/Datasets"
@@ -73,7 +77,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
                 # Run cmake with the current combination of values
                 run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION" "$THROTTLE_CONGESTION_THRESHOLD"
                 # Setting memory -m to 200KB because the 64x64 chip won't have enough memory to store large graphs.
-                "$REPO_PATH/Papers/IPDPS_2024/Runs/BFS/$SCRIPT_TO_RUN" -dataset "$DATASET_PATH" -hx "$DIM" -hy "$DIM" -m 204800
+                "$REPO_PATH/Papers/IPDPS_2024/Runs/BFS/$SCRIPT_TO_RUN" -dataset "$DATASET_PATH" -hx "$DIM" -hy "$DIM" -m 8004800
             done
         done
     done
