@@ -80,7 +80,7 @@ with open(output_file, 'r') as file:
     total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred, operons_moved = file.readline().strip().split()
 
     # convert cycles, invoked, performed and false_pred to integers
-    cycles, objects_created, actions_created, actions_performed, actions_false_pred = map(
+    cycles, objects_created, actions_created, actions_performed, actions_false_pred, operons_moved = map(
         int, [total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred, operons_moved])
 
     # read the header line for the table and discard it
