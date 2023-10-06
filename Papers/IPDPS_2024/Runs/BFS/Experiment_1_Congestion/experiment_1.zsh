@@ -79,10 +79,10 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
         for TERMINATION in "${TERMINATION_VALUES[@]}"; do
 
             # Calculate the adjusted throttle time based on the buffer size.
-            baseThrottleTime=181     # Throttle time when buffer size is 1
-            throttleReductionFactor=0.2  # Adjust this factor as needed
-            adjustedThrottleTime=$(calculate_throttle_time $baseThrottleTime $RECVBUFFSIZE $throttleReductionFactor)
-
+            # baseThrottleTime=181     # Throttle time when buffer size is 1
+            # throttleReductionFactor=0.2  # Adjust this factor as needed
+            # adjustedThrottleTime=$(calculate_throttle_time $baseThrottleTime $RECVBUFFSIZE $throttleReductionFactor)
+            adjustedThrottleTime=181
             # Run cmake with the current combination of values
             run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION" "$adjustedThrottleTime"
             "$REPO_PATH/Papers/IPDPS_2024/Runs/BFS/$SCRIPT_TO_RUN" -dataset "$DATASET_PATH"
