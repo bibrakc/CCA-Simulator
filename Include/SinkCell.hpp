@@ -119,21 +119,22 @@ class SinkCell : public Cell
 
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
-        this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
+        // this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
+        this->number_of_virtual_channels = 2;
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
-            std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
+            std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
                                                 FixedSizeQueue<Operon>(buffer_size)));
 
         // send channel buffer can only hold one operon since its there to put send (put) in the
         // recv channel of the neighbor.
         this->send_channel_per_neighbor.resize(
             this->number_of_neighbors,
-            std::vector<FixedSizeQueue<Operon>>(this->distance_class_length,
+            std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
                                                 FixedSizeQueue<Operon>(1)));
 
-        this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
+        // this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
                                                                 MaxCounter());
 
@@ -143,7 +144,8 @@ class SinkCell : public Cell
 
         this->last_congested_cycle = std::nullopt;
 
-        // Experimental
+        // Experimental. The cells don't have sense of a global cycle. It is here for debuging and
+        // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
     }
 

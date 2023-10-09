@@ -52,6 +52,13 @@ Cell::add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_com
 void
 Cell::add_neighbor_compute_cells()
 {
+    /*
+        Left = 0 index
+        Up = 1 index
+        Right = 2 index
+        Down = 3 index
+    */
+
     if (this->primary_network_type != 0 && this->primary_network_type != 1) {
         std::cerr << "primary_network_type: " << primary_network_type << " not supported!\n";
         exit(0);
@@ -204,9 +211,9 @@ Cell::add_neighbor_compute_cells()
 }
 
 auto
-Cell::recv_operon(const Operon& operon, u_int32_t direction_in, u_int32_t distance_class) -> bool
+Cell::recv_operon(const Operon& operon, u_int32_t direction_in, u_int32_t virtual_channel) -> bool
 {
-    return this->recv_channel_per_neighbor[direction_in][distance_class].push(operon);
+    return this->recv_channel_per_neighbor[direction_in][virtual_channel].push(operon);
 }
 
 inline auto
@@ -883,9 +890,8 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
                 return paths;
             }
         }
-        
     }
-    std::cerr <<"horizontal_first_routing returning nothing. This is not OK!!! \n";
+    std::cerr << "horizontal_first_routing returning nothing. This is not OK!!! \n";
     exit(0);
 }
 

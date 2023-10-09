@@ -287,7 +287,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     // Move the operon from previous cycle recv channel to thier destination: action queue or
     // send channel of a neighbor
     for (u_int32_t i = 0; i < this->recv_channel_per_neighbor.size(); i++) {
-        // Distance Class
+        // Virtual Channel
         for (int j = this->recv_channel_per_neighbor[recv_channel_index].size() - 1; j >= 0; j--) {
             // for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
 
@@ -295,7 +295,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
             if (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
 
                 // If this is greater then it is a bug
-                assert(j <= static_cast<int>(this->distance_class_length));
+                assert(j <= static_cast<int>(this->number_of_virtual_channels));
 
                 std::vector<Operon> recv_operons;
                 while (this->recv_channel_per_neighbor[recv_channel_index][j].size()) {
@@ -325,20 +325,20 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         this->insert_action(operon.second);
                         operon_was_inserted_or_sent = true;
                     } else {
-                        //if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
-                           /*  std::cout << "\n";
+                        // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                        /*  std::cout << "\n";
 
-                            std::cout
-                                << "inside prepare_a_communication_cycle for: " << this->cooridates
-                                << ", with id: " << this->id << "\n";
-                            std::cout << "operon dst: "
-                                      << this->cc_id_to_cooridinate(
-                                             operon.first.dst_cc_id, this->shape, this->dim_y)
-                                      << ", with id: " << operon.first.dst_cc_id << "\n";
-                            std::cout << "operon src: "
-                                      << this->cc_id_to_cooridinate(
-                                             operon.first.src_cc_id, this->shape, this->dim_y)
-                                      << ", with id: " << operon.first.src_cc_id << "\n"; */
+                         std::cout
+                             << "inside prepare_a_communication_cycle for: " << this->cooridates
+                             << ", with id: " << this->id << "\n";
+                         std::cout << "operon dst: "
+                                   << this->cc_id_to_cooridinate(
+                                          operon.first.dst_cc_id, this->shape, this->dim_y)
+                                   << ", with id: " << operon.first.dst_cc_id << "\n";
+                         std::cout << "operon src: "
+                                   << this->cc_id_to_cooridinate(
+                                          operon.first.src_cc_id, this->shape, this->dim_y)
+                                   << ", with id: " << operon.first.src_cc_id << "\n"; */
                         //}
 
                         // Get the route using Routing 0
@@ -350,29 +350,52 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             this->get_route_towards_cc_id(operon.first.src_cc_id,
                                                           routing_cell_id.value());
 
-                       // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
-                           /*  std::cout << "\n";
-                            std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
+                        // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                        /*  std::cout << "\n";
+                         std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
                         //}
 
-                        // bool pushed = false;
-                        for (auto channel_to_send : channels_to_send) {
-                            if (this->send_channel_per_neighbor[channel_to_send].push(operon)) {
+                        u_int32_t const cc_column = this->cooridates.first;
+                        u_int32_t const cc_row = this->cooridates.second;
 
-                                // Set the distance class for this operon
-                                this->send_channel_per_neighbor_current_distance_class
-                                    [channel_to_send] = 0; // j + 1;
+                        bool const is_cell_top_border = cc_row == 0;
+                        bool const is_cell_bottom_border = cc_row == this->dim_x - 1;
+
+                        bool const is_cell_left_border = cc_column == 0;
+                        bool const is_cell_right_border = cc_column == this->dim_y - 1;
+
+                        for (auto channel_to_send : channels_to_send) {
+
+                            u_int32_t current_virtual_channel = j;
+
+                            bool stay_on_same_virtual_channel =
+                                (recv_channel_index % 2) == (channel_to_send % 2);
+
+                            bool is_warped = false;
+                            if ((is_cell_top_border && (channel_to_send == 1)) ||
+                                (is_cell_bottom_border && (channel_to_send == 3)) ||
+                                (is_cell_left_border && (channel_to_send == 0)) ||
+                                (is_cell_right_border && (channel_to_send == 2))) {
+                                is_warped = true;
+                            }
+
+                            if (is_warped && stay_on_same_virtual_channel) {
+                                stay_on_same_virtual_channel = !stay_on_same_virtual_channel;
+                            }
+
+                            u_int32_t virtual_channel_to_use = current_virtual_channel;
+                            if (!stay_on_same_virtual_channel) {
+                                virtual_channel_to_use = (current_virtual_channel + 1) %
+                                                         this->number_of_virtual_channels;
+                            }
+
+                            if (this->send_channel_per_neighbor[channel_to_send]
+                                                               [virtual_channel_to_use]
+                                                                   .push(operon)) {
 
                                 // Break out of the for loop. Discard other paths.
                                 operon_was_inserted_or_sent = true;
                                 break;
-                            } else {
-                               // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
-                                  //  std::cout << "\n";
-                                    /* std::cout
-                                        << "BUSY !! channels_to_send = " << channels_to_send[0]
-                                        << "\n"; */
-                              //  }
                             }
                         }
                     }
@@ -417,7 +440,8 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
         Task const current_task = this->task_queue.front();
 
         // Check if the staging buffer is not full and the task type is send operon
-        // In that case stall and don't do anything. Because the task can't send operon
+        // In that case stall and don't do anything. Because the task can't send operon due to
+        // staging buffer being full.
         if (this->staging_operon_from_logic &&
             (current_task.first == taskType::send_operon_task_type)) {
         } else {
@@ -426,7 +450,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             if constexpr (throttling_switch) {
                 if (this->last_congested_cycle) {
                     was_recently_congested =
-                        (this->current_cycle - this->last_congested_cycle.value()) <
+                        (this->current_cycle - this->last_congested_cycle.value()) <=
                         curently_congested_threshold;
                 }
             }
@@ -479,12 +503,13 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             std::vector<u_int32_t> const channels_to_send =
                 this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
 
-            for (auto channel_to_send : channels_to_send) {
-                if (this->send_channel_per_neighbor[channel_to_send][0].push(
-                        this->staging_operon_from_logic.value())) {
+            // Always use the default virtual channel 0 as this is the begining of the journey for
+            // this operon. It shouldn't matter for deadlocks.
+            u_int32_t virtual_channel_to_use = 0;
 
-                    // Set to distance class 0 since this operon originates from this CC
-                    this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
+            for (auto channel_to_send : channels_to_send) {
+                if (this->send_channel_per_neighbor[channel_to_send][virtual_channel_to_use].push(
+                        this->staging_operon_from_logic.value())) {
 
                     // Empty the staging buffer
                     this->staging_operon_from_logic = std::nullopt;
@@ -510,50 +535,56 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
         for (u_int32_t i = 0; i < this->send_channel_per_neighbor.size(); i++) {
 
-            if (this->send_channel_per_neighbor[i].size()) {
+            for (u_int32_t virtual_channel_index = 0;
+                 virtual_channel_index < this->number_of_virtual_channels;
+                 virtual_channel_index++) {
 
-                // TODO: NOTE: the size of each channel is fixed to be `1`, therfore this leftover
-                // etc is of no use for now
-                std::vector<Operon> send_operons;
-                while (this->send_channel_per_neighbor[i].size()) {
-                    send_operons.push_back(this->send_channel_per_neighbor[i].front());
-                    this->send_channel_per_neighbor[i].pop();
-                }
+                if (this->send_channel_per_neighbor[i][virtual_channel_index].size()) {
 
-                std::vector<Operon> left_over_operons;
-                for (Operon const& operon : send_operons) {
-                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
-
-                    // Check if this operon is destined for this compute cell
-                    assert(this->id != dst_cc_id);
-                    assert(this->neighbor_compute_cells[i] != std::nullopt);
-
-                    u_int32_t const neighbor_id_ = this->neighbor_compute_cells[i].value().first;
-
-                    if (!CCA_chip[neighbor_id_]->recv_operon(
-                            operon,
-                            receiving_direction[i],
-                            this->send_channel_per_neighbor_current_distance_class[i])) {
-
-                        this->send_channel_per_neighbor_contention_count[i].increment();
-
-                          /* std::cout
-                             << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
-                             << this->neighbor_compute_cells[i].value().second << " i = " << i
-                             << ", contention_count: max:"
-                             << this->send_channel_per_neighbor_contention_count[i].get_max_count()
-                             << ", contention_count: current : "
-                             << this->send_channel_per_neighbor_contention_count[i].get_count()
-                             << "\n";  */
-
-                        left_over_operons.push_back(operon);
-                    } else {
-                        this->send_channel_per_neighbor_contention_count[i].reset();
-                        this->statistics.operons_moved++;
+                    // TODO: NOTE: the size of each channel is fixed to be `1`, therfore this
+                    // leftover etc is of no use for now
+                    std::vector<Operon> send_operons;
+                    while (this->send_channel_per_neighbor[i][virtual_channel_index].size()) {
+                        send_operons.push_back(
+                            this->send_channel_per_neighbor[i][virtual_channel_index].front());
+                        this->send_channel_per_neighbor[i][virtual_channel_index].pop();
                     }
 
-                    for (Operon const& operon : left_over_operons) {
-                        this->send_channel_per_neighbor[i].push(operon);
+                    std::vector<Operon> left_over_operons;
+                    for (Operon const& operon : send_operons) {
+                        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+
+                        // Check if this operon is destined for this compute cell
+                        assert(this->id != dst_cc_id);
+                        assert(this->neighbor_compute_cells[i] != std::nullopt);
+
+                        u_int32_t const neighbor_id_ =
+                            this->neighbor_compute_cells[i].value().first;
+
+                        if (!CCA_chip[neighbor_id_]->recv_operon(
+                                operon, receiving_direction[i], virtual_channel_index)) {
+
+                            this->send_channel_per_neighbor_contention_count[i].increment();
+
+                            /* std::cout
+                               << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
+                               << this->neighbor_compute_cells[i].value().second << " i = " << i
+                               << ", contention_count: max:"
+                               <<
+                               this->send_channel_per_neighbor_contention_count[i].get_max_count()
+                               << ", contention_count: current : "
+                               << this->send_channel_per_neighbor_contention_count[i].get_count()
+                               << "\n";  */
+
+                            left_over_operons.push_back(operon);
+                        } else {
+                            this->send_channel_per_neighbor_contention_count[i].reset();
+                            this->statistics.operons_moved++;
+                        }
+
+                        for (Operon const& operon : left_over_operons) {
+                            this->send_channel_per_neighbor[i][virtual_channel_index].push(operon);
+                        }
                     }
                 }
             }
@@ -569,12 +600,16 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
     bool send_channels = false;
     bool recv_channels = false;
     for (u_int32_t i = 0; i < this->number_of_neighbors; i++) {
-        if (this->send_channel_per_neighbor[i].size()) {
-            send_channels = true;
-            break;
-        }
-        for (u_int32_t j = 0; j < this->recv_channel_per_neighbor[i].size(); j++) {
-            if (this->recv_channel_per_neighbor[i][j].size()) {
+        for (u_int32_t virtual_channel_index = 0;
+             virtual_channel_index < this->number_of_virtual_channels;
+             virtual_channel_index++) {
+
+            if (this->send_channel_per_neighbor[i][virtual_channel_index].size()) {
+                send_channels = true;
+                break;
+            }
+
+            if (this->recv_channel_per_neighbor[i][virtual_channel_index].size()) {
                 recv_channels = true;
                 break;
             }

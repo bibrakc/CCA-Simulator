@@ -65,7 +65,7 @@ main(int argc, char** argv) -> int
                                       cmd_args.hdepth,
                                       cmd_args.hbandwidth_max,
                                       cmd_args.memory_per_cc,
-                                      1,
+                                      cmd_args.mesh_type,
                                       cmd_args.routing_policy);
 
     // Print details of the CCA Chip.
@@ -84,7 +84,7 @@ main(int argc, char** argv) -> int
     // initializer in `transfer_graph_host_to_cca`.
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
                                    (cca_square_simulator.dim_y / 2);
-    center_of_the_chip = 0;
+    // center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to

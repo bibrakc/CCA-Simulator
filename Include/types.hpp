@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <cassert>
 #include <ostream>
 #include <queue>
 
@@ -114,6 +115,11 @@ class MaxCounter
     }
 
     void reset() { this->counter = 0; }
+    void decrement()
+    {
+        assert(this->counter > 0);
+        this->counter--;
+    }
     [[nodiscard]] auto get_count() const -> u_int32_t { return this->counter; }
     [[nodiscard]] auto get_max_count() const -> u_int32_t { return this->max_counter; }
     [[nodiscard]] auto get_total_count() const -> u_int32_t { return this->total_counter; }

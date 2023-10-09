@@ -345,7 +345,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
                 << simulation_statistics.actions_created << "\t"
                 << simulation_statistics.actions_performed_work << "\t"
                 << simulation_statistics.actions_false_on_predicate << "\t"
-                << simulation_statistics.operons_moved <<"\n";
+                << simulation_statistics.operons_moved << "\n";
 
     output_file << "avg_objects_per_cc\n" << avg_objects_per_cc << "\n";
 
@@ -372,10 +372,10 @@ CCASimulator::run_simulation(Address app_terminator)
     // while (is_system_active) {
 
     // while (this->is_diffusion_active(app_terminator)) {
-   // while (run_next_cycle) {
-         u_int32_t count_temp = 0;
-        while (count_temp < 600) {
-            count_temp++;  
+    while (run_next_cycle) {
+        /* u_int32_t count_temp = 0;
+        while (count_temp < 4000) {
+            count_temp++; */
 
         is_system_active = false;
         run_next_cycle = false;
@@ -432,7 +432,7 @@ CCASimulator::run_simulation(Address app_terminator)
             active_status_frame_per_cells[i] = this->CCA_chip[i]->is_compute_cell_active();
             if (active_status_frame_per_cells[i]) {
                 sum_global_active_cc_local++;
-                std::cout <<"CC: " << i << " is active\n";
+                // std::cout <<"CC: " << i << " is active\n";
             }
         }
 

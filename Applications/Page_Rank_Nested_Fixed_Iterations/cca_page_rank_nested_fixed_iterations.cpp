@@ -64,6 +64,7 @@ main(int argc, char** argv) -> int
                                       cmd_args.hdepth,
                                       cmd_args.hbandwidth_max,
                                       cmd_args.memory_per_cc,
+                                      cmd_args.mesh_type,
                                       cmd_args.routing_policy);
     // Print details of the CCA Chip.
     cca_square_simulator.print_discription(std::cout);
