@@ -65,6 +65,7 @@ main(int argc, char** argv) -> int
                                       cmd_args.hdepth,
                                       cmd_args.hbandwidth_max,
                                       cmd_args.memory_per_cc,
+                                      cmd_args.mesh_type,
                                       cmd_args.routing_policy);
 
     // Print details of the CCA Chip.
@@ -83,6 +84,7 @@ main(int argc, char** argv) -> int
     // initializer in `transfer_graph_host_to_cca`.
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
                                    (cca_square_simulator.dim_y / 2);
+    // center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
@@ -92,7 +94,7 @@ main(int argc, char** argv) -> int
         allocator,
         std::optional<u_int32_t>(cmd_args.root_vertex),
         cmd_args.shuffle_switch);
-    
+
     /*
     std::vector<u_int32_t> vertices_inbound_degree_zero =
         input_graph.get_vertices_ids_with_zero_in_degree();
@@ -146,6 +148,30 @@ main(int argc, char** argv) -> int
                                                  bfs_predicate,
                                                  bfs_work,
                                                  bfs_diffuse));
+
+    ///////////
+
+    /* auto vertex_addr_to_dst = input_graph.get_vertex_address_in_cca(0);
+
+    BFSArguments root_level_to_send_dst;
+    root_level_to_send_dst.level = 0;
+    // Origin vertex from where this action came. Host not used. Put any value;
+    root_level_to_send_dst.src_vertex_id = 99999;
+
+    ActionArgumentType const args_x_dst =
+        cca_create_action_argument<BFSArguments>(root_level_to_send_dst);
+
+    // Insert a seed action into the CCA chip that will help start the diffusion.
+    cca_square_simulator.germinate_action(Action(vertex_addr_to_dst,
+                                                 bfs_terminator.value(),
+                                                 actionType::germinate_action,
+                                                 true,
+                                                 args_x_dst,
+                                                 bfs_predicate,
+                                                 bfs_work,
+                                                 bfs_diffuse)); */
+
+    ////////////
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();

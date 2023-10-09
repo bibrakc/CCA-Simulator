@@ -181,14 +181,19 @@ class Cell
     // later
     u_int32_t number_of_neighbors;
 
-    // IDs and Coordinates of the neighbors
+    // Number of virtual channels.
+    u_int32_t number_of_virtual_channels;
+
+    // IDs and Coordinates of the neighbors.
     std::vector<std::optional<std::pair<u_int32_t, Coordinates>>> neighbor_compute_cells;
 
-    // Per neighbor send channel/link
-    std::vector<FixedSizeQueue<Operon>> send_channel_per_neighbor;
-    std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
+    // Per neighbor send channel/link.
+    std::vector<std::vector<FixedSizeQueue<Operon>>> send_channel_per_neighbor;
 
-    // Use this to detect deadlock
+    // TODO: Remove this or add this later. We are not using diatance class right now.
+    // std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
+
+    // Use this to detect deadlock.
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count;
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
@@ -201,11 +206,15 @@ class Cell
     // semantics/pragmatics of CCA.
     std::vector<std::vector<FixedSizeQueue<Operon>>> recv_channel_per_neighbor;
 
+    // High bandwidth network type. This is the primary network. By default the mesh. But can be
+    // Torus and more.
+    // TODO: Instead of `u_int32_t` put some enum type.
+    // 0: Mesh
+    // 1: Torus
+    u_int32_t primary_network_type{};
+
     // Routing policy
     u_int32_t mesh_routing_policy;
-
-    // For deadlock avoidance
-    u_int32_t distance_class_length;
 
     // Performance measurements and counters
     ComputeCellStatistics statistics;

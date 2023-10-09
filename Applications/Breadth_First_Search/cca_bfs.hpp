@@ -246,6 +246,9 @@ configure_parser(cli::Parser& parser)
         "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
+    parser.set_optional<u_int32_t>(
+        "mesh", "mesh_type", 0, "Type of the mesh:\n\t0: Regular\n\t1: Torus.");
+
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
 
     parser.set_optional<bool>(
@@ -284,6 +287,10 @@ struct BFSCommandLineArguments
 
     // Get the memory per cc or use the default.
     u_int32_t memory_per_cc{};
+
+    // Mesh type.
+    u_int32_t mesh_type{};
+
     // Get the routing policy to use.
     u_int32_t routing_policy{};
 
@@ -303,6 +310,7 @@ struct BFSCommandLineArguments
         , shape_arg(parser.get<std::string>("s"))
         , shape_of_compute_cells(computeCellShape::computeCellShape_invalid)
         , memory_per_cc(parser.get<u_int32_t>("m"))
+        , mesh_type(parser.get<u_int32_t>("mesh"))
         , routing_policy(parser.get<u_int32_t>("route"))
         , shuffle_switch(parser.get<bool>("shuffle"))
     {

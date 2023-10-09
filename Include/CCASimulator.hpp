@@ -117,6 +117,13 @@ class CCASimulator
     // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
 
+    // High bandwidth network type. This is the primary network. By default the mesh. But can be
+    // Torus and more.
+    // TODO: Instead of `u_int32_t` put some enum type.
+    // 0: Mesh
+    // 1: Torus
+    u_int32_t primary_network_type{};
+
     // The routing policy and algorithms id for the mesh network
     u_int32_t mesh_routing_policy_id;
 
@@ -154,6 +161,7 @@ class CCASimulator
                  u_int32_t hdepth_in,
                  u_int32_t hbandwidth_max_in,
                  u_int32_t memory_per_cc_in,
+                 u_int32_t primary_network_type_in,
                  u_int32_t mesh_routing_policy_id_in)
         : shape_of_compute_cells(shape_in)
         , hx(hx_in)
@@ -161,6 +169,7 @@ class CCASimulator
         , hdepth(hdepth_in)
         , hbandwidth_max(hbandwidth_max_in)
         , memory_per_cc(memory_per_cc_in)
+        , primary_network_type(primary_network_type_in)
         , mesh_routing_policy_id(mesh_routing_policy_id_in)
         , htree_network(hx_in, hy_in, hdepth_in, hbandwidth_max_in)
     {
