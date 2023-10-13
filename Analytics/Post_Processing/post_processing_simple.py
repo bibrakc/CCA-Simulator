@@ -47,7 +47,7 @@ args = sys.argv
 
 output_file = args[1]
 
-routing_algorithm = args[2]
+routing_algorithm = "Dimenssion Ordered ??"
 
 # open the file in read mode
 with open(output_file, 'r') as file:
@@ -82,7 +82,7 @@ with open(output_file, 'r') as file:
     total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred, operons_moved = file.readline().strip().split()
 
     # convert cycles, invoked, performed and false_pred to integers
-    cycles, objects_created, actions_created, actions_performed, actions_false_pred = map(
+    cycles, objects_created, actions_created, actions_performed, actions_false_pred, operons_moved = map(
         int, [total_cycles, total_objects_created, total_actions_created, total_actions_performed, total_actions_false_pred, operons_moved])
 
     # read the header line for the table and discard it
@@ -123,7 +123,15 @@ print("avg_objects_per_cc: ", avg_objects_per_cc)
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
 
-print(stats.describe())
+# print(stats.describe())
+
+selected_columns = ['max_action_queue', 'max_task_queue', 'total_task_queue']
+custom_percentiles = [0.1, 0.25, 0.5, 0.75, 0.85, 0.9, 0.95]  # Specify your desired percentiles here
+subset_df = stats[selected_columns]
+statistics = subset_df.describe(percentiles=custom_percentiles)
+print(statistics)
+
+
 
 chip_config = "Chip of " + \
     str(dim_x)+" x "+str(dim_y)+" Cells"
@@ -223,8 +231,8 @@ def active_status_chart():
 # print(matplotlib.matplotlib_fname())
 
 # Main
-congestion_charts()
+# congestion_charts()
 # active_status_chart()
 
 # Display the plot
-plt.show()
+# plt.show()

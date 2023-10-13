@@ -132,6 +132,7 @@ ComputeCell::insert_action(const Action& action)
 {
     this->action_queue.push(action);
     this->statistics.actions_pushed++;
+    this->statistics.action_queue_count.increment();
 }
 
 // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon on
@@ -190,6 +191,7 @@ ComputeCell::diffuse(const Action& action)
 
     // A new action was created. Increment the statistics for action.
     this->statistics.actions_created++;
+    this->statistics.task_queue_count.increment();
 }
 
 void
@@ -203,6 +205,7 @@ ComputeCell::execute_action(void* function_events)
     if (!this->action_queue.empty()) {
         Action const action = this->action_queue.front();
         this->action_queue.pop();
+        this->statistics.action_queue_count.decrement();
 
         auto* function_events_manager = static_cast<FunctionEventManager*>(function_events);
 
@@ -458,6 +461,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             if (!was_recently_congested) {
                 // Remove the task from the queue and execute it.
                 this->task_queue.pop();
+                this->statistics.task_queue_count.decrement();
                 // Execute the task
                 current_task.second();
             }

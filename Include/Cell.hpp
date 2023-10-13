@@ -93,6 +93,12 @@ struct ComputeCellStatistics
     // # of objects allocated
     u_int32_t objects_allocated{};
 
+    // Use this to find max queue size for a given application run.
+    MaxCounter action_queue_count;
+
+    // Use this to find max queue size for a given application run.
+    MaxCounter task_queue_count;
+
     // Type of the Cell: ComputeCell or Htree node? For which these statistics were taken
     CellType type;
 
@@ -102,6 +108,7 @@ struct ComputeCellStatistics
               "\tactions_created\tactions_acknowledgement_created"
               "\tactions_pushed\tactions_invoked\tactions_performed_work"
               "\tactions_acknoledgement_invoked\tactions_false_on_predicate\toperons_moved"
+              "\tmax_action_queue\tmax_task_queue\ttotal_task_queue"
               "\tleft_send_contention_max\tleft_send_contention_total"
               "\tup_send_contention_max\tup_send_contention_total"
               "\tright_send_contention_max\tright_send_contention_total"
@@ -193,7 +200,7 @@ class Cell
     // TODO: Remove this or add this later. We are not using diatance class right now.
     // std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
 
-    // Use this to detect deadlock.
+    // Use this to detect and also quantify congestion
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count;
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
