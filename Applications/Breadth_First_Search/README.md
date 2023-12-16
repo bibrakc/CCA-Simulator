@@ -23,5 +23,5 @@ Assuming the current directory is `/Applications/Breadth_First_Search`
 ### Using Pure Mesh Netowrk
 > `$ ./build/BFS_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx 48 -hy 48 -hdepth 0 -hb 0 -route 0 -mesh 1 -verify`
 
-- `-mesh 1`: represents the Torus mesh. 0: is pure mesh.
+- `-mesh 1`: represents the Torus mesh. `0`: is pure mesh.
 - Make sure to have the output `-od ./Output` directory created before runing the application.

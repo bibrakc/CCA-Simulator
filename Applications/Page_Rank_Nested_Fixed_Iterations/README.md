@@ -30,4 +30,6 @@ Assuming the current directory is `/Applications/Page_Rank_Nested_Fixed_Iteratio
 - The `root` will only be used if there are no vertices with `in degree` of zero. The application will try to find if there are any vertices with zero `in degre` and if it finds then it will germinate the page rank action on all those vertices.
 
 ## Limitations
-For a directed graph if there is any vertex with zero outbound degree then the networkx calculated .pagerank score might not match since perhaps networkx uses some form of dandling calculations that this version does not. It needs to be investigated further. Right now it shouldn't be an issue as far as the performance and understanding of the behaviour is concerned.
+For a directed graph if there is any vertex with zero outbound degree then the networkx calculated .pagerank score might not match since perhaps networkx uses some form of dandling calculations that this version does not. It needs to be investigated further. Right now it shouldn't be an issue as far as the performance and understanding of the behaviour of the computation is concerned.
+
+When using `NESTEDITERATIONS > 1` and `-iter > 1` then for some graphs (most likely the ones where there are vertices with zero inbound degrees) it may throw a bug exception on the 2nd iteration of `-iter`. Not sure whether that will be considered a bug in this circumstances. Nevertheless, for now this is not an issue when invoking with `-iter 1` and `NESTEDITERATIONS > 1`, because this is our fully asynchronous case.

@@ -440,6 +440,10 @@ write_results(const BFSCommandLineArguments& cmd_args,
     if constexpr (termination_switch) {
         termination_text = "ON";
     }
+    std::string network_text = "MESH";
+    if (cmd_args.mesh_type == 1) {
+        network_text = "TORUS";
+    }
 
     std::string const output_file_name =
         "bfs_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
@@ -448,7 +452,7 @@ write_results(const BFSCommandLineArguments& cmd_args,
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
         "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
         std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max) +
-        "_termimation_" + termination_text;
+        "_termimation_" + termination_text + "_network_" + network_text;
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";

@@ -103,7 +103,8 @@ main(int argc, char** argv) -> int
     // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
     // allocator from the center of the chip and later provide the `root` vertex to the graph
     // initializer in `transfer_graph_host_to_cca`.
-    u_int32_t center_of_the_chip = cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2);
+    u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
+                                   (cca_square_simulator.dim_y / 2);
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is

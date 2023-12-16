@@ -634,7 +634,10 @@ verify_results(const PageRankNestedIterationCommandLineArguments& cmd_args,
         int node_id;
         double pagerank_value;
         while (std::getline(file, line)) {
-
+            
+            // When there are vertices with in-degree zero then they are not present in the
+            // .pagerank file. Therefore, the vertification will fail in that case.
+            // TODO: Need to add the case.
             if (std::sscanf(line.c_str(), "%d\t%lf", &node_id, &pagerank_value) == 2) {
                 control_results.emplace_back(pagerank_value);
             }
