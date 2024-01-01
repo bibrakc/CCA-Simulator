@@ -235,7 +235,7 @@ class CCASimulator
            << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
            << " MB"
            << "\n\tMesh Type: " << this->primary_network_type
-           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n\n";
+           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n" << std::endl;
     }
     inline void output_description_in_a_single_line(std::ostream& os)
     {

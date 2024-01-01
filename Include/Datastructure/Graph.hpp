@@ -250,7 +250,7 @@ class Graph
 
         std::cout << "The graph: " << input_graph_path
                   << " has total_vertices: " << this->total_vertices << " with "
-                  << this->total_edges << " egdes.\n";
+                  << this->total_edges << " egdes." << std::endl;
 
         // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
         std::shared_ptr<VertexType[]> const vertices_(new VertexType[this->total_vertices],
