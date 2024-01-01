@@ -424,13 +424,19 @@ CCASimulator::run_simulation(Address app_terminator)
         u_int32_t sum_global_active_cc_local = 0;
         // Also put the active status in the statistics to create the animation using the python
         // script.
-        std::shared_ptr<u_int32_t[]> const active_status_frame_per_cells(
-            new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
+        std::shared_ptr<u_int32_t[]> active_status_frame_per_cells;
+        if constexpr (animation_switch) {
+            active_status_frame_per_cells = std::shared_ptr<u_int32_t[]>(
+                new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
+        }
 
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            active_status_frame_per_cells[i] = this->CCA_chip[i]->is_compute_cell_active();
-            if (active_status_frame_per_cells[i]) {
+            const bool is_cell_active = this->CCA_chip[i]->is_compute_cell_active();
+            if constexpr (animation_switch) {
+                active_status_frame_per_cells[i] = is_cell_active;
+            }
+            if (is_cell_active) {
                 sum_global_active_cc_local++;
                 // std::cout <<"CC: " << i << " is active\n";
             }
