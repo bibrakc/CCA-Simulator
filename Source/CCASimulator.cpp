@@ -467,7 +467,7 @@ CCASimulator::run_simulation(Address app_terminator)
             static_cast<double>(htree_network.htree_all_nodes.size());
 
         // Only print on screen every 500th cycle status update.
-        if (this->total_current_run_cycles % 500 == 0) {
+        if (this->total_current_run_cycles % 1000 == 0) {
             std::cout << "End of current run cycle # " << this->total_current_run_cycles
                       << ", Total cycles: " << this->total_cycles
                       << ", CCs Active: " << percent_CCs_active
