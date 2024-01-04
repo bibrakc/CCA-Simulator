@@ -235,7 +235,8 @@ class CCASimulator
            << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
            << " MB"
            << "\n\tMesh Type: " << this->primary_network_type
-           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n" << std::endl;
+           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n"
+           << std::endl;
     }
     inline void output_description_in_a_single_line(std::ostream& os)
     {
@@ -273,9 +274,15 @@ class CCASimulator
         os << "avg_cells_active_percent\n" << this->cca_statistics.avg_cells_active_percent << "\n";
 
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
-        for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
-            os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"
-               << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+        if constexpr (animation_switch) {
+            for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
+                os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
+                   << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+            }
+        } else {
+            os << "0\t0\t0\n";
+            os << "0\t0\t0\n";
+            os << "0\t0\t0\n";
         }
     }
 
