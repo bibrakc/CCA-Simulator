@@ -94,7 +94,7 @@ class FixedSizeQueue
         return (this->underlying_queue.size() != this->size_max);
     }
 };
-
+#include <iostream>
 class MaxCounter
 {
   private:
@@ -104,6 +104,7 @@ class MaxCounter
 
   public:
     MaxCounter() {}
+    u_int32_t temp_cc_id{ 0 };
 
     void increment()
     {
@@ -118,7 +119,7 @@ class MaxCounter
     void decrement()
     {
         assert(this->counter > 0);
-        this->counter--;
+        this->counter = this->counter - 1;
     }
     [[nodiscard]] auto get_count() const -> u_int32_t { return this->counter; }
     [[nodiscard]] auto get_max_count() const -> u_int32_t { return this->max_counter; }

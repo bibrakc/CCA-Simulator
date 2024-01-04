@@ -72,7 +72,9 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
         // Create Operon and put it in the task queue
         Operon const operon_to_send =
             ComputeCell::construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
+
         cc.task_queue.push(cc.send_operon(operon_to_send));
+        cc.statistics.task_queue_count.increment();
     }
 }
 
@@ -111,7 +113,9 @@ Terminator::unsignal(ComputeCell& cc)
             // Create Operon and put it in the task queue
             Operon const operon_to_send = ComputeCell::construct_operon(
                 cc.id, this->parent.value().cc_id, acknowledgement_action);
+
             cc.task_queue.push(cc.send_operon(operon_to_send));
+            cc.statistics.task_queue_count.increment();
 
             // Unset the parent
             this->parent = std::nullopt;
@@ -125,14 +129,14 @@ void
 Terminator::host_signal()
 {
     this->deficit++;
-    //std::cout<<"host_signal: deficit = " << this->deficit << "\n";
+    // std::cout<<"host_signal: deficit = " << this->deficit << "\n";
 }
 void
 Terminator::host_acknowledgement()
 {
     assert(this->deficit != 0);
     this->deficit--;
-    //std::cout<<"host_acknowledgement: deficit = " << this->deficit << "\n";
+    // std::cout<<"host_acknowledgement: deficit = " << this->deficit << "\n";
 }
 
 // Recieved an acknowledgement message back. Decreament my deficit.
@@ -171,7 +175,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             // Create Operon and put it in the task queue
             Operon const operon_to_send = ComputeCell::construct_operon(
                 cc.id, this->parent.value().cc_id, acknowledgement_action);
+
             cc.task_queue.push(cc.send_operon(operon_to_send));
+            cc.statistics.task_queue_count.increment();
 
             // Unset the parent
             this->parent = std::nullopt;
@@ -214,7 +220,9 @@ Terminator::acknowledgement(ComputeCell& cc)
             // Create Operon and put it in the task queue
             Operon const operon_to_send = ComputeCell::construct_operon(
                 cc.id, this->parent.value().cc_id, acknowledgement_action);
+
             cc.task_queue.push(cc.send_operon(operon_to_send));
+            cc.statistics.task_queue_count.increment();
 
             // Unset the parent
             this->parent = std::nullopt;

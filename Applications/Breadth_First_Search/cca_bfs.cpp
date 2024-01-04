@@ -180,9 +180,9 @@ main(int argc, char** argv) -> int
 
     std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
 
-    std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
+    std::cout << "Program elapsed time (This has nothing to do with the simulation "
                  "itself): "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
+              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
               << std::endl;
 
     // Verify results.

@@ -200,6 +200,8 @@ class ComputeCell : public Cell
         // Experimental. The cells don't have sense of a global cycle. It is here for debuging and
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
+
+        this->statistics.task_queue_count.temp_cc_id = this->id;
     }
 
     ~ComputeCell() override = default;

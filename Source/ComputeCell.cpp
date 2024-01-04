@@ -459,8 +459,10 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             }
 
             if (!was_recently_congested) {
+
                 // Remove the task from the queue and execute it.
                 this->task_queue.pop();
+
                 this->statistics.task_queue_count.decrement();
                 // Execute the task
                 current_task.second();
