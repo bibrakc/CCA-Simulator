@@ -573,14 +573,14 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                             this->send_channel_per_neighbor_contention_count[i].increment();
 
                             /* std::cout
-                               << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
-                               << this->neighbor_compute_cells[i].value().second << " i = " << i
-                               << ", contention_count: max:"
-                               <<
-                               this->send_channel_per_neighbor_contention_count[i].get_max_count()
-                               << ", contention_count: current : "
-                               << this->send_channel_per_neighbor_contention_count[i].get_count()
-                               << "\n";  */
+                              << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
+                              << this->neighbor_compute_cells[i].value().second << " i = " << i
+                              << ", contention_count: max:"
+                              <<
+                              this->send_channel_per_neighbor_contention_count[i].get_max_count()
+                              << ", contention_count: current : "
+                              << this->send_channel_per_neighbor_contention_count[i].get_count()
+                              << "\n";  */
 
                             left_over_operons.push_back(operon);
                         } else {
@@ -622,6 +622,7 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
         }
     }
     bool const compute_active = !this->action_queue.empty() || !this->task_queue.empty();
+
     bool const communication_active =
         (this->staging_operon_from_logic || send_channels || recv_channels);
 

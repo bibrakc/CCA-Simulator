@@ -372,10 +372,10 @@ CCASimulator::run_simulation(Address app_terminator)
     // while (is_system_active) {
 
     // while (this->is_diffusion_active(app_terminator)) {
-    while (run_next_cycle) {
-        /* u_int32_t count_temp = 0;
+    // while (run_next_cycle) {
+         u_int32_t count_temp = 0;
         while (count_temp < 4000) {
-            count_temp++; */
+            count_temp++; 
 
         is_system_active = false;
         run_next_cycle = false;
@@ -432,7 +432,7 @@ CCASimulator::run_simulation(Address app_terminator)
 
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            const bool is_cell_active = this->CCA_chip[i]->is_compute_cell_active();
+            const u_int32_t is_cell_active = this->CCA_chip[i]->is_compute_cell_active();
             if constexpr (animation_switch) {
                 active_status_frame_per_cells[i] = is_cell_active;
             }

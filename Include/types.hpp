@@ -104,7 +104,7 @@ class MaxCounter
 
   public:
     MaxCounter() {}
-    u_int32_t temp_cc_id{ 0 };
+    //u_int32_t temp_cc_id{ 0 };
 
     void increment()
     {

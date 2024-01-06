@@ -486,6 +486,7 @@ Cell::is_congested() -> std::pair<bool, u_int32_t>
     bool is_congested = false;
     u_int32_t congestion_level_addition = 0;
     for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
+
         if (congestion_count.get_count() > congestion_threshold_1) {
             is_congested = true;
 
@@ -538,8 +539,7 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
 }
 
 auto
-Cell::get_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
-    -> std::vector<u_int32_t>
+Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
     // return get_west_first_route_towards_cc_id(dst_cc_id);
 
@@ -552,11 +552,12 @@ Cell::get_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
 
     // Note: These are good with throttling.
     // return get_vertical_first_route_towards_cc_id(dst_cc_id);
-    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+
+    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-    // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+     return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 auto
@@ -783,20 +784,98 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
 {
 
     std::vector<u_int32_t> paths;
+    if (this->primary_network_type == 0) { // Mesh
+        if (this->cooridates.second > dst_cc_coordinates.second) {
+            paths.push_back(1); // Clockwise 1 = up
+        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+            paths.push_back(3); // Clockwise 3 = down
+        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+            // send to right
+            paths.push_back(2);
+        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+            // send to left
+            paths.push_back(0);
+        }
 
-    if (this->cooridates.second > dst_cc_coordinates.second) {
-        paths.push_back(1); // Clockwise 1 = up
-    } else if (this->cooridates.second < dst_cc_coordinates.second) {
-        paths.push_back(3); // Clockwise 3 = down
-    } else if (this->cooridates.first < dst_cc_coordinates.first) {
-        // send to right
-        paths.push_back(2);
-    } else if (this->cooridates.first > dst_cc_coordinates.first) {
-        // send to left
-        paths.push_back(0);
+        return paths;
+    } else if (this->primary_network_type == 1) { // Torus
+
+        if (this->cooridates.second != dst_cc_coordinates.second) {
+
+            if (this->cooridates.second < dst_cc_coordinates.second) {
+                int dst_to_down_edge = this->dim_x - dst_cc_coordinates.second;
+                int wraped_distance_y = dst_to_down_edge + this->cooridates.second;
+
+                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                                              static_cast<int>(dst_cc_coordinates.second));
+
+                /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
+                          << ", wraped_distance_y: " << wraped_distance_y
+                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
+
+                if (abs_distance_y <= wraped_distance_y) {
+                    paths.push_back(3); // Clockwise 3 = down
+                } else {
+                    paths.push_back(1); // Clockwise 1 = up
+                }
+                return paths;
+            } else {
+                int dst_to_up_edge = dst_cc_coordinates.second;
+                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->cooridates.second;
+
+                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                                              static_cast<int>(dst_cc_coordinates.second));
+
+                /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
+                          << ", wraped_distance_y: " << wraped_distance_y
+                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
+
+                if (abs_distance_y <= wraped_distance_y) {
+                    paths.push_back(1); // Clockwise 1 = up
+                } else {
+                    paths.push_back(3); // Clockwise 3 = down
+                }
+                return paths;
+            }
+        } else {
+            if (this->cooridates.first < dst_cc_coordinates.first) {
+                int dst_to_right_edge = this->dim_y - dst_cc_coordinates.first;
+                int wraped_distance_x = dst_to_right_edge + this->cooridates.first;
+
+                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                                              static_cast<int>(dst_cc_coordinates.first));
+
+                /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
+                          << ", wraped_distance: " << wraped_distance_x
+                          << ", abs_distance: " << abs_distance_x << "\n"; */
+
+                if (abs_distance_x <= wraped_distance_x) {
+                    // std::cout << "Move Right!\n";
+                    // send to right
+                    paths.push_back(2);
+                } else {
+                    // std::cout << "Move Left!\n";
+                    paths.push_back(0); // Clockwise 0 = left
+                }
+                return paths;
+            } else {
+                int dst_to_left_edge = dst_cc_coordinates.first;
+                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->cooridates.first;
+
+                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                                              static_cast<int>(dst_cc_coordinates.first));
+                if (abs_distance_x <= wraped_distance_x) {
+                    paths.push_back(0); // Clockwise 0 = left
+                } else {
+                    // send to right
+                    paths.push_back(2);
+                }
+                return paths;
+            }
+        }
     }
-
-    return paths;
+    std::cerr << "vertical_first_routing returning nothing. This is not OK!!! \n";
+    exit(0);
 }
 
 inline auto
@@ -912,8 +991,8 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_
 {
 
     // Algorithm == mixed first.
-    // For even columns of CCs use horizontal (west or east) first and for odd columns use vertizal
-    // first (up or down).
+    // For even columns of CCs use horizontal (west or east) first and for odd columns use
+    // vertizal first (up or down).
     if (this->shape == computeCellShape::square) {
         // Remember for a square shaped CC there are four links to neighbors enumerated in
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
