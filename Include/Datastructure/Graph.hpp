@@ -147,7 +147,8 @@ class Graph
             starting_vertex_id = start_vertex_id.value();
             std::cout << "Vertex id " << starting_vertex_id
                       << " will be allocated first by the allocator. Then the rest of the vertices "
-                         "will follow based on the allocator type.\n";
+                         "will follow based on the allocator type."
+                      << std::endl;
         }
 
         // Create a vector of ids of all vertices values from root to N cyclically
@@ -176,7 +177,8 @@ class Graph
                 exit(0);
             }
             std::cout << "Shuffled the vertex id list for random allocation of vertices. May help "
-                         "with synthetic graphs where the graph generator didn't do a good job.\n";
+                         "with synthetic graphs where the graph generator didn't do a good job."
+                      << std::endl;
         }
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
@@ -211,7 +213,10 @@ class Graph
             vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
-        std::cout << "Populating vertices by inserting edges: \n";
+        std::cout << "Populating vertices by inserting edges: " << std::endl;
+
+// TODO: Can we OpenMP parallelize this?
+#pragma omp parallel for
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 

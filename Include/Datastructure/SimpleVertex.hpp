@@ -69,11 +69,11 @@ struct SimpleVertex : Object
     // Outbound degree. Number of vertices that this vertex points to.
     u_int32_t outbound_degree{};
 
-    // Total inbound edges to this vertex.
+    // Total inbound edges to this vertex. Used for Page Rank like applications.
     u_int32_t inbound_degree{};
 
     // Used in the calculation with the damping factor in page rank. Or can be used in other
-    // algorithms. Right now putting is here in the parent class since this might be used for many
+    // algorithms. Right now putting this here in the parent class since this might be used for many
     // algorithms. TODO: Think of ways how this changes in dynamic graphs
     u_int32_t total_number_of_vertices;
 
