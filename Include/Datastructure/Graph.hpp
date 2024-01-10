@@ -215,7 +215,6 @@ class Graph
 
         std::cout << "Populating vertices by inserting edges: " << std::endl;
 
-// TODO: Can we OpenMP parallelize this?
 #pragma omp parallel for
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;

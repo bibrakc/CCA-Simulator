@@ -174,7 +174,7 @@ class ComputeCell : public Cell
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
         // this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
-        this->number_of_virtual_channels = 3;
+        this->number_of_virtual_channels = 4; // To avoid deadlock, espesially in Torus routing.
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
