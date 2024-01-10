@@ -227,7 +227,8 @@ ComputeCell::execute_action(void* function_events)
 
             // termination_switch is set at compile time by -D TERMINATION=true/false. It is here to
             // find overhead of termination detection method in our benchmarks. Normally, the
-            // termination_switch is set to true.
+            // termination_switch is set to true. Or false if we are using CCA as strictly an
+            // accelerator for a single user application without runtime management tasks.
             if constexpr (termination_switch) {
                 // Signal that this object is active for termination detection
                 // origin_addr is set to be parent if deficit == 0
@@ -245,15 +246,17 @@ ComputeCell::execute_action(void* function_events)
                 this->statistics.actions_performed_work++;
 
                 // diffuse
-                function_events_manager->get_function_event_handler(action.diffuse)(
-                    *this, action.obj_addr, action.action_type, action.args);
+                /* function_events_manager->get_function_event_handler(action.diffuse)(
+                 *this, action.obj_addr, action.action_type, action.args); */
+                this->diffuse_queue.push(action);
+
             } else {
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
-            if constexpr (termination_switch) {
+            /* if constexpr (termination_switch) {
                 obj->terminator.unsignal(*this);
-            }
+            } */
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
             function_events_manager->get_acknowledgement_event_handler()(
@@ -269,6 +272,74 @@ ComputeCell::execute_action(void* function_events)
         return;
     }
     std::cerr << "Bug! Cannot execute action as the action_queue is empty! It shouldn't be here\n";
+    exit(0);
+}
+
+void
+ComputeCell::execute_diffusion_phase(void* function_events)
+{
+
+    // Using `void* function_events` becuase there is conflict in compiler with dependencies between
+    // classes.
+    // TODO: later find a graceful way and then remove this `void*`
+
+    if (!this->diffuse_queue.empty()) {
+        
+        Action const action = this->diffuse_queue.front();
+        this->diffuse_queue.pop();
+
+        // TODO: Fix this stats!
+        // this->statistics.action_queue_count.decrement();
+
+        auto* function_events_manager = static_cast<FunctionEventManager*>(function_events);
+
+        if constexpr (debug_code) {
+            if (action.obj_addr.cc_id != this->id) {
+                std::cout << "Invalid addr! The vertex does not exist on this CC\n";
+                return;
+            }
+            // When needed put the inlude header for that datastructure and print it here.
+            /* SimpleVertex<Address>* vertex =
+                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
+            print_SimpleVertex(vertex, action.obj_addr); */
+        }
+
+        if (action.action_type == actionType::application_action ||
+            action.action_type == actionType::germinate_action) {
+
+            auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
+
+            // if predicate
+            int const predicate_resolution = function_events_manager->get_function_event_handler(
+                action.diffuse_predicate)(*this, action.obj_addr, action.action_type, action.args);
+
+            if (predicate_resolution == 1) {
+                // diffuse
+                //std::cout << "running execute_diffusion_phase\n";
+                function_events_manager->get_function_event_handler(action.diffuse)(
+                    *this, action.obj_addr, action.action_type, action.args);
+
+            } else {
+                // This diffusion is discarded/subsumed.
+                // TODO: Fix this stat.
+                // this->statistics.actions_false_on_predicate++;
+            }
+
+            // Finally this object becomes inactive.
+            if constexpr (termination_switch) {
+                obj->terminator.unsignal(*this);
+            }
+        } else {
+            std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
+            exit(0);
+        }
+        // Increament the counter for actions that were invoked
+        // this->statistics.actions_invoked++;
+
+        return;
+    }
+    std::cerr << "Bug! Cannot execute diffuse phase as the diffuse_queue is empty! It shouldn't be "
+                 "here\n";
     exit(0);
 }
 
@@ -469,9 +540,31 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             }
         }
 
-    } else if (!this->action_queue.empty()) {
-        // Else execute an action if the action_queue is not empty
-        this->execute_action(function_events);
+    } else {
+
+        // Logic for arbitration between action and diffuse queue
+        bool const both_queues_non_empty =
+            !this->action_queue.empty() && !this->diffuse_queue.empty();
+
+        if (both_queues_non_empty) {
+            // Both queues are non-empty, decide which one to use.
+            if (this->use_diffuse_queue) {
+                // Execute an action if the diffuse_queue is not empty.
+                this->execute_diffusion_phase(function_events);
+
+            } else {
+                // Execute an action if the action_queue is not empty.
+                this->execute_action(function_events);
+            }
+            this->use_diffuse_queue = !this->use_diffuse_queue;
+        } else {
+            // Only one of the queues is non-empty or both are empty.
+            if (!this->action_queue.empty()) {
+                this->execute_action(function_events);
+            } else if (!this->diffuse_queue.empty()) {
+                this->execute_diffusion_phase(function_events);
+            }
+        }
     }
 }
 
@@ -621,7 +714,8 @@ ComputeCell::is_compute_cell_active() -> u_int32_t
             }
         }
     }
-    bool const compute_active = !this->action_queue.empty() || !this->task_queue.empty();
+    bool const compute_active =
+        !this->action_queue.empty() || !this->diffuse_queue.empty() || !this->task_queue.empty();
 
     bool const communication_active =
         (this->staging_operon_from_logic || send_channels || recv_channels);

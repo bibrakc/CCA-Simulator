@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // In the main register the functions and get their ids
 CCAFunctionEvent bfs_predicate;
 CCAFunctionEvent bfs_work;
+CCAFunctionEvent bfs_diffuse_predicate;
 CCAFunctionEvent bfs_diffuse;
 
 auto
@@ -124,6 +125,8 @@ main(int argc, char** argv) -> int
     // Register the BFS action functions for predicate, work, and diffuse.
     bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);
     bfs_work = cca_square_simulator.register_function_event(bfs_work_func);
+    bfs_diffuse_predicate =
+        cca_square_simulator.register_function_event(bfs_diffuse_predicate_func);
     bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
 
     BFSArguments root_level_to_send;
@@ -147,6 +150,7 @@ main(int argc, char** argv) -> int
                                                  args_x,
                                                  bfs_predicate,
                                                  bfs_work,
+                                                 bfs_diffuse_predicate,
                                                  bfs_diffuse));
 
     ///////////

@@ -61,6 +61,7 @@ class ComputeCell : public Cell
     void insert_action(const Action& action);
 
     void execute_action(void* function_events);
+    void execute_diffusion_phase(void* function_events);
 
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links
@@ -114,12 +115,24 @@ class ComputeCell : public Cell
     // Actions queue of the Compute Cell
     std::queue<Action> action_queue;
 
+    // Diffusion Queue of the Compute Cell that holds the diffusive sections of the action. An
+    // action comes into the `action_queue`, where it gets invoked. When it is invoked the diffusion
+    // part is not immediately executed but rather it is sent to the `diffuse_queue` and is later
+    // scheduled for execution. This separation helps in deadlock avoidance on queues in that if
+    // there were a single queue it may becoem full and new actions couldnt be generated for that CC
+    // by that CC. It may also improve task scheduling, depending on how it is managed. Need to be
+    // clever.
+    std::queue<Action> diffuse_queue;
+
+    bool use_diffuse_queue{};
+
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
     // std::shared_ptr<Action> get_an_action();
 
     // Tasks for the Compute Cell. These tasks exist only for the simulator and are not part of the
-    // actual internals of any Compute Cell.
+    // actual internals of any Compute Cell. It functions to simulate tasks cycle by cycle thus
+    // making the simulation more accurate/realistic.
     std::queue<Task> task_queue;
 
     // Constructor
@@ -200,6 +213,8 @@ class ComputeCell : public Cell
         // Experimental. The cells don't have sense of a global cycle. It is here for debuging and
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
+        
+        this->use_diffuse_queue = false;
     }
 
     ~ComputeCell() override = default;

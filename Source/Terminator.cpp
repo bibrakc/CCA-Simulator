@@ -64,9 +64,10 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
                                             actionType::terminator_acknowledgement_action,
                                             true,
                                             nullptr,
-                                            0,
-                                            0,
-                                            0);
+                                            0,  // null event
+                                            0,  // null event
+                                            0,  // null event
+                                            0); // null event
 
         cc.statistics.actions_acknowledgement_created++;
         // Create Operon and put it in the task queue
@@ -105,6 +106,7 @@ Terminator::unsignal(ComputeCell& cc)
                                                 actionType::terminator_acknowledgement_action,
                                                 true,
                                                 nullptr,
+                                                0,  // null event
                                                 0,  // null event
                                                 0,  // null event
                                                 0); // null event
@@ -169,6 +171,7 @@ Terminator::acknowledgement(ComputeCell& cc)
                                                 nullptr,
                                                 0,  // null event
                                                 0,  // null event
+                                                0,  // null event
                                                 0); // null event
 
             cc.statistics.actions_acknowledgement_created++;
@@ -212,6 +215,7 @@ Terminator::acknowledgement(ComputeCell& cc)
                                                 actionType::terminator_acknowledgement_action,
                                                 true,
                                                 nullptr,
+                                                0,  // null event
                                                 0,  // null event
                                                 0,  // null event
                                                 0); // null event

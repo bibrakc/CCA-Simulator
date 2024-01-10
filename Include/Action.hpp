@@ -70,6 +70,7 @@ class Action
     CCAFunctionEvent work;
 
     // Generate actions along the edges for the diffusion
+    CCAFunctionEvent diffuse_predicate;
     CCAFunctionEvent diffuse;
 
     Action(const Address destination_vertex_addr_in,
@@ -79,6 +80,7 @@ class Action
            const ActionArgumentType& args_in,
            CCAFunctionEvent predicate_in,
            CCAFunctionEvent work_in,
+           CCAFunctionEvent diffuse_predicate_in,
            CCAFunctionEvent diffuse_in)
     {
         this->obj_addr = destination_vertex_addr_in;
@@ -91,6 +93,7 @@ class Action
 
         this->predicate = predicate_in;
         this->work = work_in;
+        this->diffuse_predicate = diffuse_predicate_in;
         this->diffuse = diffuse_in;
     }
 
@@ -98,7 +101,5 @@ class Action
     { /* std::cout << "Action class destructor" << std::endl;  */
     }
 };
-
-
 
 #endif // ACTION_HPP

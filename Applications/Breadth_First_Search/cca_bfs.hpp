@@ -71,6 +71,7 @@ struct BFSVertex : Vertex_T
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent bfs_predicate;
 extern CCAFunctionEvent bfs_work;
+extern CCAFunctionEvent bfs_diffuse_predicate;
 extern CCAFunctionEvent bfs_diffuse;
 
 // This is what the action carries as payload.
@@ -133,6 +134,32 @@ bfs_work_func(ComputeCell& cc,
 }
 
 inline auto
+bfs_diffuse_predicate_func(ComputeCell& cc,
+                           const Address& addr,
+                           actionType /* action_type_in */,
+                           const ActionArgumentType& args) -> int
+{
+    // First check whether this is a ghost vertex. If it is then always predicate true.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 1;
+    }
+
+    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+
+    u_int32_t const incoming_level = bfs_args.level;
+
+    if (v->bfs_level == incoming_level) {
+        return 1;
+    }
+    return 0;
+}
+
+inline auto
 bfs_diffuse_func(ComputeCell& cc,
                  const Address& addr,
                  actionType /* action_type_in */,
@@ -175,6 +202,7 @@ bfs_diffuse_func(ComputeCell& cc,
                               args_for_ghost_vertices,
                               bfs_predicate,
                               bfs_work,
+                              bfs_diffuse_predicate,
                               bfs_diffuse));
         }
     }
@@ -191,6 +219,7 @@ bfs_diffuse_func(ComputeCell& cc,
                           args_x,
                           bfs_predicate,
                           bfs_work,
+                          bfs_diffuse_predicate,
                           bfs_diffuse));
     }
 
