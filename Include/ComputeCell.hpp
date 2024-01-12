@@ -58,7 +58,7 @@ class ComputeCell : public Cell
     // Returns the offset in memory for this newly created object
     auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
-    void insert_action(const Action& action);
+    [[nodiscard]] auto insert_action(const Action& action) -> bool;
 
     void execute_action(void* function_events);
     void execute_diffusion_phase(void* function_events);
@@ -113,7 +113,7 @@ class ComputeCell : public Cell
     u_int32_t host_id;
 
     // Actions queue of the Compute Cell
-    std::queue<Action> action_queue;
+    FixedSizeQueue<Action> action_queue;
 
     // Diffusion Queue of the Compute Cell that holds the diffusive sections of the action. An
     // action comes into the `action_queue`, where it gets invoked. When it is invoked the diffusion
@@ -122,9 +122,9 @@ class ComputeCell : public Cell
     // there were a single queue it may becoem full and new actions couldnt be generated for that CC
     // by that CC. It may also improve task scheduling, depending on how it is managed. Need to be
     // clever.
-    std::queue<Action> diffuse_queue;
+    FixedSizeQueue<Action> diffuse_queue;
 
-    bool use_diffuse_queue{};
+    // bool use_diffuse_queue{};
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
@@ -213,8 +213,11 @@ class ComputeCell : public Cell
         // Experimental. The cells don't have sense of a global cycle. It is here for debuging and
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
-        
-        this->use_diffuse_queue = false;
+
+        this->action_queue = FixedSizeQueue<Action>(256);
+        this->diffuse_queue = FixedSizeQueue<Action>(1000);
+
+        // this->use_diffuse_queue = false;
     }
 
     ~ComputeCell() override = default;

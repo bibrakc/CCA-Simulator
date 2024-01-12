@@ -61,12 +61,18 @@ class FixedSizeQueue
     u_int32_t size_max;
 
   public:
+    // Default constructor
+    FixedSizeQueue()
+        : size_max(0) // You can set a default size or initialize it to 0
+    {
+    }
+
     FixedSizeQueue(u_int32_t size_max_in)
         : size_max(size_max_in)
     {
     }
 
-    auto push(const T& value) -> bool
+    [[nodiscard]] auto push(const T& value) -> bool
     {
         // Not able to enqueue. Return false
         if (underlying_queue.size() == this->size_max) {
@@ -88,10 +94,22 @@ class FixedSizeQueue
     // Return the max size of the queue
     [[nodiscard]] auto queue_size_max() const -> u_int32_t { return this->size_max; }
 
+    // Return the whether it is empty
+    [[nodiscard]] auto empty() const -> bool { return this->underlying_queue.empty(); }
+
     // Return whether there is a slot in the queue
     [[nodiscard]] auto has_room() const -> bool
     {
         return (this->underlying_queue.size() != this->size_max);
+    }
+
+    // Experimental: For prioritizing the action, diffuse, and task queues
+    // Return whether there is a slot in the queue.
+
+    // If half full then it means that it is getting full.
+    [[nodiscard]] auto is_getting_full() const -> bool
+    {
+        return (this->underlying_queue.size() > this->size_max / 2);
     }
 };
 #include <iostream>
@@ -104,7 +122,7 @@ class MaxCounter
 
   public:
     MaxCounter() {}
-    //u_int32_t temp_cc_id{ 0 };
+    // u_int32_t temp_cc_id{ 0 };
 
     void increment()
     {

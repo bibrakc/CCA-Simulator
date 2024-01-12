@@ -37,6 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // For memcpy()
 #include <cstring>
 
+// TODO: Remove
+#include "CCASimulator.hpp"
+#include "SimpleVertex.hpp"
+
 // Recieved an acknowledgement message back. Decreament my deficit.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
@@ -127,12 +131,18 @@ ComputeCell::get_cc_htree_sink_cell() -> std::optional<Coordinates>
     return Coordinates(nearby_col, nearby_row);
 }
 
-void
+bool
 ComputeCell::insert_action(const Action& action)
 {
-    this->action_queue.push(action);
-    this->statistics.actions_pushed++;
-    this->statistics.action_queue_count.increment();
+    if (this->action_queue.push(action)) {
+        this->statistics.actions_pushed++;
+        this->statistics.action_queue_count.increment();
+        return true;
+    } else {
+        return false;
+        // std::cerr << "action_queue full. Fatal!" << std::endl;
+        // exit(0);
+    }
 }
 
 // Send an Operon. Create a task that when invoked on a Compute Cell it simply puts the operon on
@@ -150,6 +160,16 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
         auto* obj = static_cast<Object*>(this->get_object(addr));
 
         obj->terminator.deficit++;
+
+        /* SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)this->get_object(addr);
+        // print_SimpleVertex(vertex, addr);
+        if (vertex->id == 0) {
+            //  Signal that this object is active for termination detection
+            //  origin_addr is set to be parent if deficit == 0
+
+            std::cout << "Increamented the terminator deficit: " << obj->terminator.deficit
+                      << ", << vertex->terminator.deficit: " << vertex->terminator.deficit << "\n";
+        } */
     }
 
     return std::pair<taskType, Task_func>(
@@ -225,14 +245,31 @@ ComputeCell::execute_action(void* function_events)
 
             auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
 
-            // termination_switch is set at compile time by -D TERMINATION=true/false. It is here to
-            // find overhead of termination detection method in our benchmarks. Normally, the
-            // termination_switch is set to true. Or false if we are using CCA as strictly an
-            // accelerator for a single user application without runtime management tasks.
+            // termination_switch is set at compile time by -D TERMINATION=true/false. It is
+            // here to find overhead of termination detection method in our benchmarks.
+            // Normally, the termination_switch is set to true. Or false if we are using CCA as
+            // strictly an accelerator for a single user application without runtime management
+            // tasks.
             if constexpr (termination_switch) {
-                // Signal that this object is active for termination detection
-                // origin_addr is set to be parent if deficit == 0
+
+                // When needed put the inlude header for that datastructure and print it here.
+                SimpleVertex<Address>* vertex =
+                    (SimpleVertex<Address>*)this->get_object(action.obj_addr);
+
+                // print_SimpleVertex(vertex, action.obj_addr);
+                if (vertex->id == 0) {
+                    // Signal that this object is active for termination detection
+                    // origin_addr is set to be parent if deficit == 0
+                    std::cout << "before term signal in execute action, deficit: "
+                              << vertex->terminator.deficit
+                              << ", parent: " << vertex->terminator.parent.has_value() << "\n";
+                }
                 obj->terminator.signal(*this, action.origin_addr);
+                if (vertex->id == 0) {
+                    std::cout << "after term signal in execute action, deficit: "
+                              << vertex->terminator.deficit
+                              << ", parent: " << vertex->terminator.parent.has_value() << "\n";
+                }
             }
             // if predicate
             int const predicate_resolution = function_events_manager->get_function_event_handler(
@@ -248,7 +285,10 @@ ComputeCell::execute_action(void* function_events)
                 // diffuse
                 /* function_events_manager->get_function_event_handler(action.diffuse)(
                  *this, action.obj_addr, action.action_type, action.args); */
-                this->diffuse_queue.push(action);
+                if (!this->diffuse_queue.push(action)) {
+                    std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
+                    exit(0);
+                }
 
             } else {
                 // This action is discarded/subsumed
@@ -284,7 +324,7 @@ ComputeCell::execute_diffusion_phase(void* function_events)
     // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->diffuse_queue.empty()) {
-        
+
         Action const action = this->diffuse_queue.front();
         this->diffuse_queue.pop();
 
@@ -307,15 +347,13 @@ ComputeCell::execute_diffusion_phase(void* function_events)
         if (action.action_type == actionType::application_action ||
             action.action_type == actionType::germinate_action) {
 
-            auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
-
             // if predicate
-            int const predicate_resolution = function_events_manager->get_function_event_handler(
+            int predicate_resolution = function_events_manager->get_function_event_handler(
                 action.diffuse_predicate)(*this, action.obj_addr, action.action_type, action.args);
-
+            // predicate_resolution = 1;
             if (predicate_resolution == 1) {
                 // diffuse
-                //std::cout << "running execute_diffusion_phase\n";
+                // std::cout << "running execute_diffusion_phase\n";
                 function_events_manager->get_function_event_handler(action.diffuse)(
                     *this, action.obj_addr, action.action_type, action.args);
 
@@ -324,9 +362,9 @@ ComputeCell::execute_diffusion_phase(void* function_events)
                 // TODO: Fix this stat.
                 // this->statistics.actions_false_on_predicate++;
             }
-
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {
+                auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
                 obj->terminator.unsignal(*this);
             }
         } else {
@@ -396,8 +434,15 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
-                        this->insert_action(operon.second);
-                        operon_was_inserted_or_sent = true;
+                        if (this->insert_action(operon.second)) {
+
+                            operon_was_inserted_or_sent = true;
+                        } else {
+                            // action_queue is full. Therefore, just return without doing anything.
+                            // Contended.
+                            // return;
+                        }
+
                     } else {
                         // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
                         /*  std::cout << "\n";
@@ -479,7 +524,11 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 }
 
                 for (Operon const& operon : left_over_operons) {
-                    this->recv_channel_per_neighbor[recv_channel_index][j].push(operon);
+                    if (!this->recv_channel_per_neighbor[recv_channel_index][j].push(operon)) {
+                        std::cerr << "ComputeCell: recv_channel_per_neighbor can not push. Fatal. "
+                                     "Perhaps a bug"
+                                  << std::endl;
+                    }
                 }
             }
         }
@@ -542,13 +591,17 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
     } else {
 
-        // Logic for arbitration between action and diffuse queue
+        // Logic for arbitration between action and diffuse queues.
         bool const both_queues_non_empty =
             !this->action_queue.empty() && !this->diffuse_queue.empty();
 
+        bool const diffuse_queue_has_more = this->diffuse_queue.is_getting_full();
+        // WHERE EVER THE action_queue and diffuse_queues are enqueues they are not being checked
+        // for being full!!!
         if (both_queues_non_empty) {
             // Both queues are non-empty, decide which one to use.
-            if (this->use_diffuse_queue) {
+
+            if (diffuse_queue_has_more) {
                 // Execute an action if the diffuse_queue is not empty.
                 this->execute_diffusion_phase(function_events);
 
@@ -556,7 +609,9 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                 // Execute an action if the action_queue is not empty.
                 this->execute_action(function_events);
             }
-            this->use_diffuse_queue = !this->use_diffuse_queue;
+            // this->use_diffuse_queue = !this->use_diffuse_queue;
+            // this->execute_action(function_events);
+            // this->execute_diffusion_phase(function_events);
         } else {
             // Only one of the queues is non-empty or both are empty.
             if (!this->action_queue.empty()) {
@@ -587,7 +642,10 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
         if (this->id == dst_cc_id) {
-            this->insert_action(operon_.second);
+            if (!this->insert_action(operon_.second)) {
+                // action_queue is full. Therefore, just return without doing anything. Contended.
+                return;
+            }
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
@@ -682,7 +740,12 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                         }
 
                         for (Operon const& operon : left_over_operons) {
-                            this->send_channel_per_neighbor[i][virtual_channel_index].push(operon);
+                            if (!this->send_channel_per_neighbor[i][virtual_channel_index].push(
+                                    operon)) {
+                                std::cerr << "ComputeCell: send_channel_per_neighbor can not push. "
+                                             "Fatal. Perhaps a bug."
+                                          << std::endl;
+                            }
                         }
                     }
                 }

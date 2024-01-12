@@ -308,7 +308,12 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
         exit(0);
     }
 
-    compute_cell->insert_action(action_to_germinate);
+    if (!compute_cell->insert_action(action_to_germinate)) {
+        std::cerr << "germinate_action failed to insert in the action_queue. Fatal. Think about "
+                     "what to do in this situation?"
+                  << std::endl;
+        exit(0);
+    }
 
     // Get the host terminator object for signal.
     auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));

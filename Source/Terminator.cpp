@@ -35,6 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cassert>
 
+// TODO: Remove
+#include "CCASimulator.hpp"
+#include "SimpleVertex.hpp"
+
 auto
 Terminator::is_active() -> bool
 {
@@ -53,12 +57,17 @@ void
 Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
 {
     // this->deficit++;
-    if (this->deficit == 0) {
-        assert(this->parent == std::nullopt);
+    // if (this->deficit == 0) {
+    //    assert(this->parent == std::nullopt);
+    if (this->parent == std::nullopt) {
+        if (this->deficit != 0) {
+            std::cout << "this->deficit != 0, this->deficit: " << this->deficit << "\n";
+        }
+        assert(this->deficit == 0);
 
         this->parent = origin_addr_in;
     } else {
-        // Send acknowledgement back to where the action came from
+        // Send acknowledgement back to where the action came from.
         Action const acknowledgement_action(origin_addr_in,
                                             this->my_object,
                                             actionType::terminator_acknowledgement_action,
@@ -70,7 +79,7 @@ Terminator::signal(ComputeCell& cc, const Address origin_addr_in)
                                             0); // null event
 
         cc.statistics.actions_acknowledgement_created++;
-        // Create Operon and put it in the task queue
+        // Create Operon and put it in the task queue.
         Operon const operon_to_send =
             ComputeCell::construct_operon(cc.id, origin_addr_in.cc_id, acknowledgement_action);
 
@@ -121,6 +130,13 @@ Terminator::unsignal(ComputeCell& cc)
 
             // Unset the parent
             this->parent = std::nullopt;
+
+            SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+
+            if (vertex->id == 0) {
+                std::cout << "Unset the parent\n";
+                print_SimpleVertex(vertex, this->my_object);
+            }
         }
     }
 }
@@ -145,6 +161,7 @@ Terminator::host_acknowledgement()
 void
 Terminator::acknowledgement(ComputeCell& cc)
 {
+
     if ((this->deficit == 0) && (this->parent != std::nullopt)) {
         if (this->parent.value().cc_id == cc.host_id) {
             // Simple decreament the deficit at the host.
@@ -184,11 +201,25 @@ Terminator::acknowledgement(ComputeCell& cc)
 
             // Unset the parent
             this->parent = std::nullopt;
+
+            SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+
+            if (vertex->id == 0) {
+                std::cout << "def=0 and parent not null. Unset the parent\n";
+                print_SimpleVertex(vertex, this->my_object);
+            }
         }
         return;
     }
 
     this->deficit--;
+   
+    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+
+    if (vertex->id == 0) {
+        std::cout << "def-- \n";
+        print_SimpleVertex(vertex, this->my_object);
+    }
     if (this->deficit == 0) {
         // Unset the parent and send an acknowledgement back to the parent.
         if (this->parent.value().cc_id == cc.host_id) {
