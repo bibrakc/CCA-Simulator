@@ -214,7 +214,8 @@ class ComputeCell : public Cell
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
 
-        this->action_queue = FixedSizeQueue<Action>(256);
+        this->action_queue =
+            FixedSizeQueue<Action>(256, edges_max + 2 + 5); // 2: ghost edges, 5: just because.
         this->diffuse_queue = FixedSizeQueue<Action>(1000);
 
         // this->use_diffuse_queue = false;

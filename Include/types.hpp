@@ -59,16 +59,25 @@ class FixedSizeQueue
   private:
     std::queue<T> underlying_queue;
     u_int32_t size_max;
+    u_int32_t buffer_space_for_priority;
 
   public:
     // Default constructor
-    FixedSizeQueue()
-        : size_max(0) // You can set a default size or initialize it to 0
+    FixedSizeQueue() // Default constructor initialize it to 0.
+        : size_max(0)
+        , buffer_space_for_priority(0)
     {
     }
 
     FixedSizeQueue(u_int32_t size_max_in)
         : size_max(size_max_in)
+        , buffer_space_for_priority(0)
+    {
+    }
+
+    FixedSizeQueue(u_int32_t size_max_in, u_int32_t buffer_space_for_priority_in)
+        : size_max(size_max_in + buffer_space_for_priority_in)
+        , buffer_space_for_priority(buffer_space_for_priority_in)
     {
     }
 
@@ -100,7 +109,17 @@ class FixedSizeQueue
     // Return whether there is a slot in the queue
     [[nodiscard]] auto has_room() const -> bool
     {
-        return (this->underlying_queue.size() != this->size_max);
+        return (this->size() < this->size_max - this->buffer_space_for_priority);
+    }
+
+    // Return whether there is a slot in the queue with priority
+    [[nodiscard]] auto has_room(bool priority) const -> bool
+    {
+        if (priority) {
+            return (this->size() != this->size_max);
+        } else {
+            return this->has_room();
+        }
     }
 
     // Experimental: For prioritizing the action, diffuse, and task queues
