@@ -58,10 +58,11 @@ class ComputeCell : public Cell
     // Returns the offset in memory for this newly created object
     auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
-    [[nodiscard]] auto insert_action(const Action& action) -> bool;
+    [[nodiscard]] auto insert_action(const Action& action, bool priority) -> bool;
 
     void execute_action(void* function_events);
     void execute_diffusion_phase(void* function_events);
+    void filter_diffusion(void* function_events);
 
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links
@@ -216,7 +217,7 @@ class ComputeCell : public Cell
 
         this->action_queue =
             FixedSizeQueue<Action>(256, edges_max + 2 + 5); // 2: ghost edges, 5: just because.
-        this->diffuse_queue = FixedSizeQueue<Action>(1000);
+        this->diffuse_queue = FixedSizeQueue<Action>(1024);
 
         // this->use_diffuse_queue = false;
     }

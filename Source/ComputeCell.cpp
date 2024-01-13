@@ -132,9 +132,9 @@ ComputeCell::get_cc_htree_sink_cell() -> std::optional<Coordinates>
 }
 
 bool
-ComputeCell::insert_action(const Action& action)
+ComputeCell::insert_action(const Action& action, bool priority)
 {
-    if (this->action_queue.push(action)) {
+    if (this->action_queue.push(action, priority)) {
         this->statistics.actions_pushed++;
         this->statistics.action_queue_count.increment();
         return true;
@@ -501,7 +501,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
-                        if (this->insert_action(operon.second)) {
+                        if (this->insert_action(operon.second, false)) {
 
                             operon_was_inserted_or_sent = true;
                         } else {
@@ -660,6 +660,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                 } else {
                     this->execute_action(function_events);
                 }
+                // this->execute_action(function_events);
             } else {
                 // Only one of the queues is non-empty or both are empty.
                 if (!this->action_queue.empty()) {
@@ -745,7 +746,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
         if (this->id == dst_cc_id) {
-            if (!this->insert_action(operon_.second)) {
+            if (!this->insert_action(operon_.second, true)) {
                 // action_queue is full. Therefore, just return without doing anything. Contended.
                 return;
             }

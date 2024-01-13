@@ -308,7 +308,7 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
         exit(0);
     }
 
-    if (!compute_cell->insert_action(action_to_germinate)) {
+    if (!compute_cell->insert_action(action_to_germinate, false)) {
         std::cerr << "germinate_action failed to insert in the action_queue. Fatal. Think about "
                      "what to do in this situation?"
                   << std::endl;

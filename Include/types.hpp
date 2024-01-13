@@ -84,11 +84,22 @@ class FixedSizeQueue
     [[nodiscard]] auto push(const T& value) -> bool
     {
         // Not able to enqueue. Return false
-        if (underlying_queue.size() == this->size_max) {
+        if (underlying_queue.size() >= this->size_max - this->buffer_space_for_priority) {
             return false;
         }
         this->underlying_queue.push(value);
         return true;
+    }
+
+    [[nodiscard]] auto push(const T& value, bool priority) -> bool
+    {
+        if (priority) {
+            if (underlying_queue.size() <= this->size_max) {
+                this->underlying_queue.push(value);
+                return true;
+            }
+        }
+        return this->push(value);
     }
 
     // Get from front FIFO
@@ -125,10 +136,11 @@ class FixedSizeQueue
     // Experimental: For prioritizing the action, diffuse, and task queues
     // Return whether there is a slot in the queue.
 
-    // If half full then it means that it is getting full.
+    // If 66% full then it means that it is getting full.
     [[nodiscard]] auto is_getting_full() const -> bool
     {
-        return (this->underlying_queue.size() > this->size_max / 2);
+        return (this->underlying_queue.size() >
+                static_cast<u_int32_t>(static_cast<double>(size_max) / 1.5));
     }
 };
 #include <iostream>
