@@ -382,6 +382,73 @@ ComputeCell::execute_diffusion_phase(void* function_events)
 }
 
 void
+ComputeCell::filter_diffusion(void* function_events)
+{
+
+    // Using `void* function_events` becuase there is conflict in compiler with dependencies between
+    // classes.
+    // TODO: later find a graceful way and then remove this `void*`
+
+    if (!this->diffuse_queue.empty()) {
+
+        Action const action = this->diffuse_queue.front();
+        this->diffuse_queue.pop();
+
+        // TODO: Fix this stats!
+        // this->statistics.action_queue_count.decrement();
+
+        auto* function_events_manager = static_cast<FunctionEventManager*>(function_events);
+
+        if constexpr (debug_code) {
+            if (action.obj_addr.cc_id != this->id) {
+                std::cout << "Invalid addr! The vertex does not exist on this CC\n";
+                return;
+            }
+            // When needed put the inlude header for that datastructure and print it here.
+            /* SimpleVertex<Address>* vertex =
+                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
+            print_SimpleVertex(vertex, action.obj_addr); */
+        }
+
+        if (action.action_type == actionType::application_action ||
+            action.action_type == actionType::germinate_action) {
+
+            // if predicate
+            int predicate_resolution = function_events_manager->get_function_event_handler(
+                action.diffuse_predicate)(*this, action.obj_addr, action.action_type, action.args);
+            // predicate_resolution = 1;
+            if (predicate_resolution == 1) {
+                // put it back into the queue
+                if (!this->diffuse_queue.push(action)) {
+                    std::cerr << "diffuse_queue full. How is this possible? Bug!" << std::endl;
+                    exit(0);
+                }
+
+            } else {
+                // This diffusion is discarded/subsumed.
+                // TODO: Fix this stat.
+                // this->statistics.actions_false_on_predicate++;
+            }
+            // Finally this object becomes inactive.
+            if constexpr (termination_switch) {
+                auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
+                obj->terminator.unsignal(*this);
+            }
+        } else {
+            std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
+            exit(0);
+        }
+        // Increament the counter for actions that were invoked
+        // this->statistics.actions_invoked++;
+
+        return;
+    }
+    std::cerr << "Bug! Cannot execute diffuse phase as the diffuse_queue is empty! It shouldn't be "
+                 "here\n";
+    exit(0);
+}
+
+void
 ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
 {
 
@@ -550,54 +617,90 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
     }
 
     // A single compute cell can perform work and communication in parallel in a single cycle
-    // This function does both. First it performs work if there is any. Then it performs
-    // communication
+    // This function performs work if there is any.
 
     // Apply the network operations from the previous cycle and prepare this cycle for
     // computation and communication
     this->prepare_a_cycle(CCA_chip);
 
-    // Perform execution of work. Exectute a task if the task_queue is not empty
-    if (!this->task_queue.empty()) {
-        //  Get a task from the task_queue
-        Task const current_task = this->task_queue.front();
+    // Check whether throttle needs to be applied.
+    bool was_recently_congested = false;
+    if constexpr (throttling_switch) {
+        if (this->last_congested_cycle) {
+            was_recently_congested = (this->current_cycle - this->last_congested_cycle.value()) <=
+                                     curently_congested_threshold;
+        }
+    }
 
-        // Check if the staging buffer is not full and the task type is send operon
-        // In that case stall and don't do anything. Because the task can't send operon due to
-        // staging buffer being full.
-        if (this->staging_operon_from_logic &&
-            (current_task.first == taskType::send_operon_task_type)) {
-        } else {
-            // Apply throttle if enabled.
-            bool was_recently_congested = false;
-            if constexpr (throttling_switch) {
-                if (this->last_congested_cycle) {
-                    was_recently_congested =
-                        (this->current_cycle - this->last_congested_cycle.value()) <=
-                        curently_congested_threshold;
+    if (!this->task_queue.empty()) {
+
+        // If staging buffer is full then no need to perform diffusion task (send operon) since it
+        // will stall. Same is true when it is congested and we are throttling.
+        // We can use this cycle to potentially filter out action_queue or diffuse_queue.
+        if (this->staging_operon_from_logic || was_recently_congested) {
+            // Filter action_queue or diffuse_queue by executing them.
+            // When an `Action` from action_queue is executed it is checked for predicate. IF
+            // predicate is true then work is performed and along with it a new diffuse Action is
+            // created and put into the diffuse_queue. This process can be "seen" as filtering of
+            // the action_queue. Similarly, the diffuse_queue can be filtered but it is naunced as
+            // if its predicate is true then it needs to put `send_operon` tasks into the task queue
+            // that is already occupied. Remember: the task queue is a way of simulating the `for`
+            // loop in diffusion so it is actually a thread and not a queue, and is therefore
+            // considered "context switched". So we cant have two threads at the same time.
+            // Logic for arbitration between action and diffuse queues.
+
+            bool const both_queues_non_empty =
+                !this->action_queue.empty() && !this->diffuse_queue.empty();
+
+            bool const diffuse_queue_has_more = this->diffuse_queue.is_getting_full();
+
+            if (both_queues_non_empty) {
+                if (diffuse_queue_has_more) {
+                    this->filter_diffusion(function_events);
+                } else {
+                    this->execute_action(function_events);
+                }
+            } else {
+                // Only one of the queues is non-empty or both are empty.
+                if (!this->action_queue.empty()) {
+                    this->execute_action(function_events);
+                } else if (!this->diffuse_queue.empty()) {
+                    this->filter_diffusion(function_events);
                 }
             }
+        } else {
+            //  Get a task from the task_queue
+            Task const current_task = this->task_queue.front();
 
-            if (!was_recently_congested) {
+            // Check if the staging buffer is not full and the task type is send operon
+            // In that case stall and don't do anything. Because the task can't send operon due to
+            // staging buffer being full.
+            if (this->staging_operon_from_logic &&
+                (current_task.first == taskType::send_operon_task_type)) {
 
-                // Remove the task from the queue and execute it.
-                this->task_queue.pop();
+            } else {
 
-                this->statistics.task_queue_count.decrement();
-                // Execute the task
-                current_task.second();
+                if (!was_recently_congested) {
+
+                    // Remove the task from the queue and execute it.
+                    this->task_queue.pop();
+
+                    this->statistics.task_queue_count.decrement();
+                    // Execute the task
+                    current_task.second();
+                }
             }
         }
-
     } else {
+
+        // Execute action_queue or diffuse_queue.
 
         // Logic for arbitration between action and diffuse queues.
         bool const both_queues_non_empty =
             !this->action_queue.empty() && !this->diffuse_queue.empty();
 
         bool const diffuse_queue_has_more = this->diffuse_queue.is_getting_full();
-        // WHERE EVER THE action_queue and diffuse_queues are enqueues they are not being checked
-        // for being full!!!
+
         if (both_queues_non_empty) {
             // Both queues are non-empty, decide which one to use.
 
