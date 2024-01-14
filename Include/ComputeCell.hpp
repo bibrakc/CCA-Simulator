@@ -216,8 +216,8 @@ class ComputeCell : public Cell
         this->current_cycle = 0;
 
         this->action_queue =
-            FixedSizeQueue<Action>(256, edges_max + 2 + 5); // 2: ghost edges, 5: just because.
-        this->diffuse_queue = FixedSizeQueue<Action>(1024);
+            FixedSizeQueue<Action>(512, edges_max + 2 + 5); // 2: ghost edges, 5: just because.
+        this->diffuse_queue = FixedSizeQueue<Action>(8192);
 
         // this->use_diffuse_queue = false;
     }
