@@ -678,7 +678,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             // staging buffer being full.
             if (this->staging_operon_from_logic &&
                 (current_task.first == taskType::send_operon_task_type)) {
-
+                this->staging_logic_contention_count.increment();
             } else {
 
                 if (!was_recently_congested) {
@@ -689,6 +689,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                     this->statistics.task_queue_count.decrement();
                     // Execute the task
                     current_task.second();
+                    this->staging_logic_contention_count.reset();
                 }
             }
         }

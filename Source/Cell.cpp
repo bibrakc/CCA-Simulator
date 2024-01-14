@@ -485,6 +485,12 @@ Cell::is_congested() -> std::pair<bool, u_int32_t>
 
     bool is_congested = false;
     u_int32_t congestion_level_addition = 0;
+
+    if (this->staging_logic_contention_count.get_count() > congestion_threshold_1) {
+        is_congested = true;
+        congestion_level_addition = 1;
+    }
+
     for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
 
         if (congestion_count.get_count() > congestion_threshold_1) {
@@ -557,7 +563,7 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::
 
     // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-     return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 auto
@@ -1082,4 +1088,6 @@ Cell::copy_cell_simulation_records_to_statistics()
 {
     this->statistics.send_channel_per_neighbor_contention_count_record =
         this->send_channel_per_neighbor_contention_count;
+
+    this->statistics.staging_logic_contention_count_record = this->staging_logic_contention_count;
 }

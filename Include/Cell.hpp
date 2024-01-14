@@ -86,7 +86,7 @@ struct ComputeCellStatistics
     u_int32_t actions_false_on_predicate{};
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
-
+    MaxCounter staging_logic_contention_count_record;
     // Count of operon movements.
     u_int64_t operons_moved{};
 
@@ -202,6 +202,7 @@ class Cell
 
     // Use this to detect and also quantify congestion
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count;
+    MaxCounter staging_logic_contention_count;
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
     // into the current working buffer of a neighbor Cell. If it does then the neighbor may start
