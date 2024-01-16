@@ -135,12 +135,13 @@ class FixedSizeQueue
 
     // Experimental: For prioritizing the action, diffuse, and task queues
     // Return whether there is a slot in the queue.
-
-    // If 66% full then it means that it is getting full.
-    [[nodiscard]] auto is_getting_full() const -> bool
+    // Check if the queue is `percent`% full.
+    [[nodiscard]] auto is_percent_full(double percent) const -> bool
     {
-        return (this->underlying_queue.size() >
-                static_cast<u_int32_t>(static_cast<double>(size_max) / 1.5));
+        assert(percent > 0.0 && percent < 100.0 && "Percentage must be between 0 and 100");
+
+        double threshold = size_max / (100.0 / percent);
+        return (this->underlying_queue.size() > static_cast<u_int32_t>(threshold));
     }
 };
 #include <iostream>

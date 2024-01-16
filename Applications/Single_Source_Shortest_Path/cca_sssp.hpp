@@ -71,6 +71,7 @@ struct SSSPVertex : Vertex_T
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent sssp_predicate;
 extern CCAFunctionEvent sssp_work;
+extern CCAFunctionEvent sssp_diffuse_predicate;
 extern CCAFunctionEvent sssp_diffuse;
 
 // This is what the action carries as payload.
@@ -134,6 +135,33 @@ sssp_work_func(ComputeCell& cc,
 }
 
 inline auto
+sssp_diffuse_predicate_func(ComputeCell& cc,
+                            const Address& addr,
+                            actionType /* action_type_in */,
+                            const ActionArgumentType& args) -> int
+{
+
+    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 1;
+    }
+
+    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+    u_int32_t const incoming_distance = sssp_args.distance;
+
+    if (v->sssp_distance == incoming_distance) {
+        return 1;
+    }
+    return 0;
+}
+
+inline auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   actionType /* action_type_in */,
@@ -177,6 +205,7 @@ sssp_diffuse_func(ComputeCell& cc,
                               args_for_ghost_vertices,
                               sssp_predicate,
                               sssp_work,
+                              sssp_diffuse_predicate,
                               sssp_diffuse));
         }
     }
@@ -194,6 +223,7 @@ sssp_diffuse_func(ComputeCell& cc,
                           args_x,
                           sssp_predicate,
                           sssp_work,
+                          sssp_diffuse_predicate,
                           sssp_diffuse));
     }
 

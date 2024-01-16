@@ -652,25 +652,30 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
             bool const both_queues_non_empty =
                 !this->action_queue.empty() && !this->diffuse_queue.empty();
 
-            bool const diffuse_queue_has_more = this->diffuse_queue.is_getting_full();
+            bool const diffuse_queue_is_getting_full = this->diffuse_queue.is_percent_full(90.0);
+            bool const action_queue_near_full = this->diffuse_queue.is_percent_full(95.0);
 
             if (both_queues_non_empty) {
-                if (diffuse_queue_has_more) {
+                if (action_queue_near_full && this->diffuse_queue.has_room()) {
+                    this->execute_action(function_events);
+                } else if (diffuse_queue_is_getting_full) { //&& this->prefer_diffuse_queue) {
                     this->filter_diffusion(function_events);
+                    // this->prefer_diffuse_queue = false;
                 } else {
                     this->execute_action(function_events);
+                    // this->prefer_diffuse_queue = true;
                 }
                 // this->execute_action(function_events);
             } else {
                 // Only one of the queues is non-empty or both are empty.
-                if (!this->action_queue.empty()) {
-                    this->execute_action(function_events);
-                } else if (!this->diffuse_queue.empty()) {
+                if (!this->diffuse_queue.empty()) {
                     this->filter_diffusion(function_events);
+                } else if (!this->action_queue.empty()) {
+                    this->execute_action(function_events);
                 }
             }
         } else {
-            //  Get a task from the task_queue
+            // Get a task from the task_queue
             Task const current_task = this->task_queue.front();
 
             // Check if the staging buffer is not full and the task type is send operon
@@ -701,22 +706,20 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
         bool const both_queues_non_empty =
             !this->action_queue.empty() && !this->diffuse_queue.empty();
 
-        bool const diffuse_queue_has_more = this->diffuse_queue.is_getting_full();
-
         if (both_queues_non_empty) {
             // Both queues are non-empty, decide which one to use.
+            bool const diffuse_queue_is_getting_full = this->diffuse_queue.is_percent_full(90.0);
+            bool const action_queue_near_full = this->diffuse_queue.is_percent_full(90.0);
 
-            if (diffuse_queue_has_more) {
-                // Execute an action if the diffuse_queue is not empty.
+            if (action_queue_near_full && this->diffuse_queue.has_room()) {
+                this->execute_action(function_events);
+            } else if (diffuse_queue_is_getting_full) {
+                // Execute an diffusion if the diffuse_queue is not empty.
                 this->execute_diffusion_phase(function_events);
-
             } else {
                 // Execute an action if the action_queue is not empty.
                 this->execute_action(function_events);
             }
-            // this->use_diffuse_queue = !this->use_diffuse_queue;
-            // this->execute_action(function_events);
-            // this->execute_diffusion_phase(function_events);
         } else {
             // Only one of the queues is non-empty or both are empty.
             if (!this->action_queue.empty()) {

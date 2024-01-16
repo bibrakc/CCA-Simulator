@@ -489,6 +489,14 @@ Cell::is_congested() -> std::pair<bool, u_int32_t>
     if (this->staging_logic_contention_count.get_count() > congestion_threshold_1) {
         is_congested = true;
         congestion_level_addition = 1;
+
+        if (this->staging_logic_contention_count.get_count() >= congestion_threshold_4) {
+            congestion_level_addition = 3;
+        } else if (this->staging_logic_contention_count.get_count() >= congestion_threshold_3) {
+            congestion_level_addition = 2;
+        } else if (this->staging_logic_contention_count.get_count() >= congestion_threshold_2) {
+            congestion_level_addition = 1;
+        }
     }
 
     for (auto& congestion_count : this->send_channel_per_neighbor_contention_count) {
@@ -559,11 +567,11 @@ Cell::get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id) -> std::
     // Note: These are good with throttling.
     // return get_vertical_first_route_towards_cc_id(dst_cc_id);
 
-    // return get_horizontal_first_route_towards_cc_id(dst_cc_id);
+    return get_horizontal_first_route_towards_cc_id(dst_cc_id);
 
     // This has deadlocks or dont work.
     // return get_adaptive_positive_only_routes_towards_cc_id(src_cc_id, dst_cc_id);
-    return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
+    // return get_mixed_first_route_towards_cc_id(src_cc_id, dst_cc_id);
 }
 
 auto

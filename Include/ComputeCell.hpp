@@ -125,7 +125,7 @@ class ComputeCell : public Cell
     // clever.
     FixedSizeQueue<Action> diffuse_queue;
 
-    // bool use_diffuse_queue{};
+    // bool prefer_diffuse_queue{};
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
@@ -215,11 +215,14 @@ class ComputeCell : public Cell
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
 
-        this->action_queue =
-            FixedSizeQueue<Action>(512, edges_max + 2 + 5); // 2: ghost edges, 5: just because.
-        this->diffuse_queue = FixedSizeQueue<Action>(8192);
+        // edges_max + 2 + 5 = helps to have enough buffer (and not deadlock) for the CC to push
+        // actions onto itself in case of a diffusion that requires pushing to itself.
+        // 2: ghost edges, 5: just because.
+        this->action_queue = FixedSizeQueue<Action>(32, edges_max + 2 + 5);
+        this->diffuse_queue = FixedSizeQueue<Action>(4096);
 
-        // this->use_diffuse_queue = false;
+        // Experimental for scheduling.
+        // this->prefer_diffuse_queue = false;
     }
 
     ~ComputeCell() override = default;
@@ -227,7 +230,7 @@ class ComputeCell : public Cell
   private:
     // Each compute cell has a sink cell configured such that when it has to send an operon to far
     // flung compute cell it routes to the Htree network and has to sink the operon into the sink
-    // cell that is nearby
+    // cell that is nearby.
     auto get_cc_htree_sink_cell() -> std::optional<Coordinates>;
 };
 
