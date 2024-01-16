@@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 inline constexpr double damping_factor = 0.85;
 inline constexpr u_int32_t nested_iterations = NESTEDITERATIONS; // 10;
 
-/* inline constexpr u_int32_t DEBUG_VERTEX = 17; */
+inline constexpr u_int32_t DEBUG_VERTEX = 0;
 
 // This is what the action carries as payload.
 struct PageRankNestedFixedIterationsArguments
@@ -151,6 +151,7 @@ struct PageRankNestedFixedIterationsVertex : Vertex_T
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent page_rank_nested_fixed_iterations_predicate;
 extern CCAFunctionEvent page_rank_nested_fixed_iterations_work;
+extern CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse_predicate;
 extern CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse;
 
 inline auto
@@ -185,20 +186,20 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
         cca_get_action_argument<PageRankNestedFixedIterationsArguments>(args);
 
     u_int32_t const iteration = page_rank_args.nested_iteration;
-
-    // std::cout << "v->id: " << v->id << ", start work\n";
-
+    /*  if (v->id == DEBUG_VERTEX) {
+         std::cout << "v->id: " << v->id << ", inbound: " << v->inbound_degree
+                   << ", messages_received_count[" << iteration
+                   << "]: " << v->iterations[iteration].messages_received_count
+                   << ", iteration: " << iteration << "\n";
+     } */
     bool const is_germinate = action_type_in == actionType::germinate_action;
-
-    bool const is_first_message_of_the_epoch =
-        ((v->iterations[iteration].messages_received_count == 0) && (iteration == 0));
 
     assert(iteration < nested_iterations && "Bug! Incoming Exceeds nested_iterations");
 
     /*     assert(v->iterations[iteration].messages_received_count < v->inbound_degree ||
                is_germinate && "Bug! current_iteration_incoming_count Exceeds v->inbound_degree");
      */
-
+    // >= or > ???
     if (v->iterations[iteration].messages_received_count >= v->inbound_degree && !is_germinate) {
 
         std::cout << "v->id: " << v->id << ", Bug! "
@@ -206,25 +207,28 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
                   << "]: " << v->iterations[iteration].messages_received_count << " >  inbound "
                   << v->inbound_degree << "\n";
 
-        /*   if (v->id == DEBUG_VERTEX) {
-              std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
-                        << v->page_rank_current_nested_iteration
-                        << ", page_rank_args.nested_iteration: " << iteration << std::endl;
-              // Print values before setting to zero
-              for (int i = 0; i < nested_iterations; i++) {
+        if (v->id == DEBUG_VERTEX) {
+            std::cout << "\nstate of counters, v->page_rank_current_nested_iteration: "
+                      << v->page_rank_current_nested_iteration
+                      << ", page_rank_args.nested_iteration: " << iteration << std::endl;
+            // Print values before setting to zero
+            for (int i = 0; i < nested_iterations; i++) {
 
-                  std::cout << "v->id: " << v->id << ", messages_received_count[" << i
-                            << "]: " << v->iterations[i].messages_received_count
-                            << ", iteration_page_rank_score[" << i
-                            << "]: " << v->iterations[i].iteration_page_rank_score
-                            << ", v->iterations_received_this_epoch: "
-                            << v->iterations_received_this_epoch
-                            << ", v->inbound_degree: " << v->inbound_degree << "\n";
-              }
-              std::cout << std::endl;
-          } */
+                std::cout << "v->id: " << v->id << ", messages_received_count[" << i
+                          << "]: " << v->iterations[i].messages_received_count
+                          << ", iteration_page_rank_score[" << i
+                          << "]: " << v->iterations[i].iteration_page_rank_score
+                          << ", v->iterations_received_this_epoch: "
+                          << v->iterations_received_this_epoch
+                          << ", v->inbound_degree: " << v->inbound_degree << "\n";
+            }
+            std::cout << std::endl;
+        }
         exit(0);
     }
+
+    bool const is_first_message_of_the_epoch =
+        ((v->iterations[iteration].messages_received_count == 0) && (iteration == 0));
 
     if (is_germinate || is_first_message_of_the_epoch) {
 
@@ -319,6 +323,17 @@ page_rank_nested_fixed_iterations_work_func(ComputeCell& cc,
 }
 
 inline auto
+page_rank_nested_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
+                                                         const Address& addr,
+                                                         actionType /* action_type_in */,
+                                                         const ActionArgumentType& /* args */)
+    -> int
+{
+    // Set to always true.
+    return 1;
+}
+
+inline auto
 page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                                                const Address& addr,
                                                actionType /* action_type_in */,
@@ -373,6 +388,7 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                                   args_x,
                                   page_rank_nested_fixed_iterations_predicate,
                                   page_rank_nested_fixed_iterations_work,
+                                  page_rank_nested_fixed_iterations_diffuse_predicate,
                                   page_rank_nested_fixed_iterations_diffuse));
             }
         }
@@ -402,6 +418,7 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                               args_x,
                               page_rank_nested_fixed_iterations_predicate,
                               page_rank_nested_fixed_iterations_work,
+                              page_rank_nested_fixed_iterations_diffuse_predicate,
                               page_rank_nested_fixed_iterations_diffuse));
         }
 
@@ -437,6 +454,7 @@ page_rank_nested_fixed_iterations_diffuse_func(ComputeCell& cc,
                           args_x,
                           page_rank_nested_fixed_iterations_predicate,
                           page_rank_nested_fixed_iterations_work,
+                          page_rank_nested_fixed_iterations_diffuse_predicate,
                           page_rank_nested_fixed_iterations_diffuse));
     }
 
@@ -634,7 +652,7 @@ verify_results(const PageRankNestedIterationCommandLineArguments& cmd_args,
         int node_id;
         double pagerank_value;
         while (std::getline(file, line)) {
-            
+
             // When there are vertices with in-degree zero then they are not present in the
             // .pagerank file. Therefore, the vertification will fail in that case.
             // TODO: Need to add the case.

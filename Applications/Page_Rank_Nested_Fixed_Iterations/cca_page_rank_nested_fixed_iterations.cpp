@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // work, and diffuse. In the main register the functions and get their ids
 CCAFunctionEvent page_rank_nested_fixed_iterations_predicate;
 CCAFunctionEvent page_rank_nested_fixed_iterations_work;
+CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse_predicate;
 CCAFunctionEvent page_rank_nested_fixed_iterations_diffuse;
 
 auto
@@ -126,6 +127,9 @@ main(int argc, char** argv) -> int
         page_rank_nested_fixed_iterations_predicate_func);
     page_rank_nested_fixed_iterations_work =
         cca_square_simulator.register_function_event(page_rank_nested_fixed_iterations_work_func);
+    page_rank_nested_fixed_iterations_diffuse_predicate =
+        cca_square_simulator.register_function_event(
+            page_rank_nested_fixed_iterations_diffuse_predicate_func);
     page_rank_nested_fixed_iterations_diffuse = cca_square_simulator.register_function_event(
         page_rank_nested_fixed_iterations_diffuse_func);
 
@@ -160,6 +164,7 @@ main(int argc, char** argv) -> int
                    args_x,
                    page_rank_nested_fixed_iterations_predicate,
                    page_rank_nested_fixed_iterations_work,
+                   page_rank_nested_fixed_iterations_diffuse_predicate,
                    page_rank_nested_fixed_iterations_diffuse));
         //}
 
@@ -188,6 +193,7 @@ main(int argc, char** argv) -> int
                        args_to_zero_in_degree,
                        page_rank_nested_fixed_iterations_predicate,
                        page_rank_nested_fixed_iterations_work,
+                       page_rank_nested_fixed_iterations_diffuse_predicate,
                        page_rank_nested_fixed_iterations_diffuse));
 
             // std::cout << "Germinated Vertices with degree value 0: " << vertex_id << "\n";
