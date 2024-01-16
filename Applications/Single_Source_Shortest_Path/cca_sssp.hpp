@@ -409,7 +409,8 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
         }
 
         u_int32_t node_id;
-        u_int32_t sssp_value;
+        // u_int32_t sssp_value;
+        double sssp_value;
         while (std::getline(file, line)) {
 
             std::istringstream iss(line);
@@ -421,7 +422,7 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
                 while (node_id != control_results.size()) {
                     control_results.emplace_back(undefined_distance);
                 }
-                control_results.emplace_back(sssp_value);
+                control_results.emplace_back(static_cast<u_int32_t>(sssp_value));
             } else {
                 // Parsing failed.
                 std::cerr << "Error parsing line: " << line
