@@ -171,7 +171,7 @@ main(int argc, char** argv) -> int
                 cmd_args.input_graph_path + "_" + std::to_string(dynamic_increment) + ".tsv";
             std::vector<EdgeTuple> new_edges =
                 input_graph.read_dnyamic_graph_increment<true>(input_graph_inc_path);
-            std::cout << "\n\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
+            std::cout << "\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
                       << "\n";
             /* for (auto& x : new_edges) {
                 std::cout << "from: " << x.from << ", to: " << x.to << ", w: " << x.weight << "\n";
@@ -179,6 +179,7 @@ main(int argc, char** argv) -> int
             input_graph.transfer_graph_edges_increment_host_to_cca<
                 BFSVertex<RecursiveParallelVertex<Address>>>(cca_square_simulator,
                                                              new_edges,
+                                                             cmd_args.root_vertex,
                                                              dynamic_bfs_terminator.value(),
                                                              dynamic_bfs_edge_insert_continuation);
         }

@@ -64,6 +64,8 @@ struct BFSArgumentsEdgeInsertContinuation
 
     Address dst_vertex_addr;
     u_int32_t edge_weight;
+
+    u_int32_t root_vertex;
 };
 
 template<typename Vertex_T>
@@ -80,14 +82,18 @@ struct BFSVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
-    auto edge_insert_continuation_argument(Address dst_vertex_addr_in, u_int32_t edge_weight_in)
-        -> ActionArgumentType
+    auto edge_insert_continuation_argument(Address dst_vertex_addr_in,
+                                           u_int32_t edge_weight_in,
+                                           u_int32_t root_vertex_in) -> ActionArgumentType
     {
         BFSArgumentsEdgeInsertContinuation arg_continuation;
         arg_continuation.level = this->bfs_level;
         arg_continuation.src_vertex_id = this->id;
+
         arg_continuation.dst_vertex_addr = dst_vertex_addr_in;
         arg_continuation.edge_weight = edge_weight_in;
+
+        arg_continuation.root_vertex = root_vertex_in;
 
         /* std::cout << "edge_insert_continuation_argument: dst_vertex_addr_in: " <<
            dst_vertex_addr_in
@@ -271,6 +277,11 @@ dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
         cca_get_action_argument<BFSArgumentsEdgeInsertContinuation>(args);
 
     u_int32_t current_level = bfs_args.level;
+
+    /* if (current_level == BFSVertex<RecursiveParallelVertex<Address>>::max_level) {
+        std::cout << "undefined level Not diffusing the continuation\n";
+        return 0;
+    } */
 
     BFSArguments level_to_send;
     level_to_send.level = current_level + 1;

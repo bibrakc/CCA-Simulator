@@ -110,6 +110,7 @@ class Graph
                                                          Address src_vertex_addr,
                                                          Address dst_vertex_addr,
                                                          u_int32_t edge_weight,
+                                                         u_int32_t root_vertex,
                                                          Address terminator,
                                                          CCAFunctionEvent continuation) -> bool
     {
@@ -117,11 +118,11 @@ class Graph
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
 
         ActionArgumentType args_for_continuation =
-            vertex->edge_insert_continuation_argument(dst_vertex_addr, edge_weight);
+            vertex->edge_insert_continuation_argument(dst_vertex_addr, edge_weight, root_vertex);
 
         /* auto* dvertex =
             static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
-        
+
         std::cout << "svertex: " << vertex->id << ", src_vertex_addr: " << src_vertex_addr
                   << ", dvertex: " << dvertex->id << ", dst_vertex_addr: " << dst_vertex_addr
                   << "\n"; */
@@ -332,6 +333,7 @@ class Graph
     template<class VertexTypeOfAddress>
     void transfer_graph_edges_increment_host_to_cca(CCASimulator& cca_simulator,
                                                     std::vector<EdgeTuple>& new_edges,
+                                                    u_int32_t root_vertex,
                                                     Address terminator,
                                                     CCAFunctionEvent continuation)
     {
@@ -348,14 +350,15 @@ class Graph
             u_int32_t const src_vertex_id = new_edges[i].from;
             u_int32_t const dst_vertex_id = new_edges[i].to;
             u_int32_t const edge_weight = new_edges[i].weight;
-            std::cout << "\n\nsrc: " << src_vertex_id << ", dst: " << dst_vertex_id
-                      << ", weight: " << edge_weight << "\n";
+            /* std::cout << "\n\nsrc: " << src_vertex_id << ", dst: " << dst_vertex_id
+                      << ", weight: " << edge_weight << "\n"; */
             if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
                     cca_simulator,
                     /*  allocator, */
                     this->vertex_addresses[src_vertex_id],
                     this->vertex_addresses[dst_vertex_id],
                     edge_weight,
+                    root_vertex,
                     terminator,
                     continuation)) {
                 std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
