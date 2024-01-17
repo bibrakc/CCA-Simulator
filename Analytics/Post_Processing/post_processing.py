@@ -121,7 +121,7 @@ print("avg_objects_per_cc: ", avg_objects_per_cc)
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
 
-print(stats.describe())
+# print(stats.describe())
 
 chip_config = "Chip of " + \
     str(dim_x)+" x "+str(dim_y)+" Cells"
@@ -226,7 +226,8 @@ def active_status_chart():
     # Create the line plot using sns.lineplot
     fig, ax = plt.subplots(figsize=(16, 10))
     sns.lineplot(x='Cycle#', y='Cells_Active_Percent',
-                 data=active_status_df, label='Cells Active Percent', ax=ax, color='orange')
+                 data=active_status_df, label='Cells Active Percent', ax=ax, color='red', linewidth=2)
+    
     if hdepth != 0:
         sns.lineplot(x='Cycle#', y='Htree_Active_Percent',
                      data=active_status_df, label='Htree Active Percent', ax=ax, color='blue')

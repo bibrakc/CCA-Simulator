@@ -565,7 +565,7 @@ write_results(const BFSCommandLineArguments& cmd_args,
     }
 
     std::string const output_file_name =
-        "bfs_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
+        "dynamic_bfs_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
         std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
         std::to_string(input_graph.total_vertices) + "_e_" +
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +

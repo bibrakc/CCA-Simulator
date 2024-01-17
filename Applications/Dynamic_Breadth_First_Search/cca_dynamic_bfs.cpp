@@ -173,9 +173,7 @@ main(int argc, char** argv) -> int
                 input_graph.read_dnyamic_graph_increment<true>(input_graph_inc_path);
             std::cout << "\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
                       << "\n";
-            /* for (auto& x : new_edges) {
-                std::cout << "from: " << x.from << ", to: " << x.to << ", w: " << x.weight << "\n";
-            } */
+
             input_graph.transfer_graph_edges_increment_host_to_cca<
                 BFSVertex<RecursiveParallelVertex<Address>>>(cca_square_simulator,
                                                              new_edges,
