@@ -46,6 +46,8 @@ CCAFunctionEvent dynamic_bfs_work;
 CCAFunctionEvent dynamic_bfs_diffuse_predicate;
 CCAFunctionEvent dynamic_bfs_diffuse;
 
+CCAFunctionEvent dynamic_bfs_edge_insert_continuation;
+
 auto
 main(int argc, char** argv) -> int
 {
@@ -127,6 +129,9 @@ main(int argc, char** argv) -> int
         cca_square_simulator.register_function_event(dynamic_bfs_diffuse_predicate_func);
     dynamic_bfs_diffuse = cca_square_simulator.register_function_event(dynamic_bfs_diffuse_func);
 
+    dynamic_bfs_edge_insert_continuation =
+        cca_square_simulator.register_function_event(dynamic_bfs_edge_insert_continuation_func);
+
     std::optional<Address> dynamic_bfs_terminator = cca_square_simulator.create_terminator();
     if (!dynamic_bfs_terminator) {
         std::cerr << "Error! Memory not allocated for dynamic_bfs_terminator \n";
@@ -160,13 +165,22 @@ main(int argc, char** argv) -> int
                                                          dynamic_bfs_diffuse_predicate,
                                                          dynamic_bfs_diffuse));
         } else {
-            // read edges from the increament file and then germinate actions
+
+            // Read edges from the increament file and then insert then and germinate actions.
             std::string input_graph_inc_path =
                 cmd_args.input_graph_path + "_" + std::to_string(dynamic_increment) + ".tsv";
             std::vector<EdgeTuple> new_edges =
-                input_graph.read_dnyamic_graph_increment(input_graph_inc_path);
-            std::cout << "Read " << new_edges.size() << " edges from " << input_graph_inc_path
+                input_graph.read_dnyamic_graph_increment<true>(input_graph_inc_path);
+            std::cout << "\n\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
                       << "\n";
+            /* for (auto& x : new_edges) {
+                std::cout << "from: " << x.from << ", to: " << x.to << ", w: " << x.weight << "\n";
+            } */
+            input_graph.transfer_graph_edges_increment_host_to_cca<
+                BFSVertex<RecursiveParallelVertex<Address>>>(cca_square_simulator,
+                                                             new_edges,
+                                                             dynamic_bfs_terminator.value(),
+                                                             dynamic_bfs_edge_insert_continuation);
         }
 
         ///////////

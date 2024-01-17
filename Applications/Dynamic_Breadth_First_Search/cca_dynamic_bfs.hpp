@@ -49,6 +49,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 inline static constexpr u_int32_t undefined_level = 999999;
 
+// This is what the action carries as payload.
+struct BFSArguments
+{
+    u_int32_t level;
+    u_int32_t src_vertex_id;
+};
+
+// This is what the continuation for insert edge carries as payload.
+struct BFSArgumentsEdgeInsertContinuation
+{
+    u_int32_t level;
+    u_int32_t src_vertex_id; // maybe not needed.
+
+    Address dst_vertex_addr;
+    u_int32_t edge_weight;
+};
+
 template<typename Vertex_T>
 struct BFSVertex : Vertex_T
 {
@@ -63,6 +80,22 @@ struct BFSVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
+    auto edge_insert_continuation_argument(Address dst_vertex_addr_in, u_int32_t edge_weight_in)
+        -> ActionArgumentType
+    {
+        BFSArgumentsEdgeInsertContinuation arg_continuation;
+        arg_continuation.level = this->bfs_level;
+        arg_continuation.src_vertex_id = this->id;
+        arg_continuation.dst_vertex_addr = dst_vertex_addr_in;
+        arg_continuation.edge_weight = edge_weight_in;
+
+        /* std::cout << "edge_insert_continuation_argument: dst_vertex_addr_in: " <<
+           dst_vertex_addr_in
+                  << "\n"; */
+
+        return cca_create_action_argument<BFSArgumentsEdgeInsertContinuation>(arg_continuation);
+    }
+
     BFSVertex() {}
     ~BFSVertex() {}
 };
@@ -74,12 +107,7 @@ extern CCAFunctionEvent dynamic_bfs_work;
 extern CCAFunctionEvent dynamic_bfs_diffuse_predicate;
 extern CCAFunctionEvent dynamic_bfs_diffuse;
 
-// This is what the action carries as payload.
-struct BFSArguments
-{
-    u_int32_t level;
-    u_int32_t src_vertex_id;
-};
+extern CCAFunctionEvent dynamic_bfs_edge_insert_continuation;
 
 inline auto
 dynamic_bfs_predicate_func(ComputeCell& cc,
@@ -127,6 +155,12 @@ dynamic_bfs_work_func(ComputeCell& cc,
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
+
+    /* if (v->id == 402) {
+        std::cout << "dynamic_bfs_work_func: incoming_level: " << incoming_level
+                  << ", src: " << bfs_args.src_vertex_id << ", old v->bfs_level: " << v->bfs_level
+                  << "\n";
+    } */
 
     // Update level with the new level
     v->bfs_level = incoming_level;
@@ -222,6 +256,41 @@ dynamic_bfs_diffuse_func(ComputeCell& cc,
                           dynamic_bfs_diffuse_predicate,
                           dynamic_bfs_diffuse));
     }
+
+    return 0;
+}
+
+inline auto
+dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
+                                          const Address& addr,
+                                          actionType /* action_type_in */,
+                                          const ActionArgumentType& args) -> int
+{
+
+    BFSArgumentsEdgeInsertContinuation const bfs_args =
+        cca_get_action_argument<BFSArgumentsEdgeInsertContinuation>(args);
+
+    u_int32_t current_level = bfs_args.level;
+
+    BFSArguments level_to_send;
+    level_to_send.level = current_level + 1;
+    level_to_send.src_vertex_id = bfs_args.src_vertex_id;
+
+    ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
+
+    /* std::cout << "dynamic_bfs_edge_insert_continuation_func || vertex: "
+              << level_to_send.src_vertex_id << ", level to send: " << level_to_send.level
+              << ", bfs_args.dst_vertex_addr: " << bfs_args.dst_vertex_addr << "\n";
+ */
+    cc.diffuse(Action(bfs_args.dst_vertex_addr,
+                      addr,
+                      actionType::application_action,
+                      true,
+                      args_x,
+                      dynamic_bfs_predicate,
+                      dynamic_bfs_work,
+                      dynamic_bfs_diffuse_predicate,
+                      dynamic_bfs_diffuse));
 
     return 0;
 }

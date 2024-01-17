@@ -103,6 +103,49 @@ class Graph
         return success;
     }
 
+    // Insert edge by `Address` type src and dst with continuation.
+    template<class VertexTypeOfAddress>
+    inline auto insert_edge_by_address_with_continuation(CCASimulator& cca_simulator,
+                                                         /* MemoryAllocator& allocator, */
+                                                         Address src_vertex_addr,
+                                                         Address dst_vertex_addr,
+                                                         u_int32_t edge_weight,
+                                                         Address terminator,
+                                                         CCAFunctionEvent continuation) -> bool
+    {
+
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+
+        ActionArgumentType args_for_continuation =
+            vertex->edge_insert_continuation_argument(dst_vertex_addr, edge_weight);
+
+        /* auto* dvertex =
+            static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
+        
+        std::cout << "svertex: " << vertex->id << ", src_vertex_addr: " << src_vertex_addr
+                  << ", dvertex: " << dvertex->id << ", dst_vertex_addr: " << dst_vertex_addr
+                  << "\n"; */
+
+        bool success = vertex->insert_edge(cca_simulator,
+                                           src_vertex_addr.cc_id,
+                                           src_vertex_addr,
+                                           dst_vertex_addr,
+                                           edge_weight,
+                                           args_for_continuation,
+                                           terminator,
+                                           continuation);
+
+        // Increament the `inbound_degree` of the destination vertex
+        if (success) {
+            auto* vertex =
+                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
+
+            vertex->inbound_degree++;
+        }
+
+        return success;
+    }
+
     auto get_vertices_ids_with_zero_in_degree() -> std::vector<u_int32_t>
     {
         // Find vertices with inbound_degree equal to 0.
@@ -246,7 +289,7 @@ class Graph
             }
         }
     }
-
+    template<bool ZERO_INDEX>
     auto read_dnyamic_graph_increment(const std::string& input_graph_path) -> std::vector<EdgeTuple>
     {
 
@@ -266,6 +309,10 @@ class Graph
         while (input_graph_file_handler >> reader_edge.from >> reader_edge.to >>
                reader_edge.weight) {
             // Insert the edge in `this` graph i.e. host side store
+            if constexpr (ZERO_INDEX) {
+                reader_edge.from--;
+                reader_edge.to--;
+            }
             this->add_edge(this->vertices[reader_edge.from], reader_edge.to, reader_edge.weight);
 
             // Insert the edge in the vector to be returned to caller so that it can then call the
@@ -284,7 +331,9 @@ class Graph
     // new vertices, although its not an issue and can be done easily in the future.
     template<class VertexTypeOfAddress>
     void transfer_graph_edges_increment_host_to_cca(CCASimulator& cca_simulator,
-                                                    std::vector<EdgeTuple> new_edges)
+                                                    std::vector<EdgeTuple>& new_edges,
+                                                    Address terminator,
+                                                    CCAFunctionEvent continuation)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.
@@ -294,18 +343,21 @@ class Graph
         std::cout << "Inserting increment of new edges: " << std::endl;
 
         // Not sure if this is thread safe anymore... #pragma omp parallel for
-        for (int i = 0; i < new_edges.size(); i++) {
+        for (u_int32_t i = 0; i < new_edges.size(); i++) {
 
             u_int32_t const src_vertex_id = new_edges[i].from;
             u_int32_t const dst_vertex_id = new_edges[i].to;
             u_int32_t const edge_weight = new_edges[i].weight;
-
-            if (!this->insert_edge_by_address<VertexTypeOfAddress>(
+            std::cout << "\n\nsrc: " << src_vertex_id << ", dst: " << dst_vertex_id
+                      << ", weight: " << edge_weight << "\n";
+            if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
                     cca_simulator,
                     /*  allocator, */
                     this->vertex_addresses[src_vertex_id],
                     this->vertex_addresses[dst_vertex_id],
-                    edge_weight)) {
+                    edge_weight,
+                    terminator,
+                    continuation)) {
                 std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                           << edge_weight << ") not inserted successfully.\n";
                 exit(0);
