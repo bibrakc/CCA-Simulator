@@ -50,6 +50,11 @@ if(NOT DEFINED ANIMATION)
 endif()
 add_definitions(-DANIMATION=${ANIMATION})
 
+if(NOT DEFINED ACTIVE_PERCENT)
+    set(ACTIVE_PERCENT "true")
+endif()
+add_definitions(-DACTIVE_PERCENT=${ACTIVE_PERCENT})
+
 if(NOT DEFINED VICINITY)
     set(VICINITY 3)
 endif()

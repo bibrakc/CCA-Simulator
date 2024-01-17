@@ -274,7 +274,7 @@ class CCASimulator
         os << "avg_cells_active_percent\n" << this->cca_statistics.avg_cells_active_percent << "\n";
 
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
-        if constexpr (animation_switch) {
+        if constexpr (active_percent_switch) {
             for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
                 os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
                    << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";

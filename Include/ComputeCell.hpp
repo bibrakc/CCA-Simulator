@@ -218,7 +218,7 @@ class ComputeCell : public Cell
         // edges_max + 2 + 5 = helps to have enough buffer (and not deadlock) for the CC to push
         // actions onto itself in case of a diffusion that requires pushing to itself.
         // 2: ghost edges, 5: just because.
-        this->action_queue = FixedSizeQueue<Action>(64, edges_max + 2 + 5);
+        this->action_queue = FixedSizeQueue<Action>(4096, edges_max + 2 + 5);
         this->diffuse_queue = FixedSizeQueue<Action>(4096);
 
         // Experimental for scheduling.

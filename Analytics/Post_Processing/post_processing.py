@@ -45,7 +45,7 @@ args = sys.argv
 
 output_file = args[1]
 
-routing_algorithm = args[2]
+routing_algorithm = "XY" #args[2]
 
 # open the file in read mode
 with open(output_file, 'r') as file:
@@ -258,7 +258,7 @@ def active_status_chart():
 # print(matplotlib.matplotlib_fname())
 
 # Main
-congestion_charts()
+# congestion_charts()
 active_status_chart()
 
 # Display the plot

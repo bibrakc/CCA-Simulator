@@ -42,9 +42,13 @@ inline constexpr bool debug_code = false;
 // Compile with: -DTHROTTLE=true/false
 inline constexpr bool throttling_switch = THROTTLE;
 
-// Dump active status per cycle for all compute cells.
+// Dump active status per cycle for each compute cells.
 // Compile with: -DANIMATION=true/false
 inline constexpr bool animation_switch = ANIMATION;
+
+// Dump active status per cycle for all compute cells as a percentage.
+// Compile with: -DACTIVE_PERCENT=true/false
+inline constexpr bool active_percent_switch = ACTIVE_PERCENT;
 
 // For older gcc compiler or something.
 #ifndef u_int32_t
