@@ -33,7 +33,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef Graph_HPP
 #define Graph_HPP
 
+#include <fstream>
 #include <random>
+
+// Used for dynamic graphs when reading the increment edgelist file.
+struct EdgeTuple
+{
+    u_int32_t from;
+    u_int32_t to;
+    u_int32_t weight;
+};
 
 template<class VertexType>
 class Graph
@@ -234,6 +243,72 @@ class Graph
                               << edge_weight << ") not inserted successfully.\n";
                     exit(0);
                 }
+            }
+        }
+    }
+
+    auto read_dnyamic_graph_increment(const std::string& input_graph_path) -> std::vector<EdgeTuple>
+    {
+
+        // Read the input data graph
+        std::ifstream input_graph_file_handler(input_graph_path);
+
+        // Check if the file is open
+        if (!input_graph_file_handler.is_open()) {
+            std::cerr << "The graph: " << input_graph_path << " failed to open\n";
+            exit(0);
+        }
+
+        std::vector<EdgeTuple> new_edges;
+
+        // Read from file and insert edges
+        EdgeTuple reader_edge;
+        while (input_graph_file_handler >> reader_edge.from >> reader_edge.to >>
+               reader_edge.weight) {
+            // Insert the edge in `this` graph i.e. host side store
+            this->add_edge(this->vertices[reader_edge.from], reader_edge.to, reader_edge.weight);
+
+            // Insert the edge in the vector to be returned to caller so that it can then call the
+            // insert_edge to transfer this new edgelist to the device.
+            new_edges.emplace_back(reader_edge);
+            this->total_edges++;
+        }
+
+        // Close the file
+        input_graph_file_handler.close();
+
+        return new_edges;
+    }
+
+    // For dynamic graphs transfer the new edgelist. Note: this function does not accept creation of
+    // new vertices, although its not an issue and can be done easily in the future.
+    template<class VertexTypeOfAddress>
+    void transfer_graph_edges_increment_host_to_cca(CCASimulator& cca_simulator,
+                                                    std::vector<EdgeTuple> new_edges)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        std::cout << "Inserting increment of new edges: " << std::endl;
+
+        // Not sure if this is thread safe anymore... #pragma omp parallel for
+        for (int i = 0; i < new_edges.size(); i++) {
+
+            u_int32_t const src_vertex_id = new_edges[i].from;
+            u_int32_t const dst_vertex_id = new_edges[i].to;
+            u_int32_t const edge_weight = new_edges[i].weight;
+
+            if (!this->insert_edge_by_address<VertexTypeOfAddress>(
+                    cca_simulator,
+                    /*  allocator, */
+                    this->vertex_addresses[src_vertex_id],
+                    this->vertex_addresses[dst_vertex_id],
+                    edge_weight)) {
+                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                          << edge_weight << ") not inserted successfully.\n";
+                exit(0);
             }
         }
     }

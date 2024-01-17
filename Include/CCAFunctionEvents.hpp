@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Function.hpp"
 #include <vector>
 
-
 struct FunctionEventManager
 {
     // Stores the functions that are called from within an action invokation. These may include
@@ -49,6 +48,10 @@ struct FunctionEventManager
 
     // Used for special actions such as terminator that don't call predicate, work, and diffuse.
     CCAFunctionEvent null_event_id;
+
+    // Used for special actions such as edge insertion with continuation for dynamic graphs that
+    // don't need to have predicate,and diffuse.
+    CCAFunctionEvent null_event_true_id;
 
     // Special system events:
     // Acknowledgement event id for termination detection.
@@ -63,6 +66,7 @@ struct FunctionEventManager
     FunctionEventManager()
         : event_handlers()
         , null_event_id(register_function_event(null_func))
+        , null_event_true_id(register_function_event(null_true_func))
         , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
     }

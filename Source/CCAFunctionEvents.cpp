@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cassert>
 #include <vector>
 
-// null event.
+// null event, that returns false (0).
 auto
 null_func(ComputeCell& /* cc */,
           const Address& /* addr */,
@@ -46,6 +46,16 @@ null_func(ComputeCell& /* cc */,
           const ActionArgumentType& /*args*/) -> int
 {
     return 0;
+}
+
+// true ops event, that returns true (1).
+auto
+null_true_func(ComputeCell& /* cc */,
+               const Address& /* addr */,
+               actionType /* action_type_in */,
+               const ActionArgumentType& /*args*/) -> int
+{
+    return 1;
 }
 
 handler_func
