@@ -50,6 +50,9 @@ inline constexpr bool animation_switch = ANIMATION;
 // Compile with: -DACTIVE_PERCENT=true/false
 inline constexpr bool active_percent_switch = ACTIVE_PERCENT;
 
+// Compile with: -DACTIONQUEUESIZE=<int value> (use 64 or more/less or whatever).
+inline constexpr u_int32_t action_queue_size = ACTIONQUEUESIZE;
+
 // For older gcc compiler or something.
 #ifndef u_int32_t
 #define u_int32_t uint32_t

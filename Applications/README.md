@@ -4,13 +4,15 @@ Applications build using CCASimulator using the diffusive programming model
 ## Breadth_First_Search
 The [Breadth_First_Search](/Applications/Breadth_First_Search/) implements asynchronous `breadth first search` using the CCASimulator.
 ## Iterative_Breadth_First_Search
-The [Iterative_Breadth_First_Search](/Applications/Iterative_Breadth_First_Search/) application implements asynchronous `breadth first search` using the CCASimulator. In particular it uses Iterative Deepening to traverse the graph.
+The [Iterative_Breadth_First_Search](/Applications/Deprecated/Iterative_Breadth_First_Search/) application implements asynchronous `breadth first search` using the CCASimulator. In particular it uses Iterative Deepening to traverse the graph.
+## Dynamic_Breadth_First_Search
+The [Breadth_First_Search](/Applications/Dynamic_Breadth_First_Search/) implements asynchronous `dynamic breadth first search` using the CCASimulator.
 ## Iterative_Single_Source_Shortest_Path
-The [Iterative_Single_Source_Shortest_Path](/Applications/Iterative_Single_Source_Shortest_Path/) application implements asynchronous `single source shortest path` using the CCASimulator. In particular it uses Iterative Deepening to traverse the graph.
+The [Iterative_Single_Source_Shortest_Path](/Applications/Deprecated/Iterative_Single_Source_Shortest_Path/) application implements asynchronous `single source shortest path` using the CCASimulator. In particular it uses Iterative Deepening to traverse the graph.
 ## Page_Rank_Fixed_Iterations
-The [Page_Rank_Fixed_Iterations](/Applications/Page_Rank_Fixed_Iterations/) implements asynchronous `page rank` with fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user.
+The [Page_Rank_Fixed_Iterations](/Applications/Deprecated/Page_Rank_Fixed_Iterations/) implements asynchronous `page rank` with fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user.
 ## Page_Rank_Nested_Fixed_Iterations
-The [Page_Rank_Nested_Fixed_Iterations](/Applications/Page_Rank_Nested_Fixed_Iterations/) implements an asynchronous `page rank` with nested fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user. These host side iterations invoke the `nested page rank` where it asynchronously goes into the next iteration. Kind of an overlap.
+The [Page_Rank_Nested_Fixed_Iterations](/Applications/Deprecated/Page_Rank_Nested_Fixed_Iterations/) implements an asynchronous `page rank` with nested fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user. These host side iterations invoke the `nested page rank` where it asynchronously goes into the next iteration. Kind of an overlap.
 ## Single_Source_Shortest_Path
 The [Single_Source_Shortest_Path](/Applications/Single_Source_Shortest_Path/) implements asynchronous `single source shortest path` using the CCASimulator.
 
