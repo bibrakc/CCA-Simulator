@@ -4,13 +4,9 @@ Event-level simulator for [Continuum Computer Architecture (CCA)](https://superf
 ## Summary
 The CCA Simulator enables exploring design space of the CCA class of non-Von Neumann intelligent memory systems. These systems are concieved to be highly fine-grain parallel and use event-driven mechanisms to perform computation.
 
+It can be used to design and deploy asynchronous message-driven computations and understand the runtime behavior of AM-CCA configurations. The simulator is high-level enough to be programmed using the diffusive programming model and yet low-level enough to simulate individual operon movements between CCs. In a single simulation cycle, an operon can traverse one hop from one CC to a neighboring CC. We make this assumption since AM-CCA channel links are $256$ bit wide and can easily send the small operons of our tested applications in a single flit cycle. Simultaneously, a single CC, can perform either of the two operations: 
+1. a computing task, which is the predicate resolution and work in the user application action, or
+2. the creation and staging of a new \textit{operon}.
+
 ## Graph Applications
 The [Applications](/Applications/) directory contains asynchronous message-driven applications written using the CCASimulator. Please browser through each application for build and run instructions.
-
-## Using clang-tidy
-Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
-
-Inside an application use something like:
-> `$ noglob /opt/homebrew/opt/llvm/bin/clang-tidy -p build ../../Source/ComputeCell.cpp -checks=cppcoreguidelines-* -header-filter=.*`
-
-> `$ noglob python3 /opt/homebrew/opt/llvm/bin/run-clang-tidy -p build -header-filter='.*' -checks='-*,modernize-use-nullptr'`

@@ -14,5 +14,15 @@ The [Page_Rank_Nested_Fixed_Iterations](/Applications/Page_Rank_Nested_Fixed_Ite
 ## Single_Source_Shortest_Path
 The [Single_Source_Shortest_Path](/Applications/Single_Source_Shortest_Path/) implements asynchronous `single source shortest path` using the CCASimulator.
 
+# Notes
+
 ## Deprecated
 Some of the above applications have been moved to the `Deprecated` folder due to constant internal development of the simulator they need to be modified and tested. It should not require much work other than fixing the predicate and diffuse functions. Previously there was only one queue in a compute cell, i.e. the `action_queue` but now since it has been split into `action_queue` and `diffuse_queue` the applications need to provide "diffuse predicate function".
+
+## Using clang-tidy
+Compile with: `CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+
+Inside an application use something like:
+> `$ noglob /opt/homebrew/opt/llvm/bin/clang-tidy -p build ../../Source/ComputeCell.cpp -checks=cppcoreguidelines-* -header-filter=.*`
+
+> `$ noglob python3 /opt/homebrew/opt/llvm/bin/run-clang-tidy -p build -header-filter='.*' -checks='-*,modernize-use-nullptr'`
