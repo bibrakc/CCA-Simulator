@@ -1,5 +1,8 @@
 *a.out
 [Bb]uild
+Page_Rank_Nested_Fixed_Iterations_tmp
+Papers/ICS_2024/Runs/Page_Rank/
+Papers/ICS_2024/Runs/job_cca_*
 Generated_Graphs
 Measurements
 .DS_Store
