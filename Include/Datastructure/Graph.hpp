@@ -33,7 +33,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef Graph_HPP
 #define Graph_HPP
 
+#include <fstream>
 #include <random>
+
+// Used for dynamic graphs when reading the increment edgelist file.
+struct EdgeTuple
+{
+    u_int32_t from;
+    u_int32_t to;
+    u_int32_t weight;
+};
 
 template<class VertexType>
 class Graph
@@ -82,6 +91,50 @@ class Graph
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
         bool success =
             vertex->insert_edge(cca_simulator, src_vertex_addr.cc_id, dst_vertex_addr, edge_weight);
+
+        // Increament the `inbound_degree` of the destination vertex
+        if (success) {
+            auto* vertex =
+                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
+
+            vertex->inbound_degree++;
+        }
+
+        return success;
+    }
+
+    // Insert edge by `Address` type src and dst with continuation.
+    template<class VertexTypeOfAddress>
+    inline auto insert_edge_by_address_with_continuation(CCASimulator& cca_simulator,
+                                                         /* MemoryAllocator& allocator, */
+                                                         Address src_vertex_addr,
+                                                         Address dst_vertex_addr,
+                                                         u_int32_t edge_weight,
+                                                         u_int32_t root_vertex,
+                                                         Address terminator,
+                                                         CCAFunctionEvent continuation) -> bool
+    {
+
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+
+        ActionArgumentType args_for_continuation =
+            vertex->edge_insert_continuation_argument(dst_vertex_addr, edge_weight, root_vertex);
+
+        /* auto* dvertex =
+            static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
+
+        std::cout << "svertex: " << vertex->id << ", src_vertex_addr: " << src_vertex_addr
+                  << ", dvertex: " << dvertex->id << ", dst_vertex_addr: " << dst_vertex_addr
+                  << "\n"; */
+
+        bool success = vertex->insert_edge(cca_simulator,
+                                           src_vertex_addr.cc_id,
+                                           src_vertex_addr,
+                                           dst_vertex_addr,
+                                           edge_weight,
+                                           args_for_continuation,
+                                           terminator,
+                                           continuation);
 
         // Increament the `inbound_degree` of the destination vertex
         if (success) {
@@ -147,7 +200,8 @@ class Graph
             starting_vertex_id = start_vertex_id.value();
             std::cout << "Vertex id " << starting_vertex_id
                       << " will be allocated first by the allocator. Then the rest of the vertices "
-                         "will follow based on the allocator type.\n";
+                         "will follow based on the allocator type."
+                      << std::endl;
         }
 
         // Create a vector of ids of all vertices values from root to N cyclically
@@ -176,7 +230,8 @@ class Graph
                 exit(0);
             }
             std::cout << "Shuffled the vertex id list for random allocation of vertices. May help "
-                         "with synthetic graphs where the graph generator didn't do a good job.\n";
+                         "with synthetic graphs where the graph generator didn't do a good job."
+                      << std::endl;
         }
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
@@ -211,7 +266,9 @@ class Graph
             vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
-        std::cout << "Populating vertices by inserting edges: \n";
+        std::cout << "Populating vertices by inserting edges: " << std::endl;
+
+#pragma omp parallel for
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 
@@ -233,6 +290,83 @@ class Graph
             }
         }
     }
+    template<bool ZERO_INDEX>
+    auto read_dnyamic_graph_increment(const std::string& input_graph_path) -> std::vector<EdgeTuple>
+    {
+
+        // Read the input data graph
+        std::ifstream input_graph_file_handler(input_graph_path);
+
+        // Check if the file is open
+        if (!input_graph_file_handler.is_open()) {
+            std::cerr << "The graph: " << input_graph_path << " failed to open\n";
+            exit(0);
+        }
+
+        std::vector<EdgeTuple> new_edges;
+
+        // Read from file and insert edges
+        EdgeTuple reader_edge;
+        while (input_graph_file_handler >> reader_edge.from >> reader_edge.to >>
+               reader_edge.weight) {
+            // Insert the edge in `this` graph i.e. host side store
+            if constexpr (ZERO_INDEX) {
+                reader_edge.from--;
+                reader_edge.to--;
+            }
+            this->add_edge(this->vertices[reader_edge.from], reader_edge.to, reader_edge.weight);
+
+            // Insert the edge in the vector to be returned to caller so that it can then call the
+            // insert_edge to transfer this new edgelist to the device.
+            new_edges.emplace_back(reader_edge);
+            this->total_edges++;
+        }
+
+        // Close the file
+        input_graph_file_handler.close();
+
+        return new_edges;
+    }
+
+    // For dynamic graphs transfer the new edgelist. Note: this function does not accept creation of
+    // new vertices, although its not an issue and can be done easily in the future.
+    template<class VertexTypeOfAddress>
+    void transfer_graph_edges_increment_host_to_cca(CCASimulator& cca_simulator,
+                                                    std::vector<EdgeTuple>& new_edges,
+                                                    u_int32_t root_vertex,
+                                                    Address terminator,
+                                                    CCAFunctionEvent continuation)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        std::cout << "Inserting increment of new edges: " << std::endl;
+
+        // Not sure if this is thread safe anymore... #pragma omp parallel for
+        for (u_int32_t i = 0; i < new_edges.size(); i++) {
+
+            u_int32_t const src_vertex_id = new_edges[i].from;
+            u_int32_t const dst_vertex_id = new_edges[i].to;
+            u_int32_t const edge_weight = new_edges[i].weight;
+            /* std::cout << "\n\nsrc: " << src_vertex_id << ", dst: " << dst_vertex_id
+                      << ", weight: " << edge_weight << "\n"; */
+            if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
+                    cca_simulator,
+                    /*  allocator, */
+                    this->vertex_addresses[src_vertex_id],
+                    this->vertex_addresses[dst_vertex_id],
+                    edge_weight,
+                    root_vertex,
+                    terminator,
+                    continuation)) {
+                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                          << edge_weight << ") not inserted successfully.\n";
+                exit(0);
+            }
+        }
+    }
 
     Graph(const std::string& input_graph_path)
     {
@@ -250,7 +384,7 @@ class Graph
 
         std::cout << "The graph: " << input_graph_path
                   << " has total_vertices: " << this->total_vertices << " with "
-                  << this->total_edges << " egdes.\n";
+                  << this->total_edges << " egdes." << std::endl;
 
         // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
         std::shared_ptr<VertexType[]> const vertices_(new VertexType[this->total_vertices],

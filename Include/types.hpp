@@ -59,21 +59,47 @@ class FixedSizeQueue
   private:
     std::queue<T> underlying_queue;
     u_int32_t size_max;
+    u_int32_t buffer_space_for_priority;
 
   public:
-    FixedSizeQueue(u_int32_t size_max_in)
-        : size_max(size_max_in)
+    // Default constructor
+    FixedSizeQueue() // Default constructor initialize it to 0.
+        : size_max(0)
+        , buffer_space_for_priority(0)
     {
     }
 
-    auto push(const T& value) -> bool
+    FixedSizeQueue(u_int32_t size_max_in)
+        : size_max(size_max_in)
+        , buffer_space_for_priority(0)
+    {
+    }
+
+    FixedSizeQueue(u_int32_t size_max_in, u_int32_t buffer_space_for_priority_in)
+        : size_max(size_max_in + buffer_space_for_priority_in)
+        , buffer_space_for_priority(buffer_space_for_priority_in)
+    {
+    }
+
+    [[nodiscard]] auto push(const T& value) -> bool
     {
         // Not able to enqueue. Return false
-        if (underlying_queue.size() == this->size_max) {
+        if (underlying_queue.size() >= this->size_max - this->buffer_space_for_priority) {
             return false;
         }
         this->underlying_queue.push(value);
         return true;
+    }
+
+    [[nodiscard]] auto push(const T& value, bool priority) -> bool
+    {
+        if (priority) {
+            if (underlying_queue.size() <= this->size_max) {
+                this->underlying_queue.push(value);
+                return true;
+            }
+        }
+        return this->push(value);
     }
 
     // Get from front FIFO
@@ -88,13 +114,37 @@ class FixedSizeQueue
     // Return the max size of the queue
     [[nodiscard]] auto queue_size_max() const -> u_int32_t { return this->size_max; }
 
+    // Return the whether it is empty
+    [[nodiscard]] auto empty() const -> bool { return this->underlying_queue.empty(); }
+
     // Return whether there is a slot in the queue
     [[nodiscard]] auto has_room() const -> bool
     {
-        return (this->underlying_queue.size() != this->size_max);
+        return (this->size() < this->size_max - this->buffer_space_for_priority);
+    }
+
+    // Return whether there is a slot in the queue with priority
+    [[nodiscard]] auto has_room(bool priority) const -> bool
+    {
+        if (priority) {
+            return (this->size() != this->size_max);
+        } else {
+            return this->has_room();
+        }
+    }
+
+    // Experimental: For prioritizing the action, diffuse, and task queues
+    // Return whether there is a slot in the queue.
+    // Check if the queue is `percent`% full.
+    [[nodiscard]] auto is_percent_full(double percent) const -> bool
+    {
+        assert(percent > 0.0 && percent < 100.0 && "Percentage must be between 0 and 100");
+
+        double threshold = size_max / (100.0 / percent);
+        return (this->underlying_queue.size() > static_cast<u_int32_t>(threshold));
     }
 };
-
+#include <iostream>
 class MaxCounter
 {
   private:
@@ -104,6 +154,7 @@ class MaxCounter
 
   public:
     MaxCounter() {}
+    // u_int32_t temp_cc_id{ 0 };
 
     void increment()
     {
@@ -118,7 +169,7 @@ class MaxCounter
     void decrement()
     {
         assert(this->counter > 0);
-        this->counter--;
+        this->counter = this->counter - 1;
     }
     [[nodiscard]] auto get_count() const -> u_int32_t { return this->counter; }
     [[nodiscard]] auto get_max_count() const -> u_int32_t { return this->max_counter; }

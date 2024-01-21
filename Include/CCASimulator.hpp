@@ -105,14 +105,14 @@ class CCASimulator
     u_int32_t hbandwidth_max;
 
     // Number of SinkCells per CCA chip.
-    u_int32_t total_sink_cells;
+    u_int64_t total_sink_cells;
 
     // Total CCA Cells (including Sink Cells)
-    u_int32_t total_compute_cells;
+    u_int64_t total_compute_cells;
 
     // Memory per compute cell and the total combined memory of this CCA chip
-    u_int32_t memory_per_cc;
-    u_int32_t total_chip_memory;
+    u_int64_t memory_per_cc;
+    u_int64_t total_chip_memory;
 
     // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
     std::vector<std::shared_ptr<Cell>> CCA_chip;
@@ -177,8 +177,8 @@ class CCASimulator
         // Seed the random generator. Right now rand is being used in the VicinityMemoryAllocator.
         std::srand(1989);
 
-        // Currently using Low-Latency Network as Htree therefore just by default using it to
-        // prepare the CCA chip.
+        // Using Low-Latency Network as Htree therefore just by default using it to
+        // prepare the CCA chip. When hdepth == 0, then thre is no Htree and dims are hx and hy.
         this->dim_x = HtreeNetwork::get_htree_dims(this->hx, this->hdepth);
         this->dim_y = HtreeNetwork::get_htree_dims(this->hy, this->hdepth);
         this->total_compute_cells = this->dim_x * this->dim_y;
@@ -193,6 +193,7 @@ class CCASimulator
 
         this->global_active_cc = false;
         this->total_cycles = 0;
+
         this->total_chip_memory =
             (this->total_compute_cells - this->total_sink_cells) * this->memory_per_cc;
 
@@ -231,8 +232,11 @@ class CCASimulator
            << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
            << " KB"
            << "\n\tTotal Chip Memory: "
-           << this->total_chip_memory / static_cast<double>(1024 * 1024) << " MB"
-           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n\n";
+           << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
+           << " MB"
+           << "\n\tMesh Type: " << this->primary_network_type
+           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n"
+           << std::endl;
     }
     inline void output_description_in_a_single_line(std::ostream& os)
     {
@@ -270,9 +274,15 @@ class CCASimulator
         os << "avg_cells_active_percent\n" << this->cca_statistics.avg_cells_active_percent << "\n";
 
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
-        for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
-            os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent << "\t"
-               << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+        if constexpr (active_percent_switch) {
+            for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
+                os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
+                   << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+            }
+        } else {
+            os << "0\t0\t0\n";
+            os << "0\t0\t0\n";
+            os << "0\t0\t0\n";
         }
     }
 

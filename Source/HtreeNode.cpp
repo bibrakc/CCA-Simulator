@@ -134,7 +134,9 @@ HtreeNode::transfer(const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& re
 
         // Put this back since it was not sent in this cycle due to the send_channel
         // being full
-        recv->push(operon);
+        if (!recv->push(operon)) {
+            std::cerr << "recv push failed in Htree transfer. Perhaps a bug.\n";
+        }
     }
 }
 
@@ -196,7 +198,10 @@ HtreeNode::shift_from_a_single_recv_channel_to_send_channels(
 
                     // Put this back since it was not sent in this cycle due to the send_channel
                     // being full
-                    recv->push(operon);
+
+                    if (!recv->push(operon)) {
+                        std::cerr << "recv push failed in Htree transfer. Perhaps a bug.\n";
+                    }
                 }
 
             } else {
@@ -292,7 +297,10 @@ HtreeNode::run_a_communication_cylce()
 
                 // Put this back since it was not sent in this cycle due to the
                 // recv_channel_to_htree_node being full
-                this->send_channel_to_sink_cell->push(operon);
+
+                if (this->send_channel_to_sink_cell->push(operon)) {
+                    std::cerr << "recv push failed in Htree transfer. Perhaps a bug.\n";
+                }
             }
         }
     }

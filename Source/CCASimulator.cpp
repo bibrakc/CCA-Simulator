@@ -308,7 +308,12 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
         exit(0);
     }
 
-    compute_cell->insert_action(action_to_germinate);
+    if (!compute_cell->insert_action(action_to_germinate, false)) {
+        std::cerr << "germinate_action failed to insert in the action_queue. Fatal. Think about "
+                     "what to do in this situation?"
+                  << std::endl;
+        exit(0);
+    }
 
     // Get the host terminator object for signal.
     auto* obj = static_cast<Object*>(this->get_object(action_to_germinate.origin_addr));
@@ -369,13 +374,14 @@ CCASimulator::run_simulation(Address app_terminator)
 
     bool is_system_active = true;
     bool run_next_cycle = true;
-    // while (is_system_active) {
 
-    // while (this->is_diffusion_active(app_terminator)) {
     while (run_next_cycle) {
+
+        // For debugging. Uncomment this and comment out the above line of while loop. This will
+        // then run the simulation for only 3700 cycles.
         /* u_int32_t count_temp = 0;
-        while (count_temp < 4000) {
-            count_temp++; */
+        while (count_temp < 3700) {
+            count_temp++;  */
 
         is_system_active = false;
         run_next_cycle = false;
@@ -424,13 +430,19 @@ CCASimulator::run_simulation(Address app_terminator)
         u_int32_t sum_global_active_cc_local = 0;
         // Also put the active status in the statistics to create the animation using the python
         // script.
-        std::shared_ptr<u_int32_t[]> const active_status_frame_per_cells(
-            new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
+        std::shared_ptr<u_int32_t[]> active_status_frame_per_cells;
+        if constexpr (animation_switch) {
+            active_status_frame_per_cells = std::shared_ptr<u_int32_t[]>(
+                new u_int32_t[this->CCA_chip.size()](), std::default_delete<u_int32_t[]>());
+        }
 
 #pragma omp parallel for reduction(+ : sum_global_active_cc_local)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            active_status_frame_per_cells[i] = this->CCA_chip[i]->is_compute_cell_active();
-            if (active_status_frame_per_cells[i]) {
+            const u_int32_t is_cell_active = this->CCA_chip[i]->is_compute_cell_active();
+            if constexpr (animation_switch) {
+                active_status_frame_per_cells[i] = is_cell_active;
+            }
+            if (is_cell_active) {
                 sum_global_active_cc_local++;
                 // std::cout <<"CC: " << i << " is active\n";
             }
@@ -460,12 +472,12 @@ CCASimulator::run_simulation(Address app_terminator)
             100.0 * static_cast<double>(sum_global_active_htree) /
             static_cast<double>(htree_network.htree_all_nodes.size());
 
-        // Only print on screen every 500th cycle status update.
-        if (this->total_current_run_cycles % 500 == 0) {
+        // Only print on screen every 1000th cycle status update.
+        if (this->total_current_run_cycles % 1000 == 0) {
             std::cout << "End of current run cycle # " << this->total_current_run_cycles
                       << ", Total cycles: " << this->total_cycles
                       << ", CCs Active: " << percent_CCs_active
-                      << "%, htree Active: " << percent_htree_active << "%\n";
+                      << "%, htree Active: " << percent_htree_active << "%" << std::endl;
         }
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         this->total_cycles++;

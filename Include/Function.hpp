@@ -67,4 +67,10 @@ null_func(ComputeCell& /* cc */,
           actionType /* action_type_in */,
           const ActionArgumentType& /*args*/) -> int;
 
+auto
+null_true_func(ComputeCell& /* cc */,
+               const Address& /* addr */,
+               actionType /* action_type_in */,
+               const ActionArgumentType& /*args*/) -> int;
+
 #endif // FUNCTION_HPP

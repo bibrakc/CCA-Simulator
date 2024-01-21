@@ -1,0 +1,9 @@
+network,termination,throttle,recv_buff_size,total_cycles,actions_created,actions_performed,actions_false_pred,avg_cells_active_percent,operons_moved,dim_x,dim_y,max_edges,vicinity,congestion_threshold_value,total_memory,avg_objects_per_cc,total_objects_created,vertices,edges,graph_file,routing_algorithm
+TORUS,OFF,OFF,1,24383,6544284,657165,5887119,87.2097,403520584,128,128,20,3,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,OFF,4,21985,6401295,627759,5773536,89.3678,394749367,128,128,20,3,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,OFF,8,20271,6156119,596326,5559793,85.33,379518913,128,128,20,3,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,ON,1,17794,5970180,577554,5392626,73.6499,368337512,128,128,20,3,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,ON,4,21588,8654043,876461,7777582,82.24,553963905,128,128,20,128,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+MESH,OFF,ON,4,24427,5804710,559986,5244724,69.6988,474812055,128,128,20,3,181,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,ON,4,17097,5923319,577355,5345964,76.7381,365345243,128,128,20,3,90,8231321600,27.1131,444221,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY
+TORUS,OFF,ON,8,13698,5733969,550943,5183026,79.3082,353502809,128,128,20,3,90,8231321600,27.1132,444222,262144,4718592,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Synthetic/RMAT_ef_9_v_18.edgelist,XY

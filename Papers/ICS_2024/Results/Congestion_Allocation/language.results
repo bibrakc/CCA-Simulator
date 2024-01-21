@@ -1,0 +1,9 @@
+network,termination,throttle,recv_buff_size,total_cycles,actions_created,actions_performed,actions_false_pred,avg_cells_active_percent,operons_moved,dim_x,dim_y,max_edges,vicinity,congestion_threshold_value,total_memory,avg_objects_per_cc,total_objects_created,vertices,edges,graph_file,routing_algorithm
+TORUS,OFF,OFF,1,4675,1377639,485896,891743,47.2141,56868805,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,OFF,4,4402,1338576,467279,871297,40.4374,55469846,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,OFF,8,3823,1340918,466178,874740,38.9968,55557170,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,ON,1,3098,1335165,467523,867642,55.6973,55321603,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,ON,4,3555,1725771,616676,1109095,51.2405,72455418,128,128,12,128,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+MESH,OFF,ON,4,3603,1332570,465344,867226,56.9206,71610286,128,128,12,16,181,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,ON,4,2373,1316161,458611,857550,56.4456,54547612,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY
+TORUS,OFF,ON,8,2269,1323953,459052,864901,57.261,54939176,128,128,12,16,90,1677721600,25.9999,425983,399130,1216334,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/language.edgelist,XY

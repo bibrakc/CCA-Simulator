@@ -187,7 +187,10 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                 }
 
                 for (Operon const& operon : left_over_operons) {
-                    this->recv_channel_per_neighbor[recv_channel_index][j].push(operon);
+                    if (!this->recv_channel_per_neighbor[recv_channel_index][j].push(operon)) {
+                        std::cerr << "SinkCell push on recv_channel_per_neighbor failed. Perhaps a "
+                                     "bug.\n";
+                    }
                 }
             }
         }
@@ -251,7 +254,10 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     }
 
     for (Operon const& operon : left_over_operons) {
-        this->recv_channel_to_htree_node.push(operon);
+        if (!this->recv_channel_to_htree_node.push(operon)) {
+            std::cerr << "SinkCell push on recv_channel_to_htree_node failed. Perhaps a "
+                         "bug.\n";
+        }
     }
 }
 
@@ -340,7 +346,9 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CC
     }
 
     for (Operon const& operon : left_over_operons) {
-        this->recv_channel_to_htree_node.push(operon);
+        if (!this->recv_channel_to_htree_node.push(operon)) {
+            std::cerr << "SinkCell: recv_channel_to_htree_node failed on push. Perhaps a bug.";
+        }
     }
 }
 
@@ -416,7 +424,11 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                         }
                     }
                     for (Operon const& operon : left_over_operons) {
-                        this->send_channel_per_neighbor[i][virtual_channel_index].push(operon);
+                        if (!this->send_channel_per_neighbor[i][virtual_channel_index].push(
+                                operon)) {
+                            std::cerr << "SinkCell: send_channel_per_neighbor failed on push. "
+                                         "Perhaps a bug.";
+                        }
                     }
                 }
             }

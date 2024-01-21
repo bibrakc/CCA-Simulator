@@ -103,7 +103,7 @@ htree_draw = False
 # Display the RGB image
 grid = ax.imshow(grid_data[0], alpha=0.80)
 
-colors = ['black', 'cyan', 'green', 'white', 'yellow', 'red']
+colors = ['black', 'cyan', 'green', 'white', 'yellow', '#B00002']
 # Create custom legend with color-value mappings
 legend_labels = {0: 'Inactive', 1: 'Only Communicating', 2: 'Only Computing',
                  3: 'Computing & Communicating', 4: 'Congested Communicating', 5: 'Congested Computing & Communicating'}
@@ -136,10 +136,10 @@ for value, label in legend_labels.items():
     0.5, -0.3), loc='lower center', fontsize=14) """
 
 # Add legends with borders
-legend = ax.legend(handles=legend_patches, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2, fontsize=12)
+# legend = ax.legend(handles=legend_patches, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2, fontsize=12)
 
 # Add the legend to the plot
-ax.add_artist(legend)
+# ax.add_artist(legend)
 
 """ # Add a border around the legend
 legend.get_frame().set_edgecolor('black')

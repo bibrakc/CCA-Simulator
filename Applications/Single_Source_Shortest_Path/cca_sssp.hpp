@@ -71,6 +71,7 @@ struct SSSPVertex : Vertex_T
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent sssp_predicate;
 extern CCAFunctionEvent sssp_work;
+extern CCAFunctionEvent sssp_diffuse_predicate;
 extern CCAFunctionEvent sssp_diffuse;
 
 // This is what the action carries as payload.
@@ -134,6 +135,33 @@ sssp_work_func(ComputeCell& cc,
 }
 
 inline auto
+sssp_diffuse_predicate_func(ComputeCell& cc,
+                            const Address& addr,
+                            actionType /* action_type_in */,
+                            const ActionArgumentType& args) -> int
+{
+
+    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 1;
+    }
+
+    auto* v = static_cast<SSSPVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+    u_int32_t const incoming_distance = sssp_args.distance;
+
+    if (v->sssp_distance == incoming_distance) {
+        return 1;
+    }
+    return 0;
+}
+
+inline auto
 sssp_diffuse_func(ComputeCell& cc,
                   const Address& addr,
                   actionType /* action_type_in */,
@@ -177,6 +205,7 @@ sssp_diffuse_func(ComputeCell& cc,
                               args_for_ghost_vertices,
                               sssp_predicate,
                               sssp_work,
+                              sssp_diffuse_predicate,
                               sssp_diffuse));
         }
     }
@@ -194,6 +223,7 @@ sssp_diffuse_func(ComputeCell& cc,
                           args_x,
                           sssp_predicate,
                           sssp_work,
+                          sssp_diffuse_predicate,
                           sssp_diffuse));
     }
 
@@ -379,7 +409,8 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
         }
 
         u_int32_t node_id;
-        u_int32_t sssp_value;
+        // u_int32_t sssp_value;
+        double sssp_value;
         while (std::getline(file, line)) {
 
             std::istringstream iss(line);
@@ -391,7 +422,7 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
                 while (node_id != control_results.size()) {
                     control_results.emplace_back(undefined_distance);
                 }
-                control_results.emplace_back(sssp_value);
+                control_results.emplace_back(static_cast<u_int32_t>(sssp_value));
             } else {
                 // Parsing failed.
                 std::cerr << "Error parsing line: " << line
@@ -443,6 +474,10 @@ write_results(const SSSPCommandLineArguments& cmd_args,
     if constexpr (termination_switch) {
         termination_text = "ON";
     }
+    std::string network_text = "MESH";
+    if (cmd_args.mesh_type == 1) {
+        network_text = "TORUS";
+    }
 
     std::string const output_file_name =
         "sssp_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
@@ -451,7 +486,7 @@ write_results(const SSSPCommandLineArguments& cmd_args,
         std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
         "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
         std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max) +
-        "_termimation_" + termination_text;
+        "_termimation_" + termination_text + "_network_" + network_text;
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";

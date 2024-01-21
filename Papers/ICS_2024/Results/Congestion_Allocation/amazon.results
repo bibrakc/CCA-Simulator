@@ -1,0 +1,8 @@
+network,termination,throttle,recv_buff_size,total_cycles,actions_created,actions_performed,actions_false_pred,avg_cells_active_percent,operons_moved,dim_x,dim_y,max_edges,vicinity,congestion_threshold_value,total_memory,avg_objects_per_cc,total_objects_created,vertices,edges,graph_file,routing_algorithm
+TORUS,OFF,OFF,1,8909,2250524,524134,1726390,59.9335,144115720,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+TORUS,OFF,OFF,4,6877,2211979,503429,1708550,58.2593,141569597,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+TORUS,OFF,OFF,8,6360,2526216,564478,1961738,58.5191,161692615,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+TORUS,OFF,ON,1,7108,2043434,462711,1580723,53.3413,130838759,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+MESH,OFF,ON,4,10345,2574772,595383,1979389,58.788,219762688,128,128,5,1,181,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+TORUS,OFF,ON,4,5916,2100437,466960,1633477,49.567,134413325,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY
+TORUS,OFF,ON,8,6186,2417519,530757,1886762,48.4461,154749997,128,128,5,1,90,369098752,15.998,262112,262111,1234877,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/muchiSim/amazon0302.edgelist,XY

@@ -58,9 +58,11 @@ class ComputeCell : public Cell
     // Returns the offset in memory for this newly created object
     auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
-    void insert_action(const Action& action);
+    [[nodiscard]] auto insert_action(const Action& action, bool priority) -> bool;
 
     void execute_action(void* function_events);
+    void execute_diffusion_phase(void* function_events);
+    void filter_diffusion(void* function_events);
 
     // Prepare the cycle. This involves moving operon data into either the action queue or send
     // buffers of the network links
@@ -112,14 +114,26 @@ class ComputeCell : public Cell
     u_int32_t host_id;
 
     // Actions queue of the Compute Cell
-    std::queue<Action> action_queue;
+    FixedSizeQueue<Action> action_queue;
+
+    // Diffusion Queue of the Compute Cell that holds the diffusive sections of the action. An
+    // action comes into the `action_queue`, where it gets invoked. When it is invoked the diffusion
+    // part is not immediately executed but rather it is sent to the `diffuse_queue` and is later
+    // scheduled for execution. This separation helps in deadlock avoidance on queues in that if
+    // there were a single queue it may becoem full and new actions couldnt be generated for that CC
+    // by that CC. It may also improve task scheduling, depending on how it is managed. Need to be
+    // clever.
+    FixedSizeQueue<Action> diffuse_queue;
+
+    // bool prefer_diffuse_queue{};
 
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
     // std::shared_ptr<Action> get_an_action();
 
     // Tasks for the Compute Cell. These tasks exist only for the simulator and are not part of the
-    // actual internals of any Compute Cell.
+    // actual internals of any Compute Cell. It functions to simulate tasks cycle by cycle thus
+    // making the simulation more accurate/realistic.
     std::queue<Task> task_queue;
 
     // Constructor
@@ -174,7 +188,7 @@ class ComputeCell : public Cell
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
         // this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
-        this->number_of_virtual_channels = 2;
+        this->number_of_virtual_channels = 4; // To avoid deadlock, espesially in Torus routing.
 
         this->recv_channel_per_neighbor.resize(
             this->number_of_neighbors,
@@ -200,6 +214,15 @@ class ComputeCell : public Cell
         // Experimental. The cells don't have sense of a global cycle. It is here for debuging and
         // making the implementation of the simulator easier such as throttling.
         this->current_cycle = 0;
+
+        // edges_max + 2 + 5 = helps to have enough buffer (and not deadlock) for the CC to push
+        // actions onto itself in case of a diffusion that requires pushing to itself.
+        // 2: ghost edges, 5: just because.
+        this->action_queue = FixedSizeQueue<Action>(4096, edges_max + 2 + 5);
+        this->diffuse_queue = FixedSizeQueue<Action>(4096);
+
+        // Experimental for scheduling.
+        // this->prefer_diffuse_queue = false;
     }
 
     ~ComputeCell() override = default;
@@ -207,7 +230,7 @@ class ComputeCell : public Cell
   private:
     // Each compute cell has a sink cell configured such that when it has to send an operon to far
     // flung compute cell it routes to the Htree network and has to sink the operon into the sink
-    // cell that is nearby
+    // cell that is nearby.
     auto get_cc_htree_sink_cell() -> std::optional<Coordinates>;
 };
 

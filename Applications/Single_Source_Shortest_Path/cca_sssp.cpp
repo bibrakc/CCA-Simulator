@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // In the main register the functions and get their ids
 CCAFunctionEvent sssp_predicate;
 CCAFunctionEvent sssp_work;
+CCAFunctionEvent sssp_diffuse_predicate;
 CCAFunctionEvent sssp_diffuse;
 
 auto
@@ -79,7 +80,8 @@ main(int argc, char** argv) -> int
     // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
     // allocator from the center of the chip and later provide the `root` vertex to the graph
     // initializer in `transfer_graph_host_to_cca`.
-    u_int32_t center_of_the_chip = cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2);
+    u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
+                                   (cca_square_simulator.dim_y / 2);
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
@@ -97,6 +99,8 @@ main(int argc, char** argv) -> int
     // Register the SSSP action functions for predicate, work, and diffuse.
     sssp_predicate = cca_square_simulator.register_function_event(sssp_predicate_func);
     sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
+    sssp_diffuse_predicate =
+        cca_square_simulator.register_function_event(sssp_diffuse_predicate_func);
     sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
 
     SSSPArguments root_distance_to_send;
@@ -120,6 +124,7 @@ main(int argc, char** argv) -> int
                                                  args_x,
                                                  sssp_predicate,
                                                  sssp_work,
+                                                 sssp_diffuse_predicate,
                                                  sssp_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
