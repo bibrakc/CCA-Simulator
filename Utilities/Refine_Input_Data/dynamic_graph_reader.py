@@ -15,13 +15,18 @@ import pandas as pd
 pd.options.display.float_format = '{:.2f}'.format
 
 
+# Check if the correct number of command-line arguments is provided
+if len(sys.argv) != 3:
+    print("Usage: python3 dynamic_graph_reader.py <filename> <number_nodes>")
+    print("Example: python3 ../../../Utilities/Refine_Input_Data/dynamic_graph_reader.py streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes 1000")
+    sys.exit(1)
+
 args = sys.argv
 # Read input data from file
 filename = args[1]
 number_nodes = args[2]
 
 Output_filename = filename+".output"
-
 
 def write_to_file(filename, content):
     with open(filename, 'a') as f:
@@ -271,6 +276,18 @@ for increment in range(1, 11):
     # Write the .bfs of these larger incremented graphs
     src_vertex=0
     bfs(G, src_vertex, output_filename+".bfs")
+
+    """
+    # Call SSSP starting from node 0. Write the levels in a file.
+    sssp(G, max_out_degree_vertex, filename+".sssp")
+
+    # Perform pagerank using nx.pagerank. Write the values in a file.
+    pagerank(G, filename+".pagerank") """
+
+    """ start = time.time()
+    ShortestPaths_Analysis(G.to_undirected())
+    end = time.time()
+    print("Time in SSSP: ", end-start, "\n") """
     
   
 # Get all vertex IDs in the graph
@@ -287,26 +304,6 @@ missing_vertices = [v for v in range(max_vertex_id + 1) if v not in vertex_ids]
 print("max_vertex_id: ", max_vertex_id)
 print("Missing vertices:", missing_vertices)
 """
-
-
-""" start = time.time()
-ShortestPaths_Analysis(G.to_undirected())
-end = time.time()
-print("Time in SSSP: ", end-start, "\n") """
-
-
-
-"""
-# Call BFS starting from node 0. Write the levels in a file.
-bfs(G, max_out_degree_vertex, filename+".bfs")
-
-
-# Call SSSP starting from node 0. Write the levels in a file.
-sssp(G, max_out_degree_vertex, filename+".sssp")
-
-# Perform pagerank using nx.pagerank. Write the values in a file.
-pagerank(G, filename+".pagerank") """
-
 
 # G2 = G.to_undirected()
 # CC_Distribution(G2)

@@ -1,0 +1,270 @@
+Directed : Number of vertices: 803, Number of edges: 825
+In Degree Distribution Statistics
+count   803.00
+mean      1.03
+std       0.92
+min       0.00
+10%       0.00
+25%       0.00
+50%       1.00
+75%       1.00
+95%       3.00
+max       5.00
+dtype: float64
+highest in degree vertex: 157
+Out Degree Distribution Statistics
+count   803.00
+mean      1.03
+std       0.93
+min       0.00
+10%       0.00
+25%       0.00
+50%       1.00
+75%       1.00
+95%       3.00
+max       6.00
+dtype: float64
+highest out degree vertex: 318
+Directed : Number of vertices: 956, Number of edges: 1595
+In Degree Distribution Statistics
+count   956.00
+mean      1.67
+std       1.28
+min       0.00
+10%       0.00
+25%       1.00
+50%       1.00
+75%       2.00
+95%       4.00
+max       8.00
+dtype: float64
+highest in degree vertex: 181
+Out Degree Distribution Statistics
+count   956.00
+mean      1.67
+std       1.26
+min       0.00
+10%       0.00
+25%       1.00
+50%       1.00
+75%       2.00
+95%       4.00
+max       7.00
+dtype: float64
+highest out degree vertex: 38
+Directed : Number of vertices: 991, Number of edges: 2465
+In Degree Distribution Statistics
+count   991.00
+mean      2.49
+std       1.64
+min       0.00
+10%       1.00
+25%       1.00
+50%       2.00
+75%       3.00
+95%       5.00
+max       9.00
+dtype: float64
+highest in degree vertex: 181
+Out Degree Distribution Statistics
+count   991.00
+mean      2.49
+std       1.66
+min       0.00
+10%       1.00
+25%       1.00
+50%       2.00
+75%       3.00
+95%       5.50
+max      10.00
+dtype: float64
+highest out degree vertex: 794
+Directed : Number of vertices: 996, Number of edges: 3260
+In Degree Distribution Statistics
+count   996.00
+mean      3.27
+std       1.95
+min       0.00
+10%       1.00
+25%       2.00
+50%       3.00
+75%       4.00
+95%       7.00
+max      11.00
+dtype: float64
+highest in degree vertex: 288
+Out Degree Distribution Statistics
+count   996.00
+mean      3.27
+std       1.94
+min       0.00
+10%       1.00
+25%       2.00
+50%       3.00
+75%       4.00
+95%       7.00
+max      11.00
+dtype: float64
+highest out degree vertex: 31
+Directed : Number of vertices: 999, Number of edges: 3987
+In Degree Distribution Statistics
+count   999.00
+mean      3.99
+std       2.18
+min       0.00
+10%       1.00
+25%       2.00
+50%       4.00
+75%       5.00
+95%       8.00
+max      12.00
+dtype: float64
+highest in degree vertex: 288
+Out Degree Distribution Statistics
+count   999.00
+mean      3.99
+std       2.23
+min       0.00
+10%       1.00
+25%       2.00
+50%       4.00
+75%       5.00
+95%       8.00
+max      15.00
+dtype: float64
+highest out degree vertex: 794
+Directed : Number of vertices: 1000, Number of edges: 4756
+In Degree Distribution Statistics
+count   1000.00
+mean       4.76
+std        2.39
+min        0.00
+10%        2.00
+25%        3.00
+50%        4.00
+75%        6.00
+95%        9.00
+max       15.00
+dtype: float64
+highest in degree vertex: 288
+Out Degree Distribution Statistics
+count   1000.00
+mean       4.76
+std        2.47
+min        0.00
+10%        2.00
+25%        3.00
+50%        5.00
+75%        6.00
+95%        9.00
+max       16.00
+dtype: float64
+highest out degree vertex: 38
+Directed : Number of vertices: 1000, Number of edges: 5594
+In Degree Distribution Statistics
+count   1000.00
+mean       5.59
+std        2.66
+min        0.00
+10%        2.00
+25%        4.00
+50%        5.00
+75%        7.00
+95%       10.00
+max       15.00
+dtype: float64
+highest in degree vertex: 288
+Out Degree Distribution Statistics
+count   1000.00
+mean       5.59
+std        2.76
+min        0.00
+10%        2.00
+25%        4.00
+50%        5.00
+75%        7.00
+95%       10.00
+max       18.00
+dtype: float64
+highest out degree vertex: 38
+Directed : Number of vertices: 1000, Number of edges: 6447
+In Degree Distribution Statistics
+count   1000.00
+mean       6.45
+std        2.91
+min        0.00
+10%        3.00
+25%        4.00
+50%        6.00
+75%        8.00
+95%       12.00
+max       17.00
+dtype: float64
+highest in degree vertex: 288
+Out Degree Distribution Statistics
+count   1000.00
+mean       6.45
+std        3.02
+min        0.00
+10%        3.00
+25%        4.00
+50%        6.00
+75%        8.00
+95%       12.00
+max       18.00
+dtype: float64
+highest out degree vertex: 38
+Directed : Number of vertices: 1000, Number of edges: 7267
+In Degree Distribution Statistics
+count   1000.00
+mean       7.27
+std        3.15
+min        0.00
+10%        4.00
+25%        5.00
+50%        7.00
+75%        9.00
+95%       13.00
+max       18.00
+dtype: float64
+highest in degree vertex: 287
+Out Degree Distribution Statistics
+count   1000.00
+mean       7.27
+std        3.31
+min        0.00
+10%        3.00
+25%        5.00
+50%        7.00
+75%        9.00
+95%       13.00
+max       20.00
+dtype: float64
+highest out degree vertex: 38
+Directed : Number of vertices: 1000, Number of edges: 8067
+In Degree Distribution Statistics
+count   1000.00
+mean       8.07
+std        3.39
+min        0.00
+10%        4.00
+25%        6.00
+50%        8.00
+75%       10.00
+95%       14.00
+max       21.00
+dtype: float64
+highest in degree vertex: 287
+Out Degree Distribution Statistics
+count   1000.00
+mean       8.07
+std        3.55
+min        0.00
+10%        4.00
+25%        6.00
+50%        8.00
+75%       10.00
+95%       15.00
+max       21.00
+dtype: float64
+highest out degree vertex: 38
