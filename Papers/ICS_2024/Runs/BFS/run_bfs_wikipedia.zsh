@@ -9,7 +9,7 @@ EXECUTABLE="./build/BFS_CCASimulator"
 GRAPH_TYPE="Wikipedia"
 OUTPUT_DIR="."
 SHAPE="square"
-ROOT_NODE="3895627"
+ROOT_NODE="0" # "3895627"
 MEMORY_CC="825280"
 HX="128"
 HY="128"
@@ -17,7 +17,7 @@ HDEPTH="0"
 HB="0"
 ROUTE="0"
 NETWORK="1" # 0: Mesh, 1: Torus
-VERIFY="" # "-verify"
+VERIFY="-verify"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do

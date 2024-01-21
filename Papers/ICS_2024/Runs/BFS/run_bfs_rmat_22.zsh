@@ -9,7 +9,7 @@ EXECUTABLE="./build/BFS_CCASimulator"
 GRAPH_TYPE="RMAT"
 OUTPUT_DIR="."
 SHAPE="square"
-ROOT_NODE="1345716"
+ROOT_NODE="0" # "1345716"
 MEMORY_CC="825280"
 HX="128"
 HY="128"
@@ -17,7 +17,7 @@ HDEPTH="0"
 HB="0"
 ROUTE="0"
 NETWORK="1" # 0: Mesh, 1: Torus
-VERIFY="" # "-verify"
+VERIFY="-verify"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -49,6 +49,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INPUT_FILE="$DATASET_PATH/muchiSim/liveJournal.edgelist"
+INPUT_FILE="$DATASET_PATH/muchiSim/kron22.edgelist"
 # Run the command
 $EXECUTABLE -f $INPUT_FILE -g $GRAPH_TYPE -od $OUTPUT_DIR -s $SHAPE -root $ROOT_NODE -m $MEMORY_CC -hx $HX -hy $HY -hdepth $HDEPTH -hb $HB -route $ROUTE -mesh $NETWORK -shuffle $VERIFY

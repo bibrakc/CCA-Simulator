@@ -1,19 +1,20 @@
 #!/bin/zsh
 
 # Define the path to the executable
-EXECUTABLE="./build/BFS_CCASimulator"
+EXECUTABLE="./build/PageRank_Nested_Fixed_Iterations_CCASimulator"
 
 # Define other command-line arguments
-GRAPH_TYPE="Erdos"
+GRAPH_TYPE="Amazon"
 OUTPUT_DIR="."
 SHAPE="square"
-ROOT_NODE="0" #"65821"
+ROOT_NODE="0"
 MEMORY_CC="22528"
 HX="128"
 HY="128"
 HDEPTH="0"
 HB="0"
 ROUTE="0"
+ITER="1"
 NETWORK="1" # 0: Mesh, 1: Torus
 VERIFY="" # "-verify"
 
@@ -36,6 +37,10 @@ while [[ $# -gt 0 ]]; do
         DATASET_PATH="$2"
         shift 2
         ;;
+    -iter) 
+        ITER="$2"
+        shift 2
+        ;; 
     -network)
         NETWORK="$2"
         shift 2
@@ -47,6 +52,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INPUT_FILE="$DATASET_PATH/Synthetic/Erdos-Renyi_directed_ef_9_v_18.edgelist"
+INPUT_FILE="$DATASET_PATH/muchiSim/amazon0302.edgelist"
 # Run the command
-$EXECUTABLE -f $INPUT_FILE -g $GRAPH_TYPE -od $OUTPUT_DIR -s $SHAPE -root $ROOT_NODE -m $MEMORY_CC -hx $HX -hy $HY -hdepth $HDEPTH -hb $HB -route $ROUTE -mesh $NETWORK $VERIFY -shuffle
+$EXECUTABLE -f $INPUT_FILE -g $GRAPH_TYPE -od $OUTPUT_DIR -s $SHAPE -root $ROOT_NODE -m $MEMORY_CC -hx $HX -hy $HY -hdepth $HDEPTH -hb $HB -route $ROUTE -mesh $NETWORK $VERIFY -iter $ITER
+

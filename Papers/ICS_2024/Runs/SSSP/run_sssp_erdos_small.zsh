@@ -7,10 +7,10 @@ EXECUTABLE="./build/BFS_CCASimulator"
 GRAPH_TYPE="Erdos"
 OUTPUT_DIR="."
 SHAPE="square"
-ROOT_NODE="0" #"65821"
-MEMORY_CC="22528"
-HX="128"
-HY="128"
+ROOT_NODE="193"
+MEMORY_CC="10240"
+HX="20"
+HY="20"
 HDEPTH="0"
 HB="0"
 ROUTE="0"
@@ -47,6 +47,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INPUT_FILE="$DATASET_PATH/Synthetic/Erdos-Renyi_directed_ef_9_v_18.edgelist"
+INPUT_FILE="$DATASET_PATH/Synthetic/tmp/Erdos-Renyi_directed_ef_8_v_9.edgelist"
 # Run the command
-$EXECUTABLE -f $INPUT_FILE -g $GRAPH_TYPE -od $OUTPUT_DIR -s $SHAPE -root $ROOT_NODE -m $MEMORY_CC -hx $HX -hy $HY -hdepth $HDEPTH -hb $HB -route $ROUTE -mesh $NETWORK $VERIFY -shuffle
+$EXECUTABLE -f $INPUT_FILE -g $GRAPH_TYPE -od $OUTPUT_DIR -s $SHAPE -root $ROOT_NODE -m $MEMORY_CC -hx $HX -hy $HY -hdepth $HDEPTH -hb $HB -route $ROUTE -mesh $NETWORK $VERIFY

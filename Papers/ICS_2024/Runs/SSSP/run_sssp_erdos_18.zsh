@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 # Define the path to the executable
-EXECUTABLE="./build/BFS_CCASimulator"
+EXECUTABLE="./build/SSSP_CCASimulator"
 
 # Define other command-line arguments
 GRAPH_TYPE="Erdos"

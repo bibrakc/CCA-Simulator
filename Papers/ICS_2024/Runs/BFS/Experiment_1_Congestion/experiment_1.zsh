@@ -3,11 +3,11 @@
 # export OMP_NUM_THREADS=32
 
 # Define possible values for each variable
-THROTTLE_VALUES=("true" "false")
-RECVBUFFSIZE_VALUES=("1" "2" "4" "8" "16")
+THROTTLE_VALUES=("true")
+RECVBUFFSIZE_VALUES=("4")
 # TERMINATION_VALUES=("true" "false")
-TERMINATION_VALUES=("true")
-NETWORK_VALUES=("0" "1") # 0: Mesh, 1: Torus
+TERMINATION_VALUES=("false")
+NETWORK_VALUES=("1") # 0: Mesh, 1: Torus
 
 CHIP_SIZE_X="128"
 CHIP_SIZE_Y="128"
@@ -97,7 +97,7 @@ done
 AAP_PATH="$REPO_PATH/Applications/Breadth_First_Search"
 # Create a function to run cmake with the given parameters
 run_cmake() {
-    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3" -D THROTTLE_CONGESTION_THRESHOLD="$4"
+    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build -D ACTIVE_PERCENT=false -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3" -D THROTTLE_CONGESTION_THRESHOLD="$4"
     cmake --build build -j 6
 }
 

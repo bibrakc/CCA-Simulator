@@ -9,7 +9,6 @@ TERMINATION_VALUES=("false")
 
 NETWORK="1" # TORUS
 
-
 # Function to calculate Pythagorean theorem
 pythagorean() {
     if [[ $# -ne 3 ]]; then
@@ -86,10 +85,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-AAP_PATH="$REPO_PATH/Applications/Breadth_First_Search"
+AAP_PATH="$REPO_PATH/Applications/Single_Source_Shortest_Path"
 # Create a function to run cmake with the given parameters
 run_cmake() {
-    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build -D ACTIVE_PERCENT=false -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3" -D THROTTLE_CONGESTION_THRESHOLD="$4"
+    CC="$CC_EXE" CXX="$CXX_EXE" cmake -S "$AAP_PATH" -B build -D ANIMATION=false -D VICINITY="$VICINITY_VAL" -D MAXEDGESPERVERTEX="$MAX_EDGE" -D THROTTLE="$1" -D RECVBUFFSIZE="$2" -D TERMINATION="$3" -D THROTTLE_CONGESTION_THRESHOLD="$4"
     cmake --build build -j 6
 }
 
@@ -101,7 +100,7 @@ for THROTTLE in "${THROTTLE_VALUES[@]}"; do
             # Run cmake with the current combination of values
             run_cmake "$THROTTLE" "$RECVBUFFSIZE" "$TERMINATION" "$ThrottleTime"
             # Run the experiment
-            "$REPO_PATH/Papers/ICS_2024/Runs/BFS/$SCRIPT_TO_RUN" -hx "$CHIP_SIZE_X" -hy "$CHIP_SIZE_Y" -dataset "$DATASET_PATH" -network "$NETWORK" -m "$MEMORY_CC"
+            "$REPO_PATH/Papers/ICS_2024/Runs/SSSP/$SCRIPT_TO_RUN" -hx "$CHIP_SIZE_X" -hy "$CHIP_SIZE_Y" -dataset "$DATASET_PATH" -network "$NETWORK" -m "$MEMORY_CC"
         done
     done
 done
