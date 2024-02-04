@@ -177,6 +177,7 @@ class Graph
 
     // Initialize a newly created vertex in the CCA memory.
     // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // NOTE: Only to be used for RecurssiveParallelVertex
     template<class VertexTypeOfAddress>
     inline auto init_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
     {
@@ -184,17 +185,21 @@ class Graph
         return vertex->init(cca_simulator, src_vertex_addr.cc_id);
     }
 
+    // Initialize a newly created vertex in the CCA memory.
+    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // NOTE: Only to be used for RhizomeRecurssiveParallelVertex
     template<class VertexTypeOfAddress>
-    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
-                                    MemoryAllocator& allocator,
-                                    std::optional<u_int32_t> start_vertex_id,
-                                    bool shuffle_enabled)
+    inline auto init_rhizome_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
     {
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        return vertex->init(
+            cca_simulator, src_vertex_addr.cc_id, true); // true: meaning it is rhizome
+    }
 
-        // The vertex object that exists on the CCA needs to have edges of type `Address`.
-        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
-                      "edge type must be of type Address");
-
+    std::vector<int> make_vertices_list(std::optional<u_int32_t> start_vertex_id,
+                                        bool shuffle_enabled,
+                                        int total_vertices)
+    {
         u_int32_t starting_vertex_id = 0;
         if (start_vertex_id.has_value()) {
             starting_vertex_id = start_vertex_id.value();
@@ -234,10 +239,27 @@ class Graph
                       << std::endl;
         }
 
+        return vertex_ids;
+    }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
+                                    MemoryAllocator& allocator,
+                                    std::optional<u_int32_t> start_vertex_id,
+                                    bool shuffle_enabled)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        // TODO: Perhaps this `int` must become `u_int32_t`
+        std::vector<int> vertex_ids =
+            make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
+
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
-        //  for (int i = 0; i < this->total_vertices; i++) {
         for (int i = 0; i < vertex_ids.size(); i++) {
             int current_vertex_id = vertex_ids[i];
 
@@ -263,7 +285,7 @@ class Graph
             }
 
             // Insert into the vertex_addresses map
-            vertex_addresses[current_vertex_id] = vertex_addr.value();
+            this->vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
         std::cout << "Populating vertices by inserting edges: " << std::endl;
@@ -290,6 +312,79 @@ class Graph
             }
         }
     }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca_rhizome(CCASimulator& cca_simulator,
+                                            MemoryAllocator& allocator,
+                                            std::optional<u_int32_t> start_vertex_id,
+                                            bool shuffle_enabled)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        // TODO: Perhaps this `int` must become `u_int32_t`
+        std::vector<int> vertex_ids =
+            make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
+
+        // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
+        // constructor everytime.
+        VertexTypeOfAddress vertex_(0, this->total_vertices);
+        for (int i = 0; i < vertex_ids.size(); i++) {
+            int current_vertex_id = vertex_ids[i];
+
+            // Put a vertex in memory with id = current_vertex_id
+            vertex_.id = current_vertex_id;
+
+            // Get the Address of this vertex allocated on the CCA chip. Note here we use
+            // VertexType<Address> since the object is now going to be sent to the CCA chip and
+            // there the address type is Address (not u_int32_t ID)
+            std::optional<Address> vertex_addr = cca_simulator.allocate_and_insert_object_on_cc(
+                allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+            if (!vertex_addr) {
+                std::cerr << "Error! Memory not allocated for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
+                                                                vertex_addr.value())) {
+                std::cerr << "Error! Vertex initialization failed for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            // Insert into the vertex_addresses map
+            this->vertex_addresses[current_vertex_id] = vertex_addr.value();
+        }
+
+        std::cout << "Populating vertices by inserting edges: " << std::endl;
+
+#pragma omp parallel for
+        for (int i = 0; i < this->total_vertices; i++) {
+            u_int32_t const src_vertex_id = this->vertices[i].id;
+
+            for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
+
+                u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
+                u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
+
+                if (!this->insert_edge_by_address<VertexTypeOfAddress>(
+                        cca_simulator,
+                        /*  allocator, */
+                        this->vertex_addresses[src_vertex_id],
+                        this->vertex_addresses[dst_vertex_id],
+                        edge_weight)) {
+                    std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                              << edge_weight << ") not inserted successfully.\n";
+                    exit(0);
+                }
+            }
+        }
+    }
+
     template<bool ZERO_INDEX>
     auto read_dnyamic_graph_increment(const std::string& input_graph_path) -> std::vector<EdgeTuple>
     {
