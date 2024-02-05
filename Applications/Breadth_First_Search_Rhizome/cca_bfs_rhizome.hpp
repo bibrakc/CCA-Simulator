@@ -432,7 +432,7 @@ verify_results(const BFSCommandLineArguments& cmd_args,
 
             // Check for correctness. Print the level to a target test vertex. test_vertex
 
-            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(i);
 
             auto* v_test = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(
                 cca_simulator.get_object(test_vertex_addr));

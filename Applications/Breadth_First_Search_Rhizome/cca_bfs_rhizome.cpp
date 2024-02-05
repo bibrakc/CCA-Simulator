@@ -121,7 +121,7 @@ main(int argc, char** argv) -> int
 
     // Only put the BFS seed action on a single vertex.
     // In this case BFS root = root_vertex
-    auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
+    auto vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(cmd_args.root_vertex);
 
     // Register the BFS action functions for predicate, work, and diffuse.
     bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);
