@@ -63,7 +63,8 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     u_int32_t next_insertion_in_rhizome_iterator{};
 
     // If this vertex is rhizome vertex? Default is `false` meaning that it is only the ghost
-    // vertex.
+    // vertex. TODO: This seems redundant. If it is not ghost then obviously it is a named root
+    // (rhizome root).
     bool is_rhizome_vertex{};
 
     // RPVO below
@@ -82,7 +83,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     // Used to allocate the ghost vertices.
     Allocator_T ghost_vertex_allocator;
 
-    auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
+    [[nodiscard]] auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
     {
 
         if (this->next_insertion_in_rhizome_iterator ==

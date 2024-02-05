@@ -34,6 +34,13 @@ def write_to_file(filename, content):
 # Output: find degrees and plot their distribution
 
 
+percentiles=[0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.95, 0.96, 0.98, 0.99]
+SSSP = False
+
+# When Flase use 0
+ROOT_VERTEX_ZERO = True
+
+
 def In_Degree_Distribution(G):
 
     degree = G.in_degree()
@@ -42,11 +49,10 @@ def In_Degree_Distribution(G):
 
     print("In Degree Distribution Statistics")
     s = pd.Series(degree)
-    print(s.describe(percentiles=[0.10, 0.20, 0.30,
-                                  0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
+
+    print(s.describe(percentiles=percentiles))
     write_to_file(Output_filename, "In Degree Distribution Statistics")
-    write_to_file(Output_filename, str(s.describe(percentiles=[0.10, 0.20, 0.30,
-                                                               0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99])))
+    write_to_file(Output_filename, str(s.describe(percentiles)))
 
     sorted_degrees = sorted(G.in_degree, key=lambda x: x[1], reverse=True)
     print('highest in degree vertex: ', sorted_degrees[0][0])
@@ -62,11 +68,9 @@ def Out_Degree_Distribution(G):
 
     print("Out Degree Distribution Statistics")
     s = pd.Series(degree)
-    print(s.describe(percentiles=[0.10, 0.20, 0.30,
-                                  0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99]))
+    print(s.describe(percentiles=percentiles))
     write_to_file(Output_filename, "Out Degree Distribution Statistics")
-    write_to_file(Output_filename, str(s.describe(percentiles=[0.10, 0.20, 0.30,
-                                                               0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.94, 0.96, 0.98, 0.99])))
+    write_to_file(Output_filename, str(s.describe(percentiles=percentiles)))
 
     sorted_degrees = sorted(G.out_degree, key=lambda x: x[1], reverse=True)
     print('highest out degree vertex: ', sorted_degrees[0][0])
@@ -423,13 +427,14 @@ Avg_ShortestPaths_Analysis(G_gen)
 end = time.time()
 print("Time in SSSP: ", end-start, "\n") """
 
-start = time.time()
-if directed == "directed":
-    ShortestPaths_Analysis(G_gen.to_undirected())
-else:
-    ShortestPaths_Analysis(G_gen)
-end = time.time()
-print("Time in SSSP: ", end-start, "\n") 
+if SSSP:
+    start = time.time()
+    if directed == "directed":
+        ShortestPaths_Analysis(G_gen.to_undirected())
+    else:
+        ShortestPaths_Analysis(G_gen)
+    end = time.time()
+    print("Time in SSSP: ", end-start, "\n") 
 
 for (u, v) in G_gen.edges():
     G_gen.edges[u, v]['weight'] = random.randint(1, 5)
@@ -503,6 +508,8 @@ print("Time in In_Degree_Distribution: ", end-start, "\n")
 
 start = time.time()
 max_out_degree_vertex = Out_Degree_Distribution(G)
+if ROOT_VERTEX_ZERO:
+    max_out_degree_vertex = 0
 end = time.time()
 print("Time in Out_Degree_Distribution: ", end-start, "\n")
 
@@ -521,7 +528,7 @@ bfs(G_gen, max_out_degree_vertex, filename_to_write+".bfs")
 sssp(G_gen, max_out_degree_vertex, filename_to_write+".sssp")
 
 # Perform pagerank using nx.pagerank. Write the values in a file.
-pagerank(G_gen, filename_to_write+".pagerank")
+# pagerank(G_gen, filename_to_write+".pagerank")
 
 # sssp = nx.shortest_path(G_gen,source=4, target=47, weight=None)#, weight='weight')
 # sssp = nx.shortest_path(G_gen,source=0, target=35,  weight='weight')

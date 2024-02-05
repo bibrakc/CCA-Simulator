@@ -167,9 +167,11 @@ bfs_diffuse_func(ComputeCell& cc,
 {
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
-    auto* parent_recursive_parralel_vertex =
+    auto* parent_recursive_parallel_vertex =
         static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
-    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+
+    bool const this_is_ghost_vertex = parent_recursive_parallel_vertex->is_ghost_vertex;
+    bool const this_is_rhizome_vertex = parent_recursive_parallel_vertex->is_rhizome_vertex;
 
     auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
@@ -187,6 +189,19 @@ bfs_diffuse_func(ComputeCell& cc,
 
     ActionArgumentType const args_for_ghost_vertices =
         cca_create_action_argument<BFSArguments>(level_to_send);
+
+    // Rely to the Rhizome link
+    if (v->rhizome_vertices[0].has_value()) {
+        cc.diffuse(Action(v->rhizome_vertices[0].value(),
+                          addr,
+                          actionType::application_action,
+                          true,
+                          args_for_ghost_vertices, // same as if relying to ghosts
+                          bfs_predicate,
+                          bfs_work,
+                          bfs_diffuse_predicate,
+                          bfs_diffuse));
+    }
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.

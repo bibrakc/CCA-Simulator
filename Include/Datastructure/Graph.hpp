@@ -44,8 +44,12 @@ struct EdgeTuple
     u_int32_t weight;
 };
 
+// Number of total rhizomes per vertex.
 u_int32_t constexpr rhizome_size = 2;
-u_int32_t constexpr rhizome_inbound_degree_cutoff = 200;
+
+// How many inbound edges before it switches to a new rhizome?
+u_int32_t constexpr rhizome_inbound_degree_cutoff = 1750;
+
 struct VertexInfo
 {
     std::optional<Address> addresses[rhizome_size];
@@ -70,7 +74,8 @@ struct VertexInfo
         this->inbound_degree[this->current_rhizome]++;
 
         // When the cutoff is reached then switch to the other rhizome.
-        if (this->inbound_degree[this->current_rhizome] == rhizome_inbound_degree_cutoff) {
+        if (this->inbound_degree[this->current_rhizome] == rhizome_inbound_degree_cutoff &&
+            this->current_rhizome == 0) {
             this->current_rhizome++;
         }
     }
@@ -441,9 +446,33 @@ class Graph
                             << this->vertices[dst_vertex_id].id << "\n";
                         exit(0);
                     }
-                    Exchange the rhizome addresses between the rhizomes i.e. link them ...
+
                     // Insert the address into the vertices_info vector.
                     this->vertices_info[dst_vertex_id].set_current_rhizome_address(vertex_addr);
+
+                    // Exchange the rhizome addresses between the rhizomes i.e. link them ...
+                    auto* new_rhizome_vertex = static_cast<VertexTypeOfAddress*>(
+                        cca_simulator.get_object(vertex_addr.value()));
+
+                    if (!new_rhizome_vertex->set_rhizome(
+                            this->vertices_info[dst_vertex_id].addresses[0])) {
+                        std::cerr << "Error! new set_rhizome failed for the Rhizome of Vertex ID: "
+                                  << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+
+                    // Exchange the rhizome addresses between the rhizomes i.e. link them ...
+                    auto* first_rhizome_vertex =
+                        static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(
+                            this->vertices_info[dst_vertex_id].addresses[0].value()));
+
+                    if (!first_rhizome_vertex->set_rhizome(
+                            this->vertices_info[dst_vertex_id].addresses[1])) {
+                        std::cerr << "Error! 1st set_rhizome failed for the Rhizome of Vertex ID: "
+                                  << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+
                     // this->vertices_info[dst_vertex_id].addresses[1] = vertex_addr.value();
                 }
 
