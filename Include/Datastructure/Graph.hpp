@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -58,6 +58,11 @@ struct VertexInfo
     auto get_current_rhizome_address() -> std::optional<Address>
     {
         return this->addresses[this->current_rhizome];
+    }
+
+    void set_current_rhizome_address(std::optional<Address> addr)
+    {
+        this->addresses[this->current_rhizome] = addr;
     }
 
     void increment_inbound_degree()
@@ -416,17 +421,43 @@ class Graph
                 u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
                 u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
 
+                // Create the Rhizome if needed. 
+                if (!this->vertices_info[dst_vertex_id].get_current_rhizome_address()) {
+
+                    std::optional<Address> vertex_addr =
+                        cca_simulator.allocate_and_insert_object_on_cc(
+                            allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+                    if (!vertex_addr) {
+                        std::cerr << "Error! Memory not allocated for the Rhizome of Vertex ID: "
+                                  << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+
+                    if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
+                                                                        vertex_addr.value())) {
+                        std::cerr
+                            << "Error! Vertex initialization failed for the Rhizome of Vertex ID: "
+                            << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+                    Exchange the rhizome addresses between the rhizomes i.e. link them ...
+                    // Insert the address into the vertices_info vector.
+                    this->vertices_info[dst_vertex_id].set_current_rhizome_address(vertex_addr);
+                    // this->vertices_info[dst_vertex_id].addresses[1] = vertex_addr.value();
+                }
+
                 if (!this->insert_edge_by_address<VertexTypeOfAddress>(
                         cca_simulator,
                         /*  allocator, */
                         this->vertices_info[src_vertex_id].addresses[0].value(),
-                        this->vertices_info[dst_vertex_id].addresses[0].value(),
+                        this->vertices_info[dst_vertex_id].get_current_rhizome_address().value(),
                         edge_weight)) {
                     std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                               << edge_weight << ") not inserted successfully.\n";
                     exit(0);
                 } else {
-                    // Insertion was successful. Now increament the local count for inbound edges
+                    // Insertion was successful. Now increment the local count for inbound edges
                     // for dst vertex to be used to form Rhizomes.
                     this->vertices_info[dst_vertex_id].increment_inbound_degree();
                 }
