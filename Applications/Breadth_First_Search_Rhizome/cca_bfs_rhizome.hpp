@@ -497,8 +497,9 @@ write_results(const BFSCommandLineArguments& cmd_args,
         "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
         std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max) +
         "_termimation_" + termination_text + "_network_" + network_text + "_rhizomes_" +
-        std::to_string(rhizome_size) + "_rhizome_cutoff_" +
-        std::to_string(rhizome_inbound_degree_cutoff);
+        std::to_string(rhizome_size) + "_rhizomecutoff_" +
+        std::to_string(rhizome_inbound_degree_cutoff) + "_actionqueue_" +
+        std::to_string(action_queue_size);
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
