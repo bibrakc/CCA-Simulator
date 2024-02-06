@@ -35,6 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdint.h>
 
+// For older gcc compiler or something.
+#ifndef u_int32_t
+#define u_int32_t uint32_t
+#endif
+
+
 // Set it to true/false
 inline constexpr bool debug_code = false;
 
@@ -52,11 +58,6 @@ inline constexpr bool active_percent_switch = ACTIVE_PERCENT;
 
 // Compile with: -DACTIONQUEUESIZE=<int value> (use 64 or more/less or whatever).
 inline constexpr u_int32_t action_queue_size = ACTIONQUEUESIZE;
-
-// For older gcc compiler or something.
-#ifndef u_int32_t
-#define u_int32_t uint32_t
-#endif
 
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
@@ -77,7 +78,5 @@ inline u_int32_t constexpr rhizome_size = RHIZOME_SIZE;
 
 // How many inbound edges before it switches to a new rhizome?
 inline u_int32_t constexpr rhizome_inbound_degree_cutoff = RHIZOME_INDEGREE_CUTOFF;
-
-
 
 #endif // CONSTANTS_HPP
