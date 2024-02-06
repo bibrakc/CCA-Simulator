@@ -72,4 +72,12 @@ inline constexpr bool termination_switch = TERMINATION;
 // Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
 constexpr u_int32_t curently_congested_threshold = THROTTLE_CONGESTION_THRESHOLD; // cycles
 
+// Number of total rhizomes per vertex.
+inline u_int32_t constexpr rhizome_size = RHIZOME_SIZE;
+
+// How many inbound edges before it switches to a new rhizome?
+inline u_int32_t constexpr rhizome_inbound_degree_cutoff = RHIZOME_INDEGREE_CUTOFF;
+
+
+
 #endif // CONSTANTS_HPP

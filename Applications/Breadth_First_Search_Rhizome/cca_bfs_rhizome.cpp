@@ -88,12 +88,23 @@ main(int argc, char** argv) -> int
     // center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
+    // random allocator for creating rhizomes. There will be placed anywhere on the chip randomly.
+    // The hope is to have them be somewhat apart.
+    VicinityMemoryAllocator random_allocator(
+        Coordinates(cca_square_simulator.dim_x / 2, cca_square_simulator.dim_y / 2),
+        cca_square_simulator.dim_x, // vicinity_rows
+        cca_square_simulator.dim_y, // vicinity_cols
+        cca_square_simulator.dim_x,
+        cca_square_simulator.dim_y,
+        cca_square_simulator.shape_of_compute_cells);
+
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph
         .transfer_graph_host_to_cca_rhizome<BFSVertex<RhizomeRecursiveParallelVertex<Address>>>(
             cca_square_simulator,
             allocator,
+            random_allocator,
             std::optional<u_int32_t>(cmd_args.root_vertex),
             cmd_args.shuffle_switch);
 

@@ -53,7 +53,10 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     static_assert(std::is_same_v<Address_T, Address>);
 
     // How many Rhizome vertices/links can there be? 1 means there are total of two Rhizome roots.
-    inline static constexpr u_int32_t rhizome_vertices_max_degree = 1;
+    // Therefore, if globally there are a max of N rhizomes for each vertex then put N-1 here.
+    // Because this vertex itself can also be one of the Rhizomes and must not be counted twice.
+    inline static constexpr u_int32_t rhizome_vertices_max_degree = rhizome_size - 1;
+
     // Addresses of any Rhizome vertices/links that this vertex might have.
     std::optional<Address_T>
         rhizome_vertices[RhizomeRecursiveParallelVertex::rhizome_vertices_max_degree]{};
@@ -352,8 +355,8 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
             // sophisticated by using some measure like the outbound edges and then for each
             // vertex spread its vicinity of allocation such that large vertices have a larger
             // vicinity. 2 and 2 = 5x5 actually.
-            constexpr u_int32_t vicinity_rows = vicinity_radius; // 2;
-            constexpr u_int32_t vicinity_cols = vicinity_radius; // 2;
+            constexpr u_int32_t vicinity_rows = vicinity_radius;
+            constexpr u_int32_t vicinity_cols = vicinity_radius;
 
             this->ghost_vertex_allocator = VicinityMemoryAllocator(
                 Cell::cc_id_to_cooridinate(

@@ -16,6 +16,9 @@ To compile the application, execute the following `cmake` commands to generate t
 - `-D TERMINATION=true/false`: for running the termination detection algorithm or not. When it is false there won't be any ack messages for each action recieved and that way the overheads of termination can be calculated. This is for benchmarking purposes normally the termination detection will be on.
 - `-D THROTTLE_CONGESTION_THRESHOLD=<int value>`: When there is congestion at a compute cell then that compute cell cools down for a period of cycles before generating new operons. This period is provided in `THROTTLE_CONGESTION_THRESHOLD`.
 - `-D RECVBUFFSIZE=<int value>`: sets the size of the buffers at each channel of the compute cell.
+- `-D RHIZOME_SIZE=<int value>`: sets the maximum number of rhizomes for a single vertex.
+- `-D RHIZOME_INDEGREE_CUTOFF=<int value>`: sets the criterion of rhizome creation. When edges are added they are counted and if the count exceeds the cutoff then point the next edges to the 2nd rhizome, so on and so forth.
+
 
 ## Executing
 Assuming the current directory is `/Applications/Breadth_First_Search`
