@@ -339,7 +339,7 @@ class Graph
 
         std::cout << "Populating vertices by inserting edges: " << std::endl;
 
-#pragma omp parallel for
+        // #pragma omp parallel for
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 
@@ -504,7 +504,6 @@ class Graph
                     // Insertion was successful. Now increment the local count for inbound edges
                     // for dst vertex to be used to form Rhizomes.
                     this->vertices_info[dst_vertex_id].increment_inbound_degree();
-                
                 }
             }
         }

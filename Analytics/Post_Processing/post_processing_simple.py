@@ -98,7 +98,7 @@ with open(output_file, 'r') as file:
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
-    for i in range(0, cycles):  # all cycles
+    for i in range(0, 3):  # cycles all cycles
         line = file.readline()
         line = line.strip().split('\t')
         cycle = int(line[0])
@@ -186,14 +186,15 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        #ax.set_xlim(0, 200)  # Set the x-axis limit 
-        ax.set_ylim(0, 3500)  # Set the y-axis limit 
+        ax.set_xlim(0, 400000)  # Set the x-axis limit 
+        ax.set_ylim(0, 5900)  # Set the y-axis limit 
 
 
     # Adjust spacing between subplots
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.1)
     plt.subplots_adjust(top=0.9)
+    # plt.ylim(0.5, 9) #max(speedup) + 0.1)
 
 def active_status_chart():
 

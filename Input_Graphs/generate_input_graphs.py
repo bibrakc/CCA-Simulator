@@ -35,9 +35,9 @@ def write_to_file(filename, content):
 
 
 percentiles=[0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.92, 0.95, 0.96, 0.98, 0.99]
-SSSP = False
+SSSP_length = False
 
-# When Flase use 0
+# When False use 0
 ROOT_VERTEX_ZERO = True
 
 
@@ -427,7 +427,7 @@ Avg_ShortestPaths_Analysis(G_gen)
 end = time.time()
 print("Time in SSSP: ", end-start, "\n") """
 
-if SSSP:
+if SSSP_length:
     start = time.time()
     if directed == "directed":
         ShortestPaths_Analysis(G_gen.to_undirected())
@@ -528,7 +528,7 @@ bfs(G_gen, max_out_degree_vertex, filename_to_write+".bfs")
 sssp(G_gen, max_out_degree_vertex, filename_to_write+".sssp")
 
 # Perform pagerank using nx.pagerank. Write the values in a file.
-# pagerank(G_gen, filename_to_write+".pagerank")
+pagerank(G_gen, filename_to_write+".pagerank")
 
 # sssp = nx.shortest_path(G_gen,source=4, target=47, weight=None)#, weight='weight')
 # sssp = nx.shortest_path(G_gen,source=0, target=35,  weight='weight')
