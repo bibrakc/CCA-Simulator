@@ -1,6 +1,6 @@
 # BSD 3-Clause License
 # 
-# Copyright (c) 2023, Bibrak Qamar
+# Copyright (c) 2023-2024, Bibrak Qamar
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -35,50 +35,73 @@ project(${executable_name} LANGUAGES CXX)
 # Set C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
 
+message(STATUS "Configuring constants as:")
 if(NOT DEFINED THROTTLE)
     set(THROTTLE "true")
 endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
+message(STATUS "\tTHROTTLE: ${THROTTLE}")
 
 if(NOT DEFINED RECVBUFFSIZE)
     set(RECVBUFFSIZE 4)
 endif()
 add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
+message(STATUS "\tRECVBUFFSIZE: ${RECVBUFFSIZE}")
 
 if(NOT DEFINED ANIMATION)
     set(ANIMATION "false")
 endif()
 add_definitions(-DANIMATION=${ANIMATION})
+message(STATUS "\tANIMATION: ${ANIMATION}")
 
 if(NOT DEFINED ACTIVE_PERCENT)
     set(ACTIVE_PERCENT "true")
 endif()
 add_definitions(-DACTIVE_PERCENT=${ACTIVE_PERCENT})
+message(STATUS "\tACTIVE_PERCENT: ${ACTIVE_PERCENT}")
 
 if(NOT DEFINED ACTIONQUEUESIZE)
-    set(ACTIONQUEUESIZE 1024)
+    set(ACTIONQUEUESIZE 64)
 endif()
 add_definitions(-DACTIONQUEUESIZE=${ACTIONQUEUESIZE})
+message(STATUS "\tACTIONQUEUESIZE: ${ACTIONQUEUESIZE}")
 
 if(NOT DEFINED VICINITY)
     set(VICINITY 3)
 endif()
 add_definitions(-DVICINITY=${VICINITY})
+message(STATUS "\tVICINITY: ${VICINITY}")
 
 if(NOT DEFINED MAXEDGESPERVERTEX)
     set(MAXEDGESPERVERTEX 30)
 endif()
 add_definitions(-DMAXEDGESPERVERTEX=${MAXEDGESPERVERTEX})
+message(STATUS "\tMAXEDGESPERVERTEX: ${MAXEDGESPERVERTEX}")
 
 if(NOT DEFINED TERMINATION)
     set(TERMINATION "false")
 endif()
 add_definitions(-DTERMINATION=${TERMINATION})
+message(STATUS "\tTERMINATION: ${TERMINATION}")
 
 if(NOT DEFINED THROTTLE_CONGESTION_THRESHOLD)
     set(THROTTLE_CONGESTION_THRESHOLD 45)
 endif()
 add_definitions(-DTHROTTLE_CONGESTION_THRESHOLD=${THROTTLE_CONGESTION_THRESHOLD})
+message(STATUS "\tTHROTTLE_CONGESTION_THRESHOLD: ${THROTTLE_CONGESTION_THRESHOLD}")
+
+# Rhizome related
+if(NOT DEFINED RHIZOME_SIZE)
+    set(RHIZOME_SIZE 2)
+endif()
+add_definitions(-DRHIZOME_SIZE=${RHIZOME_SIZE})
+message(STATUS "\tRHIZOME_SIZE: ${RHIZOME_SIZE}")
+
+if(NOT DEFINED RHIZOME_INDEGREE_CUTOFF)
+    set(RHIZOME_INDEGREE_CUTOFF 5000)
+endif()
+add_definitions(-DRHIZOME_INDEGREE_CUTOFF=${RHIZOME_INDEGREE_CUTOFF})
+message(STATUS "\tRHIZOME_INDEGREE_CUTOFF: ${RHIZOME_INDEGREE_CUTOFF}")
 
 find_package(OpenMP REQUIRED)
 

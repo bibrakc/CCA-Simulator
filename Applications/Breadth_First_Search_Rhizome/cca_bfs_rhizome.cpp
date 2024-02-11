@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_bfs.hpp"
+#include "cca_bfs_rhizome.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -80,23 +80,33 @@ main(int argc, char** argv) -> int
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion. This is different from
     // when the `RecursiveParallelVertex` allocates ghost vertices.
-    // To avoid high degree vertex being allocated on the corners of the chip we can start the
-    // cyclic allocator from the center of the chip and later provide the `root` vertex to the graph
-    // initializer in `transfer_graph_host_to_cca`. If the root is a non high-degree node then the
-    // high-degree node won't be at the center. In most experiments it is not and therefore we
-    // really dont do any such "preprocessing".
+    // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
+    // allocator from the center of the chip and later provide the `root` vertex to the graph
+    // initializer in `transfer_graph_host_to_cca`.
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
                                    (cca_square_simulator.dim_y / 2);
     // center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
+    // random allocator for creating rhizomes. There will be placed anywhere on the chip randomly.
+    // The hope is to have them be somewhat apart.
+    VicinityMemoryAllocator random_allocator(
+        Coordinates(cca_square_simulator.dim_x / 2, cca_square_simulator.dim_y / 2),
+        cca_square_simulator.dim_x, // vicinity_rows
+        cca_square_simulator.dim_y, // vicinity_cols
+        cca_square_simulator.dim_x,
+        cca_square_simulator.dim_y,
+        cca_square_simulator.shape_of_compute_cells);
+
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address>>>(
-        cca_square_simulator,
-        allocator,
-        std::optional<u_int32_t>(cmd_args.root_vertex),
-        cmd_args.shuffle_switch);
+    input_graph
+        .transfer_graph_host_to_cca_rhizome<BFSVertex<RhizomeRecursiveParallelVertex<Address>>>(
+            cca_square_simulator,
+            allocator,
+            random_allocator,
+            std::optional<u_int32_t>(cmd_args.root_vertex),
+            cmd_args.shuffle_switch);
 
     /*
     std::vector<u_int32_t> vertices_inbound_degree_zero =
@@ -122,7 +132,7 @@ main(int argc, char** argv) -> int
 
     // Only put the BFS seed action on a single vertex.
     // In this case BFS root = root_vertex
-    auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
+    auto vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(cmd_args.root_vertex);
 
     // Register the BFS action functions for predicate, work, and diffuse.
     bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);

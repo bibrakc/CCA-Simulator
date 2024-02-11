@@ -101,9 +101,11 @@ main(int argc, char** argv) -> int
     // Memory allocator for vertices allocation. Here we use cyclic allocator, which allocates
     // vertices (or objects) one per compute cell in round-robin fashion. This is different from
     // when the `RecursiveParallelVertex` allocates ghost vertices.
-    // To avoid high degree vertex being allocated on the corners of the chip we start the cyclic
-    // allocator from the center of the chip and later provide the `root` vertex to the graph
-    // initializer in `transfer_graph_host_to_cca`.
+    // To avoid high degree vertex being allocated on the corners of the chip we can start the
+    // cyclic allocator from the center of the chip and later provide the `root` vertex to the graph
+    // initializer in `transfer_graph_host_to_cca`. If the root is a non high-degree node then the
+    // high-degree node won't be at the center. In most experiments it is not and therefore we
+    // really dont do any such "preprocessing".
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
                                    (cca_square_simulator.dim_y / 2);
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);

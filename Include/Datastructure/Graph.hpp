@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef Graph_HPP
 #define Graph_HPP
 
+#include "Constants.hpp"
+
 #include <fstream>
 #include <random>
 
@@ -42,6 +44,39 @@ struct EdgeTuple
     u_int32_t from;
     u_int32_t to;
     u_int32_t weight;
+};
+
+struct VertexInfo
+{
+    std::optional<Address> addresses[rhizome_size];
+    u_int32_t inbound_degree[rhizome_size] = { 0 };
+
+    // Start pointing the inbound edges to rhizome 0 but then as the `rhizome_inbound_degree_cutoff`
+    // is reached then move to the next rhizome i.e. 1, 2, 3, until rhizome_size then back to 0.
+    u_int32_t current_rhizome{};
+
+    auto get_current_rhizome_address() -> std::optional<Address>
+    {
+        return this->addresses[this->current_rhizome];
+    }
+
+    void set_current_rhizome_address(std::optional<Address> addr)
+    {
+        this->addresses[this->current_rhizome] = addr;
+    }
+
+    void increment_inbound_degree()
+    {
+        this->inbound_degree[this->current_rhizome]++;
+
+        // When the cutoff is reached then switch to the other rhizome.
+        u_int32_t current_chunk =
+            this->inbound_degree[this->current_rhizome] % rhizome_inbound_degree_cutoff;
+
+        if (current_chunk == 0) {
+            this->current_rhizome = (this->current_rhizome + 1) % rhizome_size;
+        }
+    }
 };
 
 template<class VertexType>
@@ -60,13 +95,26 @@ class Graph
 
     // Store the CCA address of vertices in a map so as to retrieve easily for edge insertion and
     // other tasks like printing for debuging and solution checking.
+    // TODO: Why is this a map? It can easily be a vector.
     std::map<u_int32_t, Address> vertex_addresses;
+
+    // Holds information about the inbound degree for rhizomes and their addresses.
+    // TODO: Investigate: strange that it would occasionally throw memory errors in destructor when
+    // this was a vector and we .resize() in the transfer function. With a map it is ok now...
+    // std::vector<VertexInfo> vertices_info;
+    std::map<u_int32_t, VertexInfo> vertices_info;
 
     auto get_vertex_address_in_cca(u_int32_t vertex_id) -> Address
     {
         return this->vertex_addresses[vertex_id];
     }
 
+    auto get_vertex_address_in_cca_rhizome(u_int32_t vertex_id) -> Address
+    {
+        return this->vertices_info[vertex_id].addresses[0].value();
+    }
+
+    // This is used to populate the host side graph when it is read from a file for example.
     void add_edge(VertexType& vertex, u_int32_t dst_vertex_id, u_int32_t weight)
     {
         // Add the edge on the host allocated graph.
@@ -97,6 +145,7 @@ class Graph
             auto* vertex =
                 static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(dst_vertex_addr));
 
+            // TODO: This might not be thread-safe!
             vertex->inbound_degree++;
         }
 
@@ -177,6 +226,7 @@ class Graph
 
     // Initialize a newly created vertex in the CCA memory.
     // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // NOTE: Only to be used for RecurssiveParallelVertex
     template<class VertexTypeOfAddress>
     inline auto init_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
     {
@@ -184,17 +234,21 @@ class Graph
         return vertex->init(cca_simulator, src_vertex_addr.cc_id);
     }
 
+    // Initialize a newly created vertex in the CCA memory.
+    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // NOTE: Only to be used for RhizomeRecurssiveParallelVertex
     template<class VertexTypeOfAddress>
-    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
-                                    MemoryAllocator& allocator,
-                                    std::optional<u_int32_t> start_vertex_id,
-                                    bool shuffle_enabled)
+    inline auto init_rhizome_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
     {
+        auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
+        return vertex->init(
+            cca_simulator, src_vertex_addr.cc_id, true); // true: meaning it is rhizome
+    }
 
-        // The vertex object that exists on the CCA needs to have edges of type `Address`.
-        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
-                      "edge type must be of type Address");
-
+    std::vector<int> make_vertices_list(std::optional<u_int32_t> start_vertex_id,
+                                        bool shuffle_enabled,
+                                        int total_vertices)
+    {
         u_int32_t starting_vertex_id = 0;
         if (start_vertex_id.has_value()) {
             starting_vertex_id = start_vertex_id.value();
@@ -234,10 +288,27 @@ class Graph
                       << std::endl;
         }
 
+        return vertex_ids;
+    }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca(CCASimulator& cca_simulator,
+                                    MemoryAllocator& allocator,
+                                    std::optional<u_int32_t> start_vertex_id,
+                                    bool shuffle_enabled)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        // TODO: Perhaps this `int` must become `u_int32_t`
+        std::vector<int> vertex_ids =
+            make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
+
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
-        //  for (int i = 0; i < this->total_vertices; i++) {
         for (int i = 0; i < vertex_ids.size(); i++) {
             int current_vertex_id = vertex_ids[i];
 
@@ -263,12 +334,12 @@ class Graph
             }
 
             // Insert into the vertex_addresses map
-            vertex_addresses[current_vertex_id] = vertex_addr.value();
+            this->vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
         std::cout << "Populating vertices by inserting edges: " << std::endl;
 
-#pragma omp parallel for
+        // #pragma omp parallel for
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 
@@ -290,6 +361,154 @@ class Graph
             }
         }
     }
+
+    template<class VertexTypeOfAddress>
+    void transfer_graph_host_to_cca_rhizome(CCASimulator& cca_simulator,
+                                            MemoryAllocator& allocator,
+                                            MemoryAllocator& random_allocator,
+                                            std::optional<u_int32_t> start_vertex_id,
+                                            bool shuffle_enabled)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        // TODO: Perhaps this `int` must become `u_int32_t`
+        std::vector<int> vertex_ids =
+            make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
+
+        // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
+        // constructor everytime.
+        VertexTypeOfAddress vertex_(0, this->total_vertices);
+
+        // Set the size of the vertices information vector before inserting into it.
+        // this->vertices_info.resize(this->total_vertices);
+
+        for (int i = 0; i < vertex_ids.size(); i++) {
+            int current_vertex_id = vertex_ids[i];
+
+            // Put a vertex in memory with id = current_vertex_id
+            vertex_.id = current_vertex_id;
+
+            // Get the Address of this vertex allocated on the CCA chip. Note here we use
+            // VertexType<Address> since the object is now going to be sent to the CCA chip and
+            // there the address type is Address (not u_int32_t ID).
+            std::optional<Address> vertex_addr = cca_simulator.allocate_and_insert_object_on_cc(
+                allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+            if (!vertex_addr) {
+                std::cerr << "Error! Memory not allocated for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
+                                                                vertex_addr.value())) {
+                std::cerr << "Error! Vertex initialization failed for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            // Insert the address into the vertices_info vector.
+            this->vertices_info[current_vertex_id].addresses[0] = vertex_addr.value();
+        }
+
+        std::cout << "Populating vertices by inserting edges: " << std::endl;
+
+        // #pragma omp parallel for
+        for (int i = 0; i < this->total_vertices; i++) {
+            u_int32_t const src_vertex_id = this->vertices[i].id;
+
+            for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
+
+                u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
+                u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
+
+                // Create the Rhizome if needed. 
+                if (!this->vertices_info[dst_vertex_id].get_current_rhizome_address()) {
+
+                    std::optional<Address> vertex_addr =
+                        cca_simulator.allocate_and_insert_object_on_cc(
+                            random_allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+                    if (!vertex_addr) {
+                        std::cerr << "Error! Memory not allocated for the Rhizome of Vertex ID: "
+                                  << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+                    /* std::cout << "Rhizome Created for dst_vertex_id: " << dst_vertex_id
+                              << ", Total inbound: " << this->vertices[dst_vertex_id].inbound_degree
+                              << "\n"; */
+
+                    if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
+                                                                        vertex_addr.value())) {
+                        std::cerr
+                            << "Error! Vertex initialization failed for the Rhizome of Vertex ID: "
+                            << this->vertices[dst_vertex_id].id << "\n";
+                        exit(0);
+                    }
+
+                    // Exchange the rhizome addresses between the rhizomes
+                    // i.e. link them...
+                    auto* new_rhizome_vertex = static_cast<VertexTypeOfAddress*>(
+                        cca_simulator.get_object(vertex_addr.value()));
+
+                    // 1. New adds all in self.
+                    for (u_int32_t rhizome_iterator = 0;
+                         rhizome_iterator < this->vertices_info[dst_vertex_id].current_rhizome;
+                         rhizome_iterator++) {
+
+                        if (!new_rhizome_vertex->set_rhizome(
+                                this->vertices_info[dst_vertex_id].addresses[rhizome_iterator])) {
+                            std::cerr
+                                << "Error! new set_rhizome failed for the Rhizome of Vertex ID: "
+                                << this->vertices[dst_vertex_id].id << "\n";
+                            exit(0);
+                        }
+                    }
+
+                    // 2. All other rhizomes add/link this new rhizome
+                    // Exchange the rhizome addresses between the rhizomes i.e. link them ...
+                    for (u_int32_t rhizome_iterator = 0;
+                         rhizome_iterator < this->vertices_info[dst_vertex_id].current_rhizome;
+                         rhizome_iterator++) {
+
+                        auto* other_rhizome_vertex = static_cast<VertexTypeOfAddress*>(
+                            cca_simulator.get_object(this->vertices_info[dst_vertex_id]
+                                                         .addresses[rhizome_iterator]
+                                                         .value()));
+
+                        if (!other_rhizome_vertex->set_rhizome(vertex_addr)) {
+                            std::cerr << "Error! other_rhizome_vertex set_rhizome failed for the "
+                                         "Rhizome of Vertex ID: "
+                                      << this->vertices[dst_vertex_id].id << "\n";
+                            exit(0);
+                        }
+                    }
+
+                    // 3. Insert the address into the Graph::vertices_info map.
+                    this->vertices_info[dst_vertex_id].set_current_rhizome_address(vertex_addr);
+                }
+
+                if (!this->insert_edge_by_address<VertexTypeOfAddress>(
+                        cca_simulator,
+                        /*  allocator, */
+                        this->vertices_info[src_vertex_id].addresses[0].value(),
+                        this->vertices_info[dst_vertex_id].get_current_rhizome_address().value(),
+                        edge_weight)) {
+                    std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                              << edge_weight << ") not inserted successfully.\n";
+                    exit(0);
+                } else {
+                    // Insertion was successful. Now increment the local count for inbound edges
+                    // for dst vertex to be used to form Rhizomes.
+                    this->vertices_info[dst_vertex_id].increment_inbound_degree();
+                }
+            }
+        }
+    }
+
     template<bool ZERO_INDEX>
     auto read_dnyamic_graph_increment(const std::string& input_graph_path) -> std::vector<EdgeTuple>
     {

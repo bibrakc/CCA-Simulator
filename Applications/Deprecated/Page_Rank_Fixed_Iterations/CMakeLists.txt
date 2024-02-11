@@ -41,19 +41,58 @@ endif()
 add_definitions(-DTHROTTLE=${THROTTLE})
 
 if(NOT DEFINED RECVBUFFSIZE)
-    set(RECVBUFFSIZE 1)
+    set(RECVBUFFSIZE 4)
 endif()
 add_definitions(-DRECVBUFFSIZE=${RECVBUFFSIZE})
 
 if(NOT DEFINED ANIMATION)
-    set(ANIMATION "true")
+    set(ANIMATION "false")
 endif()
 add_definitions(-DANIMATION=${ANIMATION})
+
+if(NOT DEFINED ACTIVE_PERCENT)
+    set(ACTIVE_PERCENT "true")
+endif()
+add_definitions(-DACTIVE_PERCENT=${ACTIVE_PERCENT})
+
+if(NOT DEFINED ACTIONQUEUESIZE)
+    set(ACTIONQUEUESIZE 64)
+endif()
+add_definitions(-DACTIONQUEUESIZE=${ACTIONQUEUESIZE})
 
 if(NOT DEFINED VICINITY)
     set(VICINITY 3)
 endif()
 add_definitions(-DVICINITY=${VICINITY})
+
+if(NOT DEFINED MAXEDGESPERVERTEX)
+    set(MAXEDGESPERVERTEX 30)
+endif()
+add_definitions(-DMAXEDGESPERVERTEX=${MAXEDGESPERVERTEX})
+
+if(NOT DEFINED TERMINATION)
+    set(TERMINATION "false")
+endif()
+add_definitions(-DTERMINATION=${TERMINATION})
+
+if(NOT DEFINED THROTTLE_CONGESTION_THRESHOLD)
+    set(THROTTLE_CONGESTION_THRESHOLD 45)
+endif()
+add_definitions(-DTHROTTLE_CONGESTION_THRESHOLD=${THROTTLE_CONGESTION_THRESHOLD})
+
+# Rhizome related
+if(NOT DEFINED RHIZOME_SIZE)
+    set(RHIZOME_SIZE 2)
+endif()
+add_definitions(-DRHIZOME_SIZE=${RHIZOME_SIZE})
+
+if(NOT DEFINED RHIZOME_INDEGREE_CUTOFF)
+    set(RHIZOME_INDEGREE_CUTOFF 5000)
+endif()
+add_definitions(-DRHIZOME_INDEGREE_CUTOFF=${RHIZOME_INDEGREE_CUTOFF})
+
+find_package(OpenMP REQUIRED)
+
 
 find_package(OpenMP REQUIRED)
 
@@ -91,6 +130,7 @@ add_library(CCASimulator
             ${SourceDirectory}/CCAFunctionEvents.cpp
             ${SourceDirectory}/ComputeCell.cpp
             ${SourceDirectory}/CyclicMemoryAllocator.cpp
+            ${SourceDirectory}/VicinityMemoryAllocator.cpp
             ${SourceDirectory}/SinkCell.cpp
             ${SourceDirectory}/Terminator.cpp
             )

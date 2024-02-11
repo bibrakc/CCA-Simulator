@@ -93,6 +93,7 @@ ComputeCell::memory_available_in_bytes() -> u_int32_t
 auto
 ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj) -> std::optional<Address>
 {
+    // TODO: mutex lock here for thread-safety.
     if (this->memory_available_in_bytes() < size_of_obj) {
         return std::nullopt;
     }

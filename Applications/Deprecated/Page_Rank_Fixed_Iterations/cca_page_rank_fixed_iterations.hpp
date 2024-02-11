@@ -34,7 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CCA_Page_Rank_Fixed_Iterations_HPP
 
 #include "CCASimulator.hpp"
-#include "SimpleVertex.hpp"
+#include "Enums.hpp"
+
+// Datastructures
+#include "Graph.hpp"
+#include "RecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
@@ -43,8 +47,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 inline constexpr double damping_factor = 0.85;
 
-template<typename Address_T>
-struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
+// This is what the action carries as payload.
+struct PageRankFixedIterationsArguments
+{
+    double score;
+    u_int32_t src_vertex_id;
+};
+
+/* template<typename Address_T>
+struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T> */
+template<typename Vertex_T>
+struct PageRankFixedIterationsVertex : Vertex_T
 {
     u_int32_t page_rank_current_iteration{};
 
@@ -63,7 +76,7 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
     // current_iteration_incoming_count == inbound_degree
     u_int32_t current_iteration_incoming_count{};
 
-    PageRankFixedIterationsSimpleVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+    PageRankFixedIterationsVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
         : page_rank_current_rank_score(1.0 / total_number_of_vertices_in)
     {
         this->id = id_in;
@@ -77,22 +90,16 @@ struct PageRankFixedIterationsSimpleVertex : SimpleVertex<Address_T>
         this->page_rank_current_rank_score = initial_page_rank_score;
     }
 
-    PageRankFixedIterationsSimpleVertex() = default;
-    ~PageRankFixedIterationsSimpleVertex() = default;
+    PageRankFixedIterationsVertex() = default;
+    ~PageRankFixedIterationsVertex() = default;
 };
 
 // CCAFunctionEvent ids for the Page Rank Fixed Iterations action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
 extern CCAFunctionEvent page_rank_fixed_iterations_predicate;
 extern CCAFunctionEvent page_rank_fixed_iterations_work;
+extern CCAFunctionEvent page_rank_fixed_iterations_diffuse_predicate;
 extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
-
-// This is what the action carries as payload.
-struct PageRankFixedIterationsArguments
-{
-    double score;
-    u_int32_t src_vertex_id;
-};
 
 inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
@@ -111,14 +118,26 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
                                      actionType action_type_in,
                                      const ActionArgumentType& args) -> int
 {
-    auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
 
-    PageRankFixedIterationsArguments const page_rank_args =
-        cca_get_action_argument<PageRankFixedIterationsArguments>(args);
+    // First check whether this is a ghost vertex. If it is then don't perform any work.
+    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return 0;
+    }
 
     // If the action comes from the host and is germinate action then don't update scores and just
     // treat it as a purely diffusive action.
     if (action_type_in == actionType::application_action) {
+
+        auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+            cc.get_object(addr));
+
+        PageRankFixedIterationsArguments const page_rank_args =
+            cca_get_action_argument<PageRankFixedIterationsArguments>(args);
+
         // Update partial new score with the new incoming score.
         v->current_iteration_rank_score += page_rank_args.score;
         v->current_iteration_incoming_count++;
@@ -127,12 +146,30 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 }
 
 inline auto
+page_rank_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
+                                                  const Address& addr,
+                                                  actionType /* action_type_in */,
+                                                  const ActionArgumentType& /*args*/) -> int
+{
+    return 1;
+}
+
+inline auto
 page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const Address& addr,
                                         actionType /* action_type_in */,
                                         const ActionArgumentType& /*args*/) -> int
 {
-    auto* v = static_cast<PageRankFixedIterationsSimpleVertex<Address>*>(cc.get_object(addr));
+
+    // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+
+    assert(this_is_ghost_vertex == false && "There is ghost");
+
+    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+        cc.get_object(addr));
 
     // If the diffusion has not occured for the current iteration then diffuse.
     if (!v->has_current_iteration_diffused) {
@@ -145,8 +182,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         for (int i = 0; i < v->number_of_edges; i++) {
 
             ActionArgumentType const args_x =
-                cca_create_action_argument<PageRankFixedIterationsArguments>(
-                    my_score_to_send);
+                cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send);
 
             // Diffuse.
             cc.diffuse(Action(v->edges[i].edge,
@@ -156,13 +192,19 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                               args_x,
                               page_rank_fixed_iterations_predicate,
                               page_rank_fixed_iterations_work,
+                              page_rank_fixed_iterations_diffuse_predicate,
                               page_rank_fixed_iterations_diffuse));
         }
-
+        if (v->id == 1)
+            std::cout << "vertex: " << v->id << ", inbound: " << v->inbound_degree
+                      << ", page_rank_current_iteration: " << v->page_rank_current_iteration
+                      << ", has_current_iteration_diffused: " << v->has_current_iteration_diffused
+                      << std::endl;
         v->has_current_iteration_diffused = true;
     }
 
     if (v->current_iteration_incoming_count == v->inbound_degree) {
+
         // Update the page rank score.
         v->page_rank_current_rank_score =
             ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +

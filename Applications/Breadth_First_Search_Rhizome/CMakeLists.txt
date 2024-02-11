@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name SSSP_CCASimulator)
+set(executable_name BFS_Rhizome_CCASimulator)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -119,7 +119,7 @@ target_include_directories(CCACommons PUBLIC
             ${IncludeDirectory}
             ${IncludeDirectory}/Datastructure)
 
-target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
+target_compile_options(CCACommons PRIVATE -g -Werror -Wall -Wextra)
 
 add_library(HtreeNework
             ${SourceDirectory}/HtreeNode.cpp
@@ -130,7 +130,7 @@ target_include_directories(HtreeNework PUBLIC
             ${IncludeDirectory}
             )
 
-target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
+target_compile_options(HtreeNework PRIVATE -g -Werror -Wall -Wextra)
 
 target_link_libraries(HtreeNework PUBLIC CCACommons)
 
@@ -150,12 +150,12 @@ target_include_directories(CCASimulator PUBLIC
                            ${IncludeDirectory}/Datastructure
                            )
                            
-target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-parameter)
+target_compile_options(CCASimulator PRIVATE -g -Werror -Wall -Wextra -Wno-unused-parameter)
 
 target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
-# Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_sssp.cpp)
+# Add the executable for the cca_bfs_rhizome.cpp source file
+add_executable(${executable_name} cca_bfs_rhizome.cpp)
 
 target_include_directories(${executable_name} PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}
@@ -167,5 +167,5 @@ target_include_directories(${executable_name} PUBLIC
 # Enable debugging
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-set_source_files_properties(cca_sssp.cpp PROPERTIES LANGUAGE CXX)
+set_source_files_properties(cca_bfs_rhizome.cpp PROPERTIES LANGUAGE CXX)
 target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
