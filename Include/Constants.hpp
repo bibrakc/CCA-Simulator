@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define u_int32_t uint32_t
 #endif
 
-
 // Set it to true/false
 inline constexpr bool debug_code = false;
 
@@ -71,12 +70,16 @@ inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;
 inline constexpr bool termination_switch = TERMINATION;
 
 // Used for throttling. TODO: Make this sophisticated so that it adapts at runtime.
-constexpr u_int32_t curently_congested_threshold = THROTTLE_CONGESTION_THRESHOLD; // cycles
+inline constexpr u_int32_t curently_congested_threshold = THROTTLE_CONGESTION_THRESHOLD; // cycles
 
 // Number of total rhizomes per vertex.
-inline u_int32_t constexpr rhizome_size = RHIZOME_SIZE;
+inline constexpr u_int32_t rhizome_size = RHIZOME_SIZE;
 
 // How many inbound edges before it switches to a new rhizome?
-inline u_int32_t constexpr rhizome_inbound_degree_cutoff = RHIZOME_INDEGREE_CUTOFF;
+inline constexpr u_int32_t rhizome_inbound_degree_cutoff = RHIZOME_INDEGREE_CUTOFF;
+
+// Either to split the queue into two: action and diffuse queue
+// Or keep it one queue called the action queue
+inline constexpr bool split_queues = SPLIT_QUEUES;
 
 #endif // CONSTANTS_HPP

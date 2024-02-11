@@ -283,14 +283,26 @@ ComputeCell::execute_action(void* function_events)
                     *this, action.obj_addr, action.action_type, action.args);
                 this->statistics.actions_performed_work++;
 
-                // diffuse
-                /* function_events_manager->get_function_event_handler(action.diffuse)(
-                 *this, action.obj_addr, action.action_type, action.args); */
-                if (!this->diffuse_queue.push(action)) {
-                    std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
-                    exit(0);
-                }
+                // If there are two queues in the system (configured at compile time) then we put
+                // the diffuse closure into the diffuse_queue otherwise just run the diffusion here.
+                if constexpr (split_queues) {
+                    if (!this->diffuse_queue.push(action)) {
+                        std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
+                        exit(0);
+                    }
+                } else { // Only single queue i.e. action_queue
+                    // if diffuse predicate
+                    int const diffuse_predicate_resolution =
+                        function_events_manager->get_function_event_handler(
+                            action.diffuse_predicate)(
+                            *this, action.obj_addr, action.action_type, action.args);
 
+                    // diffuse
+                    if (diffuse_predicate_resolution == 1) {
+                        function_events_manager->get_function_event_handler(action.diffuse)(
+                            *this, action.obj_addr, action.action_type, action.args);
+                    }
+                }
             } else {
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
@@ -635,44 +647,48 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
     if (!this->task_queue.empty()) {
 
-        // If staging buffer is full then no need to perform diffusion task (send operon) since it
+        // If staging buffer is full then no need to perform diffusion task (`send_operon`) since it
         // will stall. Same is true when it is congested and we are throttling.
         // We can use this cycle to potentially filter out action_queue or diffuse_queue.
         if (this->staging_operon_from_logic || was_recently_congested) {
-            // Filter action_queue or diffuse_queue by executing them.
-            // When an `Action` from action_queue is executed it is checked for predicate. IF
-            // predicate is true then work is performed and along with it a new diffuse Action is
-            // created and put into the diffuse_queue. This process can be "seen" as filtering of
-            // the action_queue. Similarly, the diffuse_queue can be filtered but it is naunced as
-            // if its predicate is true then it needs to put `send_operon` tasks into the task queue
-            // that is already occupied. Remember: the task queue is a way of simulating the `for`
-            // loop in diffusion so it is actually a thread and not a queue, and is therefore
-            // considered "context switched". So we cant have two threads at the same time.
-            // Logic for arbitration between action and diffuse queues.
 
-            bool const both_queues_non_empty =
-                !this->action_queue.empty() && !this->diffuse_queue.empty();
+            if constexpr (split_queues) {
+                // Filter action_queue or diffuse_queue by executing them.
+                // When an `Action` from action_queue is executed it is checked for predicate. IF
+                // predicate is true then work is performed and along with it a new diffuse Action
+                // is created and put into the diffuse_queue. This process can be "seen" as
+                // filtering of the action_queue. Similarly, the diffuse_queue can be filtered but
+                // it is naunced as if its predicate is true then it needs to put `send_operon`
+                // tasks into the task queue that is already occupied. Remember: the task queue is a
+                // way of simulating the `for` loop in diffusion so it is actually a thread and not
+                // a queue, and is therefore considered "context switched". So we cant have two
+                // threads at the same time. Logic for arbitration between action and diffuse
+                // queues.
 
-            bool const diffuse_queue_is_getting_full = this->diffuse_queue.is_percent_full(90.0);
-            bool const action_queue_near_full = this->diffuse_queue.is_percent_full(95.0);
+                bool const both_queues_non_empty =
+                    !this->action_queue.empty() && !this->diffuse_queue.empty();
 
-            if (both_queues_non_empty) {
-                if (action_queue_near_full && this->diffuse_queue.has_room()) {
-                    this->execute_action(function_events);
-                } else if (diffuse_queue_is_getting_full) { //&& this->prefer_diffuse_queue) {
-                    this->filter_diffusion(function_events);
-                    // this->prefer_diffuse_queue = false;
+                bool const diffuse_queue_is_getting_full =
+                    this->diffuse_queue.is_percent_full(90.0);
+                bool const action_queue_near_full = this->diffuse_queue.is_percent_full(95.0);
+
+                if (both_queues_non_empty) {
+                    if (action_queue_near_full && this->diffuse_queue.has_room()) {
+                        this->execute_action(function_events);
+                    } else if (diffuse_queue_is_getting_full) { //&& this->prefer_diffuse_queue) {
+                        this->filter_diffusion(function_events);
+                        // this->prefer_diffuse_queue = false;
+                    } else {
+                        this->execute_action(function_events);
+                        // this->prefer_diffuse_queue = true;
+                    }
                 } else {
-                    this->execute_action(function_events);
-                    // this->prefer_diffuse_queue = true;
-                }
-                // this->execute_action(function_events);
-            } else {
-                // Only one of the queues is non-empty or both are empty.
-                if (!this->diffuse_queue.empty()) {
-                    this->filter_diffusion(function_events);
-                } else if (!this->action_queue.empty()) {
-                    this->execute_action(function_events);
+                    // Only one of the queues is non-empty or both are empty.
+                    if (!this->diffuse_queue.empty()) {
+                        this->filter_diffusion(function_events);
+                    } else if (!this->action_queue.empty()) {
+                        this->execute_action(function_events);
+                    }
                 }
             }
         } else {
@@ -701,32 +717,38 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
         }
     } else {
 
-        // Execute action_queue or diffuse_queue.
+        if constexpr (split_queues) {
+            // Execute action_queue or diffuse_queue.
+            // Logic for arbitration between action and diffuse queues.
+            bool const both_queues_non_empty =
+                !this->action_queue.empty() && !this->diffuse_queue.empty();
 
-        // Logic for arbitration between action and diffuse queues.
-        bool const both_queues_non_empty =
-            !this->action_queue.empty() && !this->diffuse_queue.empty();
+            if (both_queues_non_empty) {
+                // Both queues are non-empty, decide which one to use.
+                bool const diffuse_queue_is_getting_full =
+                    this->diffuse_queue.is_percent_full(90.0);
+                bool const action_queue_near_full = this->diffuse_queue.is_percent_full(90.0);
 
-        if (both_queues_non_empty) {
-            // Both queues are non-empty, decide which one to use.
-            bool const diffuse_queue_is_getting_full = this->diffuse_queue.is_percent_full(90.0);
-            bool const action_queue_near_full = this->diffuse_queue.is_percent_full(90.0);
-
-            if (action_queue_near_full && this->diffuse_queue.has_room()) {
-                this->execute_action(function_events);
-            } else if (diffuse_queue_is_getting_full) {
-                // Execute an diffusion if the diffuse_queue is not empty.
-                this->execute_diffusion_phase(function_events);
+                if (action_queue_near_full && this->diffuse_queue.has_room()) {
+                    this->execute_action(function_events);
+                } else if (diffuse_queue_is_getting_full) {
+                    // Execute an diffusion if the diffuse_queue is not empty.
+                    this->execute_diffusion_phase(function_events);
+                } else {
+                    // Execute an action if the action_queue is not empty.
+                    this->execute_action(function_events);
+                }
             } else {
-                // Execute an action if the action_queue is not empty.
-                this->execute_action(function_events);
+                // Only one of the queues is non-empty or both are empty.
+                if (!this->action_queue.empty()) {
+                    this->execute_action(function_events);
+                } else if (!this->diffuse_queue.empty()) {
+                    this->execute_diffusion_phase(function_events);
+                }
             }
-        } else {
-            // Only one of the queues is non-empty or both are empty.
+        } else { // When there is only one action_queue.
             if (!this->action_queue.empty()) {
                 this->execute_action(function_events);
-            } else if (!this->diffuse_queue.empty()) {
-                this->execute_diffusion_phase(function_events);
             }
         }
     }
