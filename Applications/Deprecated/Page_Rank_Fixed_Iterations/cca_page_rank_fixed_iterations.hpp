@@ -195,11 +195,11 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                               page_rank_fixed_iterations_diffuse_predicate,
                               page_rank_fixed_iterations_diffuse));
         }
-        if(v->id == 1)
-        std::cout << "vertex: " << v->id << ", inbound: " << v->inbound_degree
-                  << ", page_rank_current_iteration: " << v->page_rank_current_iteration
-                  << ", has_current_iteration_diffused: " << v->has_current_iteration_diffused
-                  << std::endl;
+        if (v->id == 1)
+            std::cout << "vertex: " << v->id << ", inbound: " << v->inbound_degree
+                      << ", page_rank_current_iteration: " << v->page_rank_current_iteration
+                      << ", has_current_iteration_diffused: " << v->has_current_iteration_diffused
+                      << std::endl;
         v->has_current_iteration_diffused = true;
     }
 
