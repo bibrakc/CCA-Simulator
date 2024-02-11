@@ -1,6 +1,6 @@
 # BSD 3-Clause License
 # 
-# Copyright (c) 2023, Bibrak Qamar
+# Copyright (c) 2023-2024, Bibrak Qamar
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -89,7 +89,6 @@ if(NOT DEFINED THROTTLE_CONGESTION_THRESHOLD)
 endif()
 add_definitions(-DTHROTTLE_CONGESTION_THRESHOLD=${THROTTLE_CONGESTION_THRESHOLD})
 message(STATUS "\tTHROTTLE_CONGESTION_THRESHOLD: ${THROTTLE_CONGESTION_THRESHOLD}")
-
 
 # Rhizome related
 if(NOT DEFINED RHIZOME_SIZE)
