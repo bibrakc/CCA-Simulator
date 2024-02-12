@@ -459,34 +459,17 @@ verify_results(const SSSPCommandLineArguments& cmd_args,
     }
 }
 
+// Write simulation statistics to a file
 template<typename NodeType>
 inline void
 write_results(const SSSPCommandLineArguments& cmd_args,
               Graph<NodeType>& input_graph,
               CCASimulator& cca_simulator)
 {
-    // Write simulation statistics to a file
-    std::string throttle_text = "OFF";
-    if constexpr (throttling_switch) {
-        throttle_text = "ON";
-    }
-    std::string termination_text = "OFF";
-    if constexpr (termination_switch) {
-        termination_text = "ON";
-    }
-    std::string network_text = "MESH";
-    if (cmd_args.mesh_type == 1) {
-        network_text = "TORUS";
-    }
 
     std::string const output_file_name =
-        "sssp_square_x_" + std::to_string(cca_simulator.dim_x) + "_y_" +
-        std::to_string(cca_simulator.dim_y) + "_graph_" + cmd_args.graph_name + "_v_" +
-        std::to_string(input_graph.total_vertices) + "_e_" +
-        std::to_string(input_graph.total_edges) + "_hb_" + std::to_string(cmd_args.hbandwidth_max) +
-        "_th_" + throttle_text + "_recvbuff_" + std::to_string(RECVBUFFSIZE) + "_vicinity_" +
-        std::to_string(vicinity_radius) + "_edges_max_" + std::to_string(edges_max) +
-        "_termimation_" + termination_text + "_network_" + network_text;
+        "sssp_graph_" + cmd_args.graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
+        "_e_" + std::to_string(input_graph.total_edges) + cca_simulator.key_configurations_string();
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
@@ -508,24 +491,8 @@ write_results(const SSSPCommandLineArguments& cmd_args,
     // Close the output file
     output_file.close();
 
-    if constexpr (animation_switch) {
-        // Write the active status animation data in a separate file.
-        std::string const output_file_path_animation = output_file_path + "_active_animation";
-        std::cout << "\nWriting active status animation data to output file: "
-                  << output_file_path_animation << "\n";
-
-        std::ofstream output_file_animation(output_file_path_animation);
-        if (!output_file_animation) {
-            std::cerr << "Error! Output file not created\n";
-        }
-
-        // Ask the simulator to print cell active status information per cycle to the
-        // `output_file_animation`. This will be used mostly for animation purposes.
-        cca_simulator.output_CCA_active_status_per_cell_cycle(output_file_animation);
-
-        // Close the output file
-        output_file_animation.close();
-    }
+    // Print the animation of active status of each CC per cycle.
+    cca_simulator.print_animation(output_file_path);
 }
 
 #endif // CCA_SSSP_HPP

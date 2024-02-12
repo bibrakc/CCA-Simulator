@@ -256,7 +256,14 @@ class CCASimulator
 
         os << "congestion_policy\n"
            << "constant_threshold"
-           << "\t" << curently_congested_threshold << "\n ";
+           << "\t" << curently_congested_threshold << "\n";
+
+        std::string queues_text = "single";
+        if (split_queues) {
+            queues_text = "split";
+        }
+
+        os << "queues_configuration\n" << queues_text << "\n";
     }
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)
@@ -350,6 +357,12 @@ class CCASimulator
 
     // Output simulation statistics and details
     void print_statistics(std::ofstream& output_file);
+
+    // Output simulation active animation per CC per cycle.
+    void print_animation(std::string output_file_path);
+
+    // Returns key configurations as a string to be appended to output file name.
+    auto key_configurations_string() -> std::string;
 
     // Get the pointer to the object at `Address addr_in`.
     [[nodiscard]] auto get_object(Address addr_in) const -> void*;
