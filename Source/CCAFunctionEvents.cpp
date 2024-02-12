@@ -43,7 +43,7 @@ auto
 null_func(ComputeCell& /* cc */,
           const Address& /* addr */,
           actionType /* action_type_in */,
-          const ActionArgumentType& /*args*/) -> Closure
+          const ActionArgumentType /*args*/) -> Closure
 {
     return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.true_event
     // this->null_event_id;
@@ -54,7 +54,7 @@ auto
 null_true_func(ComputeCell& /* cc */,
                const Address& /* addr */,
                actionType /* action_type_in */,
-               const ActionArgumentType& /*args*/) -> Closure
+               const ActionArgumentType /*args*/) -> Closure
 {
     return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     // this->null_event_true_id;

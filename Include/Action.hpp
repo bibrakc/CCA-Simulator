@@ -77,7 +77,7 @@ class Action
            const Address origin_vertex_addr_in,
            actionType type,
            const bool ready,
-           const ActionArgumentType& args_in,
+           const ActionArgumentType args_in,
            CCAFunctionEvent predicate_in,
            CCAFunctionEvent work_in,
            CCAFunctionEvent diffuse_predicate_in,

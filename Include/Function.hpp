@@ -55,26 +55,26 @@ class ComputeCell;
 using handler_func = Closure (*)(ComputeCell& cc,
                                  const Address& addr,
                                  actionType action_type,
-                                 const ActionArgumentType& args);
+                                 const ActionArgumentType args);
 
 // Recieved an acknowledgement message back. Decreament my deficit.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type,
-                                const ActionArgumentType& args) -> Closure;
+                                const ActionArgumentType args) -> Closure;
 
 // null event.
 auto
 null_func(ComputeCell& /* cc */,
           const Address& /* addr */,
           actionType /* action_type_in */,
-          const ActionArgumentType& /*args*/) -> Closure;
+          const ActionArgumentType /*args*/) -> Closure;
 
 auto
 null_true_func(ComputeCell& /* cc */,
                const Address& /* addr */,
                actionType /* action_type_in */,
-               const ActionArgumentType& /*args*/) -> Closure;
+               const ActionArgumentType /*args*/) -> Closure;
 
 #endif // FUNCTION_HPP

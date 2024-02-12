@@ -46,7 +46,7 @@ auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type_in,
-                                const ActionArgumentType& /*args*/) -> Closure
+                                const ActionArgumentType /*args*/) -> Closure
 {
     assert(action_type_in == actionType::terminator_acknowledgement_action);
 
@@ -299,9 +299,8 @@ ComputeCell::execute_action(void* function_events)
                             exit(0);
                         }
                     } else { // diffuse predicate is lazy evaluated.
-                        assert(false && "Not implemented yet!");
 
-                        action.diffuse_predicate = diffuse_predicate.first;
+                        action.args = diffuse_predicate.second;
                         // TODO: get new arguments from `diffuse_predicate.second`
                         if (!this->diffuse_queue.push(action)) {
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
@@ -311,21 +310,30 @@ ComputeCell::execute_action(void* function_events)
 
                 } else { // Only single queue i.e. action_queue
                          // if diffuse predicate
-                         /* int const diffuse_predicate_resolution =
-                             function_events_manager->get_function_event_handler(
-                                 action.diffuse_predicate)(
-                                 *this, action.obj_addr, action.action_type, action.args); */
-                    Closure const diffuse_predicate_resolution =
+                    /* int const diffuse_predicate_resolution =
                         function_events_manager->get_function_event_handler(
-                            diffuse_predicate.first)(
-                            *this, action.obj_addr, action.action_type, action.args);
+                            action.diffuse_predicate)(
+                            *this, action.obj_addr, action.action_type, action.args); */
 
-                    // diffuse
-                    if (function_events_manager->is_true_event(
-                            diffuse_predicate_resolution.first)) {
-                        // if (diffuse_predicate_resolution == 1) {
-                        function_events_manager->get_function_event_handler(action.diffuse)(
-                            *this, action.obj_addr, action.action_type, action.args);
+                    if (function_events_manager->is_null_event(diffuse_predicate.first)) {
+                        // do nothing
+                    } else {
+
+                        if (diffuse_predicate.second != nullptr) {
+                            action.args = diffuse_predicate.second;
+                        }
+                        Closure const diffuse_predicate_resolution =
+                            function_events_manager->get_function_event_handler(
+                                diffuse_predicate.first)(
+                                *this, action.obj_addr, action.action_type, action.args);
+
+                        // diffuse
+                        if (function_events_manager->is_true_event(
+                                diffuse_predicate_resolution.first)) {
+                            // if (diffuse_predicate_resolution == 1) {
+                            function_events_manager->get_function_event_handler(action.diffuse)(
+                                *this, action.obj_addr, action.action_type, action.args);
+                        }
                     }
                 }
             } else {
