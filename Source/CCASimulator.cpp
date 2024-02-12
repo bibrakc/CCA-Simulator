@@ -354,7 +354,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
 
     output_file << "avg_objects_per_cc\n" << avg_objects_per_cc << "\n";
 
-    // Output the active status of the individual cells and htree per cycle
+    // Output the active status as percentage of cells and htree per cycle for the entire chip.
     this->output_CCA_active_status_per_cycle(output_file);
 
     // Output statistics for each compute cell
@@ -365,6 +365,58 @@ CCASimulator::print_statistics(std::ofstream& output_file)
             output_file << "\n";
         }
     }
+}
+
+// Output simulation active animation per CC per cycle.
+void
+CCASimulator::print_animation(std::string output_file_path)
+{
+
+    if constexpr (animation_switch) {
+        // Write the active status animation data in a separate file.
+        std::string const output_file_path_animation = output_file_path + "_active_animation";
+        std::cout << "\nWriting active status animation data to output file: "
+                  << output_file_path_animation << "\n";
+
+        std::ofstream output_file_animation(output_file_path_animation);
+        if (!output_file_animation) {
+            std::cerr << "Error! Output file not created\n";
+        }
+
+        // Ask the simulator to print cell active status information per cycle to the
+        // `output_file_animation`. This will be used mostly for animation purposes.
+        this->output_CCA_active_status_per_cell_cycle(output_file_animation);
+
+        // Close the output file
+        output_file_animation.close();
+    }
+}
+
+// Returns key configurations as a string to be appended to output file name.
+auto
+CCASimulator::key_configurations_string() -> std::string
+{
+    std::string throttle_text = "OFF";
+    if constexpr (throttling_switch) {
+        throttle_text = "ON";
+    }
+    std::string termination_text = "OFF";
+    if constexpr (termination_switch) {
+        termination_text = "ON";
+    }
+    std::string network_text = "MESH";
+    if (this->primary_network_type == 1) {
+        network_text = "TORUS";
+    }
+
+    std::string configs =
+        "_x_" + std::to_string(this->dim_x) + "_y_" + std::to_string(this->dim_y) + "_hb_" +
+        std::to_string(this->hbandwidth_max) + "_th_" + throttle_text + "_recvbuff_" +
+        std::to_string(RECVBUFFSIZE) + "_vicinity_" + std::to_string(vicinity_radius) +
+        "_edges_max_" + std::to_string(edges_max) + "_termimation_" + termination_text +
+        "_network_" + network_text;
+
+    return configs;
 }
 
 void

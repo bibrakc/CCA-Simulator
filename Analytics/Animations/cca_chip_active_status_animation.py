@@ -39,11 +39,28 @@ import matplotlib.patches as mpatches
 args = sys.argv
 
 # Read input data from file
-filename = args[1]
-show_last_frames = int(args[2])
-skip_frames = int(args[3])
+# Check if arguments are provided
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+else:
+    print("No filename provided.")
+    sys.exit(1)
 
-with open(filename, 'r') as file:
+# Set default values
+show_last_frames = 0
+skip_frames = 1
+
+# Check if optional arguments are provided
+if len(sys.argv) > 3:
+    show_last_frames = int(sys.argv[2])
+    skip_frames = int(sys.argv[3])
+
+print("Filename:", filename)
+print("Show Last Frames:", show_last_frames)
+print("Skip Frames:", skip_frames)
+
+
+with open(filename, "r") as file:
     # read the header line and discard it
     header = file.readline()
 
@@ -60,18 +77,18 @@ with open(filename, 'r') as file:
 
 # Mapping of scalar values to RGB colors
 scalar_to_rgb = {
-    0: (0, 0, 0),       # black
-    1: (0, 255, 255),   # cyan
-    2: (0, 255, 0),     # green
+    0: (0, 0, 0),  # black
+    1: (0, 255, 255),  # cyan
+    2: (0, 255, 0),  # green
     3: (255, 255, 255),  # white
     4: (255, 255, 214),  # yellow level 1
     5: (255, 255, 163),  # yellow level 2
     6: (255, 255, 61),  # yellow level 3
-    7: (255, 255, 0),   # yellow level 4 pure
+    7: (255, 255, 0),  # yellow level 4 pure
     8: (255, 204, 214),  # red level 1
     9: (255, 153, 163),  # red level 2
     10: (255, 51, 61),  # red level 3
-    11: (255, 0, 0),    # red level 4 pure
+    11: (255, 0, 0),  # red level 4 pure
 }
 
 
@@ -81,7 +98,7 @@ num_frames = len(frames)
 grid_data = np.zeros((num_frames, *grid_size, 3), dtype=np.uint8)
 
 for i, frame in enumerate(frames):
-    rows = frame.split(',')
+    rows = frame.split(",")
     for j, row in enumerate(rows):
         scalar_values = list(map(int, row.strip().split()))
         for k, scalar_value in enumerate(scalar_values):
@@ -103,13 +120,22 @@ htree_draw = False
 # Display the RGB image
 grid = ax.imshow(grid_data[0], alpha=0.80)
 
-colors = ['black', 'cyan', 'green', 'white', 'yellow', 'red']
+colors = ["black", "cyan", "green", "white", "yellow", "red"]
 # Create custom legend with color-value mappings
-legend_labels = {0: 'Inactive', 1: 'Only Communicating', 2: 'Only Computing',
-                 3: 'Computing & Communicating', 4: 'Congested Communicating', 5: 'Congested Computing & Communicating'}
-legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
-                   for value, label in legend_labels.items()
-                   for i, color in enumerate(colors) if i == value]
+legend_labels = {
+    0: "Inactive",
+    1: "Only Communicating",
+    2: "Only Computing",
+    3: "Computing & Communicating",
+    4: "Congested Communicating",
+    5: "Congested Computing & Communicating",
+}
+legend_elements = [
+    mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
+    for value, label in legend_labels.items()
+    for i, color in enumerate(colors)
+    if i == value
+]
 
 # Add the legend to the plot
 # ax.legend(handles=legend_elements, loc='upper right')
@@ -122,8 +148,9 @@ legend_elements = [mpatches.Circle((0, 0), radius=0.2, color=color, label=label)
 
 # Place the legend above the plot
 # ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
-ax.legend(handles=legend_elements, bbox_to_anchor=(
-    1.65, 1), loc='upper right', fontsize=14)
+ax.legend(
+    handles=legend_elements, bbox_to_anchor=(1.65, 1), loc="upper right", fontsize=14
+)
 
 
 # Recursive function to draw the H-tree
@@ -137,11 +164,11 @@ def draw_h_tree(x, y, length, depth):
     y1 = y + length / 2.4
 
     # Draw horizontal lines
-    ax.plot([x0, x1], [y, y], '--g')
+    ax.plot([x0, x1], [y, y], "--g")
 
     # Draw vertical lines
-    ax.plot([x0, x0], [y0, y1], '--g')
-    ax.plot([x1, x1], [y0, y1], '--g')
+    ax.plot([x0, x0], [y0, y1], "--g")
+    ax.plot([x1, x1], [y0, y1], "--g")
 
     # Recursively draw H-trees at the corners
     new_length = length / 2
@@ -153,7 +180,7 @@ def draw_h_tree(x, y, length, depth):
 
 
 # For larger simulation we want to see last frames
-if (show_last_frames != 0):
+if show_last_frames != 0:
     start_from = cycles - show_last_frames
 else:
     start_from = 0
@@ -162,10 +189,12 @@ else:
 
 
 def update(frame):
-    grid.set_array(grid_data[frame+start_from])
+    grid.set_array(grid_data[frame + start_from])
     # Set the title for each frame
     ax.set_title(
-        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame+start_from), fontsize=14)
+        "CCA Chip Activation Per Compute Cell - Cycle # {}".format(frame + start_from),
+        fontsize=14,
+    )
 
     if frame == 1 and htree_draw == True:
         draw_h_tree(x_htree, y_htree, length_htree, depth_htree)
@@ -177,7 +206,8 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=70)  # Increase the interval
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=70
+)  # Increase the interval
 
 # Set the grid cell size and ticks
 ax.set_xticks(np.arange(grid_size[1]))
@@ -187,16 +217,27 @@ ax.set_yticklabels([])
 ax.tick_params(length=0)
 
 # Label the axes and title the animation
-ax.set_xlabel('Columns of Compute Cells', fontsize=16)
-ax.set_ylabel('Rows of Compute Cells', fontsize=16)
+ax.set_xlabel("Columns of Compute Cells", fontsize=16)
+ax.set_ylabel("Rows of Compute Cells", fontsize=16)
 # Add a larger second title
-routing_algorithm = 'Dimension Ordered Horizontal First Routing'
-graph_size = 'Random Directed Graph V=36K and E=0.66M'
-plt.suptitle('Asynchronous SSSP on a CCA Chip of ' +
-             str(dim_x)+' x '+str(dim_y)+'\n'+routing_algorithm+'\n'+graph_size, fontsize=16)
+routing_algorithm = "Dimension Ordered Horizontal First Routing"
+graph_size = "Random Directed Graph V=36K and E=0.66M"
+plt.suptitle(
+    "Asynchronous SSSP on a CCA Chip of "
+    + str(dim_x)
+    + " x "
+    + str(dim_y)
+    + "\n"
+    + routing_algorithm
+    + "\n"
+    + graph_size,
+    fontsize=16,
+)
 
 
-output_filename = 'SSSP_TH_OFF_'+str(dim_x)+'x'+str(dim_y)+'_'+routing_algorithm
+output_filename = (
+    "SSSP_TH_OFF_" + str(dim_x) + "x" + str(dim_y) + "_" + routing_algorithm
+)
 # Save the animation as an MP4 file
 """ ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520) """
 
