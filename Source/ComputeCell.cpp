@@ -46,14 +46,14 @@ auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type_in,
-                                const ActionArgumentType& /*args*/) -> int
+                                const ActionArgumentType& /*args*/) -> Closure
 {
     assert(action_type_in == actionType::terminator_acknowledgement_action);
 
     auto* obj = static_cast<Object*>(cc.get_object(addr));
 
     obj->terminator.acknowledgement(cc);
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
 }
 
 // Get the object memory location at address addr_in
@@ -224,7 +224,7 @@ ComputeCell::execute_action(void* function_events)
     // TODO: later find a graceful way and then remove this `void*`
 
     if (!this->action_queue.empty()) {
-        Action const action = this->action_queue.front();
+        Action action = this->action_queue.front();
         this->action_queue.pop();
         this->statistics.action_queue_count.decrement();
 
@@ -273,32 +273,57 @@ ComputeCell::execute_action(void* function_events)
                 }
             }
             // if predicate
-            int const predicate_resolution = function_events_manager->get_function_event_handler(
-                action.predicate)(*this, action.obj_addr, action.action_type, action.args);
+            Closure const predicate_resolution =
+                function_events_manager->get_function_event_handler(action.predicate)(
+                    *this, action.obj_addr, action.action_type, action.args);
 
-            if (predicate_resolution == 1) {
+            if (function_events_manager->is_true_event(predicate_resolution.first)) {
+                this->statistics.actions_performed_work++;
+                // if (predicate_resolution == 1) {
 
                 // work
-                function_events_manager->get_function_event_handler(action.work)(
-                    *this, action.obj_addr, action.action_type, action.args);
-                this->statistics.actions_performed_work++;
+                Closure const diffuse_predicate =
+                    function_events_manager->get_function_event_handler(action.work)(
+                        *this, action.obj_addr, action.action_type, action.args);
 
                 // If there are two queues in the system (configured at compile time) then we put
                 // the diffuse closure into the diffuse_queue otherwise just run the diffusion here.
                 if constexpr (split_queues) {
-                    if (!this->diffuse_queue.push(action)) {
-                        std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
-                        exit(0);
+
+                    if (function_events_manager->is_null_event(diffuse_predicate.first)) {
+                        // do nothing
+                    } else if (function_events_manager->is_true_event(diffuse_predicate.first) &&
+                               diffuse_predicate.second == nullptr) {
+                        if (!this->diffuse_queue.push(action)) {
+                            std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
+                            exit(0);
+                        }
+                    } else { // diffuse predicate is lazy evaluated.
+                        assert(false && "Not implemented yet!");
+
+                        action.diffuse_predicate = diffuse_predicate.first;
+                        // TODO: get new arguments from `diffuse_predicate.second`
+                        if (!this->diffuse_queue.push(action)) {
+                            std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
+                            exit(0);
+                        }
                     }
+
                 } else { // Only single queue i.e. action_queue
-                    // if diffuse predicate
-                    int const diffuse_predicate_resolution =
+                         // if diffuse predicate
+                         /* int const diffuse_predicate_resolution =
+                             function_events_manager->get_function_event_handler(
+                                 action.diffuse_predicate)(
+                                 *this, action.obj_addr, action.action_type, action.args); */
+                    Closure const diffuse_predicate_resolution =
                         function_events_manager->get_function_event_handler(
-                            action.diffuse_predicate)(
+                            diffuse_predicate.first)(
                             *this, action.obj_addr, action.action_type, action.args);
 
                     // diffuse
-                    if (diffuse_predicate_resolution == 1) {
+                    if (function_events_manager->is_true_event(
+                            diffuse_predicate_resolution.first)) {
+                        // if (diffuse_predicate_resolution == 1) {
                         function_events_manager->get_function_event_handler(action.diffuse)(
                             *this, action.obj_addr, action.action_type, action.args);
                     }
@@ -361,12 +386,14 @@ ComputeCell::execute_diffusion_phase(void* function_events)
             action.action_type == actionType::germinate_action) {
 
             // if predicate
-            int predicate_resolution = function_events_manager->get_function_event_handler(
-                action.diffuse_predicate)(*this, action.obj_addr, action.action_type, action.args);
+            Closure const predicate_resolution =
+                function_events_manager->get_function_event_handler(action.diffuse_predicate)(
+                    *this, action.obj_addr, action.action_type, action.args);
             // predicate_resolution = 1;
-            if (predicate_resolution == 1) {
-                // diffuse
-                // std::cout << "running execute_diffusion_phase\n";
+            if (function_events_manager->is_true_event(predicate_resolution.first)) {
+                // if (predicate_resolution == 1) {
+                //  diffuse
+                //  std::cout << "running execute_diffusion_phase\n";
                 function_events_manager->get_function_event_handler(action.diffuse)(
                     *this, action.obj_addr, action.action_type, action.args);
 
@@ -427,11 +454,12 @@ ComputeCell::filter_diffusion(void* function_events)
             action.action_type == actionType::germinate_action) {
 
             // if predicate
-            int predicate_resolution = function_events_manager->get_function_event_handler(
+            Closure predicate_resolution = function_events_manager->get_function_event_handler(
                 action.diffuse_predicate)(*this, action.obj_addr, action.action_type, action.args);
             // predicate_resolution = 1;
-            if (predicate_resolution == 1) {
-                // put it back into the queue
+            if (function_events_manager->is_true_event(predicate_resolution.first)) {
+                // if (predicate_resolution == 1) {
+                //  put it back into the queue
                 if (!this->diffuse_queue.push(action)) {
                     std::cerr << "diffuse_queue full. How is this possible? Bug!" << std::endl;
                     exit(0);

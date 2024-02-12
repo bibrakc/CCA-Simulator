@@ -105,18 +105,18 @@ inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address& addr,
                                           actionType /* action_type_in */,
-                                          const ActionArgumentType& args) -> int
+                                          const ActionArgumentType& args) -> CCAFunctionEvent
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
     // vertices.
-    return 1;
+    return static_cast<CCAFunctionEvent>(1); // TODO: provide cc.true_event
 }
 
 inline auto
 page_rank_fixed_iterations_work_func(ComputeCell& cc,
                                      const Address& addr,
                                      actionType action_type_in,
-                                     const ActionArgumentType& args) -> int
+                                     const ActionArgumentType& args) -> CCAFunctionEvent
 {
 
     // First check whether this is a ghost vertex. If it is then don't perform any work.
@@ -125,7 +125,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 0;
+        return static_cast<CCAFunctionEvent>(1); // TODO: provide cc.true_event
     }
 
     // If the action comes from the host and is germinate action then don't update scores and just
@@ -149,7 +149,8 @@ inline auto
 page_rank_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
                                                   const Address& addr,
                                                   actionType /* action_type_in */,
-                                                  const ActionArgumentType& /*args*/) -> int
+                                                  const ActionArgumentType& /*args*/)
+    -> CCAFunctionEvent
 {
     return 1;
 }
@@ -158,7 +159,7 @@ inline auto
 page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const Address& addr,
                                         actionType /* action_type_in */,
-                                        const ActionArgumentType& /*args*/) -> int
+                                        const ActionArgumentType& /*args*/) -> CCAFunctionEvent
 {
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.

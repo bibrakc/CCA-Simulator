@@ -43,9 +43,10 @@ auto
 null_func(ComputeCell& /* cc */,
           const Address& /* addr */,
           actionType /* action_type_in */,
-          const ActionArgumentType& /*args*/) -> int
+          const ActionArgumentType& /*args*/) -> Closure
 {
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.true_event
+    // this->null_event_id;
 }
 
 // true ops event, that returns true (1).
@@ -53,15 +54,30 @@ auto
 null_true_func(ComputeCell& /* cc */,
                const Address& /* addr */,
                actionType /* action_type_in */,
-               const ActionArgumentType& /*args*/) -> int
+               const ActionArgumentType& /*args*/) -> Closure
 {
-    return 1;
+    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+    // this->null_event_true_id;
 }
 
 handler_func
 FunctionEventManager::get_acknowledgement_event_handler()
 {
     return this->event_handlers[this->acknowledgement_event_id];
+}
+
+auto
+FunctionEventManager::is_true_event(CCAFunctionEvent event) -> bool
+{
+
+    return this->event_handlers[event] == null_true_func;
+}
+
+auto
+FunctionEventManager::is_null_event(CCAFunctionEvent event) -> bool
+{
+
+    return this->event_handlers[event] == null_func;
 }
 
 auto
@@ -81,6 +97,7 @@ handler_func
 FunctionEventManager::get_function_event_handler(CCAFunctionEvent function_event_in)
 {
     assert(function_event_in < this->event_handlers.size());
+    assert(function_event_in > 0);
 
     return this->event_handlers[function_event_in];
 }

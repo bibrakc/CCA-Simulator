@@ -85,7 +85,7 @@ inline auto
 bfs_predicate_func(ComputeCell& cc,
                    const Address& addr,
                    actionType /* action_type_in */,
-                   const ActionArgumentType& args) -> int
+                   const ActionArgumentType& args) -> Closure
 {
 
     // First check whether this is a ghost vertex.If it is then always predicate true.
@@ -94,7 +94,7 @@ bfs_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 1;
+        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -103,16 +103,16 @@ bfs_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level > incoming_level) {
-        return 1;
+        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     }
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.true_event
 }
 
 inline auto
 bfs_work_func(ComputeCell& cc,
               const Address& addr,
               actionType /* action_type_in */,
-              const ActionArgumentType& args) -> int
+              const ActionArgumentType& args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
@@ -120,7 +120,7 @@ bfs_work_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 0;
+        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -130,14 +130,14 @@ bfs_work_func(ComputeCell& cc,
 
     // Update level with the new level
     v->bfs_level = incoming_level;
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
 }
 
 inline auto
 bfs_diffuse_predicate_func(ComputeCell& cc,
                            const Address& addr,
                            actionType /* action_type_in */,
-                           const ActionArgumentType& args) -> int
+                           const ActionArgumentType& args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
@@ -145,7 +145,7 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 1;
+        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -154,16 +154,16 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level == incoming_level) {
-        return 1;
+        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
     }
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
 }
 
 inline auto
 bfs_diffuse_func(ComputeCell& cc,
                  const Address& addr,
                  actionType /* action_type_in */,
-                 const ActionArgumentType& args) -> int
+                 const ActionArgumentType& args) -> Closure
 {
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
@@ -223,7 +223,7 @@ bfs_diffuse_func(ComputeCell& cc,
                           bfs_diffuse));
     }
 
-    return 0;
+    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
 }
 
 inline void
