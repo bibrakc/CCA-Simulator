@@ -132,6 +132,8 @@ CCASimulator::create_square_cell_htree_chip()
                     std::make_shared<ComputeCell>(cc_id,
                                                   CellType::compute_cell,
                                                   shape_of_compute_cells,
+                                                  this->function_events.null_event_id,
+                                                  this->function_events.null_event_true_id,
                                                   this->dim_x,
                                                   this->dim_y,
                                                   this->hx,
@@ -166,18 +168,21 @@ CCASimulator::create_square_cell_mesh_only_chip()
             u_int32_t const cc_id = i * this->dim_y + j;
 
             // Create individual compute cells of computeCellShape shape_of_compute_cells
-            this->CCA_chip.push_back(std::make_shared<ComputeCell>(cc_id,
-                                                                   CellType::compute_cell,
-                                                                   shape_of_compute_cells,
-                                                                   this->dim_x,
-                                                                   this->dim_y,
-                                                                   this->hx,
-                                                                   this->hy,
-                                                                   this->hdepth,
-                                                                   this->memory_per_cc,
-                                                                   this->host_memory,
-                                                                   this->primary_network_type,
-                                                                   this->mesh_routing_policy_id));
+            this->CCA_chip.push_back(
+                std::make_shared<ComputeCell>(cc_id,
+                                              CellType::compute_cell,
+                                              shape_of_compute_cells,
+                                              this->function_events.null_event_id,
+                                              this->function_events.null_event_true_id,
+                                              this->dim_x,
+                                              this->dim_y,
+                                              this->hx,
+                                              this->hy,
+                                              this->hdepth,
+                                              this->memory_per_cc,
+                                              this->host_memory,
+                                              this->primary_network_type,
+                                              this->mesh_routing_policy_id));
 
             if constexpr (debug_code) {
                 std::cout << *this->CCA_chip.back().get();

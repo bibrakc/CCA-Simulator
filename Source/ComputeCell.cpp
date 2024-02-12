@@ -309,11 +309,6 @@ ComputeCell::execute_action(void* function_events)
                     }
 
                 } else { // Only single queue i.e. action_queue
-                         // if diffuse predicate
-                    /* int const diffuse_predicate_resolution =
-                        function_events_manager->get_function_event_handler(
-                            action.diffuse_predicate)(
-                            *this, action.obj_addr, action.action_type, action.args); */
 
                     if (function_events_manager->is_null_event(diffuse_predicate.first)) {
                         // do nothing

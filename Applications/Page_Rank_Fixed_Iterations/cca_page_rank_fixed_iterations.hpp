@@ -207,19 +207,29 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
     bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
 
-    assert(this_is_ghost_vertex == false && "There is ghost");
+    //assert(this_is_ghost_vertex == false && "There is ghost");
 
     auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
-    /* PageRankFixedIterationsArguments my_score_to_send;
-    my_score_to_send.score =
-        v->page_rank_current_rank_score / static_cast<double>(v->outbound_degree);
+    // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
+    // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
+    for (u_int32_t ghosts_iterator = 0;
+         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator++) {
+        if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
-    my_score_to_send.src_vertex_id = v->id; */
-
-    /* PageRankFixedIterationsArguments const page_rank_args =
-            cca_get_action_argument<PageRankFixedIterationsArguments>(args); */
+            cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args,
+                              page_rank_fixed_iterations_predicate,
+                              page_rank_fixed_iterations_work,
+                              page_rank_fixed_iterations_diffuse_predicate,
+                              page_rank_fixed_iterations_diffuse));
+        }
+    }
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
