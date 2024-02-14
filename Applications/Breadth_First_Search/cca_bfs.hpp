@@ -94,7 +94,7 @@ bfs_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -103,9 +103,9 @@ bfs_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level > incoming_level) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
@@ -120,7 +120,7 @@ bfs_work_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -130,7 +130,7 @@ bfs_work_func(ComputeCell& cc,
 
     // Update level with the new level
     v->bfs_level = incoming_level;
-    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+    return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto
@@ -145,7 +145,7 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -154,9 +154,9 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level == incoming_level) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
@@ -223,7 +223,7 @@ bfs_diffuse_func(ComputeCell& cc,
                           bfs_diffuse));
     }
 
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline void

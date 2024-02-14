@@ -109,7 +109,7 @@ page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
 {
     // Set to always true. Since the idea is to accumulate the scores per iteration from all inbound
     // vertices.
-    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+    return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto
@@ -125,7 +125,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
@@ -162,8 +162,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 
         // Return diffuse closure
         v->has_current_iteration_diffused = true;
-        return Closure(static_cast<CCAFunctionEvent>(1),
-                       args_diffuse_closure); // TODO: provide cc.true_event
+        return Closure(cc.null_true_event, args_diffuse_closure);
     }
 
     // Reset.
@@ -183,7 +182,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         v->page_rank_current_iteration++;
     }
 
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
@@ -192,7 +191,7 @@ page_rank_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
                                                   actionType /* action_type_in */,
                                                   const ActionArgumentType /*args*/) -> Closure
 {
-    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
+    return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto
@@ -206,8 +205,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
     auto* parent_recursive_parralel_vertex =
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
     bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
-
-    //assert(this_is_ghost_vertex == false && "There is ghost");
 
     auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
@@ -233,9 +230,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        /*  ActionArgumentType const args_x =
-             cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send); */
-
         // Diffuse.
         cc.diffuse(Action(v->edges[i].edge,
                           addr,
@@ -252,7 +246,7 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                   << ", page_rank_current_iteration: " << v->page_rank_current_iteration
                   << std::endl; */
 
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline void
@@ -308,7 +302,207 @@ configure_parser(cli::Parser& parser)
         "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
+    parser.set_optional<u_int32_t>(
+        "mesh", "mesh_type", 0, "Type of the mesh:\n\t0: Regular\n\t1: Torus.");
+
     parser.set_optional<u_int32_t>("route", "routing_policy", 0, "Routing algorithm to use.");
+
+    parser.set_optional<bool>(
+        "shuffle",
+        "shuffle_vertices",
+        0,
+        "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex "
+        "IDs. This appears to be the case for certain RMAT graphs.");
+}
+
+struct PageRankFixedIterationsCommandLineArguments
+{
+    // Which vertex diffuses the seed action? root vertex.
+    u_int32_t root_vertex{};
+    // How many iterations.
+    u_int32_t iter{};
+    // Whether to cross check the calculated page rank in .pagerank file.
+    bool verify_results{};
+    // Configuration related to the input data graph.
+    std::string input_graph_path;
+    std::string graph_name;
+    // Optional output directory path.
+    std::string output_file_directory;
+    // Get the depth of Htree.
+    u_int32_t hdepth{};
+
+    // Get the rows and columbs of cells that are served by a single end Htree node. This will
+    // help in construction of the CCA chip, Htree, and routing.
+    u_int32_t hx{};
+    u_int32_t hy{};
+
+    // Get the max bandwidth of Htree.
+    u_int32_t hbandwidth_max{};
+
+    // Configuration related to the CCA Chip.
+    std::string shape_arg;
+    computeCellShape shape_of_compute_cells;
+
+    // Get the memory per cc or use the default.
+    u_int32_t memory_per_cc{};
+
+    // Mesh type.
+    u_int32_t mesh_type{};
+
+    // Get the routing policy to use.
+    u_int32_t routing_policy{};
+
+    // To shuffle or to not shuffle the vertex ID list.
+    bool shuffle_switch{};
+
+    PageRankFixedIterationsCommandLineArguments(cli::Parser& parser)
+        : root_vertex(parser.get<u_int32_t>("root"))
+        , iter(parser.get<u_int32_t>("iter"))
+        , verify_results(parser.get<bool>("verify"))
+        , input_graph_path(parser.get<std::string>("f"))
+        , graph_name(parser.get<std::string>("g"))
+        , output_file_directory(parser.get<std::string>("od"))
+        , hdepth(parser.get<u_int32_t>("hdepth"))
+        , hx(parser.get<u_int32_t>("hx"))
+        , hy(parser.get<u_int32_t>("hy"))
+        , hbandwidth_max(parser.get<u_int32_t>("hb"))
+        , shape_arg(parser.get<std::string>("s"))
+        , shape_of_compute_cells(computeCellShape::computeCellShape_invalid)
+        , memory_per_cc(parser.get<u_int32_t>("m"))
+        , mesh_type(parser.get<u_int32_t>("mesh"))
+        , routing_policy(parser.get<u_int32_t>("route"))
+        , shuffle_switch(parser.get<bool>("shuffle"))
+    {
+
+        if (hdepth != 0) {
+            if (!(hx % 2)) {
+                std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
+                exit(0);
+            }
+            if (!(hy % 2)) {
+                std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
+                exit(0);
+            }
+        }
+
+        if (hdepth == 0) {
+            hbandwidth_max = 0;
+        }
+
+        if (shape_arg == "square") {
+            shape_of_compute_cells = computeCellShape::square;
+        } else {
+            std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
+            exit(0);
+        }
+    }
+};
+
+template<typename NodeType>
+inline void
+verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
+               Graph<NodeType>& input_graph,
+               const CCASimulator& cca_simulator)
+{
+
+    std::cout << "\nPage Rank Fixed Iterations Verification: \n";
+
+    // Open the file containing pagerank results for verification.
+    std::string verfication_file_path = cmd_args.input_graph_path + ".pagerank";
+    std::ifstream file(verfication_file_path);
+
+    if (!file.is_open()) {
+        std::cout << "Failed to open the verification file: " << verfication_file_path << "\n";
+
+    } else {
+
+        std::vector<double> control_results;
+        std::string line;
+        int node_id;
+        double pagerank_value;
+
+        while (std::getline(file, line)) {
+
+            // When there are vertices with in-degree zero then they are not present in the
+            // .pagerank file. Therefore, the vertification will fail in that case.
+            // TODO: Need to add the case.
+            if (std::sscanf(line.c_str(), "%d\t%lf", &node_id, &pagerank_value) == 2) {
+                control_results.emplace_back(pagerank_value);
+            }
+        }
+
+        file.close();
+
+        // Print the stored node and rank values
+        /*  for (u_int32_t i = 0; i < control_results.size(); i++) {
+             std::cout << "Node: " << i << ", Pagerank: " << control_results[i] << "\n";
+         } */
+        double tolerance = 0.00001;
+        u_int32_t total_values_exceeding_tolerance = 0;
+        for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
+
+            // Check for correctness. Print the distance to a target test vertex. test_vertex
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+
+            auto* v_test =
+                static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+                    cca_simulator.get_object(test_vertex_addr));
+            double difference =
+                std::fabs(control_results[i] - v_test->page_rank_current_rank_score);
+            if (difference > tolerance) {
+                std::cout << "Vertex: " << i
+                          << ", Computed Pagerank: " << v_test->page_rank_current_rank_score
+                          << ", Control Value: " << control_results[i]
+                          << ", Exceeds tolerance. Difference: " << difference << "\n";
+
+                total_values_exceeding_tolerance++;
+            }
+        }
+
+        if (total_values_exceeding_tolerance > 0) {
+            std::cout << "Total number values that exceeded tolerance: "
+                      << total_values_exceeding_tolerance << ", Verification Failed\n";
+        } else {
+            std::cout << "All values were within tolerance. Verification Successful.\n";
+        }
+    }
+}
+
+// Write simulation statistics to a file.
+template<typename NodeType>
+inline void
+write_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
+              Graph<NodeType>& input_graph,
+              CCASimulator& cca_simulator)
+{
+
+    std::string const output_file_name = "pagerank_graph_" + cmd_args.graph_name + "_v_" +
+                                         std::to_string(input_graph.total_vertices) + "_e_" +
+                                         std::to_string(input_graph.total_edges) +
+                                         cca_simulator.key_configurations_string();
+
+    std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
+    std::cout << "\nWriting results to output file: " << output_file_path << "\n";
+
+    std::ofstream output_file(output_file_path);
+    if (!output_file) {
+        std::cerr << "Error! Output file not created\n";
+    }
+
+    // Output input graph details in the header of the statistics for us to know which input graph
+    // it operated on.
+    output_file << "graph_file\tvertices\tedges\troot_vertex\n"
+                << cmd_args.input_graph_path << "\t" << input_graph.total_vertices << "\t"
+                << input_graph.total_edges << "\t" << cmd_args.root_vertex << "\n";
+
+    // Ask the simulator to print its statistics to the `output_file`.
+    cca_simulator.print_statistics(output_file);
+
+    // Close the output file
+    output_file.close();
+
+    // Print the animation of active status of each CC per cycle.
+    cca_simulator.print_animation(output_file_path);
 }
 
 #endif // CCA_Page_Rank_Fixed_Iterations_HPP

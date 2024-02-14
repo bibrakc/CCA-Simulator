@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CCAFunctionEvents.hpp"
 #include "Address.hpp"
+#include "ComputeCell.hpp"
 #include "Function.hpp"
 #include "Object.hpp"
 
@@ -40,24 +41,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // null event, that returns false (0).
 auto
-null_func(ComputeCell& /* cc */,
+null_func(ComputeCell& cc,
           const Address& /* addr */,
           actionType /* action_type_in */,
           const ActionArgumentType /*args*/) -> Closure
 {
-    return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.true_event
-    // this->null_event_id;
+    return Closure(cc.null_false_event, nullptr);
 }
 
 // true ops event, that returns true (1).
 auto
-null_true_func(ComputeCell& /* cc */,
+null_true_func(ComputeCell& cc,
                const Address& /* addr */,
                actionType /* action_type_in */,
                const ActionArgumentType /*args*/) -> Closure
 {
-    return Closure(static_cast<CCAFunctionEvent>(1), nullptr); // TODO: provide cc.true_event
-    // this->null_event_true_id;
+    return Closure(cc.null_true_event, nullptr);
 }
 
 handler_func
