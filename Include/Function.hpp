@@ -44,33 +44,37 @@ using CCAFunctionEvent = u_int32_t;
 
 using ActionArgumentType = std::shared_ptr<char[]>;
 
+// Returned by action functions (especially the work function).
+// The second element ActionArgumentType are arguments to the diffuse function.
+using Closure = std::pair<CCAFunctionEvent, ActionArgumentType>;
+
 // Forward declare.
 class ComputeCell;
 
 // TODO: Maybe later convert these to `std::function`
-using handler_func = int (*)(ComputeCell& cc,
-                             const Address& addr,
-                             actionType action_type,
-                             const ActionArgumentType& args);
+using handler_func = Closure (*)(ComputeCell& cc,
+                                 const Address& addr,
+                                 actionType action_type,
+                                 const ActionArgumentType args);
 
 // Recieved an acknowledgement message back. Decreament my deficit.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
                                 const Address& addr,
                                 actionType action_type,
-                                const ActionArgumentType& args) -> int;
+                                const ActionArgumentType args) -> Closure;
 
 // null event.
 auto
 null_func(ComputeCell& /* cc */,
           const Address& /* addr */,
           actionType /* action_type_in */,
-          const ActionArgumentType& /*args*/) -> int;
+          const ActionArgumentType /*args*/) -> Closure;
 
 auto
 null_true_func(ComputeCell& /* cc */,
                const Address& /* addr */,
                actionType /* action_type_in */,
-               const ActionArgumentType& /*args*/) -> int;
+               const ActionArgumentType /*args*/) -> Closure;
 
 #endif // FUNCTION_HPP

@@ -65,7 +65,7 @@ struct BFSArgumentsEdgeInsertContinuation
     Address dst_vertex_addr;
     u_int32_t edge_weight;
 
-    u_int32_t root_vertex;
+    u_int32_t root_vertex; // Perhaps not needed.
 };
 
 template<typename Vertex_T>
@@ -119,7 +119,7 @@ inline auto
 dynamic_bfs_predicate_func(ComputeCell& cc,
                            const Address& addr,
                            actionType /* action_type_in */,
-                           const ActionArgumentType& args) -> int
+                           const ActionArgumentType args) -> Closure
 {
 
     // First check whether this is a ghost vertex.If it is then always predicate true.
@@ -128,7 +128,7 @@ dynamic_bfs_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 1;
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -137,16 +137,16 @@ dynamic_bfs_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level > incoming_level) {
-        return 1;
+        return Closure(cc.null_true_event, nullptr);
     }
-    return 0;
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
 dynamic_bfs_work_func(ComputeCell& cc,
                       const Address& addr,
                       actionType /* action_type_in */,
-                      const ActionArgumentType& args) -> int
+                      const ActionArgumentType args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
@@ -154,7 +154,7 @@ dynamic_bfs_work_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 0;
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -162,22 +162,16 @@ dynamic_bfs_work_func(ComputeCell& cc,
 
     u_int32_t const incoming_level = bfs_args.level;
 
-    /* if (v->id == 402) {
-        std::cout << "dynamic_bfs_work_func: incoming_level: " << incoming_level
-                  << ", src: " << bfs_args.src_vertex_id << ", old v->bfs_level: " << v->bfs_level
-                  << "\n";
-    } */
-
     // Update level with the new level
     v->bfs_level = incoming_level;
-    return 0;
+    return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto
 dynamic_bfs_diffuse_predicate_func(ComputeCell& cc,
                                    const Address& addr,
                                    actionType /* action_type_in */,
-                                   const ActionArgumentType& args) -> int
+                                   const ActionArgumentType args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
@@ -185,7 +179,7 @@ dynamic_bfs_diffuse_predicate_func(ComputeCell& cc,
         static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return 1;
+        return Closure(cc.null_true_event, nullptr);
     }
 
     auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
@@ -194,16 +188,16 @@ dynamic_bfs_diffuse_predicate_func(ComputeCell& cc,
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level == incoming_level) {
-        return 1;
+        return Closure(cc.null_true_event, nullptr);
     }
-    return 0;
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
 dynamic_bfs_diffuse_func(ComputeCell& cc,
                          const Address& addr,
                          actionType /* action_type_in */,
-                         const ActionArgumentType& args) -> int
+                         const ActionArgumentType args) -> Closure
 {
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
@@ -263,14 +257,14 @@ dynamic_bfs_diffuse_func(ComputeCell& cc,
                           dynamic_bfs_diffuse));
     }
 
-    return 0;
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
 dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
                                           const Address& addr,
                                           actionType /* action_type_in */,
-                                          const ActionArgumentType& args) -> int
+                                          const ActionArgumentType args) -> Closure
 {
 
     BFSArgumentsEdgeInsertContinuation const bfs_args =
@@ -303,7 +297,7 @@ dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
                       dynamic_bfs_diffuse_predicate,
                       dynamic_bfs_diffuse));
 
-    return 0;
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline void

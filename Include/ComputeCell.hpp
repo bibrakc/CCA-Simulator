@@ -102,6 +102,10 @@ class ComputeCell : public Cell
     // of `std::optional`
     std::optional<Coordinates> sink_cell;
 
+    // Used in predicate and work functions of app as they return Closures.
+    CCAFunctionEvent null_false_event;
+    CCAFunctionEvent null_true_event;
+
     // Memory of the Compute Cell in bytes.
     u_int32_t memory_size_in_bytes;
 
@@ -140,6 +144,8 @@ class ComputeCell : public Cell
     ComputeCell(u_int32_t id_in,
                 CellType type_in,
                 computeCellShape shape_in,
+                CCAFunctionEvent null_false_event_in,
+                CCAFunctionEvent null_true_event_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
                 u_int32_t hx_in,
@@ -157,6 +163,9 @@ class ComputeCell : public Cell
 
         this->shape = shape_in;
         this->number_of_neighbors = ComputeCell::get_number_of_neighbors(this->shape);
+
+        this->null_false_event = null_false_event_in;
+        this->null_true_event = null_true_event_in;
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
