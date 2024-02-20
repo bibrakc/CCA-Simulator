@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -148,6 +148,23 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
         cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send);
 
     v->has_current_iteration_diffused = true;
+
+    // Reset.
+    if (0 == v->inbound_degree) {
+
+        // Update the page rank score.
+        v->page_rank_current_rank_score =
+            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices));
+
+        // Reset.
+        v->current_iteration_rank_score = 0.0;
+        v->current_iteration_incoming_count = 0;
+        v->has_current_iteration_diffused = false;
+
+        // Increament the global iteration count.
+        v->page_rank_current_iteration++;
+    }
+
     // Return diffuse closure
     return Closure(cc.null_true_event, args_diffuse_closure);
 }
@@ -173,27 +190,8 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
-    /* { // if (v->page_rank_current_iteration > 1) {
-        PageRankFixedIterationsArguments const page_rank_args =
-            cca_get_action_argument<PageRankFixedIterationsArguments>(args);
-        if (v->id == 204 || v->id == 538)
-            std::cout << "cc: " << cc.id << ", vertex: " << v->id
-                      << ", inbound: " << v->inbound_degree
-                      << ", page_rank_current_iteration: " << v->page_rank_current_iteration
-                      << ", page_rank_args.iteration: " << page_rank_args.iteration
-                      << ", who sent: " << page_rank_args.src_vertex_id << std::endl;
-    } */
-
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
-
-    /* if (v->page_rank_current_iteration != page_rank_args.iteration) {
-        std::cout << "vertex: " << v->id << ", inbound: " << v->inbound_degree
-                  << ", page_rank_current_iteration: " << v->page_rank_current_iteration
-                  << ", page_rank_args.iteration: " << page_rank_args.iteration
-                  << ", who sent: " << page_rank_args.src_vertex_id << std::endl;
-        exit(0);
-    } */
 
     // Update partial new score with the new incoming score.
     v->current_iteration_rank_score += page_rank_args.score;
@@ -201,12 +199,7 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 
     Closure diffuse_closure_to_return(cc.null_false_event, nullptr);
 
-    // if (v->current_iteration_incoming_count == 1) {
     if (!v->has_current_iteration_diffused) {
-        /* if (v->id == 538 || v->id == 204) {
-            std::cout << "vertex: " << v->id << " Diffusing, page_rank_current_iteration: "
-                      << v->page_rank_current_iteration << std::endl;
-        } */
 
         PageRankFixedIterationsArguments my_score_to_send;
 
@@ -224,12 +217,6 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         // Return diffuse closure
         diffuse_closure_to_return = Closure(cc.null_true_event, args_diffuse_closure);
     }
-
-    /* if (v->id == 204) {
-        std::cout << "vertex: " << v->id
-                  << " v->current_iteration_incoming_count: " << v->current_iteration_incoming_count
-                  << " v->inbound_degree: " << v->inbound_degree << std::endl;
-    } */
 
     // Reset.
     if (v->current_iteration_incoming_count == v->inbound_degree) {
@@ -267,11 +254,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const ActionArgumentType args) -> Closure
 {
 
-    // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
-    /* auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
-    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex; */
-
     auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
@@ -296,11 +278,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        /* if (v->id == 538) {
-            std::cout << "\tvertex: " << v->id << " Inside diffuse, page_rank_current_iteration: "
-                      << v->page_rank_current_iteration
-                      << ", sending to:  v->edges[i].edge: " << v->edges[i].edge << std::endl;
-        } */
         // Diffuse.
         cc.diffuse(Action(v->edges[i].edge,
                           addr,
@@ -312,10 +289,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                           page_rank_fixed_iterations_diffuse_predicate,
                           page_rank_fixed_iterations_diffuse));
     }
-    /* if (v->id == 1)
-        std::cout << "vertex: " << v->id << ", inbound: " << v->inbound_degree
-                  << ", page_rank_current_iteration: " << v->page_rank_current_iteration
-                  << std::endl; */
 
     return Closure(cc.null_false_event, nullptr);
 }

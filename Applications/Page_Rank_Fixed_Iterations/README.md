@@ -18,14 +18,13 @@ To compile the application, execute the following `cmake` commands to generate t
 - `-D RECVBUFFSIZE=<int value>`: sets the size of the buffers at each channel of the compute cell.
 
 ## Executing
-Assuming the current directory is `/Applications/Page_Rank_Fixed_Iterations`, and `-iter 5` iterations to perform. `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file.
-### Using Low-Latency Network (Htree)
+Assuming the current directory is `/Applications/Page_Rank_Fixed_Iterations`, and `-iter 5` iterations to perform. 
+- `-verify` is optional but when enabled reads from an acompanying `.pagerank` file that contains precomputed pagerank values. So, make sure to have that file.
+- Make sure to have the output `-od ./Output` directory created before runing the application.
+### Using Pure Mesh or Torus-Mesh Netowrk
+> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 3 -m 90000 -hx 48 -hy 48 -hdepth 0 -hb 0 -route 0 -iter 5 -verify`
+### Using Low-Latency Network (Htree) - NOT TESTED!!
 > `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 3 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 128 -route 0 -iter 5 -verify`
 
-### Using Pure Mesh Netowrk
-> `$ ./build/PageRank_Fixed_Iterations_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 3 -m 90000 -hx 48 -hy 48 -hdepth 0 -hb 0 -route 0 -iter 5 -verify`
-
-- Make sure to have the output `-od ./Output` directory created before runing the application.
-
-## Limitations
-For a directed graph there must not be any vertex with zero inbound degree. If such a case arises, the vertex will remain inactive and consequently not contribute to the score. Moreover, this inactive vertex might hinder the update of scores for other vertices, as they depend on the activation of this vertex.
+## A Note on Verification
+The `netwokx` code used to compute the page rank has a parameter called `tol` for tolerance. If it is low and in our test runs we use a higher number of iterations `-iter` then our solutions might be better and thus verification will throw errors for correctness. Make sure both are meaningful.

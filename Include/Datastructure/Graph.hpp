@@ -359,20 +359,6 @@ class Graph
                 }
             }
         }
-
-        // TODO: REMOVE
-        /* auto* vertex = static_cast<VertexTypeOfAddress*>(
-            cca_simulator.get_object(this->vertex_addresses[538]));
-        std::cout << "\n\n Inside CCA chip: Edges for 538\n";
-        std::cout << "The type of VertexTypeOfAddress is: " << typeid(VertexTypeOfAddress).name()
-                  << std::endl;
-        for (int q = 0; q < vertex->outbound_degree; q++) {
-            auto* vertex_target =
-                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(vertex->edges[q].edge));
-
-            std::cout << "\tvertex target: " << vertex_target->id
-                      << ", vertex->edges[q].edge: " << vertex->edges[q].edge << "\n";
-        } */
     }
 
     template<class VertexTypeOfAddress>
@@ -582,8 +568,7 @@ class Graph
             u_int32_t const src_vertex_id = new_edges[i].from;
             u_int32_t const dst_vertex_id = new_edges[i].to;
             u_int32_t const edge_weight = new_edges[i].weight;
-            /* std::cout << "\n\nsrc: " << src_vertex_id << ", dst: " << dst_vertex_id
-                      << ", weight: " << edge_weight << "\n"; */
+
             if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
                     cca_simulator,
                     /*  allocator, */
@@ -634,14 +619,8 @@ class Graph
         u_int32_t weight = 0;
         for (int i = 0; i < this->total_edges; i++) {
             fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
-            // TODO: REMOVE
-            /* if (vertex_from == 538) {
-                std::cout << "read from: " << vertex_from << ", to: " << vertex_to << std::endl;
-            } */
             this->add_edge(this->vertices[vertex_from], vertex_to, weight);
         }
-        // TODO: REMOVE
-        // std::cout << std::endl << std::endl;
         fclose(input_graph_file_handler);
     }
 
