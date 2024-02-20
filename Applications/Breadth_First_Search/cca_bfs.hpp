@@ -83,7 +83,7 @@ struct BFSArguments
 
 inline auto
 bfs_predicate_func(ComputeCell& cc,
-                   const Address& addr,
+                   const Address addr,
                    actionType /* action_type_in */,
                    const ActionArgumentType args) -> Closure
 {
@@ -110,7 +110,7 @@ bfs_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_work_func(ComputeCell& cc,
-              const Address& addr,
+              const Address addr,
               actionType /* action_type_in */,
               const ActionArgumentType args) -> Closure
 {
@@ -135,7 +135,7 @@ bfs_work_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_predicate_func(ComputeCell& cc,
-                           const Address& addr,
+                           const Address addr,
                            actionType /* action_type_in */,
                            const ActionArgumentType args) -> Closure
 {
@@ -161,7 +161,7 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_func(ComputeCell& cc,
-                 const Address& addr,
+                 const Address addr,
                  actionType /* action_type_in */,
                  const ActionArgumentType args) -> Closure
 {

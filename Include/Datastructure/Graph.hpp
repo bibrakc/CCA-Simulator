@@ -245,9 +245,9 @@ class Graph
             cca_simulator, src_vertex_addr.cc_id, true); // true: meaning it is rhizome
     }
 
-    std::vector<int> make_vertices_list(std::optional<u_int32_t> start_vertex_id,
-                                        bool shuffle_enabled,
-                                        int total_vertices)
+    std::vector<u_int32_t> make_vertices_list(std::optional<u_int32_t> start_vertex_id,
+                                              bool shuffle_enabled,
+                                              int total_vertices)
     {
         u_int32_t starting_vertex_id = 0;
         if (start_vertex_id.has_value()) {
@@ -259,11 +259,11 @@ class Graph
         }
 
         // Create a vector of ids of all vertices values from root to N cyclically
-        std::vector<int> vertex_ids;
-        for (int i = starting_vertex_id; i <= this->total_vertices; ++i) {
+        std::vector<u_int32_t> vertex_ids;
+        for (u_int32_t i = starting_vertex_id; i <= this->total_vertices; ++i) {
             vertex_ids.push_back(i);
         }
-        for (int i = 0; i < starting_vertex_id; ++i) {
+        for (u_int32_t i = 0; i < starting_vertex_id; ++i) {
             vertex_ids.push_back(i);
         }
 
@@ -302,8 +302,7 @@ class Graph
         static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
                       "edge type must be of type Address");
 
-        // TODO: Perhaps this `int` must become `u_int32_t`
-        std::vector<int> vertex_ids =
+        std::vector<u_int32_t> vertex_ids =
             make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
@@ -360,6 +359,20 @@ class Graph
                 }
             }
         }
+
+        // TODO: REMOVE
+        /* auto* vertex = static_cast<VertexTypeOfAddress*>(
+            cca_simulator.get_object(this->vertex_addresses[538]));
+        std::cout << "\n\n Inside CCA chip: Edges for 538\n";
+        std::cout << "The type of VertexTypeOfAddress is: " << typeid(VertexTypeOfAddress).name()
+                  << std::endl;
+        for (int q = 0; q < vertex->outbound_degree; q++) {
+            auto* vertex_target =
+                static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(vertex->edges[q].edge));
+
+            std::cout << "\tvertex target: " << vertex_target->id
+                      << ", vertex->edges[q].edge: " << vertex->edges[q].edge << "\n";
+        } */
     }
 
     template<class VertexTypeOfAddress>
@@ -621,8 +634,14 @@ class Graph
         u_int32_t weight = 0;
         for (int i = 0; i < this->total_edges; i++) {
             fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
+            // TODO: REMOVE
+            /* if (vertex_from == 538) {
+                std::cout << "read from: " << vertex_from << ", to: " << vertex_to << std::endl;
+            } */
             this->add_edge(this->vertices[vertex_from], vertex_to, weight);
         }
+        // TODO: REMOVE
+        // std::cout << std::endl << std::endl;
         fclose(input_graph_file_handler);
     }
 

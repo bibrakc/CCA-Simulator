@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Declare the function event ids for the Page Rank Fixed Iterations action functions of predicate,
 // work, and diffuse. In the main register the functions and get their ids
 CCAFunctionEvent page_rank_fixed_iterations_predicate;
+CCAFunctionEvent page_rank_fixed_iterations_germinate_work;
 CCAFunctionEvent page_rank_fixed_iterations_work;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse_predicate;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse;
@@ -113,6 +114,8 @@ main(int argc, char** argv) -> int
     // Register the Page Rank Fixed Iterations action functions for predicate, work, and diffuse.
     page_rank_fixed_iterations_predicate =
         cca_square_simulator.register_function_event(page_rank_fixed_iterations_predicate_func);
+    page_rank_fixed_iterations_germinate_work = cca_square_simulator.register_function_event(
+        page_rank_fixed_iterations_germinate_work_func);
     page_rank_fixed_iterations_work =
         cca_square_simulator.register_function_event(page_rank_fixed_iterations_work_func);
     page_rank_fixed_iterations_diffuse_predicate = cca_square_simulator.register_function_event(
@@ -128,17 +131,18 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
-    // Prepare the arguments (payload) for the actions.
-    PageRankFixedIterationsArguments root_score_to_send;
-    root_score_to_send.score = -10;
-    root_score_to_send.src_vertex_id = 99999;
-
-    ActionArgumentType const args_x =
-        cca_create_action_argument<PageRankFixedIterationsArguments>(root_score_to_send);
-
     u_int32_t total_program_cycles = 0;
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < cmd_args.iter; iterations++) {
+
+        // Prepare the arguments (payload) for the actions.
+        PageRankFixedIterationsArguments root_score_to_send;
+        root_score_to_send.score = -10;
+        root_score_to_send.src_vertex_id = 999999;
+        root_score_to_send.iteration = iterations;
+
+        ActionArgumentType const args_x =
+            cca_create_action_argument<PageRankFixedIterationsArguments>(root_score_to_send);
 
         // Insert a seed action into the CCA chip that will help start the diffusion.
         cca_square_simulator.germinate_action(Action(vertex_addr,
@@ -147,7 +151,7 @@ main(int argc, char** argv) -> int
                                                      true,
                                                      args_x,
                                                      page_rank_fixed_iterations_predicate,
-                                                     page_rank_fixed_iterations_work,
+                                                     page_rank_fixed_iterations_germinate_work,
                                                      page_rank_fixed_iterations_diffuse_predicate,
                                                      page_rank_fixed_iterations_diffuse));
 
@@ -175,7 +179,7 @@ main(int argc, char** argv) -> int
                        true,
                        args_to_zero_in_degree,
                        page_rank_fixed_iterations_predicate,
-                       page_rank_fixed_iterations_work,
+                       page_rank_fixed_iterations_germinate_work,
                        page_rank_fixed_iterations_diffuse_predicate,
                        page_rank_fixed_iterations_diffuse));
 

@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Recieved an acknowledgement message back. Decreament my deficit.
 auto
 terminator_acknowledgement_func(ComputeCell& cc,
-                                const Address& addr,
+                                const Address addr,
                                 actionType action_type_in,
                                 const ActionArgumentType /*args*/) -> Closure
 {
@@ -300,8 +300,9 @@ ComputeCell::execute_action(void* function_events)
                         }
                     } else { // diffuse predicate is lazy evaluated.
 
+                        // Get new arguments from `diffuse_predicate.second`.
                         action.args = diffuse_predicate.second;
-                        // TODO: get new arguments from `diffuse_predicate.second`
+
                         if (!this->diffuse_queue.push(action)) {
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
                             exit(0);
