@@ -135,6 +135,19 @@ main(int argc, char** argv) -> int
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t iterations = 0; iterations < cmd_args.iter; iterations++) {
 
+        {
+            std::cout << "Germinating " << vertices_inbound_degree_zero.size()
+                      << " vertices who have indegree of 0: [";
+            // Print the contents of vertices_inbound_degree_zero
+            for (size_t i = 0; i < vertices_inbound_degree_zero.size(); ++i) {
+                std::cout << vertices_inbound_degree_zero[i];
+                if (i != vertices_inbound_degree_zero.size() - 1) {
+                    std::cout << ", ";
+                }
+            }
+            std::cout << "]" << std::endl;
+        }
+
         // Prepare the arguments (payload) for the actions.
         PageRankFixedIterationsArguments root_score_to_send;
         root_score_to_send.score = -10;
@@ -185,16 +198,7 @@ main(int argc, char** argv) -> int
 
             // std::cout << "Germinated Vertices with degree value 0: " << vertex_id << "\n";
         }
-        std::cout << "Germinated " << vertices_inbound_degree_zero.size()
-                  << " vertices who have indegree of 0: [";
-        // Print the contents of vertices_inbound_degree_zero
-        for (size_t i = 0; i < vertices_inbound_degree_zero.size(); ++i) {
-            std::cout << vertices_inbound_degree_zero[i];
-            if (i != vertices_inbound_degree_zero.size() - 1) {
-                std::cout << ", ";
-            }
-        }
-        std::cout << "]" << std::endl;
+
         std::cout << "\nIteration: " << iterations << ", Starting Execution on the CCA Chip\n\n";
 
         cca_square_simulator.run_simulation(page_rank_fixed_iterations_terminator.value());
