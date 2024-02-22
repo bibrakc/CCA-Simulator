@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -57,6 +57,10 @@ inline constexpr bool active_percent_switch = ACTIVE_PERCENT;
 
 // Compile with: -DACTIONQUEUESIZE=<int value> (use 64 or more/less or whatever).
 inline constexpr u_int32_t action_queue_size = ACTIONQUEUESIZE;
+
+// Compile with: -DDIFFUSE_QUEUE_SIZE=<int value> (use 4096 or more/less or whatever).
+// TODO: BUG MAY HAPPEN --> If small chip size and diffuse_queue_size small then compute cells might deadlock.
+inline constexpr u_int32_t diffuse_queue_size = DIFFUSE_QUEUE_SIZE;
 
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
