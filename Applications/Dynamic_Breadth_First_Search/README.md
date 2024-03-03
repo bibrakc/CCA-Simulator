@@ -10,7 +10,8 @@ To compile the application, execute the following `cmake` commands to generate t
 - `-D THROTTLE=true/false`: for enabling throttle of diffusion to mitigate congestion.
 - `-D ANIMATION=true/false`: for recording and writing the simulation animation data. To be used by `../Analytics/Animations/cca_chip_active_status_animation.py`
 - `-D ACTIVE_PERCENT=true/false`: for recording and writing the simulation active status as percentage for each cycle. To be used by `../Analytics/Post_Processing/post_processing.py`
-- `-D ACTIONQUEUESIZE=<int value>`: side of the action queue. Use `1024` or more/less or whatever. Currently, the Dynamic BFS will return error if the action queue gets full when germinating action on compute cell. So make sure to have it large enought for the experiments. This can be later fixed by waiting on some cycles before germinating new actions.
+- `-D ACTIONQUEUESIZE=<int value>`: side of the action queue. Use `64` or more/less or whatever.
+- `-D DIFFUSE_QUEUE_SIZE=<int value>`: side of the diffuse queue. Use `4096` or more/less or whatever.
 - `-D MAXEDGESPERVERTEX=<int value>`: sets the max edges per vertex object before creating a new ghost vertex.
 - `-D VICINITY=<int value>`: sets the radius of allocation for the vicinity allocator.
 - `-D TERMINATION=true/false`: for running the termination detection algorithm or not. When it is false there won't be any ack messages for each action recieved and that way the overheads of termination can be calculated. This is for benchmarking purposes normally the termination detection will be on.

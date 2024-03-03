@@ -1,5 +1,6 @@
-# Page_Rank_Fixed_Iterations
-`Page_Rank_Fixed_Iterations` application implements asynchronous `page rank` with fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user.
+# Page_Rank_Fixed_Iterations_V2
+Same as `Page_Rank_Fixed_Iterations` but here we germinate an action per vertex per iteration such that it doesn't have to traverse the graph to active the vertices. Experimental results don't know any meaningful performance benefit.
+`Page_Rank_Fixed_Iterations_V2` application implements asynchronous `page rank` with fixed number of iterations using the CCASimulator. In this application there is no convergence implemented rather the program runs for a fixed number if page rank iterations provided by the user.
 
 ## Building Using CMake
 To compile the application, execute the following `cmake` commands to generate the executable.
