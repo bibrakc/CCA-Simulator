@@ -373,8 +373,7 @@ class Graph
         static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
                       "edge type must be of type Address");
 
-        // TODO: Perhaps this `int` must become `u_int32_t`
-        std::vector<int> vertex_ids =
+        std::vector<u_int32_t> vertex_ids =
             make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the

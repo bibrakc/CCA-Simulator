@@ -83,7 +83,7 @@ struct BFSArguments
 
 inline auto
 bfs_predicate_func(ComputeCell& cc,
-                   const Address& addr,
+                   const Address addr,
                    actionType /* action_type_in */,
                    const ActionArgumentType args) -> Closure
 {
@@ -110,7 +110,7 @@ bfs_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_work_func(ComputeCell& cc,
-              const Address& addr,
+              const Address addr,
               actionType /* action_type_in */,
               const ActionArgumentType args) -> Closure
 {
@@ -135,7 +135,7 @@ bfs_work_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_predicate_func(ComputeCell& cc,
-                           const Address& addr,
+                           const Address addr,
                            actionType /* action_type_in */,
                            const ActionArgumentType args) -> Closure
 {
@@ -161,7 +161,7 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_func(ComputeCell& cc,
-                 const Address& addr,
+                 const Address addr,
                  actionType /* action_type_in */,
                  const ActionArgumentType args) -> Closure
 {
@@ -190,13 +190,13 @@ bfs_diffuse_func(ComputeCell& cc,
     ActionArgumentType const args_for_ghost_vertices =
         cca_create_action_argument<BFSArguments>(level_to_send);
 
-    // Rely to the Rhizome link
+    // Relay to the Rhizome link
     if (v->rhizome_vertices[0].has_value()) {
         cc.diffuse(Action(v->rhizome_vertices[0].value(),
                           addr,
                           actionType::application_action,
                           true,
-                          args_for_ghost_vertices, // same as if relying to ghosts
+                          args_for_ghost_vertices, // same as if relaying to ghosts
                           bfs_predicate,
                           bfs_work,
                           bfs_diffuse_predicate,
