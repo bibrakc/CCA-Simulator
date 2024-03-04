@@ -53,10 +53,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     static_assert(std::is_same_v<Address_T, Address>);
 
     // How many Rhizome vertices/links can there be? 1 means there are total of two Rhizome roots.
-    // Therefore, if globally there are a max of N rhizomes for each vertex then put N-1 here.
+    // Therefore, if globally there are a max of N rhizomes for each vertex, then put N-1 here.
     // Because this vertex itself can also be one of the Rhizomes and must not be counted twice.
-    inline static constexpr uint32_t rhizome_vertices_max_degree =
-        (rhizome_size - 1 == 0) ? 1 : (rhizome_size - 1);
+    inline static constexpr uint32_t rhizome_vertices_max_degree = (rhizome_size - 1);
 
     // Addresses of any Rhizome vertices/links that this vertex might have.
     std::optional<Address_T>
@@ -72,7 +71,6 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     bool is_rhizome_vertex{};
 
     // RPVO below
-
     inline static constexpr u_int32_t ghost_vertices_max_degree = 2;
 
     // If this vertex is ghost vertex? Default is `false` meaning that it is the root/main vertex

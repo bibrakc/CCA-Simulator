@@ -235,7 +235,8 @@ class Graph
     }
 
     // Initialize a newly created vertex in the CCA memory.
-    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // This is used for things like initializing the MemoryAllocator of the
+    // RhizomeRecurssiveParallelVertex.
     // NOTE: Only to be used for RhizomeRecurssiveParallelVertex
     template<class VertexTypeOfAddress>
     inline auto init_rhizome_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
