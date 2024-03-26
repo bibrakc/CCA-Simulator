@@ -59,6 +59,17 @@ null_true_func(ComputeCell& cc,
     return Closure(cc.null_true_event, nullptr);
 }
 
+// error event, exits with error. Used in LCOs (or other places) where the event haven't been
+// defined yet and the LCO is triggered.
+auto
+error_func(ComputeCell& cc,
+           const Address /* addr */,
+           actionType /* action_type_in */,
+           const ActionArgumentType /*args*/) -> Closure
+{
+    return Closure(cc.error_event, nullptr);
+}
+
 handler_func
 FunctionEventManager::get_acknowledgement_event_handler()
 {
@@ -77,6 +88,13 @@ FunctionEventManager::is_null_event(CCAFunctionEvent event) -> bool
 {
 
     return this->event_handlers[event] == null_func;
+}
+
+auto
+FunctionEventManager::is_error_event(CCAFunctionEvent event) -> bool
+{
+
+    return this->event_handlers[event] == error_func;
 }
 
 auto

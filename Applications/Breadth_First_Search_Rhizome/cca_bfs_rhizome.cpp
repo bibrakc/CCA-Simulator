@@ -108,28 +108,6 @@ main(int argc, char** argv) -> int
             std::optional<u_int32_t>(cmd_args.root_vertex),
             cmd_args.shuffle_switch);
 
-    /*
-    std::vector<u_int32_t> vertices_inbound_degree_zero =
-        input_graph.get_vertices_ids_with_zero_in_degree();
-
-    std::cout << "Vertices with in degree value 0: \n";
-    for (const auto& vertex_id : vertices_inbound_degree_zero) {
-        std::cout << vertex_id
-                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
-    }
-    std::cout << std::endl; */
-
-    // Get the vertices with out degree values equal to 0.
-    /* std::vector<u_int32_t> vertices_outbound_degree_zero =
-        input_graph.get_vertices_ids_with_zero_out_degree();
-
-    std::cout << "Vertices with out degree value 0: \n";
-    for (const auto& vertex_id : vertices_outbound_degree_zero) {
-        std::cout << vertex_id
-                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
-    }
-    std::cout << std::endl; */
-
     // Only put the BFS seed action on a single vertex.
     // In this case BFS root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(cmd_args.root_vertex);
@@ -164,30 +142,6 @@ main(int argc, char** argv) -> int
                                                  bfs_work,
                                                  bfs_diffuse_predicate,
                                                  bfs_diffuse));
-
-    ///////////
-
-    /* auto vertex_addr_to_dst = input_graph.get_vertex_address_in_cca(0);
-
-    BFSArguments root_level_to_send_dst;
-    root_level_to_send_dst.level = 0;
-    // Origin vertex from where this action came. Host not used. Put any value;
-    root_level_to_send_dst.src_vertex_id = 99999;
-
-    ActionArgumentType const args_x_dst =
-        cca_create_action_argument<BFSArguments>(root_level_to_send_dst);
-
-    // Insert a seed action into the CCA chip that will help start the diffusion.
-    cca_square_simulator.germinate_action(Action(vertex_addr_to_dst,
-                                                 bfs_terminator.value(),
-                                                 actionType::germinate_action,
-                                                 true,
-                                                 args_x_dst,
-                                                 bfs_predicate,
-                                                 bfs_work,
-                                                 bfs_diffuse)); */
-
-    ////////////
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();

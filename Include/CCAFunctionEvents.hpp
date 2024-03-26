@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -53,6 +53,9 @@ struct FunctionEventManager
     // don't need to have predicate,and diffuse.
     CCAFunctionEvent null_event_true_id;
 
+    // Used for undefined event and if it is triggered then the simulation exits with exist(0).
+    CCAFunctionEvent error_event_id;
+
     // Special system events:
     // Acknowledgement event id for termination detection.
     CCAFunctionEvent acknowledgement_event_id;
@@ -60,8 +63,8 @@ struct FunctionEventManager
     handler_func get_acknowledgement_event_handler();
 
     auto is_true_event(CCAFunctionEvent event) -> bool;
-
     auto is_null_event(CCAFunctionEvent event) -> bool;
+    auto is_error_event(CCAFunctionEvent event) -> bool;
 
     auto register_function_event(handler_func function_event_handler) -> CCAFunctionEvent;
 
@@ -71,6 +74,7 @@ struct FunctionEventManager
         : event_handlers()
         , null_event_id(register_function_event(null_func))
         , null_event_true_id(register_function_event(null_true_func))
+        , error_event_id(register_function_event(error_func))
         , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
     }

@@ -30,15 +30,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_Page_Rank_Fixed_Iterations_HPP
-#define CCA_Page_Rank_Fixed_Iterations_HPP
+#ifndef CCA_Page_Rank_Fixed_Iterations_Rhizome_HPP
+#define CCA_Page_Rank_Fixed_Iterations_Rhizome_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
+#include "LCO.hpp"
+#include "LCO_AND.hpp"
 
 // Datastructures
 #include "Graph.hpp"
-#include "RecursiveParallelVertex.hpp"
+#include "RhizomeRecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
@@ -51,10 +53,10 @@ inline constexpr double damping_factor = 0.85;
 struct PageRankFixedIterationsArguments
 {
     double score;
-    u_int32_t src_vertex_id;
 
     // For debuging
     u_int32_t iteration;
+    u_int32_t src_vertex_id;
 };
 
 /* template<typename Address_T>
@@ -69,7 +71,8 @@ struct PageRankFixedIterationsVertex : Vertex_T
     bool has_current_iteration_diffused{};
 
     // The page rank score for this vertex.
-    double page_rank_current_rank_score{};
+    // This becomes AND LCO. TODO: Address score_AND_LCO ?? in the purest sense.
+    LCO<double, LCO_AND> page_rank_current_rank_score;
 
     // The page rank score for this vertex. This acts as a temporary to compute the new score.
     double current_iteration_rank_score{};
@@ -80,7 +83,7 @@ struct PageRankFixedIterationsVertex : Vertex_T
     u_int32_t current_iteration_incoming_count{};
 
     PageRankFixedIterationsVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : page_rank_current_rank_score(1.0 / total_number_of_vertices_in)
+        : page_rank_current_rank_score(1.0 / total_number_of_vertices_in) // LCO constructor
     {
         this->id = id_in;
         this->number_of_edges = 0;
@@ -90,7 +93,7 @@ struct PageRankFixedIterationsVertex : Vertex_T
     // Custom initialize the page rank score other than the default of (1.0 / N).
     void initialize_page_rank_score(double initial_page_rank_score)
     {
-        this->page_rank_current_rank_score = initial_page_rank_score;
+        this->page_rank_current_rank_score.set_val(initial_page_rank_score);
     }
 
     PageRankFixedIterationsVertex() = default;
@@ -127,18 +130,18 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
     assert(action_type_in == actionType::germinate_action);
 
     // Make sure this is not a ghost vertex.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
     assert(!parent_recursive_parralel_vertex->is_ghost_vertex);
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments my_score_to_send;
 
     my_score_to_send.score =
-        v->page_rank_current_rank_score / static_cast<double>(v->outbound_degree);
+        v->page_rank_current_rank_score.get_val() / static_cast<double>(v->outbound_degree);
     my_score_to_send.src_vertex_id = v->id;
 
     // For debugging
@@ -149,12 +152,12 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
 
     v->has_current_iteration_diffused = true;
 
-    // Reset.
+    // Reset. This is a special case when the vertex has zero in-degree.
     if (0 == v->inbound_degree) {
 
         // Update the page rank score.
-        v->page_rank_current_rank_score =
-            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices));
+        v->page_rank_current_rank_score.set_val(
+            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)));
 
         // Reset.
         v->current_iteration_rank_score = 0.0;
@@ -179,15 +182,15 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     assert(action_type_in == actionType::application_action);
 
     // First check whether this is a ghost vertex. If it is then don't perform any work.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
@@ -204,11 +207,10 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         PageRankFixedIterationsArguments my_score_to_send;
 
         my_score_to_send.score =
-            v->page_rank_current_rank_score / static_cast<double>(v->outbound_degree);
-        my_score_to_send.src_vertex_id = v->id;
-
+            v->page_rank_current_rank_score.get_val() / static_cast<double>(v->outbound_degree);
         // For debugging
         my_score_to_send.iteration = v->page_rank_current_iteration;
+        my_score_to_send.src_vertex_id = v->id;
 
         ActionArgumentType const args_diffuse_closure =
             cca_create_action_argument<PageRankFixedIterationsArguments>(my_score_to_send);
@@ -219,7 +221,20 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     }
 
     // Reset.
+    // TODO: This needs to be all_reduced before being set.!!!
     if (v->current_iteration_incoming_count == v->inbound_degree) {
+
+        rhizome_collapse(CCA_PLUS_OP, v->page_rank_current_rank_score, lambda);
+        {
+            /* diffuse the `page_rank_fixed_iterations_rhizome_collapse_func` to all
+            rhizomes and onto itself too. */
+            Action rhizome_collapse_page_rank(XYZ);
+            cc.insert_action();
+        }
+
+        v->page_rank_current_rank_score.lco += v->page_rank_current_rank_score.val;
+        if (v->page_rank_current_rank_score.lco.increment()) {
+        }
 
         // Update the page rank score.
         v->page_rank_current_rank_score =
@@ -231,7 +246,60 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
         v->current_iteration_incoming_count = 0;
         v->has_current_iteration_diffused = false;
 
-        // Increment the global iteration count.
+        // Increament the global iteration count.
+        v->page_rank_current_iteration++;
+    }
+
+    return diffuse_closure_to_return;
+}
+
+inline auto
+page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
+                                                 const Address addr,
+                                                 actionType /* action_type_in */,
+                                                 const ActionArgumentType /*args*/) -> Closure
+{
+
+    // This action must not be invalid.
+    assert(action_type_in != actionType::invalid_action);
+
+    // First check whether this is a ghost vertex. If it is then its a bug.
+    auto* parent_recursive_parralel_vertex =
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        std::cerr << "Bug! rhizome collapse can not happen on a ghost vertex." << std::end;
+        exit(0);
+    }
+
+    Closure diffuse_closure_to_return(cc.null_false_event, nullptr);
+
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+        cc.get_object(addr));
+
+    PageRankFixedIterationsArguments const page_rank_args =
+        cca_get_action_argument<PageRankFixedIterationsArguments>(args);
+
+    // Accumulate the score.
+    v->page_rank_current_rank_score.lco += page_rank_args.score;
+
+    // trigger action when count == N
+    // TODO: This is very hardcode way of triggering the action. In an actual setting it should be
+    // diffused and inserted into this CC and then the system schedules it.
+    if (v->page_rank_current_rank_score.lco.increment()) {
+
+        // Update the page rank score.
+        v->page_rank_current_rank_score.set_val(
+            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
+            (damping_factor * v->page_rank_current_rank_score.lco.local_val));
+
+        // Reset.
+        v->page_rank_current_rank_score.lco.reset();
+        v->current_iteration_rank_score = 0.0;
+        v->current_iteration_incoming_count = 0;
+        v->has_current_iteration_diffused = false;
+
+        // Increament the global iteration count.
         v->page_rank_current_iteration++;
     }
 
@@ -254,13 +322,32 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const ActionArgumentType args) -> Closure
 {
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
-    // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
+    /* // Relay to the Rhizome link
+    for (u_int32_t rhizome_iterator = 0;
+         rhizome_iterator <
+         PageRankFixedIterationsVertex<
+             RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+         rhizome_iterator++) {
+
+        if (v->rhizome_vertices[rhizome_iterator].has_value()) {
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              args,
+                              page_rank_fixed_iterations_predicate,
+                              page_rank_fixed_iterations_work,
+                              page_rank_fixed_iterations_diffuse_predicate,
+                              page_rank_fixed_iterations_diffuse));
+        }
+    } */
+
+    // Note: The application vertex type is derived from the parent `RhizomeRecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
     for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator < RhizomeRecursiveParallelVertex<Address>::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
@@ -522,7 +609,9 @@ write_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
 
     std::string const output_file_name = "pagerank_graph_" + cmd_args.graph_name + "_v_" +
                                          std::to_string(input_graph.total_vertices) + "_e_" +
-                                         std::to_string(input_graph.total_edges) +
+                                         std::to_string(input_graph.total_edges) + "_rhizomes_" +
+                                         std::to_string(rhizome_size) + "_rhizomecutoff_" +
+                                         std::to_string(rhizome_inbound_degree_cutoff) +
                                          cca_simulator.key_configurations_string();
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
@@ -549,4 +638,4 @@ write_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
     cca_simulator.print_animation(output_file_path);
 }
 
-#endif // CCA_Page_Rank_Fixed_Iterations_HPP
+#endif // CCA_Page_Rank_Fixed_Iterations_Rhizome_HPP

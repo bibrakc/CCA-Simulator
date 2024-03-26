@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,25 +30,60 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef ENUMS_HPP
-#define ENUMS_HPP
+#ifndef LCO_HPP
+#define LCO_HPP
 
-enum class actionType : u_int32_t
+#include "Action.hpp"
+// #include "Function.hpp"
+
+template<typename T, typename lcoType>
+class LCO
 {
-    invalid_action = 0,
-    terminator_acknowledgement_action,
-    application_action,
-    germinate_action,
-    actionType_count
+  public:
+    // Value.
+    T val{};
+
+    // Type of the LCO: AND type, future type, or some other.
+    lcoType<T> lco;
+
+    // The action to trigger when the LCO is ready.
+    // TODO: Will implement this purist version where there is action and it is diffused in the
+    // current CC and then triggered by the system
+    // Action action;
+
+    auto get_val() -> T { return val; }
+    void set_val(T val_in) { this->val = val_in; }
+
+    /*     LCO()
+            : action(Address(0, 0, adressType::invalid_address),
+                     Address(0, 0, adressType::invalid_address),
+                     actionType::invalid_action,
+                     false,
+                     nullptr,
+                     0,
+                     0,
+                     0,
+                     0)
+        {
+        }
+        LCO(T val_in)
+            : val(val_in)
+            , action(Address(0, 0, adressType::invalid_address),
+                     Address(0, 0, adressType::invalid_address),
+                     actionType::invalid_action,
+                     false,
+                     nullptr,
+                     0,
+                     0,
+                     0,
+                     0)
+        {
+        } */
+
+    LCO(T val_in)
+        : val(val_in)
+    {
+    }
 };
 
-// TODO: Remove this!
-/* enum class lcoType : u_int32_t
-{
-    undefined_lco = 0,
-    AND_lco,
-    future_lco,
-    lcoType_count
-}; */
-
-#endif // ENUMS_HPP
+#endif // LCO_HPP

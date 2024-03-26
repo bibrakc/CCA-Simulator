@@ -105,6 +105,7 @@ class ComputeCell : public Cell
     // Used in predicate and work functions of app as they return Closures.
     CCAFunctionEvent null_false_event;
     CCAFunctionEvent null_true_event;
+    CCAFunctionEvent error_event;
 
     // Memory of the Compute Cell in bytes.
     u_int32_t memory_size_in_bytes;
@@ -146,6 +147,7 @@ class ComputeCell : public Cell
                 computeCellShape shape_in,
                 CCAFunctionEvent null_false_event_in,
                 CCAFunctionEvent null_true_event_in,
+                CCAFunctionEvent error_event_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
                 u_int32_t hx_in,
@@ -166,6 +168,7 @@ class ComputeCell : public Cell
 
         this->null_false_event = null_false_event_in;
         this->null_true_event = null_true_event_in;
+        this->error_event = error_event_in;
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;

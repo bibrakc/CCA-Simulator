@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -76,5 +76,11 @@ null_true_func(ComputeCell& /* cc */,
                const Address /* addr */,
                actionType /* action_type_in */,
                const ActionArgumentType /*args*/) -> Closure;
+
+auto
+error_func(ComputeCell& /* cc */,
+           const Address /* addr */,
+           actionType /* action_type_in */,
+           const ActionArgumentType /*args*/) -> Closure;
 
 #endif // FUNCTION_HPP

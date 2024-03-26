@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_SSSP_HPP
-#define CCA_SSSP_HPP
+#ifndef CCA_SSSP_Rhizome_HPP
+#define CCA_SSSP_Rhizome_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
@@ -203,7 +203,7 @@ sssp_diffuse_func(ComputeCell& cc,
          rhizome_iterator++) {
 
         if (v->rhizome_vertices[rhizome_iterator].has_value()) {
-            cc.diffuse(Action(v->rhizome_vertices[0].value(),
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
                               addr,
                               actionType::application_action,
                               true,
@@ -221,7 +221,6 @@ sssp_diffuse_func(ComputeCell& cc,
          ghosts_iterator < RhizomeRecursiveParallelVertex<Address>::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
-
             cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
                               addr,
                               actionType::application_action,
@@ -521,4 +520,4 @@ write_results(const SSSPCommandLineArguments& cmd_args,
     cca_simulator.print_animation(output_file_path);
 }
 
-#endif // CCA_SSSP_HPP
+#endif // CCA_SSSP_Rhizome_HPP

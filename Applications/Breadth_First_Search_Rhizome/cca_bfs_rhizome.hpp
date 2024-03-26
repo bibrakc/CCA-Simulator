@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_BFS_HPP
-#define CCA_BFS_HPP
+#ifndef CCA_BFS_Rhizome_HPP
+#define CCA_BFS_Rhizome_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
@@ -197,7 +197,7 @@ bfs_diffuse_func(ComputeCell& cc,
          rhizome_iterator++) {
 
         if (v->rhizome_vertices[rhizome_iterator].has_value()) {
-            cc.diffuse(Action(v->rhizome_vertices[0].value(),
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
                               addr,
                               actionType::application_action,
                               true,
@@ -512,4 +512,4 @@ write_results(const BFSCommandLineArguments& cmd_args,
     cca_simulator.print_animation(output_file_path);
 }
 
-#endif // CCA_BFS_HPP
+#endif // CCA_BFS_Rhizome_HPP
