@@ -114,7 +114,6 @@ handler_func
 FunctionEventManager::get_function_event_handler(CCAFunctionEvent function_event_in)
 {
     assert(function_event_in < this->event_handlers.size());
-    assert(function_event_in > 0);
 
     return this->event_handlers[function_event_in];
 }

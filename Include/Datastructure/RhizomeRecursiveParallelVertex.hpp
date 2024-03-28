@@ -89,7 +89,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     // ghost vertices do not inherit anything from user types and therefore will not need to do
     // anything. Right now using it in init() and set_rhizome() to update the configuration of
     // LCO_AND's N value.
-    virtual void configure_derived_class_LCOs() { std::cout << "I am a pure ghost!" << std::endl; }
+    virtual void configure_derived_class_LCOs() { /* std::cout << "I am a pure ghost!" << std::endl; */ }
 
     [[nodiscard]] auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
     {

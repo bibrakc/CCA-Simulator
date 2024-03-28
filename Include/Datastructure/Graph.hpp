@@ -427,6 +427,7 @@ class Graph
                 // Create the Rhizome if needed. 
                 if (!this->vertices_info[dst_vertex_id].get_current_rhizome_address()) {
 
+                    vertex_.id = dst_vertex_id;
                     std::optional<Address> vertex_addr =
                         cca_simulator.allocate_and_insert_object_on_cc(
                             random_allocator, &vertex_, sizeof(VertexTypeOfAddress));
@@ -453,11 +454,12 @@ class Graph
                     auto* new_rhizome_vertex = static_cast<VertexTypeOfAddress*>(
                         cca_simulator.get_object(vertex_addr.value()));
 
-                    // 1. New adds all in self.
+                    // 1. New adds all previous rhizomes in it self.
                     for (u_int32_t rhizome_iterator = 0;
                          rhizome_iterator < this->vertices_info[dst_vertex_id].current_rhizome;
                          rhizome_iterator++) {
-
+                        /* std::cout << "In Graph.hpp, vertex: " << new_rhizome_vertex->id
+                                  << ", rhizome_iterator: " << rhizome_iterator << std::endl; */
                         if (!new_rhizome_vertex->set_rhizome(
                                 this->vertices_info[dst_vertex_id].addresses[rhizome_iterator])) {
                             std::cerr
