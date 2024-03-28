@@ -96,6 +96,13 @@ struct PageRankFixedIterationsVertex : Vertex_T
         this->page_rank_current_rank_score.set_val(initial_page_rank_score);
     }
 
+    void configure_derived_class_LCOs()
+    {
+        std::cout << "Vertex ID: " << this->id << ", inbound_degree: " << this->inbound_degree
+                  << " is inside virtual function" << std::endl;
+        this->page_rank_current_rank_score.lco.N++;
+    }
+
     PageRankFixedIterationsVertex() = default;
     ~PageRankFixedIterationsVertex() = default;
 };
@@ -290,13 +297,11 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
-
     /* if (v->id == 2047) {
         std::cout << "In rhizome collapse, page_rank_args.score = " << page_rank_args.score
                   << ", v->page_rank_current_rank_score = "
                   << v->page_rank_current_rank_score.get_val() << std::endl;
     } */
-
 
     // Accumulate the score.
     v->page_rank_current_rank_score.lco += page_rank_args.score;

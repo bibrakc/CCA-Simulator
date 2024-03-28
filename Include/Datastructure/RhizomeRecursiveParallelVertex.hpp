@@ -85,6 +85,12 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     // Used to allocate the ghost vertices.
     Allocator_T ghost_vertex_allocator;
 
+    // Use to configurer LCOs in the user derived class. Keeping this empty here since the pure
+    // ghost vertices do not inherit anything from user types and therefore will not need to do
+    // anything. Right now using it in init() and set_rhizome() to update the configuration of
+    // LCO_AND's N value.
+    virtual void configure_derived_class_LCOs() { std::cout << "I am a pure ghost!" << std::endl; }
+
     [[nodiscard]] auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
     {
 
@@ -101,6 +107,8 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
 
         this->rhizome_vertices[this->next_insertion_in_rhizome_iterator] = rhizome_vertex_addr;
         this->next_insertion_in_rhizome_iterator++;
+
+        this->configure_derived_class_LCOs();
 
         return true;
     }
@@ -344,6 +352,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     {
 
         this->is_rhizome_vertex = is_rhizome;
+
+        // Initialize LCOs
+        this->configure_derived_class_LCOs();
 
         if constexpr (std::is_same_v<Allocator_T, CyclicMemoryAllocator>) {
             this->ghost_vertex_allocator =

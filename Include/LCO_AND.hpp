@@ -52,7 +52,8 @@ class LCO_AND
     bool increment()
     {
         this->count++;
-        if (this->count == 1){//this->N) {
+        // if (this->count == 1){//this->N) {
+        if (this->count == this->N) {
             this->is_ready = true;
         }
         return this->is_ready;
