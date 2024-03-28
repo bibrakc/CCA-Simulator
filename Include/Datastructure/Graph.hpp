@@ -437,9 +437,6 @@ class Graph
                                   << this->vertices[dst_vertex_id].id << "\n";
                         exit(0);
                     }
-                    /* std::cout << "Rhizome Created for dst_vertex_id: " << dst_vertex_id
-                              << ", Total inbound: " << this->vertices[dst_vertex_id].inbound_degree
-                              << "\n"; */
 
                     if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
                                                                         vertex_addr.value())) {

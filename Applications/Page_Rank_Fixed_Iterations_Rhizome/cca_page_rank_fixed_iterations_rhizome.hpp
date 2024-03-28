@@ -96,12 +96,10 @@ struct PageRankFixedIterationsVertex : Vertex_T
         this->page_rank_current_rank_score.set_val(initial_page_rank_score);
     }
 
-    void configure_derived_class_LCOs()
-    {
-        /* std::cout << "Vertex ID: " << this->id << ", inbound_degree: " << this->inbound_degree
-                  << " is inside virtual function" << std::endl; */
-        this->page_rank_current_rank_score.lco.N++;
-    }
+    // Each time this is called it increaments the N of LCO_AND. It means that it will be called
+    // when the Rhizome Vertex is first created (in init()) and then everytime there is a
+    // .set_rhizome() called as it is linked to other rhizomes.
+    void configure_derived_class_LCOs() { this->page_rank_current_rank_score.lco.N++; }
 
     PageRankFixedIterationsVertex() = default;
     ~PageRankFixedIterationsVertex() = default;
@@ -316,11 +314,7 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
         v->page_rank_current_iteration++;
     }
 
-    Closure diffuse_closure_to_return(cc.null_false_event, nullptr);
-    if (page_rank_args.src_vertex_id == v->id) { // It means that the action came from itself and
-                                                 // needs to diffuse the message along its rhizomes.
-        diffuse_closure_to_return.first = cc.null_true_event;
-    }
+    Closure diffuse_closure_to_return(cc.null_true_event, nullptr);
 
     return diffuse_closure_to_return;
 }
@@ -328,7 +322,7 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
 inline auto
 page_rank_fixed_iterations_rhizome_collapse_diffuse_func(ComputeCell& cc,
                                                          const Address addr,
-                                                         actionType action_type_in,
+                                                         actionType /* action_type_in */,
                                                          const ActionArgumentType args) -> Closure
 {
 
@@ -392,8 +386,8 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                               actionType::application_action,
                               true,
                               args,
-                              page_rank_fixed_iterations_predicate,
-                              page_rank_fixed_iterations_work,
+                              cc.null_true_event, // page_rank_fixed_iterations_predicate,
+                              cc.null_true_event, // page_rank_fixed_iterations_work,
                               page_rank_fixed_iterations_diffuse_predicate,
                               page_rank_fixed_iterations_diffuse));
         }

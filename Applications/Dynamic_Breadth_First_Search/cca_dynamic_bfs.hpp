@@ -102,6 +102,9 @@ struct BFSVertex : Vertex_T
         return cca_create_action_argument<BFSArgumentsEdgeInsertContinuation>(arg_continuation);
     }
 
+    // Nothing to do.
+    void configure_derived_class_LCOs() {}
+
     BFSVertex() {}
     ~BFSVertex() {}
 };
@@ -117,7 +120,7 @@ extern CCAFunctionEvent dynamic_bfs_edge_insert_continuation;
 
 inline auto
 dynamic_bfs_predicate_func(ComputeCell& cc,
-                           const Address& addr,
+                           const Address addr,
                            actionType /* action_type_in */,
                            const ActionArgumentType args) -> Closure
 {
@@ -144,7 +147,7 @@ dynamic_bfs_predicate_func(ComputeCell& cc,
 
 inline auto
 dynamic_bfs_work_func(ComputeCell& cc,
-                      const Address& addr,
+                      const Address addr,
                       actionType /* action_type_in */,
                       const ActionArgumentType args) -> Closure
 {
@@ -169,7 +172,7 @@ dynamic_bfs_work_func(ComputeCell& cc,
 
 inline auto
 dynamic_bfs_diffuse_predicate_func(ComputeCell& cc,
-                                   const Address& addr,
+                                   const Address addr,
                                    actionType /* action_type_in */,
                                    const ActionArgumentType args) -> Closure
 {
@@ -195,7 +198,7 @@ dynamic_bfs_diffuse_predicate_func(ComputeCell& cc,
 
 inline auto
 dynamic_bfs_diffuse_func(ComputeCell& cc,
-                         const Address& addr,
+                         const Address addr,
                          actionType /* action_type_in */,
                          const ActionArgumentType args) -> Closure
 {
@@ -262,7 +265,7 @@ dynamic_bfs_diffuse_func(ComputeCell& cc,
 
 inline auto
 dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
-                                          const Address& addr,
+                                          const Address addr,
                                           actionType /* action_type_in */,
                                           const ActionArgumentType args) -> Closure
 {

@@ -93,6 +93,9 @@ struct PageRankFixedIterationsVertex : Vertex_T
         this->page_rank_current_rank_score = initial_page_rank_score;
     }
 
+    // Nothing to do.
+    void configure_derived_class_LCOs() {}
+
     PageRankFixedIterationsVertex() = default;
     ~PageRankFixedIterationsVertex() = default;
 };

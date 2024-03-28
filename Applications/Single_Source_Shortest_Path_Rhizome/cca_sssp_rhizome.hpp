@@ -63,6 +63,9 @@ struct SSSPVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
+    // Nothing to do.
+    void configure_derived_class_LCOs() {}
+
     SSSPVertex() = default;
     ~SSSPVertex() = default;
 };
