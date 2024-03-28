@@ -33,10 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef LCO_HPP
 #define LCO_HPP
 
-#include "Action.hpp"
+// #include "Action.hpp"
 // #include "Function.hpp"
 
-template<typename T, typename lcoType>
+template<typename T, template<typename> class lcoType>
 class LCO
 {
   public:
@@ -79,6 +79,8 @@ class LCO
                      0)
         {
         } */
+
+    LCO() = default;
 
     LCO(T val_in)
         : val(val_in)

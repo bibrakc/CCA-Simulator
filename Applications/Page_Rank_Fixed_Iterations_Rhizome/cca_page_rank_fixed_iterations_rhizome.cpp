@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_page_rank_fixed_iterations.hpp"
+#include "cca_page_rank_fixed_iterations_rhizome.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
@@ -46,6 +46,9 @@ CCAFunctionEvent page_rank_fixed_iterations_germinate_work;
 CCAFunctionEvent page_rank_fixed_iterations_work;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse_predicate;
 CCAFunctionEvent page_rank_fixed_iterations_diffuse;
+
+CCAFunctionEvent page_rank_fixed_iterations_rhizome_collapse;
+CCAFunctionEvent page_rank_fixed_iterations_rhizome_collapse_diffuse;
 
 #define PRINT_RESULTS_FOR_ALL_VERTICES false
 
@@ -133,6 +136,13 @@ main(int argc, char** argv) -> int
         page_rank_fixed_iterations_diffuse_predicate_func);
     page_rank_fixed_iterations_diffuse =
         cca_square_simulator.register_function_event(page_rank_fixed_iterations_diffuse_func);
+
+    page_rank_fixed_iterations_rhizome_collapse = cca_square_simulator.register_function_event(
+        page_rank_fixed_iterations_rhizome_collapse_func);
+
+    page_rank_fixed_iterations_rhizome_collapse_diffuse =
+        cca_square_simulator.register_function_event(
+            page_rank_fixed_iterations_rhizome_collapse_diffuse_func);
 
     // Create the terminator for this app.
     std::optional<Address> page_rank_fixed_iterations_terminator =

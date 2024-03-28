@@ -52,7 +52,7 @@ class LCO_AND
     bool increment()
     {
         this->count++;
-        if (this->count == this->N) {
+        if (this->count == 1){//this->N) {
             this->is_ready = true;
         }
         return this->is_ready;
@@ -73,6 +73,13 @@ class LCO_AND
         // +=
         result.local_val += other;
         return result;
+    }
+
+    // Overload the += operator for LCO_AND<T> += T
+    LCO_AND<T>& operator+=(const T& other)
+    {
+        this->local_val += other;
+        return *this;
     }
 };
 

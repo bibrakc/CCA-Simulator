@@ -108,6 +108,9 @@ extern CCAFunctionEvent page_rank_fixed_iterations_work;
 extern CCAFunctionEvent page_rank_fixed_iterations_diffuse_predicate;
 extern CCAFunctionEvent page_rank_fixed_iterations_diffuse;
 
+extern CCAFunctionEvent page_rank_fixed_iterations_rhizome_collapse;
+extern CCAFunctionEvent page_rank_fixed_iterations_rhizome_collapse_diffuse;
+
 inline auto
 page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
                                           const Address addr,
@@ -224,30 +227,39 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     // TODO: This needs to be all_reduced before being set.!!!
     if (v->current_iteration_incoming_count == v->inbound_degree) {
 
-        rhizome_collapse(CCA_PLUS_OP, v->page_rank_current_rank_score, lambda);
-        {
-            /* diffuse the `page_rank_fixed_iterations_rhizome_collapse_func` to all
-            rhizomes and onto itself too. */
-            Action rhizome_collapse_page_rank(XYZ);
-            cc.insert_action();
+        // rhizome_collapse(CCA_PLUS_OP, v->page_rank_current_rank_score, lambda);
+
+        PageRankFixedIterationsArguments my_partial_score_to_send;
+
+        my_partial_score_to_send.score = v->current_iteration_rank_score;
+        // For debugging
+        my_partial_score_to_send.iteration = v->page_rank_current_iteration;
+        my_partial_score_to_send.src_vertex_id = v->id;
+
+        ActionArgumentType const args_rhizome_collapse =
+            cca_create_action_argument<PageRankFixedIterationsArguments>(my_partial_score_to_send);
+
+        Action rhizome_collapse_page_rank(addr,
+                                          addr,
+                                          actionType::application_action,
+                                          true,
+                                          args_rhizome_collapse,
+                                          cc.null_true_event,
+                                          page_rank_fixed_iterations_rhizome_collapse,
+                                          cc.null_true_event,
+                                          page_rank_fixed_iterations_rhizome_collapse_diffuse);
+        // Not a very nice way to use system level api, of inserting action, in user code. The user
+        // should return closure that is then added to the queue by the rutime. But for now we
+        // will live with this instead of refactoring the code to allow two or more closures to
+        // be returned from a single work function.
+        if (!cc.insert_action(rhizome_collapse_page_rank, false)) {
+            std::cerr << "rhizome collapse can not be inserted in action queue!" << std::endl;
+            exit(0);
         }
 
-        v->page_rank_current_rank_score.lco += v->page_rank_current_rank_score.val;
-        if (v->page_rank_current_rank_score.lco.increment()) {
-        }
-
-        // Update the page rank score.
-        v->page_rank_current_rank_score =
-            ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
-            (damping_factor * v->current_iteration_rank_score);
-
-        // Reset.
-        v->current_iteration_rank_score = 0.0;
-        v->current_iteration_incoming_count = 0;
-        v->has_current_iteration_diffused = false;
-
-        // Increament the global iteration count.
-        v->page_rank_current_iteration++;
+        /* if (v->id == 0) {
+            std::cout << "Inserted rhizome collapse action" << std::endl;
+        } */
     }
 
     return diffuse_closure_to_return;
@@ -256,8 +268,8 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 inline auto
 page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
                                                  const Address addr,
-                                                 actionType /* action_type_in */,
-                                                 const ActionArgumentType /*args*/) -> Closure
+                                                 actionType action_type_in,
+                                                 const ActionArgumentType args) -> Closure
 {
 
     // This action must not be invalid.
@@ -268,17 +280,23 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
         static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        std::cerr << "Bug! rhizome collapse can not happen on a ghost vertex." << std::end;
+        std::cerr << "Bug! rhizome collapse can not happen on a ghost vertex." << std::endl;
         exit(0);
     }
-
-    Closure diffuse_closure_to_return(cc.null_false_event, nullptr);
 
     auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
+
+
+    /* if (v->id == 2047) {
+        std::cout << "In rhizome collapse, page_rank_args.score = " << page_rank_args.score
+                  << ", v->page_rank_current_rank_score = "
+                  << v->page_rank_current_rank_score.get_val() << std::endl;
+    } */
+
 
     // Accumulate the score.
     v->page_rank_current_rank_score.lco += page_rank_args.score;
@@ -303,7 +321,49 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
         v->page_rank_current_iteration++;
     }
 
+    Closure diffuse_closure_to_return(cc.null_false_event, nullptr);
+    if (page_rank_args.src_vertex_id == v->id) { // It means that the action came from itself and
+                                                 // needs to diffuse the message along its rhizomes.
+        diffuse_closure_to_return.first = cc.null_true_event;
+    }
+
     return diffuse_closure_to_return;
+}
+
+inline auto
+page_rank_fixed_iterations_rhizome_collapse_diffuse_func(ComputeCell& cc,
+                                                         const Address addr,
+                                                         actionType action_type_in,
+                                                         const ActionArgumentType args) -> Closure
+{
+
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+        cc.get_object(addr));
+
+    /*  PageRankFixedIterationsArguments const page_rank_args =
+         cca_get_action_argument<PageRankFixedIterationsArguments>(args); */
+
+    // Relay to the Rhizome link
+    for (u_int32_t rhizome_iterator = 0;
+         rhizome_iterator <
+         PageRankFixedIterationsVertex<
+             RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+         rhizome_iterator++) {
+
+        if (v->rhizome_vertices[rhizome_iterator].has_value()) {
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args,
+                              cc.null_true_event,
+                              page_rank_fixed_iterations_rhizome_collapse,
+                              cc.null_false_event,
+                              cc.null_false_event));
+        }
+    }
+
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
@@ -324,25 +384,6 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
 
     auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
         cc.get_object(addr));
-
-    /* // Relay to the Rhizome link
-    for (u_int32_t rhizome_iterator = 0;
-         rhizome_iterator <
-         PageRankFixedIterationsVertex<
-             RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
-         rhizome_iterator++) {
-
-        if (v->rhizome_vertices[rhizome_iterator].has_value()) {
-            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
-                              addr,
-                              actionType::application_action,
-                              args,
-                              page_rank_fixed_iterations_predicate,
-                              page_rank_fixed_iterations_work,
-                              page_rank_fixed_iterations_diffuse_predicate,
-                              page_rank_fixed_iterations_diffuse));
-        }
-    } */
 
     // Note: The application vertex type is derived from the parent `RhizomeRecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
@@ -573,16 +614,16 @@ verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
         for (u_int32_t i = 0; i < input_graph.total_vertices; i++) {
 
             // Check for correctness. Print the distance to a target test vertex. test_vertex
-            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(i);
 
-            auto* v_test =
-                static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
-                    cca_simulator.get_object(test_vertex_addr));
+            auto* v_test = static_cast<
+                PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+                cca_simulator.get_object(test_vertex_addr));
             double difference =
-                std::fabs(control_results[i] - v_test->page_rank_current_rank_score);
+                std::fabs(control_results[i] - v_test->page_rank_current_rank_score.get_val());
             if (difference > tolerance) {
-                std::cout << "Vertex: " << i
-                          << ", Computed Pagerank: " << v_test->page_rank_current_rank_score
+                std::cout << "Vertex: " << i << ", Computed Pagerank: "
+                          << v_test->page_rank_current_rank_score.get_val()
                           << ", Control Value: " << control_results[i]
                           << ", Exceeds tolerance. Difference: " << difference << "\n";
 
