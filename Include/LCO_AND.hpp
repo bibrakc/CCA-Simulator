@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,25 +30,58 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef ENUMS_HPP
-#define ENUMS_HPP
+#ifndef LCO_AND_HPP
+#define LCO_AND_HPP
 
-enum class actionType : u_int32_t
+template<typename T>
+class LCO_AND
 {
-    invalid_action = 0,
-    terminator_acknowledgement_action,
-    application_action,
-    germinate_action,
-    actionType_count
+  public:
+    // The local value.
+    T local_val{};
+
+    // The total number of gates.
+    u_int32_t N{};
+    // How many gates have been set.
+    u_int32_t count{};
+
+    // Sets to `true` when all dependencies for this LCO have been satisfied.
+    // TODO: Not sure where and how to use it... for now...
+    bool is_ready{};
+
+    bool increment()
+    {
+        this->count++;
+        // if (this->count == 1){//this->N) {
+        if (this->count == this->N) {
+            this->is_ready = true;
+        }
+        return this->is_ready;
+    }
+
+    void reset()
+    {
+        this->local_val = 0;
+        this->count = 0;
+        this->is_ready = false;
+    }
+
+    // Overloading the + operator for LCO_AND<T> + T
+    LCO_AND<T> operator+(const T& other) const
+    {
+        // Create a copy of the current object
+        LCO_AND<T> result(*this);
+        // +=
+        result.local_val += other;
+        return result;
+    }
+
+    // Overload the += operator for LCO_AND<T> += T
+    LCO_AND<T>& operator+=(const T& other)
+    {
+        this->local_val += other;
+        return *this;
+    }
 };
 
-// TODO: Remove this!
-/* enum class lcoType : u_int32_t
-{
-    undefined_lco = 0,
-    AND_lco,
-    future_lco,
-    lcoType_count
-}; */
-
-#endif // ENUMS_HPP
+#endif // LCO_AND_HPP

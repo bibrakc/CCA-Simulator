@@ -30,21 +30,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "cca_bfs_rhizome.hpp"
+#include "cca_sssp_rhizome.hpp"
 
 // Datastructures
 #include "CyclicMemoryAllocator.hpp"
-#include "Graph.hpp"
+// #include "Graph.hpp"
 
 #include <chrono>
-#include <fstream>
+// #include <fstream>
 
-// Declare the function event ids for the BFS action functions of predicate, work, and diffuse.
+// Declare the function event ids for the SSSP action functions of predicate, work, and diffuse.
 // In the main register the functions and get their ids
-CCAFunctionEvent bfs_predicate;
-CCAFunctionEvent bfs_work;
-CCAFunctionEvent bfs_diffuse_predicate;
-CCAFunctionEvent bfs_diffuse;
+CCAFunctionEvent sssp_predicate;
+CCAFunctionEvent sssp_work;
+CCAFunctionEvent sssp_diffuse_predicate;
+CCAFunctionEvent sssp_diffuse;
 
 auto
 main(int argc, char** argv) -> int
@@ -55,7 +55,7 @@ main(int argc, char** argv) -> int
     parser.run_and_exit_if_error();
 
     std::cout << "Parsing Commandline Arguments: \n";
-    BFSCommandLineArguments cmd_args(parser);
+    SSSPCommandLineArguments cmd_args(parser);
 
     std::cout << "Creating the simulation environment that includes the CCA Chip: \n";
 
@@ -68,12 +68,11 @@ main(int argc, char** argv) -> int
                                       cmd_args.memory_per_cc,
                                       cmd_args.mesh_type,
                                       cmd_args.routing_policy);
-
     // Print details of the CCA Chip.
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<BFSVertex<SimpleVertex<host_edge_type>>> input_graph(cmd_args.input_graph_path);
+    Graph<SSSPVertex<SimpleVertex<host_edge_type>>> input_graph(cmd_args.input_graph_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -85,7 +84,6 @@ main(int argc, char** argv) -> int
     // initializer in `transfer_graph_host_to_cca`.
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
                                    (cca_square_simulator.dim_y / 2);
-    // center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // random allocator for creating rhizomes. There will be placed anywhere on the chip randomly.
@@ -98,70 +96,70 @@ main(int argc, char** argv) -> int
         cca_square_simulator.dim_y,
         cca_square_simulator.shape_of_compute_cells);
 
-    // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
-    // the CCA chip and there the address type is Address (not u_int32_t ID).
+    // Note: here we use SSSPSimpleVertex<Address> since the vertex object is now going to be sent
+    // to the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph
-        .transfer_graph_host_to_cca_rhizome<BFSVertex<RhizomeRecursiveParallelVertex<Address>>>(
+        .transfer_graph_host_to_cca_rhizome<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>>(
             cca_square_simulator,
             allocator,
             random_allocator,
             std::optional<u_int32_t>(cmd_args.root_vertex),
             cmd_args.shuffle_switch);
 
-    // Only put the BFS seed action on a single vertex.
-    // In this case BFS root = root_vertex
+    // Only put the SSSP seed action on a single vertex.
+    // In this case SSSP root = root_vertex
     auto vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(cmd_args.root_vertex);
 
-    // Register the BFS action functions for predicate, work, and diffuse.
-    bfs_predicate = cca_square_simulator.register_function_event(bfs_predicate_func);
-    bfs_work = cca_square_simulator.register_function_event(bfs_work_func);
-    bfs_diffuse_predicate =
-        cca_square_simulator.register_function_event(bfs_diffuse_predicate_func);
-    bfs_diffuse = cca_square_simulator.register_function_event(bfs_diffuse_func);
+    // Register the SSSP action functions for predicate, work, and diffuse.
+    sssp_predicate = cca_square_simulator.register_function_event(sssp_predicate_func);
+    sssp_work = cca_square_simulator.register_function_event(sssp_work_func);
+    sssp_diffuse_predicate =
+        cca_square_simulator.register_function_event(sssp_diffuse_predicate_func);
+    sssp_diffuse = cca_square_simulator.register_function_event(sssp_diffuse_func);
 
-    BFSArguments root_level_to_send;
-    root_level_to_send.level = 0;
-    // Origin vertex from where this action came. Host not used. Put any value;
-    root_level_to_send.src_vertex_id = 99999;
+    SSSPArguments root_distance_to_send;
+    root_distance_to_send.distance = 0;
+    root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
 
-    ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(root_level_to_send);
+    ActionArgumentType const args_x =
+        cca_create_action_argument<SSSPArguments>(root_distance_to_send);
 
-    std::optional<Address> bfs_terminator = cca_square_simulator.create_terminator();
-    if (!bfs_terminator) {
-        std::cerr << "Error! Memory not allocated for bfs_terminator \n";
+    std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
+    if (!sssp_terminator) {
+        std::cerr << "Error! Memory not allocated for sssp_terminator \n";
         exit(0);
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.
     cca_square_simulator.germinate_action(Action(vertex_addr,
-                                                 bfs_terminator.value(),
+                                                 sssp_terminator.value(),
                                                  actionType::germinate_action,
                                                  true,
                                                  args_x,
-                                                 bfs_predicate,
-                                                 bfs_work,
-                                                 bfs_diffuse_predicate,
-                                                 bfs_diffuse));
+                                                 sssp_predicate,
+                                                 sssp_work,
+                                                 sssp_diffuse_predicate,
+                                                 sssp_diffuse));
 
     std::cout << "\nStarting Execution on the CCA Chip:\n\n";
     auto start = std::chrono::steady_clock::now();
-    cca_square_simulator.run_simulation(bfs_terminator.value());
+    cca_square_simulator.run_simulation(sssp_terminator.value());
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
 
-    std::cout << "Program elapsed time (This has nothing to do with the simulation "
+    std::cout << "Program elapsed time in milliseconds (This has nothing to do with the simulation "
                  "itself): "
-              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms"
               << std::endl;
 
     // Verify results.
     if (cmd_args.verify_results) {
-        verify_results<BFSVertex<SimpleVertex<host_edge_type>>>(
+        verify_results<SSSPVertex<SimpleVertex<host_edge_type>>>(
             cmd_args, input_graph, cca_square_simulator);
     }
 
-    write_results<BFSVertex<SimpleVertex<host_edge_type>>>(
+    write_results<SSSPVertex<SimpleVertex<host_edge_type>>>(
         cmd_args, input_graph, cca_square_simulator);
 
     return 0;

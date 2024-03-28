@@ -63,6 +63,9 @@ struct SSSPVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
+    // Nothing to do.
+    void configure_derived_class_LCOs() {}
+
     SSSPVertex() = default;
     ~SSSPVertex() = default;
 };
@@ -83,7 +86,7 @@ struct SSSPArguments
 
 inline auto
 sssp_predicate_func(ComputeCell& cc,
-                    const Address& addr,
+                    const Address addr,
                     actionType /* action_type_in */,
                     const ActionArgumentType args) -> Closure
 {
@@ -110,7 +113,7 @@ sssp_predicate_func(ComputeCell& cc,
 
 inline auto
 sssp_work_func(ComputeCell& cc,
-               const Address& addr,
+               const Address addr,
                actionType /* action_type_in */,
                const ActionArgumentType args) -> Closure
 {
@@ -136,7 +139,7 @@ sssp_work_func(ComputeCell& cc,
 
 inline auto
 sssp_diffuse_predicate_func(ComputeCell& cc,
-                            const Address& addr,
+                            const Address addr,
                             actionType /* action_type_in */,
                             const ActionArgumentType args) -> Closure
 {
@@ -163,7 +166,7 @@ sssp_diffuse_predicate_func(ComputeCell& cc,
 
 inline auto
 sssp_diffuse_func(ComputeCell& cc,
-                  const Address& addr,
+                  const Address addr,
                   actionType /* action_type_in */,
                   const ActionArgumentType args) -> Closure
 {

@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_BFS_HPP
-#define CCA_BFS_HPP
+#ifndef CCA_BFS_Rhizome_HPP
+#define CCA_BFS_Rhizome_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
@@ -63,6 +63,9 @@ struct BFSVertex : Vertex_T
         this->total_number_of_vertices = total_number_of_vertices_in;
     }
 
+    // Nothing to do.
+    void configure_derived_class_LCOs() {}
+
     BFSVertex() {}
     ~BFSVertex() {}
 };
@@ -83,7 +86,7 @@ struct BFSArguments
 
 inline auto
 bfs_predicate_func(ComputeCell& cc,
-                   const Address& addr,
+                   const Address addr,
                    actionType /* action_type_in */,
                    const ActionArgumentType args) -> Closure
 {
@@ -110,12 +113,12 @@ bfs_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_work_func(ComputeCell& cc,
-              const Address& addr,
+              const Address addr,
               actionType /* action_type_in */,
               const ActionArgumentType args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then don't perform any work.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
         static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
@@ -135,7 +138,7 @@ bfs_work_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_predicate_func(ComputeCell& cc,
-                           const Address& addr,
+                           const Address addr,
                            actionType /* action_type_in */,
                            const ActionArgumentType args) -> Closure
 {
@@ -149,8 +152,8 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
     }
 
     auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
+    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
     u_int32_t const incoming_level = bfs_args.level;
 
     if (v->bfs_level == incoming_level) {
@@ -161,7 +164,7 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
 
 inline auto
 bfs_diffuse_func(ComputeCell& cc,
-                 const Address& addr,
+                 const Address addr,
                  actionType /* action_type_in */,
                  const ActionArgumentType args) -> Closure
 {
@@ -190,17 +193,23 @@ bfs_diffuse_func(ComputeCell& cc,
     ActionArgumentType const args_for_ghost_vertices =
         cca_create_action_argument<BFSArguments>(level_to_send);
 
-    // Rely to the Rhizome link
-    if (v->rhizome_vertices[0].has_value()) {
-        cc.diffuse(Action(v->rhizome_vertices[0].value(),
-                          addr,
-                          actionType::application_action,
-                          true,
-                          args_for_ghost_vertices, // same as if relying to ghosts
-                          bfs_predicate,
-                          bfs_work,
-                          bfs_diffuse_predicate,
-                          bfs_diffuse));
+    // Relay to the Rhizome link
+    for (u_int32_t rhizome_iterator = 0;
+         rhizome_iterator <
+         BFSVertex<RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+         rhizome_iterator++) {
+
+        if (v->rhizome_vertices[rhizome_iterator].has_value()) {
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args_for_ghost_vertices, // same as if relaying to ghosts
+                              bfs_predicate,
+                              bfs_work,
+                              bfs_diffuse_predicate,
+                              bfs_diffuse));
+        }
     }
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
@@ -506,4 +515,4 @@ write_results(const BFSCommandLineArguments& cmd_args,
     cca_simulator.print_animation(output_file_path);
 }
 
-#endif // CCA_BFS_HPP
+#endif // CCA_BFS_Rhizome_HPP

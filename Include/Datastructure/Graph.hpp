@@ -235,7 +235,8 @@ class Graph
     }
 
     // Initialize a newly created vertex in the CCA memory.
-    // This is used for things like initializing the MemoryAllocator of the RecurssiveParallelVertex
+    // This is used for things like initializing the MemoryAllocator of the
+    // RhizomeRecurssiveParallelVertex.
     // NOTE: Only to be used for RhizomeRecurssiveParallelVertex
     template<class VertexTypeOfAddress>
     inline auto init_rhizome_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
@@ -373,8 +374,7 @@ class Graph
         static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
                       "edge type must be of type Address");
 
-        // TODO: Perhaps this `int` must become `u_int32_t`
-        std::vector<int> vertex_ids =
+        std::vector<u_int32_t> vertex_ids =
             make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
 
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
@@ -427,6 +427,7 @@ class Graph
                 // Create the Rhizome if needed. 
                 if (!this->vertices_info[dst_vertex_id].get_current_rhizome_address()) {
 
+                    vertex_.id = dst_vertex_id;
                     std::optional<Address> vertex_addr =
                         cca_simulator.allocate_and_insert_object_on_cc(
                             random_allocator, &vertex_, sizeof(VertexTypeOfAddress));
@@ -436,9 +437,6 @@ class Graph
                                   << this->vertices[dst_vertex_id].id << "\n";
                         exit(0);
                     }
-                    /* std::cout << "Rhizome Created for dst_vertex_id: " << dst_vertex_id
-                              << ", Total inbound: " << this->vertices[dst_vertex_id].inbound_degree
-                              << "\n"; */
 
                     if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
                                                                         vertex_addr.value())) {
@@ -453,11 +451,12 @@ class Graph
                     auto* new_rhizome_vertex = static_cast<VertexTypeOfAddress*>(
                         cca_simulator.get_object(vertex_addr.value()));
 
-                    // 1. New adds all in self.
+                    // 1. New adds all previous rhizomes in it self.
                     for (u_int32_t rhizome_iterator = 0;
                          rhizome_iterator < this->vertices_info[dst_vertex_id].current_rhizome;
                          rhizome_iterator++) {
-
+                        /* std::cout << "In Graph.hpp, vertex: " << new_rhizome_vertex->id
+                                  << ", rhizome_iterator: " << rhizome_iterator << std::endl; */
                         if (!new_rhizome_vertex->set_rhizome(
                                 this->vertices_info[dst_vertex_id].addresses[rhizome_iterator])) {
                             std::cerr

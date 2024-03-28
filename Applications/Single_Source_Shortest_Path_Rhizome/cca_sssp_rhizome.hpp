@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,15 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef CCA_BFS_HPP
-#define CCA_BFS_HPP
+#ifndef CCA_SSSP_Rhizome_HPP
+#define CCA_SSSP_Rhizome_HPP
 
 #include "CCASimulator.hpp"
 #include "Enums.hpp"
 
 // Datastructures
 #include "Graph.hpp"
-#include "RecursiveParallelVertex.hpp"
+#include "RhizomeRecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
@@ -47,16 +47,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
 
-inline static constexpr u_int32_t undefined_level = 999999;
+inline static constexpr u_int32_t undefined_distance = 999999;
 
 template<typename Vertex_T>
-struct BFSVertex : Vertex_T
+struct SSSPVertex : Vertex_T
 {
-    inline static constexpr u_int32_t max_level = undefined_level;
-    u_int32_t bfs_level;
+    inline static constexpr u_int32_t max_distance = undefined_distance;
+    u_int32_t sssp_distance;
 
-    BFSVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
-        : bfs_level(BFSVertex::max_level)
+    SSSPVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
+        : sssp_distance(SSSPVertex::max_distance)
     {
         this->id = id_in;
         this->number_of_edges = 0;
@@ -66,164 +66,191 @@ struct BFSVertex : Vertex_T
     // Nothing to do.
     void configure_derived_class_LCOs() {}
 
-    BFSVertex() {}
-    ~BFSVertex() {}
+    SSSPVertex() = default;
+    ~SSSPVertex() = default;
 };
 
-// CCAFunctionEvent ids for the BFS action: predicate, work, and diffuse.
+// CCAFunctionEvent ids for the SSSP action: predicate, work, and diffuse.
 // In the main register the functions with the CCASimulator chip and get their ids.
-extern CCAFunctionEvent bfs_predicate;
-extern CCAFunctionEvent bfs_work;
-extern CCAFunctionEvent bfs_diffuse_predicate;
-extern CCAFunctionEvent bfs_diffuse;
+extern CCAFunctionEvent sssp_predicate;
+extern CCAFunctionEvent sssp_work;
+extern CCAFunctionEvent sssp_diffuse_predicate;
+extern CCAFunctionEvent sssp_diffuse;
 
 // This is what the action carries as payload.
-struct BFSArguments
+struct SSSPArguments
 {
-    u_int32_t level;
+    u_int32_t distance;
     u_int32_t src_vertex_id;
 };
 
 inline auto
-bfs_predicate_func(ComputeCell& cc,
-                   const Address addr,
-                   actionType /* action_type_in */,
-                   const ActionArgumentType args) -> Closure
+sssp_predicate_func(ComputeCell& cc,
+                    const Address addr,
+                    actionType /* action_type_in */,
+                    const ActionArgumentType args) -> Closure
 {
 
     // First check whether this is a ghost vertex.If it is then always predicate true.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+    auto* v =
+        static_cast<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
-    u_int32_t const incoming_level = bfs_args.level;
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+    u_int32_t const incoming_distance = sssp_args.distance;
 
-    if (v->bfs_level > incoming_level) {
+    if (v->sssp_distance > incoming_distance) {
         return Closure(cc.null_true_event, nullptr);
     }
     return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
-bfs_work_func(ComputeCell& cc,
-              const Address addr,
-              actionType /* action_type_in */,
-              const ActionArgumentType args) -> Closure
+sssp_work_func(ComputeCell& cc,
+               const Address addr,
+               actionType /* action_type_in */,
+               const ActionArgumentType args) -> Closure
 {
+
     // First check whether this is a ghost vertex. If it is then don't perform any work.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+    auto* v =
+        static_cast<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
-    u_int32_t const incoming_level = bfs_args.level;
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+    u_int32_t const incoming_distance = sssp_args.distance;
 
-    // Update level with the new level
-    v->bfs_level = incoming_level;
+    // Update distance with the new distance
+    v->sssp_distance = incoming_distance;
     return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto
-bfs_diffuse_predicate_func(ComputeCell& cc,
-                           const Address addr,
-                           actionType /* action_type_in */,
-                           const ActionArgumentType args) -> Closure
+sssp_diffuse_predicate_func(ComputeCell& cc,
+                            const Address addr,
+                            actionType /* action_type_in */,
+                            const ActionArgumentType args) -> Closure
 {
-    // First check whether this is a ghost vertex. If it is then always predicate true.
-    // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
 
-    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+    // First check whether this is a ghost vertex.If it is then always predicate true.
+    // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
+    auto* parent_recursive_parallel_vertex =
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+
+    if (parent_recursive_parallel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
-    BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
+    auto* v =
+        static_cast<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
-    u_int32_t const incoming_level = bfs_args.level;
+    SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+    u_int32_t const incoming_distance = sssp_args.distance;
 
-    if (v->bfs_level == incoming_level) {
+    if (v->sssp_distance == incoming_distance) {
         return Closure(cc.null_true_event, nullptr);
     }
     return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
-bfs_diffuse_func(ComputeCell& cc,
-                 const Address addr,
-                 actionType /* action_type_in */,
-                 const ActionArgumentType args) -> Closure
+sssp_diffuse_func(ComputeCell& cc,
+                  const Address addr,
+                  actionType /* action_type_in */,
+                  const ActionArgumentType args) -> Closure
 {
 
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
-    bool this_is_ghost_vertex = parent_recursive_parralel_vertex->is_ghost_vertex;
+    auto* parent_recursive_parallel_vertex =
+        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    bool this_is_ghost_vertex = parent_recursive_parallel_vertex->is_ghost_vertex;
+    bool const this_is_rhizome_vertex = parent_recursive_parallel_vertex->is_rhizome_vertex;
 
-    auto* v = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v =
+        static_cast<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
 
-    u_int32_t current_level = BFSVertex<RecursiveParallelVertex<Address>>::max_level;
+    u_int32_t current_distance = SSSPVertex<RhizomeRecursiveParallelVertex<Address>>::max_distance;
     if (this_is_ghost_vertex) {
-        BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
-        current_level = bfs_args.level;
+        SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
+        current_distance = sssp_args.distance;
     } else {
-        current_level = v->bfs_level;
+        current_distance = v->sssp_distance;
     }
 
-    BFSArguments level_to_send;
-    level_to_send.level = current_level;
-    level_to_send.src_vertex_id = v->id;
+    SSSPArguments distance_to_send;
+    // To be potentially sent to ghost vertices.
+    distance_to_send.distance = current_distance;
+    distance_to_send.src_vertex_id = v->id;
 
     ActionArgumentType const args_for_ghost_vertices =
-        cca_create_action_argument<BFSArguments>(level_to_send);
+        cca_create_action_argument<SSSPArguments>(distance_to_send);
 
-    // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
+    // Relay to the Rhizome link
+    for (u_int32_t rhizome_iterator = 0;
+         rhizome_iterator <
+         SSSPVertex<RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+         rhizome_iterator++) {
+
+        if (v->rhizome_vertices[rhizome_iterator].has_value()) {
+            cc.diffuse(Action(v->rhizome_vertices[rhizome_iterator].value(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args_for_ghost_vertices, // same as if relaying to ghosts
+                              sssp_predicate,
+                              sssp_work,
+                              sssp_diffuse_predicate,
+                              sssp_diffuse));
+        }
+    }
+
+    // Note: The application vertex type is derived from the parent `RhizomeRecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
     for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator < RhizomeRecursiveParallelVertex<Address>::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
-
             cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
                               addr,
                               actionType::application_action,
                               true,
                               args_for_ghost_vertices,
-                              bfs_predicate,
-                              bfs_work,
-                              bfs_diffuse_predicate,
-                              bfs_diffuse));
+                              sssp_predicate,
+                              sssp_work,
+                              sssp_diffuse_predicate,
+                              sssp_diffuse));
         }
     }
 
     for (int i = 0; i < v->number_of_edges; i++) {
 
-        level_to_send.level = current_level + 1;
-        ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
+        distance_to_send.distance = current_distance + v->edges[i].weight;
+        ActionArgumentType const args_x =
+            cca_create_action_argument<SSSPArguments>(distance_to_send);
 
         cc.diffuse(Action(v->edges[i].edge,
                           addr,
                           actionType::application_action,
                           true,
                           args_x,
-                          bfs_predicate,
-                          bfs_work,
-                          bfs_diffuse_predicate,
-                          bfs_diffuse));
+                          sssp_predicate,
+                          sssp_work,
+                          sssp_diffuse_predicate,
+                          sssp_diffuse));
     }
 
     return Closure(cc.null_false_event, nullptr);
@@ -238,13 +265,13 @@ configure_parser(cli::Parser& parser)
                                      "Name of the input graph used to set the name of the output "
                                      "file. Example: Erdos or anything");
     parser.set_required<std::string>("s", "shape", "Shape of the compute cell");
-    parser.set_required<u_int32_t>("root", "bfsroot", "Root vertex for Breadth First Search (BFS)");
-    parser.set_optional<bool>(
-        "verify",
-        "verification",
-        0,
-        "Enable verification of the calculated levels with the levels provided "
-        "in the accompanying .bfs file");
+    parser.set_optional<bool>("verify",
+                              "verification",
+                              0,
+                              "Enable verification of the calculated paths with the paths provided "
+                              "in the accompanying .sssp file");
+    parser.set_required<u_int32_t>(
+        "root", "sssproot", "Root vertex for Single Source Shortest Path (SSSP)");
     parser.set_optional<u_int32_t>("m",
                                    "memory_per_cc",
                                    1 * 512 * 1024,
@@ -291,45 +318,45 @@ configure_parser(cli::Parser& parser)
         "IDs. This appears to be the case for certain RMAT graphs.");
 }
 
-struct BFSCommandLineArguments
+struct SSSPCommandLineArguments
 {
-    // BFS root vertex
+    // SSSP root vertex
     u_int32_t root_vertex{};
-    // Cross check the calculated bfs lengths from root with the lengths provided in .bfs file
+    // Cross check the calculated sssp lengths from root with the lengths provided in .sssp file
     bool verify_results{};
     // Configuration related to the input data graph
     std::string input_graph_path;
     std::string graph_name;
     // Optional output directory path
     std::string output_file_directory;
-    // Get the depth of Htree.
+    // Get the depth of Htree
     u_int32_t hdepth{};
 
     // Get the rows and columbs of cells that are served by a single end Htree node. This will
-    // help in construction of the CCA chip, Htree, and routing.
+    // help in construction of the CCA chip, Htree, and routing
     u_int32_t hx{};
     u_int32_t hy{};
 
-    // Get the max bandwidth of Htree.
+    // Get the max bandwidth of Htree
     u_int32_t hbandwidth_max{};
 
-    // Configuration related to the CCA Chip.
+    // Configuration related to the CCA Chip
     std::string shape_arg;
     computeCellShape shape_of_compute_cells;
 
-    // Get the memory per cc or use the default.
+    // Get the memory per cc or use the default
     u_int32_t memory_per_cc{};
 
     // Mesh type.
     u_int32_t mesh_type{};
 
-    // Get the routing policy to use.
+    // Get the routing policy to use
     u_int32_t routing_policy{};
 
     // To shuffle or to not shuffle the vertex ID list.
     bool shuffle_switch{};
 
-    BFSCommandLineArguments(cli::Parser& parser)
+    SSSPCommandLineArguments(cli::Parser& parser)
         : root_vertex(parser.get<u_int32_t>("root"))
         , verify_results(parser.get<bool>("verify"))
         , input_graph_path(parser.get<std::string>("f"))
@@ -373,14 +400,14 @@ struct BFSCommandLineArguments
 
 template<typename NodeType>
 inline void
-verify_results(const BFSCommandLineArguments& cmd_args,
+verify_results(const SSSPCommandLineArguments& cmd_args,
                Graph<NodeType>& input_graph,
                const CCASimulator& cca_simulator)
 {
-    std::cout << "\nBreadth First Search Verification: \n";
+    std::cout << "\nSingle Source Shortest Path Verification: \n";
 
-    // Open the file containing bfs results for verification.
-    std::string verfication_file_path = cmd_args.input_graph_path + ".bfs";
+    // Open the file containing sssp results for verification.
+    std::string verfication_file_path = cmd_args.input_graph_path + ".sssp";
     std::ifstream file(verfication_file_path);
 
     if (!file.is_open()) {
@@ -392,7 +419,7 @@ verify_results(const BFSCommandLineArguments& cmd_args,
         std::string line;
         // Read the header.
         std::getline(file, line);
-        // Read the root (source) of bfs that was used for results in the .bfs file.
+        // Read the root (source) of sssp that was used for results in the .sssp file.
         // Initialize it to an invalid value first.
         u_int32_t root_in_file = input_graph.total_vertices + 1;
         std::getline(file, line);
@@ -408,19 +435,20 @@ verify_results(const BFSCommandLineArguments& cmd_args,
         }
 
         u_int32_t node_id;
-        u_int32_t bfs_value;
+        // u_int32_t sssp_value;
+        double sssp_value;
         while (std::getline(file, line)) {
 
             std::istringstream iss(line);
 
-            if (iss >> node_id >> bfs_value) {
-                // When there are vertices with in-degree zero then they are not present in the .bfs
-                // file. Therefore, we have to substitute its value with the undefined of
-                // `max_level` for the verification to work.
+            if (iss >> node_id >> sssp_value) {
+                // When there are vertices with in-degree zero then they are not present in the
+                // .sssp file. Therefore, we have to substitute its value with the undefined of
+                // `max_distance` for the verification to work.
                 while (node_id != control_results.size()) {
-                    control_results.emplace_back(undefined_level);
+                    control_results.emplace_back(undefined_distance);
                 }
-                control_results.emplace_back(bfs_value);
+                control_results.emplace_back(static_cast<u_int32_t>(sssp_value));
             } else {
                 // Parsing failed.
                 std::cerr << "Error parsing line: " << line
@@ -433,17 +461,17 @@ verify_results(const BFSCommandLineArguments& cmd_args,
         u_int32_t total_errors = 0;
         for (u_int32_t i = 0; i < control_results.size(); i++) {
 
-            // Check for correctness. Print the level to a target test vertex. test_vertex
+            // Check for correctness. Print the distance to a target test vertex. test_vertex
 
-            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
+            Address const test_vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(i);
 
-            auto* v_test = static_cast<BFSVertex<RecursiveParallelVertex<Address>>*>(
+            auto* v_test = static_cast<SSSPVertex<RhizomeRecursiveParallelVertex<Address>>*>(
                 cca_simulator.get_object(test_vertex_addr));
 
-            // Assumes the result .bfs file is sorted.
-            bool equal = control_results[i] == v_test->bfs_level;
+            // Assumes the result .sssp file is sorted.
+            bool equal = control_results[i] == v_test->sssp_distance;
             if (!equal) {
-                std::cout << "Vertex: " << i << ", Computed BFS: " << v_test->bfs_level
+                std::cout << "Vertex: " << i << ", Computed SSSP: " << v_test->sssp_distance
                           << ", Control Value: " << control_results[i] << ", Not equal! Error\n";
                 total_errors++;
             }
@@ -457,17 +485,19 @@ verify_results(const BFSCommandLineArguments& cmd_args,
     }
 }
 
-// Write simulation statistics to a file.
+// Write simulation statistics to a file
 template<typename NodeType>
 inline void
-write_results(const BFSCommandLineArguments& cmd_args,
+write_results(const SSSPCommandLineArguments& cmd_args,
               Graph<NodeType>& input_graph,
               CCASimulator& cca_simulator)
 {
 
     std::string const output_file_name =
-        "bfs_graph_" + cmd_args.graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
-        "_e_" + std::to_string(input_graph.total_edges) + cca_simulator.key_configurations_string();
+        "sssp_graph_" + cmd_args.graph_name + "_v_" + std::to_string(input_graph.total_vertices) +
+        "_e_" + std::to_string(input_graph.total_edges) + "_rhizomes_" +
+        std::to_string(rhizome_size) + "_rhizomecutoff_" +
+        std::to_string(rhizome_inbound_degree_cutoff) + cca_simulator.key_configurations_string();
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";
@@ -493,4 +523,4 @@ write_results(const BFSCommandLineArguments& cmd_args,
     cca_simulator.print_animation(output_file_path);
 }
 
-#endif // CCA_BFS_HPP
+#endif // CCA_SSSP_Rhizome_HPP
