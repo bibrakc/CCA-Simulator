@@ -132,10 +132,10 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
     // Make sure this is not a ghost vertex.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RecursiveParallelVertex<Address, edges_min>*>(cc.get_object(addr));
     assert(!parent_recursive_parralel_vertex->is_ghost_vertex);
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments my_score_to_send;
@@ -184,13 +184,13 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RecursiveParallelVertex<Address, edges_min>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
@@ -257,13 +257,13 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const ActionArgumentType args) -> Closure
 {
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
     for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator < RecursiveParallelVertex<Address, edges_min>::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
@@ -492,7 +492,7 @@ verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
             Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
             auto* v_test =
-                static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
+                static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address, edges_min>>*>(
                     cca_simulator.get_object(test_vertex_addr));
             double difference =
                 std::fabs(control_results[i] - v_test->page_rank_current_rank_score);

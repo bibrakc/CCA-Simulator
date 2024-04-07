@@ -254,7 +254,7 @@ ComputeCell::execute_action(void* function_events)
             if constexpr (termination_switch) {
 
                 // When needed put the inlude header for that datastructure and print it here.
-                SimpleVertex<Address>* vertex =
+                /* SimpleVertex<Address>* vertex =
                     (SimpleVertex<Address>*)this->get_object(action.obj_addr);
 
                 // print_SimpleVertex(vertex, action.obj_addr);
@@ -264,13 +264,13 @@ ComputeCell::execute_action(void* function_events)
                     std::cout << "before term signal in execute action, deficit: "
                               << vertex->terminator.deficit
                               << ", parent: " << vertex->terminator.parent.has_value() << "\n";
-                }
+                } */
                 obj->terminator.signal(*this, action.origin_addr);
-                if (vertex->id == 0) {
+                /* if (vertex->id == 0) {
                     std::cout << "after term signal in execute action, deficit: "
                               << vertex->terminator.deficit
                               << ", parent: " << vertex->terminator.parent.has_value() << "\n";
-                }
+                } */
             }
             // if predicate
             Closure const predicate_resolution =

@@ -131,12 +131,13 @@ Terminator::unsignal(ComputeCell& cc)
             // Unset the parent
             this->parent = std::nullopt;
 
-            SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+            /* SimpleVertex<Address>* vertex =
+            (SimpleVertex<Address>*)cc.get_object(this->my_object);
 
             if (vertex->id == 0) {
                 std::cout << "Unset the parent\n";
                 print_SimpleVertex(vertex, this->my_object);
-            }
+            } */
         }
     }
 }
@@ -202,24 +203,25 @@ Terminator::acknowledgement(ComputeCell& cc)
             // Unset the parent
             this->parent = std::nullopt;
 
-            SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+            /* SimpleVertex<Address, edges_max>* vertex = (SimpleVertex<Address,
+            edges_max>*)cc.get_object(this->my_object);
 
             if (vertex->id == 0) {
                 std::cout << "def=0 and parent not null. Unset the parent\n";
                 print_SimpleVertex(vertex, this->my_object);
-            }
+            } */
         }
         return;
     }
 
     this->deficit--;
-   
-    SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
+
+    /* SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)cc.get_object(this->my_object);
 
     if (vertex->id == 0) {
         std::cout << "def-- \n";
         print_SimpleVertex(vertex, this->my_object);
-    }
+    } */
     if (this->deficit == 0) {
         // Unset the parent and send an acknowledgement back to the parent.
         if (this->parent.value().cc_id == cc.host_id) {

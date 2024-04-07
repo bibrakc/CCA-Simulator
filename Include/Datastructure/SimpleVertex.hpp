@@ -47,19 +47,18 @@ struct Edge
 };
 
 // Used when the vertex is allocated on the CCA device. There we just create an edge list of size
-// `edges_max`.
-// inline constexpr u_int32_t edges_max = 14;
-
-template<typename Address_T>
+// `edgelist_size`.
+template<typename Address_T, u_int32_t edgelist_size>
 struct SimpleVertex : Object
 {
     u_int32_t id{};
+    static constexpr u_int32_t local_edgelist_size = edgelist_size;
 
     // If the graph is located on the host then simply store the edges as a `std::vector` but if the
     // graph is stored on the CCA then store it as a smaller edges[] array.
     static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
     using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
-                                       Edge<Address>[edges_max],
+                                       Edge<Address>[local_edgelist_size],
                                        std::vector<Edge<Address_T>>>;
     Edges_t edges{};
 
@@ -86,7 +85,7 @@ struct SimpleVertex : Object
         // std::cout << "SimpleVertex insert_edge\n";
         if constexpr (this->is_vertex_allocated_on_cca_device) {
 
-            if (this->number_of_edges >= edges_max) {
+            if (this->number_of_edges >= local_edgelist_size) {
                 std::cerr << "this->number_of_edges: " << this->number_of_edges << "\n";
                 return false;
             }
@@ -129,8 +128,8 @@ struct SimpleVertex : Object
 };
 
 // Print the SimpleVertex vertex
-inline void
-print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_addr)
+/* inline void
+print_SimpleVertex(const SimpleVertex<Address, edges_max>* vertex, const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "
               << vertex_addr
@@ -142,6 +141,6 @@ print_SimpleVertex(const SimpleVertex<Address>* vertex, const Address& vertex_ad
                   << "} ]";
     }
     std::cout << std::endl;
-}
+} */
 
 #endif // SimpleVertex_HPP

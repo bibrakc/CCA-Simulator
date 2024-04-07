@@ -41,8 +41,8 @@ using Allocator_T = VicinityMemoryAllocator;
 #include "CyclicMemoryAllocator.hpp"
 // using Allocator_T = CyclicMemoryAllocator;
 
-template<typename Address_T>
-struct RecursiveParallelVertex : SimpleVertex<Address_T>
+template<typename Address_T, int edgelist_size>
+struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 {
 
     // Checking to see whether the user has mistakenly used this for host side allocation. If they
@@ -72,7 +72,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                                   u_int32_t edge_weight) -> bool
     {
 
-        if (this->number_of_edges == edges_max) {
+        if (this->number_of_edges == edgelist_size) {
 
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
 
@@ -82,7 +82,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 // appplication specific information. Also, in the future perhaps refactor to use a
                 // different diffuse function that specializes only in diffusing and nothing about
                 // application in it.
-                RecursiveParallelVertex<Address_T> new_ghost_vertex;
+                RecursiveParallelVertex<Address_T, edgelist_size> new_ghost_vertex;
 
                 // This won't really be used just giving the ghost the same id as parent.
                 new_ghost_vertex.id = this->id;
@@ -95,7 +95,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                     cca_simulator.allocate_and_insert_object_on_cc(
                         this->ghost_vertex_allocator,
                         &new_ghost_vertex,
-                        sizeof(RecursiveParallelVertex<Address_T>));
+                        sizeof(RecursiveParallelVertex<Address_T, edgelist_size>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -103,20 +103,25 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 }
 
                 this->ghost_vertices[this->next_insertion_in_ghost_iterator] = ghost_vertex_addr;
+
+                auto* ghost_vertex_accessor =
+                    static_cast<RecursiveParallelVertex<Address_T, edgelist_size>*>(
+                        cca_simulator.get_object(
+                            this->ghost_vertices[this->next_insertion_in_ghost_iterator].value()));
+
+                // This defines the center of vicinity for allocation. Currently, using the
+                // ghost_vertex itself as the center of vicinity. That makes more sense than to have
+                // the root non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is
+                // currently not used but keeping it for future use for benchmarking.
+                const u_int32_t source_vertex_cc_id_to_use =
+                    this->ghost_vertices[this->next_insertion_in_ghost_iterator].value().cc_id;
+
+                ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
             }
-
             auto* ghost_vertex_accessor =
-                static_cast<RecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
-                    this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
-
-            // This defines the center of vicinity for allocation. Currently, using the ghost_vertex
-            // itself as the center of vicinity. That makes more sense than to have the root
-            // non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is currently not
-            // used but keeping it for future use for benchmarking.
-            const u_int32_t source_vertex_cc_id_to_use =
-                this->ghost_vertices[next_insertion_in_ghost_iterator].value().cc_id;
-
-            ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
+                static_cast<RecursiveParallelVertex<Address_T, edgelist_size>*>(
+                    cca_simulator.get_object(
+                        this->ghost_vertices[this->next_insertion_in_ghost_iterator].value()));
 
             bool success = ghost_vertex_accessor->insert_edge_recurssively(
                 cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight);
@@ -162,7 +167,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
         /* std::cout << "insert_edge_recurssively: this_vertex_addr_in: " << this_vertex_addr_in
                   << ", dst_vertex_addr: " << dst_vertex_addr << "\n"; */
 
-        if (this->number_of_edges == edges_max) {
+        if (this->number_of_edges == edgelist_size) {
 
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
 
@@ -172,7 +177,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 // appplication specific information. Also, in the future perhaps refactor to use a
                 // different diffuse function that specializes only in diffusing and nothing about
                 // application in it.
-                RecursiveParallelVertex<Address_T> new_ghost_vertex;
+                RecursiveParallelVertex<Address_T, edgelist_size> new_ghost_vertex;
 
                 // This won't really be used just giving the ghost the same id as parent.
                 new_ghost_vertex.id = this->id;
@@ -185,7 +190,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                     cca_simulator.allocate_and_insert_object_on_cc(
                         this->ghost_vertex_allocator,
                         &new_ghost_vertex,
-                        sizeof(RecursiveParallelVertex<Address_T>));
+                        sizeof(RecursiveParallelVertex<Address_T, edgelist_size>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -193,21 +198,32 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
                 }
 
                 this->ghost_vertices[this->next_insertion_in_ghost_iterator] = ghost_vertex_addr;
+
+                auto* ghost_vertex_accessor =
+                    static_cast<RecursiveParallelVertex<Address_T, edgelist_size>*>(
+                        cca_simulator.get_object(ghost_vertex_addr.value()));
+
+                // This defines the center of vicinity for allocation. Currently, using the
+                // ghost_vertex itself as the center of vicinity. That makes more sense than to have
+                // the root non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is to
+                // be used for germinating the continuation action.
+                const u_int32_t source_vertex_cc_id_to_use = this_vertex_addr_in.cc_id;
+
+                ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
             }
 
             Address ghost_vertex_addr =
                 this->ghost_vertices[next_insertion_in_ghost_iterator].value();
 
-            auto* ghost_vertex_accessor = static_cast<RecursiveParallelVertex<Address_T>*>(
-                cca_simulator.get_object(ghost_vertex_addr));
+            auto* ghost_vertex_accessor =
+                static_cast<RecursiveParallelVertex<Address_T, edgelist_size>*>(
+                    cca_simulator.get_object(ghost_vertex_addr));
 
             // This defines the center of vicinity for allocation. Currently, using the ghost_vertex
             // itself as the center of vicinity. That makes more sense than to have the root
             // non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is to be used for
             // germinating the continuation action.
             const u_int32_t source_vertex_cc_id_to_use = this_vertex_addr_in.cc_id;
-
-            ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
 
             bool success =
                 ghost_vertex_accessor->insert_edge_recurssively(cca_simulator,
@@ -332,9 +348,10 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T>
     ~RecursiveParallelVertex() = default;
 };
 
-// Print the SimpleVertex vertex
+// Print the RecursiveParallelVertex vertex
+template<u_int32_t edgelist_size>
 inline void
-print_RecursiveParallelVertex(const RecursiveParallelVertex<Address>* vertex,
+print_RecursiveParallelVertex(const RecursiveParallelVertex<Address, edgelist_size>* vertex,
                               const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "

@@ -79,7 +79,7 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type>>> input_graph(
+    Graph<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(
         cmd_args.input_graph_path);
 
     // Get the vertices with degree values equal to 0.
@@ -114,7 +114,7 @@ main(int argc, char** argv) -> int
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
     input_graph.transfer_graph_host_to_cca_rhizome<
-        PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>>(
+        PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>>(
         cca_square_simulator,
         allocator,
         random_allocator,
@@ -241,11 +241,11 @@ main(int argc, char** argv) -> int
               << ", Total Program Cycles: " << total_program_cycles << "\n";
 
     if (cmd_args.verify_results) {
-        verify_results<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type>>>(
+        verify_results<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type, edges_min>>>(
             cmd_args, input_graph, cca_square_simulator);
     }
 
-    write_results<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type>>>(
+    write_results<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type, edges_min>>>(
         cmd_args, input_graph, cca_square_simulator);
 
     return 0;

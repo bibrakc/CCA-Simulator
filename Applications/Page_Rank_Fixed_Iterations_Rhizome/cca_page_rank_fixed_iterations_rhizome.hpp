@@ -140,10 +140,10 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
     // Make sure this is not a ghost vertex.
     // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address, edges_min>*>(cc.get_object(addr));
     assert(!parent_recursive_parralel_vertex->is_ghost_vertex);
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments my_score_to_send;
@@ -192,13 +192,13 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address, edges_min>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
@@ -278,14 +278,14 @@ page_rank_fixed_iterations_rhizome_collapse_func(ComputeCell& cc,
 
     // First check whether this is a ghost vertex. If it is then its a bug.
     auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+        static_cast<RhizomeRecursiveParallelVertex<Address, edges_min>*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         std::cerr << "Bug! rhizome collapse can not happen on a ghost vertex." << std::endl;
         exit(0);
     }
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
@@ -326,7 +326,7 @@ page_rank_fixed_iterations_rhizome_collapse_diffuse_func(ComputeCell& cc,
                                                          const ActionArgumentType args) -> Closure
 {
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     /*  PageRankFixedIterationsArguments const page_rank_args =
@@ -336,7 +336,7 @@ page_rank_fixed_iterations_rhizome_collapse_diffuse_func(ComputeCell& cc,
     for (u_int32_t rhizome_iterator = 0;
          rhizome_iterator <
          PageRankFixedIterationsVertex<
-             RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+             RhizomeRecursiveParallelVertex<Address, edges_min>>::rhizome_vertices_max_degree;
          rhizome_iterator++) {
 
         if (v->rhizome_vertices[rhizome_iterator].has_value()) {
@@ -371,13 +371,13 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
                                         const ActionArgumentType args) -> Closure
 {
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+    auto* v = static_cast<PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
         cc.get_object(addr));
 
     // Note: The application vertex type is derived from the parent `RhizomeRecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
     for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RhizomeRecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+         ghosts_iterator < RhizomeRecursiveParallelVertex<Address, edges_min>::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
@@ -606,7 +606,7 @@ verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
             Address const test_vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(i);
 
             auto* v_test = static_cast<
-                PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+                PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>*>(
                 cca_simulator.get_object(test_vertex_addr));
             double difference =
                 std::fabs(control_results[i] - v_test->page_rank_current_rank_score.get_val());

@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef RECURSIVE_PARALLEL_Vertex_HPP
-#define RECURSIVE_PARALLEL_Vertex_HPP
+#ifndef RHIZOME_RECURSIVE_PARALLEL_Vertex_HPP
+#define RHIZOME_RECURSIVE_PARALLEL_Vertex_HPP
 
 #include "Constants.hpp"
 #include "RecursiveParallelVertex.hpp"
@@ -42,8 +42,8 @@ using Allocator_T = VicinityMemoryAllocator;
 #include "CyclicMemoryAllocator.hpp"
 // using Allocator_T = CyclicMemoryAllocator;
 
-template<typename Address_T>
-struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
+template<typename Address_T, int edgelist_size>
+struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 {
 
     // Checking to see whether the user has mistakenly used this for host side allocation. If they
@@ -89,7 +89,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     // ghost vertices do not inherit anything from user types and therefore will not need to do
     // anything. Right now using it in init() and set_rhizome() to update the configuration of
     // LCO_AND's N value.
-    virtual void configure_derived_class_LCOs() { /* std::cout << "I am a pure ghost!" << std::endl; */ }
+    virtual void configure_derived_class_LCOs()
+    { /* std::cout << "I am a pure ghost!" << std::endl; */
+    }
 
     [[nodiscard]] auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
     {
@@ -121,7 +123,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
                                   u_int32_t edge_weight) -> bool
     {
 
-        if (this->number_of_edges == edges_max) {
+        if (this->number_of_edges == edgelist_size) {
 
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
 
@@ -131,7 +133,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
                 // appplication specific information. Also, in the future perhaps refactor to use a
                 // different diffuse function that specializes only in diffusing and nothing about
                 // application in it.
-                RhizomeRecursiveParallelVertex<Address_T> new_ghost_vertex;
+                RhizomeRecursiveParallelVertex<Address_T, edgelist_size> new_ghost_vertex;
 
                 // This won't really be used just giving the ghost the same id as parent.
                 new_ghost_vertex.id = this->id;
@@ -144,7 +146,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
                     cca_simulator.allocate_and_insert_object_on_cc(
                         this->ghost_vertex_allocator,
                         &new_ghost_vertex,
-                        sizeof(RhizomeRecursiveParallelVertex<Address_T>));
+                        sizeof(RhizomeRecursiveParallelVertex<Address_T, edgelist_size>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -155,8 +157,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
             }
 
             auto* ghost_vertex_accessor =
-                static_cast<RhizomeRecursiveParallelVertex<Address_T>*>(cca_simulator.get_object(
-                    this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
+                static_cast<RhizomeRecursiveParallelVertex<Address_T, edgelist_size>*>(
+                    cca_simulator.get_object(
+                        this->ghost_vertices[next_insertion_in_ghost_iterator].value()));
 
             // This defines the center of vicinity for allocation. Currently, using the ghost_vertex
             // itself as the center of vicinity. That makes more sense than to have the root
@@ -211,7 +214,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
         /* std::cout << "insert_edge_recurssively: this_vertex_addr_in: " << this_vertex_addr_in
                   << ", dst_vertex_addr: " << dst_vertex_addr << "\n"; */
 
-        if (this->number_of_edges == edges_max) {
+        if (this->number_of_edges == edgelist_size) {
 
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
 
@@ -221,7 +224,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
                 // appplication specific information. Also, in the future perhaps refactor to use a
                 // different diffuse function that specializes only in diffusing and nothing about
                 // application in it.
-                RhizomeRecursiveParallelVertex<Address_T> new_ghost_vertex;
+                RhizomeRecursiveParallelVertex<Address_T, edgelist_size> new_ghost_vertex;
 
                 // This won't really be used just giving the ghost the same id as parent.
                 new_ghost_vertex.id = this->id;
@@ -234,7 +237,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
                     cca_simulator.allocate_and_insert_object_on_cc(
                         this->ghost_vertex_allocator,
                         &new_ghost_vertex,
-                        sizeof(RhizomeRecursiveParallelVertex<Address_T>));
+                        sizeof(RhizomeRecursiveParallelVertex<Address_T, edgelist_size>));
                 if (ghost_vertex_addr == std::nullopt) {
                     std::cerr << "Error: Not able to allocate ghost vertex dst: << "
                               << dst_vertex_addr << "\n";
@@ -247,8 +250,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
             Address ghost_vertex_addr =
                 this->ghost_vertices[next_insertion_in_ghost_iterator].value();
 
-            auto* ghost_vertex_accessor = static_cast<RhizomeRecursiveParallelVertex<Address_T>*>(
-                cca_simulator.get_object(ghost_vertex_addr));
+            auto* ghost_vertex_accessor =
+                static_cast<RhizomeRecursiveParallelVertex<Address_T, edgelist_size>*>(
+                    cca_simulator.get_object(ghost_vertex_addr));
 
             // This defines the center of vicinity for allocation. Currently, using the ghost_vertex
             // itself as the center of vicinity. That makes more sense than to have the root
@@ -387,10 +391,12 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T>
     ~RhizomeRecursiveParallelVertex() = default;
 };
 
-// Print the SimpleVertex vertex
+// Print the RhizomeRecursiveParallelVertex vertex
+template<u_int32_t edgelist_size>
 inline void
-print_RhizomeRecursiveParallelVertex(const RhizomeRecursiveParallelVertex<Address>* vertex,
-                                     const Address& vertex_addr)
+print_RhizomeRecursiveParallelVertex(
+    const RhizomeRecursiveParallelVertex<Address, edgelist_size>* vertex,
+    const Address& vertex_addr)
 {
     std::cout << "Vertex ID: " << vertex->id << ", Addr: "
               << vertex_addr
@@ -404,4 +410,4 @@ print_RhizomeRecursiveParallelVertex(const RhizomeRecursiveParallelVertex<Addres
     std::cout << std::endl;
 }
 
-#endif // RECURSIVE_PARALLEL_Vertex_HPP
+#endif // RHIZOME_RECURSIVE_PARALLEL_Vertex_HPP
