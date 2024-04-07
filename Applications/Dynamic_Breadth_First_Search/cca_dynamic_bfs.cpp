@@ -76,7 +76,7 @@ main(int argc, char** argv) -> int
 
     // Read the input data graph.
     std::string input_graph_inc_1_path = cmd_args.input_graph_path + ".edgelist_1";
-    Graph<BFSVertex<SimpleVertex<host_edge_type>>> input_graph(input_graph_inc_1_path);
+    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_inc_1_path);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -93,7 +93,7 @@ main(int argc, char** argv) -> int
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address>>>(
+    input_graph.transfer_graph_host_to_cca<BFSVertex<RecursiveParallelVertex<Address, edges_min>>>(
         cca_square_simulator,
         allocator,
         std::optional<u_int32_t>(cmd_args.root_vertex),
@@ -175,11 +175,12 @@ main(int argc, char** argv) -> int
                       << "\n";
 
             input_graph.transfer_graph_edges_increment_host_to_cca<
-                BFSVertex<RecursiveParallelVertex<Address>>>(cca_square_simulator,
-                                                             new_edges,
-                                                             cmd_args.root_vertex,
-                                                             dynamic_bfs_terminator.value(),
-                                                             dynamic_bfs_edge_insert_continuation);
+                BFSVertex<RecursiveParallelVertex<Address, edges_min>>>(
+                cca_square_simulator,
+                new_edges,
+                cmd_args.root_vertex,
+                dynamic_bfs_terminator.value(),
+                dynamic_bfs_edge_insert_continuation);
         }
 
         ///////////
@@ -220,12 +221,12 @@ main(int argc, char** argv) -> int
 
         // Verify results.
         if (cmd_args.verify_results) {
-            verify_results<BFSVertex<SimpleVertex<host_edge_type>>>(
+            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
                 cmd_args, input_graph, cca_square_simulator, dynamic_increment);
         }
     }
 
-    write_results<BFSVertex<SimpleVertex<host_edge_type>>>(
+    write_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
         cmd_args, input_graph, cca_square_simulator);
 
     return 0;
