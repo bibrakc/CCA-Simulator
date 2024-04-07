@@ -52,13 +52,13 @@ template<typename Address_T, u_int32_t edgelist_size>
 struct SimpleVertex : Object
 {
     u_int32_t id{};
-    static constexpr u_int32_t local_edgelist_size = edgelist_size;
+    u_int32_t local_edgelist_size{};
 
     // If the graph is located on the host then simply store the edges as a `std::vector` but if the
     // graph is stored on the CCA then store it as a smaller edges[] array.
     static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
     using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
-                                       Edge<Address>[local_edgelist_size],
+                                       Edge<Address>[edgelist_size],
                                        std::vector<Edge<Address_T>>>;
     Edges_t edges{};
 
@@ -123,7 +123,10 @@ struct SimpleVertex : Object
         return true;
     }
 
-    SimpleVertex() = default;
+    SimpleVertex()
+        : local_edgelist_size(edgelist_size)
+    {
+    }
     ~SimpleVertex() = default;
 };
 

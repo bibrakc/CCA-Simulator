@@ -73,7 +73,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 
     // Private: allocate ghost
     template<typename ghost_type>
-    void allocate_ghost(CCASimulator& cca_simulator)
+    void allocate_ghost(CCASimulator& cca_simulator, u_int32_t RPVO_level)
     {
         // Knowingly using the basic class RecursiveParallelVertex<> and not the application
         // specialized class that derives from this class. Since the ghost vertices are only
@@ -111,7 +111,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         const u_int32_t source_vertex_cc_id_to_use =
             this->ghost_vertices[this->next_insertion_in_ghost_iterator].value().cc_id;
 
-        ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use);
+        ghost_vertex_accessor->init(cca_simulator, source_vertex_cc_id_to_use, RPVO_level);
     }
 
     // Recurssively add edge into the ghost vertex
@@ -128,9 +128,10 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
                 // Allocate ghost vertex since it does not exist.
                 if (RPVO_level == 0) {
-                    this->allocate_ghost<ghost_type_level_1>(cca_simulator);
+                    this->allocate_ghost<ghost_type_level_1>(cca_simulator, RPVO_level);
                 } else {
-                    this->allocate_ghost<ghost_type_level_1>(cca_simulator);
+                    this->allocate_ghost<ghost_type_level_greater_than_1>(cca_simulator,
+                                                                          RPVO_level);
                 }
             }
 
@@ -150,7 +151,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                     cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight, RPVO_level + 1);
             } else {
                 auto* ghost_vertex_accessor =
-                    static_cast<ghost_type_level_1*>(cca_simulator.get_object(
+                    static_cast<ghost_type_level_greater_than_1*>(cca_simulator.get_object(
                         this->ghost_vertices[this->next_insertion_in_ghost_iterator].value()));
 
                 success = ghost_vertex_accessor->insert_edge_recurssively(
@@ -161,11 +162,14 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 // Increment the global edges count for this vertex.
                 this->outbound_degree++;
 
-                // Inorder to balance the ghost tree iterate over them when adding. This will
-                // make sure a balanced tree.
-                this->next_insertion_in_ghost_iterator =
-                    (this->next_insertion_in_ghost_iterator + 1) %
-                    RecursiveParallelVertex::ghost_vertices_max_degree;
+                if (this->outbound_degree % edges_max == 0) {
+
+                    // Inorder to balance the ghost tree iterate over them when adding. This will
+                    // make sure a balanced tree.
+                    this->next_insertion_in_ghost_iterator =
+                        (this->next_insertion_in_ghost_iterator + 1) %
+                        RecursiveParallelVertex::ghost_vertices_max_degree;
+                }
                 return true;
             } else {
                 return false; // insertion failed.
@@ -206,7 +210,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 if (RPVO_level == 0) {
                     this->allocate_ghost<ghost_type_level_1>(cca_simulator);
                 } else {
-                    this->allocate_ghost<ghost_type_level_1>(cca_simulator);
+                    this->allocate_ghost<ghost_type_level_greater_than_1>(cca_simulator);
                 }
             }
 
@@ -241,8 +245,8 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                                                                     continuation,
                                                                     RPVO_level + 1);
             } else {
-                auto* ghost_vertex_accessor =
-                    static_cast<ghost_type_level_1*>(cca_simulator.get_object(ghost_vertex_addr));
+                auto* ghost_vertex_accessor = static_cast<ghost_type_level_greater_than_1*>(
+                    cca_simulator.get_object(ghost_vertex_addr));
 
                 success =
                     ghost_vertex_accessor->insert_edge_recurssively(cca_simulator,
@@ -259,12 +263,13 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             if (success) {
                 // Increment the global edges count for this vertex.
                 this->outbound_degree++;
-
-                // Inorder to balance the ghost tree iterate over them when adding. This will make
-                // sure a balanced tree.
-                this->next_insertion_in_ghost_iterator =
-                    (this->next_insertion_in_ghost_iterator + 1) %
-                    RecursiveParallelVertex::ghost_vertices_max_degree;
+                if (this->outbound_degree % edges_max == 0) {
+                    // Inorder to balance the ghost tree iterate over them when adding. This will
+                    // make sure a balanced tree.
+                    this->next_insertion_in_ghost_iterator =
+                        (this->next_insertion_in_ghost_iterator + 1) %
+                        RecursiveParallelVertex::ghost_vertices_max_degree;
+                }
                 return true;
             } else {
                 return false; // insertion failed.
@@ -337,7 +342,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         return false;
     }
 
-    auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id) -> bool
+    auto init(CCASimulator& cca_simulator, u_int32_t source_cc_id, u_int32_t RPVO_level) -> bool
     {
         if constexpr (std::is_same_v<Allocator_T, CyclicMemoryAllocator>) {
             this->ghost_vertex_allocator =
@@ -348,8 +353,12 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             // sophisticated by using some measure like the outbound edges and then for each
             // vertex spread its vicinity of allocation such that large vertices have a larger
             // vicinity. 2 and 2 = 5x5 actually.
-            constexpr u_int32_t vicinity_rows = vicinity_radius; // 2;
-            constexpr u_int32_t vicinity_cols = vicinity_radius; // 2;
+            u_int32_t vicinity_rows = vicinity_radius; // 2;
+            u_int32_t vicinity_cols = vicinity_radius; // 2;
+            if (RPVO_level < 1) {
+                vicinity_rows = 1;
+                vicinity_cols = 1;
+            }
 
             this->ghost_vertex_allocator = VicinityMemoryAllocator(
                 Cell::cc_id_to_cooridinate(
