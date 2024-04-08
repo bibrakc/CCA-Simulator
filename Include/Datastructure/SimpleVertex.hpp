@@ -126,6 +126,8 @@ struct SimpleVertex : Object
     SimpleVertex()
         : local_edgelist_size(edgelist_size)
     {
+         /* std::cout << "SimpleVertex " << this->id << ", called local_edgelist_size = " << local_edgelist_size
+         << std::endl; */
     }
     ~SimpleVertex() = default;
 };

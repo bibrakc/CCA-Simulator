@@ -100,8 +100,7 @@ main(int argc, char** argv) -> int
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<
-        PageRankFixedIterationsVertex<RecursiveParallelVertex<Address, edges_min>>>(
+    input_graph.transfer_graph_host_to_cca<PageRankFixedIterationsVertex<ghost_type_level_1>>(
         cca_square_simulator,
         allocator,
         std::optional<u_int32_t>(cmd_args.root_vertex),

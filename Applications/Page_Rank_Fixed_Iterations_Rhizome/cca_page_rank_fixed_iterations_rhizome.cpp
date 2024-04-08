@@ -113,13 +113,13 @@ main(int argc, char** argv) -> int
 
     // Note: here we use PageRankFixedIterationsSimpleVertex<Address> since the vertex object is now
     // going to be sent to the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca_rhizome<
-        PageRankFixedIterationsVertex<RhizomeRecursiveParallelVertex<Address, edges_min>>>(
-        cca_square_simulator,
-        allocator,
-        random_allocator,
-        std::optional<u_int32_t>(cmd_args.root_vertex),
-        cmd_args.shuffle_switch);
+    input_graph
+        .transfer_graph_host_to_cca_rhizome<PageRankFixedIterationsVertex<ghost_type_level_1>>(
+            cca_square_simulator,
+            allocator,
+            random_allocator,
+            std::optional<u_int32_t>(cmd_args.root_vertex),
+            cmd_args.shuffle_switch);
 
     // Only put the PageRankFixedIterationsAction seed action on a single vertex.
     // In this case Page Rank Fixed Iterations root = root_vertex

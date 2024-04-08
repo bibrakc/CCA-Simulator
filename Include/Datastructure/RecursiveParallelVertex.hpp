@@ -48,6 +48,30 @@ struct RecursiveParallelVertex;
 using ghost_type_level_1 = RecursiveParallelVertex<Address, edges_min>;
 using ghost_type_level_greater_than_1 = RecursiveParallelVertex<Address, edges_max>;
 
+// A convient wrapper for deciding how to invoke the function on vertex objects. It checks for the
+// size of the local edgelist and sees if it was allocating using `edge_min` or `edge_max` and then
+// uses that type to invoke the function. Note: This is not really necessary but is used to save
+// space as most vertices are not big and have samll number of edges so don't have to allocate all
+// of them with larger local edgelist size space and waste it. In future when something like
+// std::vector is implemented in the runtime then we might not need that.
+#define INVOKE_HANDLER_3(func, cc, addr, args)                                                     \
+    do {                                                                                           \
+        auto* parent_simple_vertex = static_cast<ghost_type_level_1*>(cc.get_object(addr));        \
+        if (parent_simple_vertex->local_edgelist_size == edges_min) {                              \
+            return func<ghost_type_level_1>(cc, addr, args);                                       \
+        }                                                                                          \
+        return func<ghost_type_level_greater_than_1>(cc, addr, args);                              \
+    } while (0)
+
+#define INVOKE_HANDLER_4(func, cc, addr, action_type, args)                                        \
+    do {                                                                                           \
+        auto* parent_simple_vertex = static_cast<ghost_type_level_1*>(cc.get_object(addr));        \
+        if (parent_simple_vertex->local_edgelist_size == edges_min) {                              \
+            return func<ghost_type_level_1>(cc, addr, action_type, args);                          \
+        }                                                                                          \
+        return func<ghost_type_level_greater_than_1>(cc, addr, action_type, args);                 \
+    } while (0)
+
 template<typename Address_T, int edgelist_size>
 struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 {
@@ -162,8 +186,12 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 // Increment the global edges count for this vertex.
                 this->outbound_degree++;
 
-                if (this->outbound_degree % edges_max == 0) {
+                bool arbitrate_ghost = this->outbound_degree % edges_max == 0;
+                if (RPVO_level == 0 && (this->outbound_degree == 2 * edges_min)) {
+                    arbitrate_ghost = true;
+                }
 
+                if (arbitrate_ghost) {
                     // Inorder to balance the ghost tree iterate over them when adding. This will
                     // make sure a balanced tree.
                     this->next_insertion_in_ghost_iterator =
@@ -208,9 +236,10 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             if (!this->ghost_vertices[this->next_insertion_in_ghost_iterator].has_value()) {
                 // Allocate ghost vertex since it does not exist.
                 if (RPVO_level == 0) {
-                    this->allocate_ghost<ghost_type_level_1>(cca_simulator);
+                    this->allocate_ghost<ghost_type_level_1>(cca_simulator, RPVO_level);
                 } else {
-                    this->allocate_ghost<ghost_type_level_greater_than_1>(cca_simulator);
+                    this->allocate_ghost<ghost_type_level_greater_than_1>(cca_simulator,
+                                                                          RPVO_level);
                 }
             }
 
@@ -263,7 +292,13 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             if (success) {
                 // Increment the global edges count for this vertex.
                 this->outbound_degree++;
-                if (this->outbound_degree % edges_max == 0) {
+
+                bool arbitrate_ghost = this->outbound_degree % edges_max == 0;
+                if (RPVO_level == 0 && (this->outbound_degree == 2 * edges_min)) {
+                    arbitrate_ghost = true;
+                }
+
+                if (arbitrate_ghost) {
                     // Inorder to balance the ghost tree iterate over them when adding. This will
                     // make sure a balanced tree.
                     this->next_insertion_in_ghost_iterator =
