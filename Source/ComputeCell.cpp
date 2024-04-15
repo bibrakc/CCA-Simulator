@@ -294,11 +294,12 @@ ComputeCell::execute_action(void* function_events)
                         // do nothing
                     } else if (function_events_manager->is_true_event(diffuse_predicate.first) &&
                                diffuse_predicate.second == nullptr) {
-                        if (!this->diffuse_queue.push(action)) {
+                        if (!this->diffuse_queue.push(action)) { // diffuse body is lazy evaluated.
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
                             exit(0);
                         }
-                    } else { // diffuse predicate is lazy evaluated.
+                        this->statistics.diffusions_created++;
+                    } else { // diffuse predicate including body is lazy evaluated.
 
                         // Get new arguments from `diffuse_predicate.second`.
                         action.args = diffuse_predicate.second;
@@ -307,6 +308,7 @@ ComputeCell::execute_action(void* function_events)
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
                             exit(0);
                         }
+                        this->statistics.diffusions_created++;
                     }
 
                 } else { // Only single queue i.e. action_queue
@@ -322,7 +324,7 @@ ComputeCell::execute_action(void* function_events)
                             function_events_manager->get_function_event_handler(
                                 diffuse_predicate.first)(
                                 *this, action.obj_addr, action.action_type, action.args);
-
+                        this->statistics.diffusions_created++;
                         // diffuse
                         if (function_events_manager->is_true_event(
                                 diffuse_predicate_resolution.first)) {
@@ -330,6 +332,7 @@ ComputeCell::execute_action(void* function_events)
                             function_events_manager->get_function_event_handler(action.diffuse)(
                                 *this, action.obj_addr, action.action_type, action.args);
                         }
+                        this->statistics.diffusions_performed_work++;
                     }
                 }
             } else {
@@ -401,10 +404,11 @@ ComputeCell::execute_diffusion_phase(void* function_events)
                 function_events_manager->get_function_event_handler(action.diffuse)(
                     *this, action.obj_addr, action.action_type, action.args);
 
+                this->statistics.diffusions_performed_work++;
+
             } else {
                 // This diffusion is discarded/subsumed.
-                // TODO: Fix this stat.
-                // this->statistics.actions_false_on_predicate++;
+                this->statistics.diffusions_false_on_predicate++;
             }
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {
@@ -471,8 +475,7 @@ ComputeCell::filter_diffusion(void* function_events)
 
             } else {
                 // This diffusion is discarded/subsumed.
-                // TODO: Fix this stat.
-                // this->statistics.actions_false_on_predicate++;
+                this->statistics.diffusions_false_on_predicate++;
             }
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {

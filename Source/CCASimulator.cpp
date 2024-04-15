@@ -351,13 +351,21 @@ CCASimulator::print_statistics(std::ofstream& output_file)
 
     // Output total cycles, total actions, total actions performed work, total actions false on
     // predicate. TODO: Somehow put the resource usage as a percentage...?
-    output_file << "total_cycles\ttotal_objects_created\ttotal_actions_created\ttotal_actions_"
-                   "performed_work\ttotal_actions_false_on_predicate\toperons_moved\n"
-                << this->total_cycles << "\t" << simulation_statistics.objects_allocated << "\t"
-                << simulation_statistics.actions_created << "\t"
-                << simulation_statistics.actions_performed_work << "\t"
-                << simulation_statistics.actions_false_on_predicate << "\t"
-                << simulation_statistics.operons_moved << "\n";
+    output_file
+        << "total_cycles\ttotal_objects_created\ttotal_actions_created\ttotal_actions_"
+           "performed_work\ttotal_actions_false_on_predicate\tdiffusions_created\tdiffusions_"
+           "performed_work\tdiffusions_false_on_predicate\toperons_moved\n"
+        << this->total_cycles << "\t" << simulation_statistics.objects_allocated << "\t"
+
+        << simulation_statistics.actions_created << "\t"
+        << simulation_statistics.actions_performed_work << "\t"
+        << simulation_statistics.actions_false_on_predicate << "\t"
+
+        << simulation_statistics.diffusions_created << "\t"
+        << simulation_statistics.diffusions_performed_work << "\t"
+        << simulation_statistics.diffusions_false_on_predicate << "\t"
+
+        << simulation_statistics.operons_moved << "\n";
 
     output_file << "avg_objects_per_cc\n" << avg_objects_per_cc << "\n";
 
@@ -420,8 +428,9 @@ CCASimulator::key_configurations_string() -> std::string
         "_x_" + std::to_string(this->dim_x) + "_y_" + std::to_string(this->dim_y) + "_hb_" +
         std::to_string(this->hbandwidth_max) + "_th_" + throttle_text + "_recvbuff_" +
         std::to_string(RECVBUFFSIZE) + "_vicinity_" + std::to_string(vicinity_radius) +
-        "_edges_min_" + std::to_string(edges_min) + "_edges_max_" + std::to_string(edges_max) +
-        "_termimation_" + termination_text + "_network_" + network_text;
+        "_ghosts_children_" + std::to_string(ghost_children_max) + "_edges_min_" +
+        std::to_string(edges_min) + "_edges_max_" + std::to_string(edges_max) + "_termimation_" +
+        termination_text + "_network_" + network_text;
 
     return configs;
 }

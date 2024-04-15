@@ -221,22 +221,32 @@ class CCASimulator
 
         os << "\nCCA Chip Details:\n\tShape: "
            << ComputeCell::get_compute_cell_shape_name(this->shape_of_compute_cells)
-           << "\n\tDim: " << this->dim_x << " x " << this->dim_y
-           << "\n\tHtree End Node Coverage Block: " << this->hx << " x " << this->hy
-           << "\n\tHtree Depth: " << this->hdepth
-           << "\n\tHtree Possible Bandwidth Max: " << this->hbandwidth_max
-           << "\n\tTotal Cells: " << this->total_compute_cells
-           << "\n\tTotal Compute Cells: " << this->total_compute_cells - this->total_sink_cells
-           << "\n\tTotal Sink Cells: " << this->total_sink_cells
-           << "\n\tSink/Compute Ratio (%): " << ratio_sink_compute
-           << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
+           << "\n\tDim: " << this->dim_x << " x " << this->dim_y;
+
+        if (this->hdepth == 0) {
+            os << "\n\tTotal Compute Cells: " << this->total_compute_cells;
+        } else {
+            os << "\n\tTotal Cells: " << this->total_compute_cells;
+        }
+
+        os << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
            << " KB"
            << "\n\tTotal Chip Memory: "
            << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
            << " MB"
            << "\n\tMesh Type: " << this->primary_network_type
-           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n"
-           << std::endl;
+           << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n";
+
+        if (this->hdepth != 0) {
+
+            os << "\n\tHtree End Node Coverage Block: " << this->hx << " x " << this->hy
+               << "\n\tHtree Depth: " << this->hdepth
+               << "\n\tHtree Possible Bandwidth Max: " << this->hbandwidth_max
+               << "\n\tTotal Compute Cells: " << this->total_compute_cells - this->total_sink_cells
+               << "\n\tTotal Sink Cells: " << this->total_sink_cells
+               << "\n\tSink/Compute Ratio (%): " << ratio_sink_compute << "\n"
+               << std::endl;
+        }
     }
     inline void output_description_in_a_single_line(std::ostream& os)
     {
@@ -264,6 +274,8 @@ class CCASimulator
         }
 
         os << "queues_configuration\n" << queues_text << "\n";
+
+        os << "ghost_children_max\n" << ghost_children_max << "\n";
     }
 
     inline void output_CCA_active_status_per_cycle(std::ostream& os)
@@ -287,6 +299,7 @@ class CCASimulator
                    << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";
             }
         } else {
+            // Invalid values just to preserve format.
             os << "0\t0\t0\n";
             os << "0\t0\t0\n";
             os << "0\t0\t0\n";

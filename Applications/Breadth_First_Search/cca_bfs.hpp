@@ -482,11 +482,6 @@ verify_results(const BFSCommandLineArguments& cmd_args,
             }
         }
 
-// ANSI escape codes for color manipulation
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_GREEN "\x1b[32m"
-#define ANSI_COLOR_RESET "\x1b[0m"
-
         if (total_errors > 0) {
             std::cout << ANSI_COLOR_RED << "Total number values error: " << total_errors
                       << ", Verification Failed\n"
