@@ -40,6 +40,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define u_int32_t uint32_t
 #endif
 
+// ANSI escape codes for color to be used in std::cout statements, especially verification.
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_GREEN "\x1b[32m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+
 // Set it to true/false
 inline constexpr bool debug_code = false;
 
@@ -66,6 +71,10 @@ inline constexpr u_int32_t diffuse_queue_size = DIFFUSE_QUEUE_SIZE;
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
 
+// Compile with: -DWEIGHT=<bool value>
+// Edge with weight or no weight.
+inline constexpr bool weighted_edge = WEIGHT;
+
 // Compile with: -DMIN_EDGES_PER_VERTEX=<int value>
 // Used for the parent RPVO and its immediate childs. This is done to mimic std::vector like dynamic
 // size functionality until such `list` like feature is implemented in the runtime. TODO
@@ -73,6 +82,9 @@ inline constexpr u_int32_t edges_min = MIN_EDGES_PER_VERTEX;
 
 // Compile with: -DMAXEDGESPERVERTEX=<int value>
 inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;
+
+// Compile with: -DGHOST_CHILDREN=<int value>
+inline constexpr u_int32_t ghost_children_max = GHOST_CHILDREN;
 
 // Use termination detection or do it without by only peeking at the active status of the cell
 // queues and network queues.

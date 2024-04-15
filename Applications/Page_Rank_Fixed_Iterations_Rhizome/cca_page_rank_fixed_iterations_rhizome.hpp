@@ -657,10 +657,13 @@ verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
         }
 
         if (total_values_exceeding_tolerance > 0) {
-            std::cout << "Total number values that exceeded tolerance: "
-                      << total_values_exceeding_tolerance << ", Verification Failed\n";
+            std::cout << ANSI_COLOR_RED << "Total number values that exceeded tolerance: "
+                      << total_values_exceeding_tolerance << ", Verification Failed\n"
+                      << ANSI_COLOR_RESET;
         } else {
-            std::cout << "All values were within tolerance. Verification Successful.\n";
+            std::cout << ANSI_COLOR_GREEN
+                      << "All values were within tolerance. Verification Successful.\n"
+                      << ANSI_COLOR_RESET;
         }
     }
 }

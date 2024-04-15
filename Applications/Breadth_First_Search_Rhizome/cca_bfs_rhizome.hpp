@@ -492,9 +492,12 @@ verify_results(const BFSCommandLineArguments& cmd_args,
         }
 
         if (total_errors > 0) {
-            std::cout << "Total number values error: " << total_errors << ", Verification Failed\n";
+            std::cout << ANSI_COLOR_RED << "Total number values error: " << total_errors
+                      << ", Verification Failed\n"
+                      << ANSI_COLOR_RESET;
         } else {
-            std::cout << "All values were correct. Verification Successful.\n";
+            std::cout << ANSI_COLOR_GREEN << "All values were correct. Verification Successful.\n"
+                      << ANSI_COLOR_RESET;
         }
     }
 }

@@ -35,6 +35,9 @@ project(${executable_name} LANGUAGES CXX)
 # Set C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
 
+# SSSP needs weights. Put it here before including the ../constants.cmake
+set(WEIGHT "true")
+
 # Include constants
 include(../constants.cmake)
 

@@ -39,12 +39,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using host_edge_type = u_int32_t;
 
-template<typename Address_T>
+/* template<typename Address_T>
 struct Edge
 {
     Address_T edge;
     u_int32_t weight;
+}; */
+
+// Simple edge that only contains information about the other vertex it is pointing/connected to.
+template<typename Address_T, bool weighted>
+struct EdgeBase
+{
+    Address_T edge;
+
+    EdgeBase() = default;
+    // For compatability with the EdgeBase that has weight.
+    EdgeBase(Address_T edge_in, uint32_t weight_in) { this->edge = edge_in; }
 };
+
+// An edge with weight. Useful for app such as SSSP.
+template<typename Address_T>
+struct EdgeBase<Address_T, true>
+{
+    Address_T edge;
+    uint32_t weight;
+};
+
+template<typename Address_T>
+using Edge = EdgeBase<Address_T, weighted_edge>;
 
 // Used when the vertex is allocated on the CCA device. There we just create an edge list of size
 // `edgelist_size`.
@@ -91,11 +113,14 @@ struct SimpleVertex : Object
             }
 
             this->edges[this->number_of_edges].edge = dst_vertex_addr;
-            this->edges[this->number_of_edges].weight = edge_weight;
+            if constexpr (weighted_edge) {
+                this->edges[this->number_of_edges].weight = edge_weight;
+            }
             this->number_of_edges++;
             this->outbound_degree++;
         } else {
             this->edges.emplace_back(dst_vertex_addr, edge_weight);
+
             this->number_of_edges++;
             this->outbound_degree++;
         }
@@ -126,8 +151,9 @@ struct SimpleVertex : Object
     SimpleVertex()
         : local_edgelist_size(edgelist_size)
     {
-         /* std::cout << "SimpleVertex " << this->id << ", called local_edgelist_size = " << local_edgelist_size
-         << std::endl; */
+        /* std::cout << "SimpleVertex " << this->id << ", called local_edgelist_size = " <<
+        local_edgelist_size
+        << std::endl; */
     }
     ~SimpleVertex() = default;
 };

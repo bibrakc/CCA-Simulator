@@ -343,10 +343,13 @@ class Graph
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 
+            u_int32_t edge_weight = 0;
             for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
 
                 u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
-                u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
+                if constexpr (weighted_edge) {
+                    edge_weight = this->vertices[i].edges[j].weight;
+                }
 
                 if (!this->insert_edge_by_address<VertexTypeOfAddress>(
                         cca_simulator,
@@ -419,10 +422,13 @@ class Graph
         for (int i = 0; i < this->total_vertices; i++) {
             u_int32_t const src_vertex_id = this->vertices[i].id;
 
+            u_int32_t edge_weight = 0;
             for (int j = 0; j < this->vertices[i].number_of_edges; j++) {
 
                 u_int32_t const dst_vertex_id = this->vertices[i].edges[j].edge;
-                u_int32_t const edge_weight = this->vertices[i].edges[j].weight;
+                if constexpr (weighted_edge) {
+                    edge_weight = this->vertices[i].edges[j].weight;
+                }
 
                 // Create the Rhizome if needed. 
                 if (!this->vertices_info[dst_vertex_id].get_current_rhizome_address()) {
