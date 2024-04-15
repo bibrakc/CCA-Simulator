@@ -84,23 +84,19 @@ struct BFSArguments
     u_int32_t src_vertex_id;
 };
 
-inline auto
-bfs_predicate_func(ComputeCell& cc,
-                   const Address addr,
-                   actionType /* action_type_in */,
-                   const ActionArgumentType args) -> Closure
+template<typename ghost_type>
+auto
+bfs_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
 {
-
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
@@ -112,21 +108,27 @@ bfs_predicate_func(ComputeCell& cc,
 }
 
 inline auto
-bfs_work_func(ComputeCell& cc,
-              const Address addr,
-              actionType /* action_type_in */,
-              const ActionArgumentType args) -> Closure
+bfs_predicate_func(ComputeCell& cc,
+                   const Address addr,
+                   actionType /* action_type_in */,
+                   const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(bfs_predicate_T, cc, addr, args);
+}
+
+template<typename ghost_type>
+auto
+bfs_work_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
 {
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
 
     u_int32_t const incoming_level = bfs_args.level;
@@ -137,21 +139,28 @@ bfs_work_func(ComputeCell& cc,
 }
 
 inline auto
-bfs_diffuse_predicate_func(ComputeCell& cc,
-                           const Address addr,
-                           actionType /* action_type_in */,
-                           const ActionArgumentType args) -> Closure
+bfs_work_func(ComputeCell& cc,
+              const Address addr,
+              actionType /* action_type_in */,
+              const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(bfs_work_T, cc, addr, args);
+}
+
+template<typename ghost_type>
+auto
+bfs_diffuse_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
+    -> Closure
 {
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
 
     BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
     u_int32_t const incoming_level = bfs_args.level;
@@ -163,22 +172,27 @@ bfs_diffuse_predicate_func(ComputeCell& cc,
 }
 
 inline auto
-bfs_diffuse_func(ComputeCell& cc,
-                 const Address addr,
-                 actionType /* action_type_in */,
-                 const ActionArgumentType args) -> Closure
+bfs_diffuse_predicate_func(ComputeCell& cc,
+                           const Address addr,
+                           actionType /* action_type_in */,
+                           const ActionArgumentType args) -> Closure
 {
+    INVOKE_HANDLER_3(bfs_diffuse_predicate_T, cc, addr, args);
+}
 
+template<typename ghost_type>
+auto
+bfs_diffuse_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
+{
     // Get the hold of the parent ghost vertex. If it is ghost then simply perform diffusion.
-    auto* parent_recursive_parallel_vertex =
-        static_cast<RhizomeRecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parallel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
     bool const this_is_ghost_vertex = parent_recursive_parallel_vertex->is_ghost_vertex;
     bool const this_is_rhizome_vertex = parent_recursive_parallel_vertex->is_rhizome_vertex;
 
-    auto* v = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(cc.get_object(addr));
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
 
-    u_int32_t current_level = BFSVertex<RhizomeRecursiveParallelVertex<Address>>::max_level;
+    u_int32_t current_level = BFSVertex<ghost_type>::max_level;
     if (this_is_ghost_vertex) {
         BFSArguments const bfs_args = cca_get_action_argument<BFSArguments>(args);
         current_level = bfs_args.level;
@@ -195,8 +209,7 @@ bfs_diffuse_func(ComputeCell& cc,
 
     // Relay to the Rhizome link
     for (u_int32_t rhizome_iterator = 0;
-         rhizome_iterator <
-         BFSVertex<RhizomeRecursiveParallelVertex<Address>>::rhizome_vertices_max_degree;
+         rhizome_iterator < BFSVertex<ghost_type>::rhizome_vertices_max_degree;
          rhizome_iterator++) {
 
         if (v->rhizome_vertices[rhizome_iterator].has_value()) {
@@ -214,8 +227,7 @@ bfs_diffuse_func(ComputeCell& cc,
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
-    for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RhizomeRecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+    for (u_int32_t ghosts_iterator = 0; ghosts_iterator < ghost_type::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
@@ -248,6 +260,15 @@ bfs_diffuse_func(ComputeCell& cc,
     }
 
     return Closure(cc.null_false_event, nullptr);
+}
+
+inline auto
+bfs_diffuse_func(ComputeCell& cc,
+                 const Address addr,
+                 actionType /* action_type_in */,
+                 const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(bfs_diffuse_T, cc, addr, args);
 }
 
 inline void
@@ -458,7 +479,7 @@ verify_results(const BFSCommandLineArguments& cmd_args,
 
             Address const test_vertex_addr = input_graph.get_vertex_address_in_cca_rhizome(i);
 
-            auto* v_test = static_cast<BFSVertex<RhizomeRecursiveParallelVertex<Address>>*>(
+            auto* v_test = static_cast<BFSVertex<ghost_type_level_1>*>(
                 cca_simulator.get_object(test_vertex_addr));
 
             // Assumes the result .bfs file is sorted.

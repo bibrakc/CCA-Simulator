@@ -59,11 +59,17 @@ inline constexpr bool active_percent_switch = ACTIVE_PERCENT;
 inline constexpr u_int32_t action_queue_size = ACTIONQUEUESIZE;
 
 // Compile with: -DDIFFUSE_QUEUE_SIZE=<int value> (use 4096 or more/less or whatever).
-// TODO: BUG MAY HAPPEN --> If small chip size and diffuse_queue_size small then compute cells might deadlock.
+// TODO: BUG MAY HAPPEN --> If small chip size and diffuse_queue_size small then compute cells might
+// deadlock.
 inline constexpr u_int32_t diffuse_queue_size = DIFFUSE_QUEUE_SIZE;
 
 // Compile with: -DVICINITY=<int value>
 inline constexpr u_int32_t vicinity_radius = VICINITY;
+
+// Compile with: -DMIN_EDGES_PER_VERTEX=<int value>
+// Used for the parent RPVO and its immediate childs. This is done to mimic std::vector like dynamic
+// size functionality until such `list` like feature is implemented in the runtime. TODO
+inline constexpr u_int32_t edges_min = MIN_EDGES_PER_VERTEX;
 
 // Compile with: -DMAXEDGESPERVERTEX=<int value>
 inline constexpr u_int32_t edges_max = MAXEDGESPERVERTEX;

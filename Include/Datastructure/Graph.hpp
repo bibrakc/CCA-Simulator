@@ -231,7 +231,7 @@ class Graph
     inline auto init_vertex(CCASimulator& cca_simulator, Address src_vertex_addr) -> bool
     {
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
-        return vertex->init(cca_simulator, src_vertex_addr.cc_id);
+        return vertex->init(cca_simulator, src_vertex_addr.cc_id, 0);
     }
 
     // Initialize a newly created vertex in the CCA memory.
@@ -243,7 +243,7 @@ class Graph
     {
         auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(src_vertex_addr));
         return vertex->init(
-            cca_simulator, src_vertex_addr.cc_id, true); // true: meaning it is rhizome
+            cca_simulator, src_vertex_addr.cc_id, 0, true); // true: meaning it is rhizome
     }
 
     std::vector<u_int32_t> make_vertices_list(std::optional<u_int32_t> start_vertex_id,

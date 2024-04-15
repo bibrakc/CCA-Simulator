@@ -119,11 +119,12 @@ page_rank_fixed_iterations_predicate_func(ComputeCell& cc,
     return Closure(cc.null_true_event, nullptr);
 }
 
+template<typename ghost_type>
 inline auto
-page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
-                                               const Address addr,
-                                               actionType action_type_in,
-                                               const ActionArgumentType args) -> Closure
+page_rank_fixed_iterations_germinate_work_T(ComputeCell& cc,
+                                            const Address addr,
+                                            actionType action_type_in,
+                                            const ActionArgumentType args) -> Closure
 {
     // Validity checks
     // This action must be germinate_action.
@@ -131,12 +132,10 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
 
     // Make sure this is not a ghost vertex.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
     assert(!parent_recursive_parralel_vertex->is_ghost_vertex);
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
-        cc.get_object(addr));
+    auto* v = static_cast<PageRankFixedIterationsVertex<ghost_type>*>(cc.get_object(addr));
 
     PageRankFixedIterationsArguments my_score_to_send;
 
@@ -173,25 +172,33 @@ page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
 }
 
 inline auto
-page_rank_fixed_iterations_work_func(ComputeCell& cc,
-                                     const Address addr,
-                                     actionType action_type_in,
-                                     const ActionArgumentType args) -> Closure
+page_rank_fixed_iterations_germinate_work_func(ComputeCell& cc,
+                                               const Address addr,
+                                               actionType action_type_in,
+                                               const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_4(page_rank_fixed_iterations_germinate_work_T, cc, addr, action_type_in, args);
+}
+
+template<typename ghost_type>
+inline auto
+page_rank_fixed_iterations_work_T(ComputeCell& cc,
+                                  const Address addr,
+                                  actionType action_type_in,
+                                  const ActionArgumentType args) -> Closure
 {
     // This action must be application_action.
     assert(action_type_in == actionType::application_action);
 
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
-    auto* parent_recursive_parralel_vertex =
-        static_cast<RecursiveParallelVertex<Address>*>(cc.get_object(addr));
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         return Closure(cc.null_true_event, nullptr);
     }
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
-        cc.get_object(addr));
+    auto* v = static_cast<PageRankFixedIterationsVertex<ghost_type>*>(cc.get_object(addr));
 
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
@@ -242,6 +249,15 @@ page_rank_fixed_iterations_work_func(ComputeCell& cc,
 }
 
 inline auto
+page_rank_fixed_iterations_work_func(ComputeCell& cc,
+                                     const Address addr,
+                                     actionType action_type_in,
+                                     const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_4(page_rank_fixed_iterations_work_T, cc, addr, action_type_in, args);
+}
+
+inline auto
 page_rank_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
                                                   const Address addr,
                                                   actionType /* action_type_in */,
@@ -250,20 +266,18 @@ page_rank_fixed_iterations_diffuse_predicate_func(ComputeCell& cc,
     return Closure(cc.null_true_event, nullptr);
 }
 
+template<typename ghost_type>
 inline auto
-page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
-                                        const Address addr,
-                                        actionType /* action_type_in */,
-                                        const ActionArgumentType args) -> Closure
+page_rank_fixed_iterations_diffuse_T(ComputeCell& cc,
+                                     const Address addr,
+                                     const ActionArgumentType args) -> Closure
 {
 
-    auto* v = static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
-        cc.get_object(addr));
+    auto* v = static_cast<PageRankFixedIterationsVertex<ghost_type>*>(cc.get_object(addr));
 
     // Note: The application vertex type is derived from the parent `RecursiveParallelVertex`
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
-    for (u_int32_t ghosts_iterator = 0;
-         ghosts_iterator < RecursiveParallelVertex<Address>::ghost_vertices_max_degree;
+    for (u_int32_t ghosts_iterator = 0; ghosts_iterator < ghost_type::ghost_vertices_max_degree;
          ghosts_iterator++) {
         if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
@@ -294,6 +308,15 @@ page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
     }
 
     return Closure(cc.null_false_event, nullptr);
+}
+
+inline auto
+page_rank_fixed_iterations_diffuse_func(ComputeCell& cc,
+                                        const Address addr,
+                                        actionType /* action_type_in */,
+                                        const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(page_rank_fixed_iterations_diffuse_T, cc, addr, args);
 }
 
 inline void
@@ -491,9 +514,8 @@ verify_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
             // Check for correctness. Print the distance to a target test vertex. test_vertex
             Address const test_vertex_addr = input_graph.get_vertex_address_in_cca(i);
 
-            auto* v_test =
-                static_cast<PageRankFixedIterationsVertex<RecursiveParallelVertex<Address>>*>(
-                    cca_simulator.get_object(test_vertex_addr));
+            auto* v_test = static_cast<PageRankFixedIterationsVertex<ghost_type_level_1>*>(
+                cca_simulator.get_object(test_vertex_addr));
             double difference =
                 std::fabs(control_results[i] - v_test->page_rank_current_rank_score);
             if (difference > tolerance) {

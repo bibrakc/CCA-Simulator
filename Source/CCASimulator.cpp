@@ -420,8 +420,8 @@ CCASimulator::key_configurations_string() -> std::string
         "_x_" + std::to_string(this->dim_x) + "_y_" + std::to_string(this->dim_y) + "_hb_" +
         std::to_string(this->hbandwidth_max) + "_th_" + throttle_text + "_recvbuff_" +
         std::to_string(RECVBUFFSIZE) + "_vicinity_" + std::to_string(vicinity_radius) +
-        "_edges_max_" + std::to_string(edges_max) + "_termimation_" + termination_text +
-        "_network_" + network_text;
+        "_edges_min_" + std::to_string(edges_min) + "_edges_max_" + std::to_string(edges_max) +
+        "_termimation_" + termination_text + "_network_" + network_text;
 
     return configs;
 }

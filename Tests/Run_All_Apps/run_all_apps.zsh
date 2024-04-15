@@ -2,6 +2,25 @@
 
 CCA_SIMULATOR=../..
 
+#CMAKE_INPUT_OPTIONS=-B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+BUILD_DIR=build
+
+CMAKE_INPUT_OPTIONS=(
+    -B "${BUILD_DIR}"
+    -D THROTTLE=true
+    -D ANIMATION=false
+    -D VICINITY=2
+    -D TERMINATION=false
+    -D MIN_EDGES_PER_VERTEX=5
+    -D MAXEDGESPERVERTEX=15
+    -D THROTTLE_CONGESTION_THRESHOLD=22
+    -D RECVBUFFSIZE=4
+    -D ACTIONQUEUESIZE=256
+    -D RHIZOME_INDEGREE_CUTOFF=10
+    -D SPLIT_QUEUES=true
+)
+
+
 echo "Compiling and running all applications to check for any compilation error or bugs introduced during development. This is a very basic test with a simple small graph."
 rm -rf Output
 mkdir Output
@@ -9,7 +28,7 @@ mkdir Output
 echo "Compiling Breadth_First_Search"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -21,7 +40,7 @@ echo "Done!"
 echo "Compiling Breadth_First_Search_Rhizome"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search_Rhizome -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -34,7 +53,7 @@ echo "Done!"
 echo "Compiling Single_Source_Shortest_Path"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -46,7 +65,7 @@ echo "Done!"
 echo "Compiling Single_Source_Shortest_Path_Rhizome"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path_Rhizome -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -58,7 +77,7 @@ echo "Done!"
 echo "Compiling Page_Rank_Fixed_Iterations"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -70,7 +89,7 @@ echo "Done!"
 echo "Compiling Page_Rank_Fixed_Iterations_Rhizome"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations_Rhizome -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
@@ -82,7 +101,7 @@ echo "Done!"
 echo "Compiling Dynamic_Breadth_First_Search"
 rm -rf build
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Dynamic_Breadth_First_Search -B build -D THROTTLE=true -D ANIMATION=false -D VICINITY=2 -D TERMINATION=false -D MAXEDGESPERVERTEX=10 -D THROTTLE_CONGESTION_THRESHOLD=22 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=256 -D RHIZOME_INDEGREE_CUTOFF=10
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Dynamic_Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
 
 cmake --build build -j 6
 
