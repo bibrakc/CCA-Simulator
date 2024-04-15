@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 
-enum class adressType : u_int32_t
+enum class adressType : u_int8_t
 {
     host_address = 0,
     cca_address,

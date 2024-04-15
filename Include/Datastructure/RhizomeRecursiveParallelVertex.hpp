@@ -102,7 +102,13 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     bool is_rhizome_vertex{};
 
     // RPVO below
-    inline static constexpr u_int32_t ghost_vertices_max_degree = 2;
+
+    // For now only supported for 1, 2, and 3. See artibrate logic in the construction...
+    // static_assert(ghost_children_max < 4);
+    static_assert(GHOST_CHILDREN < 4);
+
+    // ghost_children_max;
+    inline static constexpr u_int32_t ghost_vertices_max_degree = GHOST_CHILDREN;
 
     // If this vertex is ghost vertex? Default is `false` meaning that it is the root/main vertex
     // not a ghost.
@@ -243,8 +249,21 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 bool arbitrate_ghost = this->outbound_degree % edges_max == 0;
 
                 // Special case of root RPVO when it crosses its first ghost local size.
+
+                // Only will happen once when this RPVO's first ghost is full. It will then create a
+                // new ghost and add edges_min edges to it. It helps in saving space and not
+                // creating too many ghosts.
                 if (RPVO_level == 0 && (this->outbound_degree == 2 * edges_min)) {
                     arbitrate_ghost = true;
+                }
+
+                // Only will happen once when this RPVO's second (if exists) ghost is full. It will
+                // then create a new ghost and add edges_min edges to it. It helps in saving space
+                // and not creating too many ghosts.
+                if constexpr (RhizomeRecursiveParallelVertex::ghost_vertices_max_degree == 3) {
+                    if (RPVO_level == 0 && (this->outbound_degree == 3 * edges_min)) {
+                        arbitrate_ghost = true;
+                    }
                 }
 
                 if (arbitrate_ghost) {
@@ -262,7 +281,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         } else {
 
             this->edges[this->number_of_edges].edge = dst_vertex_addr;
-            this->edges[this->number_of_edges].weight = edge_weight;
+            if constexpr (weighted_edge) {
+                this->edges[this->number_of_edges].weight = edge_weight;
+            }
             // Only increments the currect ghost/root vertex edges.
             this->number_of_edges++;
             // Increment the global edges count for this vertex. For a ghost vertex this is all the
@@ -352,8 +373,21 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 this->outbound_degree++;
 
                 bool arbitrate_ghost = this->outbound_degree % edges_max == 0;
+
+                // Only will happen once when this RPVO's first ghost is full. It will then create a
+                // new ghost and add edges_min edges to it. It helps in saving space and not
+                // creating too many ghosts.
                 if (RPVO_level == 0 && (this->outbound_degree == 2 * edges_min)) {
                     arbitrate_ghost = true;
+                }
+
+                // Only will happen once when this RPVO's second (if exists) ghost is full. It will
+                // then create a new ghost and add edges_min edges to it. It helps in saving space
+                // and not creating too many ghosts.
+                if constexpr (RhizomeRecursiveParallelVertex::ghost_vertices_max_degree == 3) {
+                    if (RPVO_level == 0 && (this->outbound_degree == 3 * edges_min)) {
+                        arbitrate_ghost = true;
+                    }
                 }
 
                 if (arbitrate_ghost) {
@@ -371,7 +405,9 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         } else {
 
             this->edges[this->number_of_edges].edge = dst_vertex_addr;
-            this->edges[this->number_of_edges].weight = edge_weight;
+            if constexpr (weighted_edge) {
+                this->edges[this->number_of_edges].weight = edge_weight;
+            }
             // Only increments the currect ghost/root vertex edges.
             this->number_of_edges++;
             // Increment the global edges count for this vertex. For a ghost vertex this is all the
@@ -494,8 +530,13 @@ print_RhizomeRecursiveParallelVertex(
               << " deficit: " << vertex->terminator.deficit << "\n";
 
     for (u_int32_t i = 0; i < vertex->number_of_edges; i++) {
-        std::cout << "\t\t[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight
-                  << "} ]";
+
+        if constexpr (weighted_edge) {
+            std::cout << "\t\t[" << vertex->edges[i].edge << ", {w: " << vertex->edges[i].weight
+                      << "} ]";
+        } else {
+            std::cout << "\t\t[" << vertex->edges[i].edge << "]";
+        }
     }
     std::cout << std::endl;
 }
