@@ -168,12 +168,13 @@ struct ComputeCellStatistics
 
            << "\n"
 
-           << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
-           << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
-
-           << "\n"
-
            << "\n\toperons_moved: " << stat.operons_moved << "\n";
+
+        if constexpr (termination_switch) {
+            os << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
+               << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
+               << "\n";
+        }
         return os;
     }
 
