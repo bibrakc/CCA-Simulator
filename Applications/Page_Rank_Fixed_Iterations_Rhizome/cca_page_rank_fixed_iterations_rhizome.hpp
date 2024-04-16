@@ -236,7 +236,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
     }
 
     // Reset.
-    // TODO: This needs to be all_reduced before being set.!!!
+    // This needs to be all_reduced before being set.!!!
     if (v->current_iteration_incoming_count == v->inbound_degree) {
 
         // rhizome_collapse(CCA_PLUS_OP, v->page_rank_current_rank_score, lambda);
@@ -267,6 +267,8 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
         if (!cc.insert_action(rhizome_collapse_page_rank, false)) {
             std::cerr << "rhizome collapse can not be inserted in action queue!" << std::endl;
             exit(0);
+        } else {
+            cc.statistics.actions_created++;
         }
     }
 
@@ -511,6 +513,8 @@ configure_parser(cli::Parser& parser)
         0,
         "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex "
         "IDs. This appears to be the case for certain RMAT graphs.");
+
+    parser.set_optional<u_int32_t>("trail", "trail_number", 0, "Trail number for this experiment.");
 }
 
 struct PageRankFixedIterationsCommandLineArguments
@@ -553,6 +557,10 @@ struct PageRankFixedIterationsCommandLineArguments
     // To shuffle or to not shuffle the vertex ID list.
     bool shuffle_switch{};
 
+    // Trail #. Used for taking multiple samples of the same configuations. Then can be averaged
+    // out.
+    u_int32_t trail_number{};
+
     PageRankFixedIterationsCommandLineArguments(cli::Parser& parser)
         : root_vertex(parser.get<u_int32_t>("root"))
         , iter(parser.get<u_int32_t>("iter"))
@@ -570,6 +578,7 @@ struct PageRankFixedIterationsCommandLineArguments
         , mesh_type(parser.get<u_int32_t>("mesh"))
         , routing_policy(parser.get<u_int32_t>("route"))
         , shuffle_switch(parser.get<bool>("shuffle"))
+        , trail_number(parser.get<u_int32_t>("trail"))
     {
 
         if (hdepth != 0) {
@@ -676,12 +685,12 @@ write_results(const PageRankFixedIterationsCommandLineArguments& cmd_args,
               CCASimulator& cca_simulator)
 {
 
-    std::string const output_file_name = "pagerank_graph_" + cmd_args.graph_name + "_v_" +
-                                         std::to_string(input_graph.total_vertices) + "_e_" +
-                                         std::to_string(input_graph.total_edges) + "_rhizomes_" +
-                                         std::to_string(rhizome_size) + "_rhizomecutoff_" +
-                                         std::to_string(rhizome_inbound_degree_cutoff) +
-                                         cca_simulator.key_configurations_string();
+    std::string const output_file_name =
+        "pagerank_graph_" + cmd_args.graph_name + "_v_" +
+        std::to_string(input_graph.total_vertices) + "_e_" +
+        std::to_string(input_graph.total_edges) + "_rhizomes_" + std::to_string(rhizome_size) +
+        "_rhizomecutoff_" + std::to_string(rhizome_inbound_degree_cutoff) + "_trail_" +
+        std::to_string(cmd_args.trail_number) + cca_simulator.key_configurations_string();
 
     std::string const output_file_path = cmd_args.output_file_directory + "/" + output_file_name;
     std::cout << "\nWriting results to output file: " << output_file_path << "\n";

@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -71,19 +71,26 @@ struct ComputeCellStatistics
     // termination acknowledgement actions.
     u_int32_t actions_created{};
 
-    // Count of ack actions created.
-    u_int32_t actions_acknowledgement_created{};
-
     // Both application actions and termination acknowledgement actions.
     u_int32_t actions_pushed{};
     u_int32_t actions_invoked{};
 
+    // # of Actions that were true on their predicate.
+    u_int32_t actions_performed_work{};
+    // # of Actions subsumed. Meaning flase on predicate.
+    u_int32_t actions_false_on_predicate{};
+
+    // Count of ack actions created. This is only for termination detection using Dijkstra–Scholten
+    // algorithm.
+    u_int32_t actions_acknowledgement_created{};
     u_int32_t actions_acknowledgement_invoked{};
 
-    u_int32_t actions_performed_work{};
-
-    // # of Actions subsumed
-    u_int32_t actions_false_on_predicate{};
+    // Related to diffusions if using the lazy diffuse evaluation. When SLIT_QUEUE=true.
+    u_int32_t diffusions_created{};
+    // # of diffusions that were true on their predicate.
+    u_int32_t diffusions_performed_work{};
+    // # of diffusions subsumed. Meaning flase on predicate.
+    u_int32_t diffusions_false_on_predicate{};
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
     MaxCounter staging_logic_contention_count_record;
@@ -105,9 +112,15 @@ struct ComputeCellStatistics
     static inline void generate_label(std::ostream& os)
     {
         os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tobjects_allocated"
+
               "\tactions_created\tactions_acknowledgement_created"
               "\tactions_pushed\tactions_invoked\tactions_performed_work"
-              "\tactions_acknoledgement_invoked\tactions_false_on_predicate\toperons_moved"
+              "\tactions_acknoledgement_invoked\tactions_false_on_predicate"
+
+              "\tdiffusions_created\tdiffusions_performed_work\tdiffusions_false_on_predicate"
+
+              "\toperons_moved"
+
               "\tmax_action_queue\tmax_task_queue\ttotal_task_queue"
               "\tleft_send_contention_max\tleft_send_contention_total"
               "\tup_send_contention_max\tup_send_contention_total"
@@ -123,30 +136,65 @@ struct ComputeCellStatistics
     // Overloading <<
     friend auto operator<<(std::ostream& os, const ComputeCellStatistics& stat) -> std::ostream&
     {
+
+        double actions_prune_percent = 100.0 *
+                                       static_cast<double>(stat.actions_false_on_predicate) /
+                                       static_cast<double>(stat.actions_created);
+
+        double diffuse_prune_percent = 100.0 *
+                                       static_cast<double>(stat.diffusions_false_on_predicate) /
+                                       static_cast<double>(stat.diffusions_created);
+
+        assert(stat.actions_pushed == stat.actions_invoked);
+        /* << "\n\tactions_pushed: " << stat.actions_pushed
+                  << "\n\tactions_invoked: " << stat.actions_invoked */
+
         os << "Statistics:"
            << "\n\tobjects_allocated: " << stat.objects_allocated
+
+           << "\n"
+
            << "\n\tactions_created: " << stat.actions_created
-           << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
-           << "\n\tactions_pushed: " << stat.actions_pushed
-           << "\n\tactions_invoked: " << stat.actions_invoked
            << "\n\tactions_performed_work: " << stat.actions_performed_work
-           << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
            << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
+           << "\n\tactions_prune_percent: " << actions_prune_percent
+
+           << "\n"
+
+           << "\n\tdiffusions_created: " << stat.diffusions_created
+           << "\n\tdiffusions_performed_work: " << stat.diffusions_performed_work
+           << "\n\tdiffusions_false_on_predicate: " << stat.diffusions_false_on_predicate
+           << "\n\tdiffuse_prune_percent: " << diffuse_prune_percent
+
+           << "\n"
+
            << "\n\toperons_moved: " << stat.operons_moved << "\n";
+
+        if constexpr (termination_switch) {
+            os << "\n\tactions_acknowledgement_created: " << stat.actions_acknowledgement_created
+               << "\n\tactions_acknowledgement_invoked: " << stat.actions_acknowledgement_invoked
+               << "\n";
+        }
         return os;
     }
 
     auto operator+=(const ComputeCellStatistics& rhs) -> ComputeCellStatistics&
     {
-        this->objects_allocated += rhs.objects_allocated;
         this->actions_created += rhs.actions_created;
-        this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
         this->actions_pushed += rhs.actions_pushed;
         this->actions_invoked += rhs.actions_invoked;
         this->actions_performed_work += rhs.actions_performed_work;
-        this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
+
+        this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
+        this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
+
+        this->diffusions_created += rhs.diffusions_created;
+        this->diffusions_performed_work += rhs.diffusions_performed_work;
+        this->diffusions_false_on_predicate += rhs.diffusions_false_on_predicate;
+
         this->operons_moved += rhs.operons_moved;
+        this->objects_allocated += rhs.objects_allocated;
 
         return *this;
     }
