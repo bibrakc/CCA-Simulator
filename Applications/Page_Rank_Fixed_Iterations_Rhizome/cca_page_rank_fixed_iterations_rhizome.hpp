@@ -236,7 +236,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
     }
 
     // Reset.
-    // TODO: This needs to be all_reduced before being set.!!!
+    // This needs to be all_reduced before being set.!!!
     if (v->current_iteration_incoming_count == v->inbound_degree) {
 
         // rhizome_collapse(CCA_PLUS_OP, v->page_rank_current_rank_score, lambda);
@@ -267,6 +267,8 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
         if (!cc.insert_action(rhizome_collapse_page_rank, false)) {
             std::cerr << "rhizome collapse can not be inserted in action queue!" << std::endl;
             exit(0);
+        } else {
+            cc.statistics.actions_created++;
         }
     }
 
