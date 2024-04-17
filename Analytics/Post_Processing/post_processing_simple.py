@@ -1,7 +1,7 @@
 """
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -125,6 +125,10 @@ with open(output_file, "r") as file:
 
     # read the header line for the table and discard it
     header = file.readline()
+    ghost_children_max = file.readline().strip().split()
+
+    # read the header line for the table and discard it
+    header = file.readline()
 
     # read the next line and split it into variables
     (
@@ -133,6 +137,9 @@ with open(output_file, "r") as file:
         total_actions_created,
         total_actions_performed,
         total_actions_false_pred,
+        total_diffusions_created,
+        total_diffusions_performed,
+        total_diffusions_false_pred,
         operons_moved,
     ) = (
         file.readline().strip().split()
@@ -145,6 +152,9 @@ with open(output_file, "r") as file:
         actions_created,
         actions_performed,
         actions_false_pred,
+        diffusions_created,
+        diffusions_performed,
+        diffusions_false_pred,
         operons_moved,
     ) = map(
         int,
@@ -154,6 +164,9 @@ with open(output_file, "r") as file:
             total_actions_created,
             total_actions_performed,
             total_actions_false_pred,
+            total_diffusions_created,
+            total_diffusions_performed,
+            total_diffusions_false_pred,
             operons_moved,
         ],
     )
@@ -171,7 +184,7 @@ with open(output_file, "r") as file:
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
-    for i in range(0, 3):  # cycles all cycles
+    for i in range(0, cycles):  # cycles all cycles
         line = file.readline()
         line = line.strip().split("\t")
         cycle = int(line[0])
@@ -193,6 +206,9 @@ print(
     total_actions_created,
     total_actions_performed,
     total_actions_false_pred,
+    total_diffusions_created,
+    total_diffusions_performed,
+    total_diffusions_false_pred,
 )
 print("congestion_policy: ", congestion_policy, ", value: ", congestion_threshold_value)
 print("avg_objects_per_cc: ", avg_objects_per_cc)
@@ -228,7 +244,7 @@ def congestion_charts():
     # Flatten the axes array to easily iterate over subplots
     axes = axes.flatten()
 
-    bins = 30
+    bins = 15
 
     # blue: '#2F5597'
     # red: '#B00002'
@@ -276,8 +292,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        ax.set_xlim(0, 400000)  # Set the x-axis limit
-        ax.set_ylim(0, 5900)  # Set the y-axis limit
+        #ax.set_xlim(0, 400000)  # Set the x-axis limit
+        #ax.set_ylim(0, 5900)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()

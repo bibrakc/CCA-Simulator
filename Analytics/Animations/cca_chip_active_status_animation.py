@@ -1,7 +1,7 @@
 """ 
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -236,7 +236,7 @@ plt.suptitle(
 
 
 output_filename = (
-    "SSSP_TH_OFF_" + str(dim_x) + "x" + str(dim_y) + "_" + routing_algorithm
+    "SSSP_" + str(dim_x) + "x" + str(dim_y) # + "_" + routing_algorithm
 )
 # Save the animation as an MP4 file
 """ ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520) """

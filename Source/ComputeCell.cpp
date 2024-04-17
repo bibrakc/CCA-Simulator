@@ -290,7 +290,8 @@ ComputeCell::execute_action(void* function_events)
                 // the diffuse closure into the diffuse_queue otherwise just run the diffusion here.
                 if constexpr (split_queues) {
 
-                    if (function_events_manager->is_null_event(diffuse_predicate.first)) {
+                    if (function_events_manager->is_null_event(diffuse_predicate.first) ||
+                        function_events_manager->is_null_event(action.diffuse_predicate)) {
                         // do nothing
                     } else if (function_events_manager->is_true_event(diffuse_predicate.first) &&
                                diffuse_predicate.second == nullptr) {
@@ -408,7 +409,12 @@ ComputeCell::execute_diffusion_phase(void* function_events)
 
             } else {
                 // This diffusion is discarded/subsumed.
-                this->statistics.diffusions_false_on_predicate++;
+
+                // If the action's diffuse itself is false then don't count it as being subsumed
+                // because it wasn't there to begin with.
+                if (action.diffuse_predicate != this->null_false_event) {
+                    this->statistics.diffusions_false_on_predicate++;
+                }
             }
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {
@@ -475,7 +481,12 @@ ComputeCell::filter_diffusion(void* function_events)
 
             } else {
                 // This diffusion is discarded/subsumed.
-                this->statistics.diffusions_false_on_predicate++;
+
+                // If the action's diffuse itself is hardcoded to be false then don't count it as
+                // being subsumed because it wasn't there to begin with.
+                if (action.diffuse_predicate != this->null_false_event) {
+                    this->statistics.diffusions_false_on_predicate++;
+                }
             }
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {

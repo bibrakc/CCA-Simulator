@@ -1,7 +1,7 @@
 """
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -123,6 +123,10 @@ with open(output_file, "r") as file:
 
     # read the header line for the table and discard it
     header = file.readline()
+    ghost_children_max = file.readline().strip().split()
+
+    # read the header line for the table and discard it
+    header = file.readline()
 
     # read the next line and split it into variables
     (
@@ -131,6 +135,9 @@ with open(output_file, "r") as file:
         total_actions_created,
         total_actions_performed,
         total_actions_false_pred,
+        total_diffusions_created,
+        total_diffusions_performed,
+        total_diffusions_false_pred,
         operons_moved,
     ) = (
         file.readline().strip().split()
@@ -143,6 +150,9 @@ with open(output_file, "r") as file:
         actions_created,
         actions_performed,
         actions_false_pred,
+        diffusions_created,
+        diffusions_performed,
+        diffusions_false_pred,
         operons_moved,
     ) = map(
         int,
@@ -152,6 +162,9 @@ with open(output_file, "r") as file:
             total_actions_created,
             total_actions_performed,
             total_actions_false_pred,
+            total_diffusions_created,
+            total_diffusions_performed,
+            total_diffusions_false_pred,
             operons_moved,
         ],
     )
@@ -191,6 +204,9 @@ print(
     total_actions_created,
     total_actions_performed,
     total_actions_false_pred,
+    total_diffusions_created,
+    total_diffusions_performed,
+    total_diffusions_false_pred,
 )
 print("congestion_policy: ", congestion_policy, ", value: ", congestion_threshold_value)
 print("avg_objects_per_cc: ", avg_objects_per_cc)
