@@ -121,7 +121,9 @@ with open(output_file, "r") as file:
 
     # read the header line for the table and discard it
     header = file.readline()
-    queues_configuration = file.readline().strip().split()
+    queues_configuration, action_queue_size, diffuse_queue_size = (
+        file.readline().strip().split()
+    )
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -210,8 +212,22 @@ print(
     total_diffusions_performed,
     total_diffusions_false_pred,
 )
-print("congestion_policy: ", congestion_policy, ", value: ", congestion_threshold_value)
-print("avg_objects_per_cc: ", avg_objects_per_cc)
+print(
+    "congestion_policy: ",
+    congestion_policy,
+    ", value: ",
+    congestion_threshold_value,
+)
+print(
+    "avg_objects_per_cc: ",
+    avg_objects_per_cc,
+)
+print(
+    "action_queue_size: ",
+    action_queue_size,
+    ", diffuse_queue_size: ",
+    diffuse_queue_size,
+)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
@@ -292,8 +308,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        #ax.set_xlim(0, 400000)  # Set the x-axis limit
-        #ax.set_ylim(0, 5900)  # Set the y-axis limit
+        # ax.set_xlim(0, 400000)  # Set the x-axis limit
+        # ax.set_ylim(0, 5900)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()

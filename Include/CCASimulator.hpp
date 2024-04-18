@@ -269,11 +269,14 @@ class CCASimulator
            << "\t" << curently_congested_threshold << "\n";
 
         std::string queues_text = "single";
+        u_int32_t size_of_diffuse_queue = 0;
         if (split_queues) {
             queues_text = "split";
+            size_of_diffuse_queue = diffuse_queue_size;
         }
 
-        os << "queues_configuration\n" << queues_text << "\n";
+        os << "queues_configuration\n"
+           << queues_text << "\t" << action_queue_size << "\t" << size_of_diffuse_queue << "\n";
 
         os << "ghost_children_max\n" << ghost_children_max << "\n";
     }

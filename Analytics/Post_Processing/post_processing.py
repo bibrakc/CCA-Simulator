@@ -119,7 +119,9 @@ with open(output_file, "r") as file:
 
     # read the header line for the table and discard it
     header = file.readline()
-    queues_configuration = file.readline().strip().split()
+    queues_configuration, action_queue_size, diffuse_queue_size = (
+        file.readline().strip().split()
+    )
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -208,9 +210,24 @@ print(
     total_diffusions_performed,
     total_diffusions_false_pred,
 )
-print("congestion_policy: ", congestion_policy, ", value: ", congestion_threshold_value)
-print("avg_objects_per_cc: ", avg_objects_per_cc)
-print("queues_configuration: ", queues_configuration)
+print(
+    "congestion_policy: ",
+    congestion_policy,
+    ", value: ",
+    congestion_threshold_value,
+)
+print(
+    "avg_objects_per_cc: ",
+    avg_objects_per_cc,
+)
+print(
+    "queues_configuration: ",
+    queues_configuration,
+    "action_queue_size: ",
+    action_queue_size,
+    ", diffuse_queue_size: ",
+    diffuse_queue_size,
+)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 

@@ -350,7 +350,8 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     this->write_cca_info(output_file);
 
     // Output total cycles, total actions, total actions performed work, total actions false on
-    // predicate. TODO: Somehow put the resource usage as a percentage...?
+    // predicate, diffusions_created	diffusions_performed_work	diffusions_false_on_predicate.
+    // TODO: Somehow put the resource usage as a percentage...?
     output_file
         << "total_cycles\ttotal_objects_created\ttotal_actions_created\ttotal_actions_"
            "performed_work\ttotal_actions_false_on_predicate\tdiffusions_created\tdiffusions_"
