@@ -54,13 +54,23 @@ struct Edge
 int
 main(int argc, char* argv[])
 {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
+
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <input_file> <weighted>" << std::endl;
         return 1;
     }
 
+    std::cout << "Remember the input file is assumed to be weighted. If it is not then the "
+                 "converted output file will not be correct!\n";
+
     const std::string inputFileName = argv[1];
-    const std::string outputFileName = inputFileName + "_weightedAdj";
+    const bool weighted = (std::stoi(argv[2]) != 0);
+    std::string outputfile_extension = "Adj";
+    if (weighted) {
+        outputfile_extension = "_weightedAdj";
+    }
+
+    const std::string outputFileName = inputFileName + outputfile_extension;
 
     std::ifstream inputFile(inputFileName);
     if (!inputFile.is_open()) {
@@ -103,7 +113,14 @@ main(int argc, char* argv[])
         return 1;
     }
 
+    std::cout << "Writing to the output file: " << outputFileName << std::endl;
+
     // Write number of vertices and the number of edges of the graph to the adj output file.
+    if (weighted) {
+        outputFile << "WeightedAdjacencyGraph\n";
+    } else {
+        outputFile << "AdjacencyGraph\n";
+    }
     outputFile << adj_graph.size() << "\n" << num_edges << "\n";
 
     int offset = 0;
@@ -111,7 +128,6 @@ main(int argc, char* argv[])
     outputFile << offset << "\n";
 
     for (int i = 0; i < adj_graph.size() - 1; i++) {
-        std::cout << "size: " << adj_graph[i].size() << "\n";
         offset += adj_graph[i].size();
         outputFile << offset << "\n";
     }
@@ -122,9 +138,11 @@ main(int argc, char* argv[])
         }
     }
 
-    for (const auto& vertex : adj_graph) {
-        for (const auto& edge : vertex) {
-            outputFile << edge.weight << "\n";
+    if (weighted) {
+        for (const auto& vertex : adj_graph) {
+            for (const auto& edge : vertex) {
+                outputFile << edge.weight << "\n";
+            }
         }
     }
 
