@@ -425,13 +425,18 @@ CCASimulator::key_configurations_string() -> std::string
         network_text = "TORUS";
     }
 
+    std::string work_pruning_text = "ON";
+    if (split_queues == false) {
+        work_pruning_text = "OFF";
+    }
+
     std::string configs =
         "_x_" + std::to_string(this->dim_x) + "_y_" + std::to_string(this->dim_y) + "_hb_" +
         std::to_string(this->hbandwidth_max) + "_th_" + throttle_text + "_recvbuff_" +
         std::to_string(RECVBUFFSIZE) + "_vicinity_" + std::to_string(vicinity_radius) +
         "_ghosts_children_" + std::to_string(ghost_children_max) + "_edges_min_" +
         std::to_string(edges_min) + "_edges_max_" + std::to_string(edges_max) + "_termimation_" +
-        termination_text + "_network_" + network_text;
+        termination_text + "_network_" + network_text + "_work_pruning_" + work_pruning_text;
 
     return configs;
 }
