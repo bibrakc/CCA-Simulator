@@ -104,4 +104,7 @@ inline constexpr u_int32_t rhizome_inbound_degree_cutoff = RHIZOME_INDEGREE_CUTO
 // Or keep it one queue called the action queue
 inline constexpr bool split_queues = SPLIT_QUEUES;
 
+// To print to the output every output_skip_cycles's cycle
+inline constexpr u_int32_t output_skip_cycles = 1;
+
 #endif // CONSTANTS_HPP
