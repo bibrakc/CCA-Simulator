@@ -298,8 +298,11 @@ class CCASimulator
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
         if constexpr (active_percent_switch) {
             for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
-                os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
-                   << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+                if (i % 100 == 0) { // Print to output file for every 100th cycle.
+                    os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
+                       << "\t" << this->cca_statistics.active_status[i].htree_active_percent
+                       << "\n";
+                }
             }
         } else {
             // Invalid values just to preserve format.
