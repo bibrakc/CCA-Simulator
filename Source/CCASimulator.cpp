@@ -355,7 +355,9 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     output_file
         << "total_cycles\ttotal_objects_created\ttotal_actions_created\ttotal_actions_"
            "performed_work\ttotal_actions_false_on_predicate\tdiffusions_created\tdiffusions_"
-           "performed_work\tdiffusions_false_on_predicate\toperons_moved\n"
+           "performed_work\tdiffusions_false_on_predicate\tdiffusions_filtered\tactions_"
+           "overlaped\tdiffusions_pruned\toperons_moved\n"
+
         << this->total_cycles << "\t" << simulation_statistics.objects_allocated << "\t"
 
         << simulation_statistics.actions_created << "\t"
@@ -365,6 +367,12 @@ CCASimulator::print_statistics(std::ofstream& output_file)
         << simulation_statistics.diffusions_created << "\t"
         << simulation_statistics.diffusions_performed_work << "\t"
         << simulation_statistics.diffusions_false_on_predicate << "\t"
+        << simulation_statistics.diffusions_filtered << "\t"
+
+        << simulation_statistics.actions_overlaped << "\t"
+        << simulation_statistics.diffusions_false_on_predicate +
+               simulation_statistics.diffusions_filtered
+        << "\t"
 
         << simulation_statistics.operons_moved << "\n";
 
