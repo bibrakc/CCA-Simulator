@@ -142,6 +142,9 @@ with open(output_file, "r") as file:
         total_diffusions_created,
         total_diffusions_performed,
         total_diffusions_false_pred,
+        total_diffusions_filtered,
+        total_actions_overlaped,
+        total_diffusions_pruned,
         operons_moved,
     ) = (
         file.readline().strip().split()
@@ -157,6 +160,9 @@ with open(output_file, "r") as file:
         diffusions_created,
         diffusions_performed,
         diffusions_false_pred,
+        diffusions_filtered,
+        actions_overlaped,
+        diffusions_pruned,
         operons_moved,
     ) = map(
         int,
@@ -169,6 +175,9 @@ with open(output_file, "r") as file:
             total_diffusions_created,
             total_diffusions_performed,
             total_diffusions_false_pred,
+            total_diffusions_filtered,
+            total_actions_overlaped,
+            total_diffusions_pruned,
             operons_moved,
         ],
     )
@@ -270,11 +279,11 @@ def congestion_charts():
         x="left_send_contention_total",
         bins=bins,
         ax=axes[0],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[0].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
-        data=stats, x="up_send_contention_total", bins=bins, ax=axes[1], color="#2F5597"
+        data=stats, x="up_send_contention_total", bins=bins, ax=axes[1], color="#B00002"
     )
     axes[1].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
@@ -282,7 +291,7 @@ def congestion_charts():
         x="right_send_contention_total",
         bins=bins,
         ax=axes[2],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[2].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
@@ -290,7 +299,7 @@ def congestion_charts():
         x="down_send_contention_total",
         bins=bins,
         ax=axes[3],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[3].set_xlabel("")  # Remove x-axis label for the second subplot
 
@@ -309,7 +318,7 @@ def congestion_charts():
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         # ax.set_xlim(0, 400000)  # Set the x-axis limit
-        # ax.set_ylim(0, 5900)  # Set the y-axis limit
+        ax.set_ylim(0, 2500)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()

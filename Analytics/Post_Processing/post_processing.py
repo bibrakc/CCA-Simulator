@@ -140,6 +140,9 @@ with open(output_file, "r") as file:
         total_diffusions_created,
         total_diffusions_performed,
         total_diffusions_false_pred,
+        total_diffusions_filtered,
+        total_actions_overlaped,
+        total_diffusions_pruned,
         operons_moved,
     ) = (
         file.readline().strip().split()
@@ -155,6 +158,9 @@ with open(output_file, "r") as file:
         diffusions_created,
         diffusions_performed,
         diffusions_false_pred,
+        diffusions_filtered,
+        actions_overlaped,
+        diffusions_pruned,
         operons_moved,
     ) = map(
         int,
@@ -167,6 +173,9 @@ with open(output_file, "r") as file:
             total_diffusions_created,
             total_diffusions_performed,
             total_diffusions_false_pred,
+            total_diffusions_filtered,
+            total_actions_overlaped,
+            total_diffusions_pruned,
             operons_moved,
         ],
     )
