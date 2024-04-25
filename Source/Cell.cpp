@@ -242,10 +242,16 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
 {
     os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
        << "\t" << cc_cooridinates.second << "\t" << this->objects_allocated << "\t"
-       << this->actions_created << "\t" << this->actions_acknowledgement_created << "\t"
-       << this->actions_pushed << "\t" << this->actions_invoked << "\t"
-       << this->actions_performed_work << "\t" << this->actions_acknowledgement_invoked << "\t"
-       << this->actions_false_on_predicate
+
+       << this->actions_created << "\t" << this->actions_invoked << "\t"
+       << this->actions_performed_work << "\t" << this->actions_false_on_predicate << "\t"
+       << this->actions_overlaped
+
+       << "\t" << this->diffusions_created << "\t" << this->diffusions_performed_work << "\t"
+       << this->diffusions_false_on_predicate << "\t" << this->diffusions_filtered
+
+       << "\t" << this->actions_acknowledgement_created << "\t"
+       << this->actions_acknowledgement_invoked
 
        << "\t" << this->operons_moved
 

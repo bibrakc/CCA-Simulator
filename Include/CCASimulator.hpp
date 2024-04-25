@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -269,11 +269,14 @@ class CCASimulator
            << "\t" << curently_congested_threshold << "\n";
 
         std::string queues_text = "single";
+        u_int32_t size_of_diffuse_queue = 0;
         if (split_queues) {
             queues_text = "split";
+            size_of_diffuse_queue = diffuse_queue_size;
         }
 
-        os << "queues_configuration\n" << queues_text << "\n";
+        os << "queues_configuration\n"
+           << queues_text << "\t" << action_queue_size << "\t" << size_of_diffuse_queue << "\n";
 
         os << "ghost_children_max\n" << ghost_children_max << "\n";
     }
@@ -295,8 +298,11 @@ class CCASimulator
         os << "Cycle#\tCells_Active_Percent\tHtree_Active_Percent\n";
         if constexpr (active_percent_switch) {
             for (size_t i = 0; i < this->cca_statistics.active_status.size(); i++) {
+                // Print to output file for every output_skip_cycles-th cycle.
+                // if (i % output_skip_cycles == 0) {
                 os << i << "\t" << this->cca_statistics.active_status[i].cells_active_percent
                    << "\t" << this->cca_statistics.active_status[i].htree_active_percent << "\n";
+                //}
             }
         } else {
             // Invalid values just to preserve format.

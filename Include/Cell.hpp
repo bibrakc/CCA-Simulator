@@ -91,6 +91,11 @@ struct ComputeCellStatistics
     u_int32_t diffusions_performed_work{};
     // # of diffusions subsumed. Meaning flase on predicate.
     u_int32_t diffusions_false_on_predicate{};
+    // u_int32_t diffusions_pruned{}; // == diffusions_false_on_predicate + diffusions_filtered
+
+    // Actions overlaped and Diffuse filtering, while the network is congested.
+    u_int32_t actions_overlaped{};
+    u_int32_t diffusions_filtered{};
 
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count_record;
     MaxCounter staging_logic_contention_count_record;
@@ -113,11 +118,13 @@ struct ComputeCellStatistics
     {
         os << "cc_id\tcc_type\tcc_coordinate_x\tcc_coordinate_y\tobjects_allocated"
 
-              "\tactions_created\tactions_acknowledgement_created"
-              "\tactions_pushed\tactions_invoked\tactions_performed_work"
-              "\tactions_acknoledgement_invoked\tactions_false_on_predicate"
+              "\tactions_created\tactions_invoked\tactions_performed_work\tactions_false_on_"
+              "predicate\tactions_overlaped"
 
-              "\tdiffusions_created\tdiffusions_performed_work\tdiffusions_false_on_predicate"
+              "\tdiffusions_created\tdiffusions_performed_work\tdiffusions_false_on_"
+              "predicate\tdiffusions_filtered"
+
+              "\tactions_acknowledgement_created\tactions_acknoledgement_invoked"
 
               "\toperons_moved"
 
@@ -137,13 +144,16 @@ struct ComputeCellStatistics
     friend auto operator<<(std::ostream& os, const ComputeCellStatistics& stat) -> std::ostream&
     {
 
-        double actions_prune_percent = 100.0 *
-                                       static_cast<double>(stat.actions_false_on_predicate) /
-                                       static_cast<double>(stat.actions_created);
+        double actions_false_predicate_percent =
+            100.0 * static_cast<double>(stat.actions_false_on_predicate) /
+            static_cast<double>(stat.actions_created);
 
-        double diffuse_prune_percent = 100.0 *
-                                       static_cast<double>(stat.diffusions_false_on_predicate) /
+        u_int32_t diffusions_pruned = stat.diffusions_false_on_predicate + stat.diffusions_filtered;
+        double diffuse_prune_percent = 100.0 * static_cast<double>(diffusions_pruned) /
                                        static_cast<double>(stat.diffusions_created);
+
+        double action_overlap_percent = 100.0 * static_cast<double>(stat.actions_overlaped) /
+                                        static_cast<double>(stat.actions_created);
 
         assert(stat.actions_pushed == stat.actions_invoked);
         /* << "\n\tactions_pushed: " << stat.actions_pushed
@@ -157,13 +167,17 @@ struct ComputeCellStatistics
            << "\n\tactions_created: " << stat.actions_created
            << "\n\tactions_performed_work: " << stat.actions_performed_work
            << "\n\tactions_false_on_predicate: " << stat.actions_false_on_predicate
-           << "\n\tactions_prune_percent: " << actions_prune_percent
+           << "\n\tactions_false_predicate_percent: " << actions_false_predicate_percent
+           << "\n\tactions_overlaped: " << stat.actions_overlaped
+           << "\n\taction_overlap_percent: " << action_overlap_percent
 
            << "\n"
 
            << "\n\tdiffusions_created: " << stat.diffusions_created
            << "\n\tdiffusions_performed_work: " << stat.diffusions_performed_work
            << "\n\tdiffusions_false_on_predicate: " << stat.diffusions_false_on_predicate
+           << "\n\tdiffusions_filtered: " << stat.diffusions_filtered
+           << "\n\tTotal diffusions_pruned: " << diffusions_pruned
            << "\n\tdiffuse_prune_percent: " << diffuse_prune_percent
 
            << "\n"
@@ -180,21 +194,24 @@ struct ComputeCellStatistics
 
     auto operator+=(const ComputeCellStatistics& rhs) -> ComputeCellStatistics&
     {
+        this->objects_allocated += rhs.objects_allocated;
+
         this->actions_created += rhs.actions_created;
         this->actions_pushed += rhs.actions_pushed;
         this->actions_invoked += rhs.actions_invoked;
         this->actions_performed_work += rhs.actions_performed_work;
         this->actions_false_on_predicate += rhs.actions_false_on_predicate;
-
-        this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
-        this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
+        this->actions_overlaped += rhs.actions_overlaped;
 
         this->diffusions_created += rhs.diffusions_created;
         this->diffusions_performed_work += rhs.diffusions_performed_work;
         this->diffusions_false_on_predicate += rhs.diffusions_false_on_predicate;
+        this->diffusions_filtered += rhs.diffusions_filtered;
+
+        this->actions_acknowledgement_created += rhs.actions_acknowledgement_created;
+        this->actions_acknowledgement_invoked += rhs.actions_acknowledgement_invoked;
 
         this->operons_moved += rhs.operons_moved;
-        this->objects_allocated += rhs.objects_allocated;
 
         return *this;
     }

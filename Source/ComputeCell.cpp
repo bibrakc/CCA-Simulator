@@ -281,17 +281,19 @@ ComputeCell::execute_action(void* function_events)
                 this->statistics.actions_performed_work++;
                 // if (predicate_resolution == 1) {
 
-                // work
+                // Perform the work contained in the action and then return its diffuse closure.
                 Closure const diffuse_predicate =
                     function_events_manager->get_function_event_handler(action.work)(
                         *this, action.obj_addr, action.action_type, action.args);
 
                 // If there are two queues in the system (configured at compile time) then we put
-                // the diffuse closure into the diffuse_queue otherwise just run the diffusion here.
+                // the diffuse closure (lazy evaluated) into the diffuse_queue otherwise just run
+                // the diffusion here.
                 if constexpr (split_queues) {
 
-                    if (function_events_manager->is_null_event(diffuse_predicate.first)) {
-                        // do nothing
+                    if (function_events_manager->is_null_event(diffuse_predicate.first) ||
+                        function_events_manager->is_null_event(action.diffuse_predicate)) {
+                        // do nothing since the diffuse wan't created runtime.
                     } else if (function_events_manager->is_true_event(diffuse_predicate.first) &&
                                diffuse_predicate.second == nullptr) {
                         if (!this->diffuse_queue.push(action)) { // diffuse body is lazy evaluated.
@@ -313,8 +315,9 @@ ComputeCell::execute_action(void* function_events)
 
                 } else { // Only single queue i.e. action_queue
 
-                    if (function_events_manager->is_null_event(diffuse_predicate.first)) {
-                        // do nothing
+                    if (function_events_manager->is_null_event(diffuse_predicate.first) ||
+                        function_events_manager->is_null_event(action.diffuse_predicate)) {
+                        // do nothing since the diffuse wan't created runtime.
                     } else {
 
                         if (diffuse_predicate.second != nullptr) {
@@ -408,7 +411,12 @@ ComputeCell::execute_diffusion_phase(void* function_events)
 
             } else {
                 // This diffusion is discarded/subsumed.
-                this->statistics.diffusions_false_on_predicate++;
+
+                // If the action's diffuse itself is false then don't count it as being subsumed
+                // because it wasn't there to begin with.
+                if (action.diffuse_predicate != this->null_false_event) {
+                    this->statistics.diffusions_false_on_predicate++;
+                }
             }
             // Finally this object becomes inactive.
             if constexpr (termination_switch) {
@@ -475,9 +483,17 @@ ComputeCell::filter_diffusion(void* function_events)
 
             } else {
                 // This diffusion is discarded/subsumed.
-                this->statistics.diffusions_false_on_predicate++;
+
+                // If the action's diffuse itself is hardcoded to be false then don't count it as
+                // being subsumed because it wasn't there to begin with.
+                if (action.diffuse_predicate != this->null_false_event) {
+                    // this->statistics.diffusions_false_on_predicate++;
+                    this->statistics.diffusions_filtered++;
+                }
             }
             // Finally this object becomes inactive.
+            // TODO: this whole termination logic is buggy right now and therfore should not be
+            // used.
             if constexpr (termination_switch) {
                 auto* obj = static_cast<Object*>(this->get_object(action.obj_addr));
                 obj->terminator.unsignal(*this);
@@ -705,16 +721,18 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
                 bool const diffuse_queue_is_getting_full =
                     this->diffuse_queue.is_percent_full(90.0);
-                bool const action_queue_near_full = this->diffuse_queue.is_percent_full(95.0);
+                bool const action_queue_near_full = this->action_queue.is_percent_full(95.0);
 
                 if (both_queues_non_empty) {
                     if (action_queue_near_full && this->diffuse_queue.has_room()) {
                         this->execute_action(function_events);
+                        this->statistics.actions_overlaped++;
                     } else if (diffuse_queue_is_getting_full) { //&& this->prefer_diffuse_queue) {
                         this->filter_diffusion(function_events);
                         // this->prefer_diffuse_queue = false;
                     } else {
                         this->execute_action(function_events);
+                        this->statistics.actions_overlaped++;
                         // this->prefer_diffuse_queue = true;
                     }
                 } else {
@@ -723,6 +741,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                         this->filter_diffusion(function_events);
                     } else if (!this->action_queue.empty()) {
                         this->execute_action(function_events);
+                        this->statistics.actions_overlaped++;
                     }
                 }
             }

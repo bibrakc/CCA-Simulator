@@ -1,7 +1,7 @@
 """
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2023-2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -121,7 +121,13 @@ with open(output_file, "r") as file:
 
     # read the header line for the table and discard it
     header = file.readline()
-    queues_configuration = file.readline().strip().split()
+    queues_configuration, action_queue_size, diffuse_queue_size = (
+        file.readline().strip().split()
+    )
+
+    # read the header line for the table and discard it
+    header = file.readline()
+    ghost_children_max = file.readline().strip().split()
 
     # read the header line for the table and discard it
     header = file.readline()
@@ -133,6 +139,12 @@ with open(output_file, "r") as file:
         total_actions_created,
         total_actions_performed,
         total_actions_false_pred,
+        total_diffusions_created,
+        total_diffusions_performed,
+        total_diffusions_false_pred,
+        total_diffusions_filtered,
+        total_actions_overlaped,
+        total_diffusions_pruned,
         operons_moved,
     ) = (
         file.readline().strip().split()
@@ -145,6 +157,12 @@ with open(output_file, "r") as file:
         actions_created,
         actions_performed,
         actions_false_pred,
+        diffusions_created,
+        diffusions_performed,
+        diffusions_false_pred,
+        diffusions_filtered,
+        actions_overlaped,
+        diffusions_pruned,
         operons_moved,
     ) = map(
         int,
@@ -154,6 +172,12 @@ with open(output_file, "r") as file:
             total_actions_created,
             total_actions_performed,
             total_actions_false_pred,
+            total_diffusions_created,
+            total_diffusions_performed,
+            total_diffusions_false_pred,
+            total_diffusions_filtered,
+            total_actions_overlaped,
+            total_diffusions_pruned,
             operons_moved,
         ],
     )
@@ -171,7 +195,7 @@ with open(output_file, "r") as file:
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
-    for i in range(0, 3):  # cycles all cycles
+    for i in range(0, cycles):  # cycles all cycles
         line = file.readline()
         line = line.strip().split("\t")
         cycle = int(line[0])
@@ -193,9 +217,26 @@ print(
     total_actions_created,
     total_actions_performed,
     total_actions_false_pred,
+    total_diffusions_created,
+    total_diffusions_performed,
+    total_diffusions_false_pred,
 )
-print("congestion_policy: ", congestion_policy, ", value: ", congestion_threshold_value)
-print("avg_objects_per_cc: ", avg_objects_per_cc)
+print(
+    "congestion_policy: ",
+    congestion_policy,
+    ", value: ",
+    congestion_threshold_value,
+)
+print(
+    "avg_objects_per_cc: ",
+    avg_objects_per_cc,
+)
+print(
+    "action_queue_size: ",
+    action_queue_size,
+    ", diffuse_queue_size: ",
+    diffuse_queue_size,
+)
 # print(cc_id, cc_x, cc_y, created, pushed, invoked, performed, false_pred,
 #      stall_logic, stall_recv, stall_send, res_usage, inactive)
 
@@ -228,7 +269,7 @@ def congestion_charts():
     # Flatten the axes array to easily iterate over subplots
     axes = axes.flatten()
 
-    bins = 30
+    bins = 15
 
     # blue: '#2F5597'
     # red: '#B00002'
@@ -238,11 +279,11 @@ def congestion_charts():
         x="left_send_contention_total",
         bins=bins,
         ax=axes[0],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[0].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
-        data=stats, x="up_send_contention_total", bins=bins, ax=axes[1], color="#2F5597"
+        data=stats, x="up_send_contention_total", bins=bins, ax=axes[1], color="#B00002"
     )
     axes[1].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
@@ -250,7 +291,7 @@ def congestion_charts():
         x="right_send_contention_total",
         bins=bins,
         ax=axes[2],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[2].set_xlabel("")  # Remove x-axis label for the second subplot
     sns.histplot(
@@ -258,7 +299,7 @@ def congestion_charts():
         x="down_send_contention_total",
         bins=bins,
         ax=axes[3],
-        color="#2F5597",
+        color="#B00002",
     )
     axes[3].set_xlabel("")  # Remove x-axis label for the second subplot
 
@@ -276,8 +317,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        ax.set_xlim(0, 400000)  # Set the x-axis limit
-        ax.set_ylim(0, 5900)  # Set the y-axis limit
+        # ax.set_xlim(0, 400000)  # Set the x-axis limit
+        ax.set_ylim(0, 2500)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()
