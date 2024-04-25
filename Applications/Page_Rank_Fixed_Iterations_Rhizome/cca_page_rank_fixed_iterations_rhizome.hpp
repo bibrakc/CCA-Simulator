@@ -147,6 +147,7 @@ page_rank_fixed_iterations_germinate_work_T(ComputeCell& cc,
 
     PageRankFixedIterationsArguments my_score_to_send;
 
+    cc.apply_CPI(DIV_CPI + LOAD_STORE_CPI);
     my_score_to_send.score =
         v->page_rank_current_rank_score.get_val() / static_cast<double>(v->outbound_degree);
     my_score_to_send.src_vertex_id = v->id;
@@ -162,6 +163,7 @@ page_rank_fixed_iterations_germinate_work_T(ComputeCell& cc,
     // Reset. This is a special case when the vertex has zero in-degree.
     if (0 == v->inbound_degree) {
 
+        cc.apply_CPI(DIV_CPI + SUBT_CPI + (3 * LOAD_STORE_CPI) + ADD_CPI);
         // Update the page rank score.
         v->page_rank_current_rank_score.set_val(
             ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)));
@@ -211,6 +213,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
+    cc.apply_CPI(2 * ADD_CPI + LOAD_STORE_CPI);
     // Update partial new score with the new incoming score.
     v->current_iteration_rank_score += page_rank_args.score;
     v->current_iteration_incoming_count++;
@@ -221,6 +224,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
 
         PageRankFixedIterationsArguments my_score_to_send;
 
+        cc.apply_CPI(DIV_CPI + 2 * LOAD_STORE_CPI);
         my_score_to_send.score =
             v->page_rank_current_rank_score.get_val() / static_cast<double>(v->outbound_degree);
         // For debugging
@@ -308,6 +312,7 @@ page_rank_fixed_iterations_rhizome_collapse_T(ComputeCell& cc,
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
+    cc.apply_CPI(ADD_CPI);
     // Accumulate the score.
     v->page_rank_current_rank_score.lco += page_rank_args.score;
 
@@ -316,6 +321,7 @@ page_rank_fixed_iterations_rhizome_collapse_T(ComputeCell& cc,
     // diffused and inserted into this CC and then the system schedules it.
     if (v->page_rank_current_rank_score.lco.increment()) {
 
+        cc.apply_CPI(DIV_CPI + SUBT_CPI + (3 * LOAD_STORE_CPI) + ADD_CPI);
         // Update the page rank score.
         v->page_rank_current_rank_score.set_val(
             ((1.0 - damping_factor) / static_cast<double>(v->total_number_of_vertices)) +
