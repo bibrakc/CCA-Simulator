@@ -195,8 +195,9 @@ main(int argc, char** argv) -> int
         // send their score to other vertices that will be waiting on them.
         for (const auto vertex_id : vertices_inbound_degree_zero) {
 
-            auto vertex_addr_to_zero_in_degree = input_graph.get_vertex_address_in_cca(vertex_id);
-            std::cout << "vertex_addr_to_zero_in_degree: " << vertex_addr_to_zero_in_degree << "\n";
+            auto vertex_addr_to_zero_in_degree =
+                input_graph.get_vertex_address_in_cca_rhizome(vertex_id);
+
             // Prepare the arguments (payload) for the actions.
             PageRankFixedIterationsArguments germinate_arg_to_zero_in_degree;
             germinate_arg_to_zero_in_degree.score = -10;
