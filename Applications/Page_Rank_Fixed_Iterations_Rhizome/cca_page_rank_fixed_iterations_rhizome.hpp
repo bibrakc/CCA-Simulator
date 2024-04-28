@@ -213,7 +213,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
     PageRankFixedIterationsArguments const page_rank_args =
         cca_get_action_argument<PageRankFixedIterationsArguments>(args);
 
-    cc.apply_CPI(2 * ADD_CPI + LOAD_STORE_CPI);
+    cc.apply_CPI((2 * ADD_CPI) + LOAD_STORE_CPI);
     // Update partial new score with the new incoming score.
     v->current_iteration_rank_score += page_rank_args.score;
     v->current_iteration_incoming_count++;
@@ -224,7 +224,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
 
         PageRankFixedIterationsArguments my_score_to_send;
 
-        cc.apply_CPI(DIV_CPI + 2 * LOAD_STORE_CPI);
+        cc.apply_CPI(DIV_CPI + (2 * LOAD_STORE_CPI));
         my_score_to_send.score =
             v->page_rank_current_rank_score.get_val() / static_cast<double>(v->outbound_degree);
         // For debugging

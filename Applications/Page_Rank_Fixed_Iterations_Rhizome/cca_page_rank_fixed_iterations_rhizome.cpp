@@ -158,7 +158,8 @@ main(int argc, char** argv) -> int
 
         {
             std::cout << "Germinating " << vertices_inbound_degree_zero.size()
-                      << " vertices who have indegree of 0: [";
+                      << " vertices who have indegree of 0" << std::endl;
+            /* std::cout << "[";
             // Print the contents of vertices_inbound_degree_zero
             for (size_t i = 0; i < vertices_inbound_degree_zero.size(); ++i) {
                 std::cout << vertices_inbound_degree_zero[i];
@@ -166,7 +167,7 @@ main(int argc, char** argv) -> int
                     std::cout << ", ";
                 }
             }
-            std::cout << "]" << std::endl;
+            std::cout << "]" << std::endl; */
         }
 
         // Prepare the arguments (payload) for the actions.
