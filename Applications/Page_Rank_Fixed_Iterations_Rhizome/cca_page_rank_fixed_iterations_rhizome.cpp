@@ -201,6 +201,7 @@ main(int argc, char** argv) -> int
             PageRankFixedIterationsArguments germinate_arg_to_zero_in_degree;
             germinate_arg_to_zero_in_degree.score = -10;
             germinate_arg_to_zero_in_degree.src_vertex_id = 99999;
+            germinate_arg_to_zero_in_degree.iteration = iterations;
 
             ActionArgumentType const args_to_zero_in_degree =
                 cca_create_action_argument<PageRankFixedIterationsArguments>(
