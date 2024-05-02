@@ -195,7 +195,7 @@ with open(output_file, "r") as file:
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
-    for i in range(0, cycles):  # cycles all cycles
+    for i in range(0, 3):  # cycles all cycles
         line = file.readline()
         line = line.strip().split("\t")
         cycle = int(line[0])
@@ -264,12 +264,12 @@ def thousands_formatter(x, pos):
 def congestion_charts():
 
     # Create a figure with subplots using gridspec_kw for shared boundaries
-    fig, axes = plt.subplots(1, 4, figsize=(9, 2.5), sharey=True)
+    fig, axes = plt.subplots(1, 4, figsize=(14, 4), sharey=True)
 
     # Flatten the axes array to easily iterate over subplots
     axes = axes.flatten()
 
-    bins = 15
+    bins = 25
 
     # blue: '#2F5597'
     # red: '#B00002'
@@ -303,13 +303,16 @@ def congestion_charts():
     )
     axes[3].set_xlabel("")  # Remove x-axis label for the second subplot
 
+    font_size = 16
+    font_size_axis = 18
+
     # Set titles for each subplot
     titles = ["West Channel", "North Channel", "East Channel", "South Channel"]
-    axes[0].set_ylabel("Count of Compute Cells", fontsize=12, fontweight="bold")
-    axes[0].tick_params(axis="y", labelsize=12)
+    axes[0].set_ylabel("Count of Compute Cells", fontsize=font_size, fontweight="bold")
+    axes[0].tick_params(axis="y", labelsize=font_size_axis)
     for ax, title in zip(axes, titles):
-        ax.set_title(title, fontsize=12, fontweight="bold")
-        ax.tick_params(axis="x", labelsize=12)
+        ax.set_title(title, fontsize=font_size_axis, fontweight="bold")
+        ax.tick_params(axis="x", labelsize=font_size_axis, rotation=90)
         # ax.set_xlabel('Cycles Spent in Contention', fontsize=11, fontweight='bold')
         ax.grid(axis="y", color="gray", linestyle="dashed", linewidth=1)
 
@@ -317,8 +320,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        # ax.set_xlim(0, 400000)  # Set the x-axis limit
-        ax.set_ylim(0, 2500)  # Set the y-axis limit
+        ax.set_xlim(0, 600000)  # Set the x-axis limit
+        ax.set_ylim(0, 1500)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()

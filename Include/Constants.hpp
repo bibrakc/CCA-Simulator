@@ -107,4 +107,11 @@ inline constexpr bool split_queues = SPLIT_QUEUES;
 // To print to the output every output_skip_cycles's cycle
 inline constexpr u_int32_t output_skip_cycles = 1;
 
+// CPI
+inline constexpr u_int32_t ADD_CPI = 1;
+inline constexpr u_int32_t SUBT_CPI = 1;
+inline constexpr u_int32_t MUL_CPI = 5;
+inline constexpr u_int32_t DIV_CPI = 30;
+inline constexpr u_int32_t LOAD_STORE_CPI = 1;
+
 #endif // CONSTANTS_HPP

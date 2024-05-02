@@ -91,6 +91,14 @@ class ComputeCell : public Cell
 
     void diffuse(const Action& action);
 
+    // To simulate CPI in each compute cycle the compute cell executes this and if it returns true
+    // meaning there was instruction pending (see `pending_instructions` below) then don't perform
+    // any new task in task_queue, action_queue, or diffuse_queue.
+    auto decrement_CPI() -> bool;
+    
+    // increaments `pending_instructions`.
+    void apply_CPI(u_int32_t);
+
     // This is also needed to satify the simulation as the network and logic on a single compute
     // cell both work in paralell. We first perform logic operations (work) then we do networking
     // related operations. This allows not just ease of programming but also opens the compute cells
@@ -140,6 +148,14 @@ class ComputeCell : public Cell
     // actual internals of any Compute Cell. It functions to simulate tasks cycle by cycle thus
     // making the simulation more accurate/realistic.
     std::queue<Task> task_queue;
+
+    // Used for CPI. The actions will contain CPI and `pending_instructions` will be updated. In the
+    // compute cycle of the simulation `pending_instructions` will be check to see if it is greater
+    // than 0, if it is then the compute cell will not take any task (the propagate in task_queue)
+    // or action_queue or diffuse_queue. It will just skip that compute cycle and simulate the
+    // latency of instructions (along with CPI) in the action that was just invoked. or any new
+    // action.
+    u_int32_t pending_instructions{}; // To simulate CPI.
 
     // Constructor
     ComputeCell(u_int32_t id_in,

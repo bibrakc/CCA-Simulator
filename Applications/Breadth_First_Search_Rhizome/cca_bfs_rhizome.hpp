@@ -88,6 +88,8 @@ template<typename ghost_type>
 auto
 bfs_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
 {
+    cc.apply_CPI(1);
+
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
@@ -120,6 +122,8 @@ template<typename ghost_type>
 auto
 bfs_work_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
 {
+    cc.apply_CPI(1);
+
     // First check whether this is a ghost vertex. If it is then don't perform any work.
     // parent word is used in the sense that `RhizomeRecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
@@ -152,6 +156,8 @@ auto
 bfs_diffuse_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
     -> Closure
 {
+    cc.apply_CPI(1);
+    
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));

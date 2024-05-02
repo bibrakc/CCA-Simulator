@@ -158,7 +158,8 @@ main(int argc, char** argv) -> int
 
         {
             std::cout << "Germinating " << vertices_inbound_degree_zero.size()
-                      << " vertices who have indegree of 0: [";
+                      << " vertices who have indegree of 0" << std::endl;
+            /* std::cout << "[";
             // Print the contents of vertices_inbound_degree_zero
             for (size_t i = 0; i < vertices_inbound_degree_zero.size(); ++i) {
                 std::cout << vertices_inbound_degree_zero[i];
@@ -166,7 +167,7 @@ main(int argc, char** argv) -> int
                     std::cout << ", ";
                 }
             }
-            std::cout << "]" << std::endl;
+            std::cout << "]" << std::endl; */
         }
 
         // Prepare the arguments (payload) for the actions.
@@ -194,12 +195,14 @@ main(int argc, char** argv) -> int
         // send their score to other vertices that will be waiting on them.
         for (const auto vertex_id : vertices_inbound_degree_zero) {
 
-            auto vertex_addr_to_zero_in_degree = input_graph.get_vertex_address_in_cca(vertex_id);
+            auto vertex_addr_to_zero_in_degree =
+                input_graph.get_vertex_address_in_cca_rhizome(vertex_id);
 
             // Prepare the arguments (payload) for the actions.
             PageRankFixedIterationsArguments germinate_arg_to_zero_in_degree;
             germinate_arg_to_zero_in_degree.score = -10;
             germinate_arg_to_zero_in_degree.src_vertex_id = 99999;
+            germinate_arg_to_zero_in_degree.iteration = iterations;
 
             ActionArgumentType const args_to_zero_in_degree =
                 cca_create_action_argument<PageRankFixedIterationsArguments>(

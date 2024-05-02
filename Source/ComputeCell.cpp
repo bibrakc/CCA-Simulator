@@ -670,6 +670,22 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         (this->current_recv_channel_to_start_a_cycle + 1) % this->number_of_neighbors;
 }
 
+auto
+ComputeCell::decrement_CPI() -> bool
+{
+    if (this->pending_instructions == 0) {
+        return false;
+    }
+    this->pending_instructions--;
+    return true;
+}
+
+void
+ComputeCell::apply_CPI(u_int32_t cpi)
+{
+    this->pending_instructions += cpi;
+}
+
 void
 ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip,
                                      void* function_events)
@@ -677,6 +693,11 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
 
     // TODO: remove this
     if (!this->is_compute_cell_active()) {
+        return;
+    }
+
+    // First check if there are any pending CPIs that will take this cycle
+    if (this->decrement_CPI()) {
         return;
     }
 

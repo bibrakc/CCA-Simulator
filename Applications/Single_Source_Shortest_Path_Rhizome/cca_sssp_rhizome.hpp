@@ -102,6 +102,7 @@ sssp_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType a
     SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
+    cc.apply_CPI(1);
     if (v->sssp_distance > incoming_distance) {
         return Closure(cc.null_true_event, nullptr);
     }
@@ -135,6 +136,7 @@ sssp_work_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) 
     SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
+    cc.apply_CPI(LOAD_STORE_CPI);
     // Update distance with the new distance
     v->sssp_distance = incoming_distance;
     return Closure(cc.null_true_event, nullptr);
@@ -168,6 +170,7 @@ sssp_diffuse_predicate_T(ComputeCell& cc, const Address addr, const ActionArgume
     SSSPArguments const sssp_args = cca_get_action_argument<SSSPArguments>(args);
     u_int32_t const incoming_distance = sssp_args.distance;
 
+    cc.apply_CPI(1);
     if (v->sssp_distance == incoming_distance) {
         return Closure(cc.null_true_event, nullptr);
     }
