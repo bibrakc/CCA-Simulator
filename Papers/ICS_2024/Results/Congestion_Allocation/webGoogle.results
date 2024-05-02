@@ -1,9 +1,0 @@
-network,termination,throttle,recv_buff_size,total_cycles,actions_created,actions_performed,actions_false_pred,avg_cells_active_percent,operons_moved,dim_x,dim_y,max_edges,vicinity,congestion_threshold_value,total_memory,avg_objects_per_cc,total_objects_created,vertices,edges,graph_file,routing_algorithm
-TORUS,OFF,OFF,1,26422,6907851,1263885,5643966,87.7373,438512826,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,OFF,4,22712,6249266,1125946,5123320,86.6443,396813559,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,OFF,8,20102,6338977,1144958,5194019,86.9613,402463557,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,ON,1,17661,7029390,1275855,5753535,84.1403,446310734,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,ON,4,19890,7385148,1345081,6040067,79.6034,472104962,128,128,20,128,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-MESH,OFF,ON,4,29756,7650840,1410380,6240460,83.9696,639710043,128,128,20,3,181,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,ON,4,16593,6717301,1220805,5496496,84.6548,426414821,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
-TORUS,OFF,ON,8,14081,6541738,1186091,5355647,85.1608,415291420,128,128,20,3,90,1677721600,57.8992,948620,916428,5105039,/N/u/bchandio/BigRed200/Research/git_repos/Datasets/Real/web-Google.edgelist,XY
