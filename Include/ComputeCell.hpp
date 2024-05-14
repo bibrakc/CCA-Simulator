@@ -95,7 +95,7 @@ class ComputeCell : public Cell
     // meaning there was instruction pending (see `pending_instructions` below) then don't perform
     // any new task in task_queue, action_queue, or diffuse_queue.
     auto decrement_CPI() -> bool;
-    
+
     // increaments `pending_instructions`.
     void apply_CPI(u_int32_t);
 
@@ -223,9 +223,19 @@ class ComputeCell : public Cell
             std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
                                                 FixedSizeQueue<Operon>(buffer_size)));
 
+        this->ruche_recv_channel_per_neighbor.resize(
+            this->number_of_neighbors,
+            std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
+                                                FixedSizeQueue<Operon>(buffer_size)));
+
         // send channel buffer can only hold one operon since its there to put send (put) in the
         // recv channel of the neighbor.
         this->send_channel_per_neighbor.resize(
+            this->number_of_neighbors,
+            std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
+                                                FixedSizeQueue<Operon>(1)));
+
+        this->ruche_send_channel_per_neighbor.resize(
             this->number_of_neighbors,
             std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
                                                 FixedSizeQueue<Operon>(1)));
@@ -234,9 +244,13 @@ class ComputeCell : public Cell
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
                                                                 MaxCounter());
 
+        this->ruche_send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
+                                                                      MaxCounter());
+
         // Start from 0th and then alternate by % 4 (here 4 = number of neighbers for square cell
         // type for example).
         this->current_recv_channel_to_start_a_cycle = 0;
+        this->current_ruche_recv_channel_to_start_a_cycle = 0;
         this->last_congested_cycle = std::nullopt;
 
         // Experimental. The cells don't have sense of a global cycle. It is here for debuging and

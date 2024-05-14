@@ -14,11 +14,11 @@ import math, sys
 
 args = sys.argv
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 10:
     print(
-        "Usage: python cca_chip_perf.py <dim (for a square chip dim^2)> <memory per cc in KB> \
-                <cycles> <total operon movements> <total actions or total propagates, same thing> \
-                <bytes payload per operon> <actions executed> <bytes read per action> <network type>"
+        "Usage: python cca_chip_perf.py \n\t<dim (for a square chip dim^2)> \n\t<memory per cc in KB>"
+        "\n\t<cycles> \n\t<total operon movements> \n\t<total actions or total propagates, same thing>"
+        "\n\t<bytes payload per operon> \n\t<actions executed> \n\t<bytes read per action> \n\t<network type>"
     )
     sys.exit(1)
 
@@ -172,6 +172,7 @@ def mesh_cost():
     fa = farea(meshT)
     side = math.sqrt(fa)
 
+    print(f"Total Chip Memory: {(fn*fn*sram_bytes)/(1024*1024)} MB")
     """ print(f"Chip area: {fn*fn*fa*1e6:.6f} mm^2")
     print(f"Total CCs: {fn*fn}")
     print(f"Total Chip Memory: {(fn*fn*sram_bytes)/(1024*1024)} MB") """
@@ -198,6 +199,7 @@ def t2d_cost():
     side = math.sqrt(fa)
     op_dist = 2 * (fn - 1) * side / fn
 
+    print(f"Total Chip Memory: {(fn*fn*sram_bytes)/(1024*1024)} MB")
     """ print(f"Chip area: {fn*fn*fa*1e6:.6f} mm^2")
     print(f"Total CCs: {fn*fn}")
     print(f"Total Chip Memory: {(fn*fn*sram_bytes)/(1024*1024)} MB")
@@ -282,16 +284,14 @@ def ruchet2d_cost():
 if __name__ == "__main__":
     if network == "MESH":
         chip_area, totE, time = mesh_cost()
-        # print(chip_area, totE, time
-        print(f"Chip area: {chip_area:.6f} mm^2")
-        print(f"Total energy: {totE:.6f} J")
-        print(f"Total time: {time:.6f} s")
     elif network == "TORUS":
         chip_area, totE, time = t2d_cost()
-        print(f"Chip area: {chip_area:.6f} mm^2")
-        print(f"Total energy: {totE:.6f} J")
-        print(f"Total time: {time:.6f} s")
     else:
         print("Invalid Network! ERROR")
+
+    print(f"Chip area: {chip_area:.6f} mm^2")
+    print(f"Total energy: {totE:.6f} J")
+    print(f"Average power: {totE/time:.6f} W")
+    print(f"Total time: {time:.6f} s")
 # ruche_cost()
 # ruchet2d_cost()

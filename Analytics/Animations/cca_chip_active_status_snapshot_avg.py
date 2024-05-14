@@ -80,10 +80,10 @@ scalar_to_rgb = {
     1: (0, 255, 255),  # cyan
     2: (0, 255, 0),  # green
     3: (255, 255, 255),  # white
-    4: (255, 255, 214),  # yellow level 1
-    5: (255, 255, 163),  # yellow level 2
-    6: (255, 255, 61),  # yellow level 3
-    7: (255, 255, 0),  # yellow level 4 pure
+    4: (255, 204, 214),  # red level 1
+    5: (255, 153, 163),  # red level 2
+    6: (255, 51, 61),  # red level 3
+    7: (255, 0, 0),  # red level 4 pure
     8: (255, 204, 214),  # red level 1
     9: (255, 153, 163),  # red level 2
     10: (255, 51, 61),  # red level 3
@@ -91,7 +91,7 @@ scalar_to_rgb = {
 }
 
 
-# Parse frames and convert to numpy arrays
+""" # Parse frames and convert to numpy arrays
 grid_size = (dim_x, dim_y)
 num_frames = len(frames)
 grid_data = np.zeros((num_frames, *grid_size, 3), dtype=np.uint8)
@@ -103,6 +103,53 @@ for i, frame in enumerate(frames):
         for k, scalar_value in enumerate(scalar_values):
             rgb_value = scalar_to_rgb[scalar_value]
             grid_data[i, j, k] = rgb_value
+
+# Compute the average color across all frames
+average_image = np.mean(grid_data, axis=0).astype(np.uint8)
+
+# Plot the average congestion image
+plt.imshow(average_image)
+plt.title('Average Congestion')
+plt.axis('off')  # Turn off axis
+plt.show() """
+
+# Parse frames and convert to numpy arrays
+grid_size = (dim_x, dim_y)
+num_frames = len(frames)
+grid_data = np.zeros((num_frames, *grid_size), dtype=np.uint8)
+
+cycles_to_count = int(cycles * 0.85)
+cycle_to_count_fromt = int(cycles * 0.05)
+
+print(f"cycles: {cycles}, cycles_to_count: {cycles_to_count}, cycle_to_count_fromt: {cycle_to_count_fromt}")
+
+for i, frame in enumerate(frames):
+    if i > cycles_to_count:
+        break
+    rows = frame.split(",")
+    if i < cycle_to_count_fromt:
+        continue
+    for j, row in enumerate(rows):
+        scalar_values = list(map(int, row.strip().split()))
+        for k, scalar_value in enumerate(scalar_values):
+            grid_data[i, j, k] = scalar_value
+
+# Compute the average scalar value across all frames
+average_scalar = np.mean(grid_data, axis=0).astype(np.uint8)
+
+# Assign RGB values to the average image
+average_image = np.zeros((*grid_size, 3), dtype=np.uint8)
+for i in range(grid_size[0]):
+    for j in range(grid_size[1]):
+        average_image[i, j] = scalar_to_rgb[average_scalar[i, j]]
+
+# Plot the average congestion image
+plt.imshow(average_image)
+plt.title('Average Congestion')
+plt.axis('off')  # Turn off axis
+plt.show()
+
+exit(0)
 
 # Create a figure and axis for the animation
 fig, ax = plt.subplots(figsize=(7, 7))

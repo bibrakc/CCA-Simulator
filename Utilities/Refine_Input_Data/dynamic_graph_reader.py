@@ -261,13 +261,13 @@ for increment in range(1, 11):
     start = time.time()
     In_Degree_Distribution(G)
     end = time.time()
-    print("Time in In_Degree_Distribution: ", end-start, "\n")
+    #print("Time in In_Degree_Distribution: ", end-start, "\n")
 
 
     start = time.time()
     max_out_degree_vertex = Out_Degree_Distribution(G)
     end = time.time()
-    print("Time in Out_Degree_Distribution: ", end-start, "\n")
+    #print("Time in Out_Degree_Distribution: ", end-start, "\n")
 
     # Write the entire graph as the increment to .edgelist_inc
     output_filename = f"{filename}.edgelist_{increment}"

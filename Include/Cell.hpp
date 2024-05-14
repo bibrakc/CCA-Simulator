@@ -228,6 +228,9 @@ class Cell
     // Type of the Cell: ComputeCell or Htree node?
     CellType type;
 
+    // True if it is defected at manufacture. In that case it will not be used.
+    bool defected{};
+
     // Coordinates of this Cell in the CCA chip. It depends on the Chip dinemsions and
     // shapes of Cells.
     Coordinates cooridates;
@@ -262,11 +265,14 @@ class Cell
     // Per neighbor send channel/link.
     std::vector<std::vector<FixedSizeQueue<Operon>>> send_channel_per_neighbor;
 
+    std::vector<std::vector<FixedSizeQueue<Operon>>> ruche_send_channel_per_neighbor;
+
     // TODO: Remove this or add this later. We are not using diatance class right now.
     // std::vector<u_int32_t> send_channel_per_neighbor_current_distance_class;
 
     // Use this to detect and also quantify congestion
     std::vector<MaxCounter> send_channel_per_neighbor_contention_count;
+    std::vector<MaxCounter> ruche_send_channel_per_neighbor_contention_count;
     MaxCounter staging_logic_contention_count;
 
     // This is needed to satisty simulation. Because a sending Cell can not just enqueue an operon
@@ -278,6 +284,8 @@ class Cell
     // not part of the computation but is only there for simulation so as not to break the
     // semantics/pragmatics of CCA.
     std::vector<std::vector<FixedSizeQueue<Operon>>> recv_channel_per_neighbor;
+
+    std::vector<std::vector<FixedSizeQueue<Operon>>> ruche_recv_channel_per_neighbor;
 
     // High bandwidth network type. This is the primary network. By default the mesh. But can be
     // Torus and more.
@@ -298,6 +306,7 @@ class Cell
     // starting recv_channel and then alternate between them. This will provide fairness and not
     // cause congestion at any one link.
     u_int32_t current_recv_channel_to_start_a_cycle{};
+    u_int32_t current_ruche_recv_channel_to_start_a_cycle{};
 
     static auto get_cell_type_name(CellType type) -> std::string;
 
