@@ -285,11 +285,13 @@ if __name__ == "__main__":
         # print(chip_area, totE, time
         print(f"Chip area: {chip_area:.6f} mm^2")
         print(f"Total energy: {totE:.6f} J")
+        print(f"Average power: {totE/time:.6f} W")
         print(f"Total time: {time:.6f} s")
     elif network == "TORUS":
         chip_area, totE, time = t2d_cost()
         print(f"Chip area: {chip_area:.6f} mm^2")
         print(f"Total energy: {totE:.6f} J")
+        print(f"Average power: {totE/time:.6f} W")
         print(f"Total time: {time:.6f} s")
     else:
         print("Invalid Network! ERROR")

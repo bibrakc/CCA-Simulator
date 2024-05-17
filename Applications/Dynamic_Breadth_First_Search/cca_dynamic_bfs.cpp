@@ -212,7 +212,8 @@ main(int argc, char** argv) -> int
         cca_square_simulator.run_simulation(dynamic_bfs_terminator.value());
         auto end = std::chrono::steady_clock::now();
 
-        std::cout << "Total Cycles: " << cca_square_simulator.total_cycles << "\n";
+        std::cout << "Increment Cycles: " << cca_square_simulator.total_current_run_cycles
+                  << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
 
         std::cout << "Program elapsed time (This has nothing to do with the simulation "
                      "itself): "
