@@ -107,7 +107,7 @@ for i, frame in enumerate(frames):
 
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(18, 10))
+fig, ax = plt.subplots(figsize=(14, 10))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -153,6 +153,8 @@ ax.legend(
 )
 
 
+
+
 # Recursive function to draw the H-tree
 def draw_h_tree(x, y, length, depth):
     if depth == 0:
@@ -192,7 +194,7 @@ def update(frame):
     grid.set_array(grid_data[frame + start_from])
     # Set the title for each frame
     ax.set_title(
-        "CCA Chip Activation Per Compute Cell - Cycle # {}".format(frame + start_from),
+        f"CCA Chip Activation Per Compute Cell - Cycle # {frame + start_from}/{cycles}",
         fontsize=14,
     )
 
@@ -206,7 +208,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=10
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=60
 )  # Increase the interval
 
 # Set the grid cell size and ticks
@@ -221,7 +223,7 @@ ax.set_xlabel("Columns of Compute Cells", fontsize=16)
 ax.set_ylabel("Rows of Compute Cells", fontsize=16)
 # Add a larger second title
 routing_algorithm = "Dimension Ordered Horizontal First Routing"
-graph_size = "RMAT Directed Graph V=65K and E=1.04M"
+graph_size = "Erdős–Rényi Graph with Verices=1024 and Edges=10240"
 plt.suptitle(
     "Asynchronous BFS on a CCA Chip of "
     + str(dim_x)
@@ -234,11 +236,9 @@ plt.suptitle(
     fontsize=16,
 )
 
-TH="ON"
-SH="ON"
-output_filename = (
-    "BFS_" + str(dim_x) + "x" + str(dim_y) + "_th_" + TH + "_SH" + SH
-)
+TH = "ON"
+SH = "ON"
+output_filename = "BFS_" + str(dim_x) + "x" + str(dim_y) + "_v_1024_e_10240_th_" + TH + "_SH_" + SH
 # Save the animation as an MP4 file
 """ ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520) """
 

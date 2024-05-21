@@ -8,5 +8,10 @@ It can be used to design and deploy asynchronous message-driven computations and
 1. a computing task, which is the predicate resolution and work in the user application action, or
 2. the creation and staging of a new operon.
 
+## Demo of Message-Driven Execution
+<img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="800"/>
+
+<img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="800"/>
+
 ## Graph Applications
 The [Applications](/Applications/) directory contains asynchronous message-driven applications written using the CCASimulator. Please browser through each application for build and run instructions.
