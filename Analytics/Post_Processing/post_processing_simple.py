@@ -195,7 +195,7 @@ with open(output_file, "r") as file:
 
     # read the per cycle active status data
     active_status_per_cycle = []  # stores the active status
-    for i in range(0, 3):  # cycles all cycles
+    for i in range(0, cycles):  # cycles all cycles
         line = file.readline()
         line = line.strip().split("\t")
         cycle = int(line[0])
@@ -339,14 +339,14 @@ def active_status_chart():
     )
 
     # Create the line plot using sns.lineplot
-    fig, ax = plt.subplots(figsize=(16, 10))
+    fig, ax = plt.subplots(figsize=(8, 5.5))
     sns.lineplot(
         x="Cycle#",
         y="Cells_Active_Percent",
         data=active_status_df,
         label="Cells Active Percent",
         ax=ax,
-        color="orange",
+        color="red",
     )
     if hdepth != 0:
         sns.lineplot(
@@ -359,11 +359,14 @@ def active_status_chart():
         )
 
     # Add labels and title
-    ax.set_xlabel("Cycles", fontsize=16)
-    ax.set_ylabel("Percent of Cells Active", fontsize=16)
+    ax.set_xlabel("Cycles", fontsize=18)
+    ax.set_ylabel("Percent of Cells Active", fontsize=18)
     # Increase font size of x and y ticks
     ax.tick_params(axis="x", labelsize=14)
     ax.tick_params(axis="y", labelsize=14)
+
+    # Set the legend location to upper right
+    ax.legend(loc='upper right')
 
     throttle_text = "OFF"
     if throttle == 1:
@@ -382,10 +385,10 @@ def active_status_chart():
             + ", Recv_buff_size: "
             + str(recv_buff_size)
             + "\nPercentage of Cells and Htree Active per Cycle",
-            fontsize=16,
+            fontsize=18,
         )
     else:
-        ax.set_title(
+        """ ax.set_title(
             "Routing: "
             + routing_algorithm
             + ", Throttle: "
@@ -394,11 +397,15 @@ def active_status_chart():
             + str(recv_buff_size)
             + "\nPure Mesh Network\nPercentage of Compute Cells Active per Cycle",
             fontsize=16,
-        )
+        ) """
+        """ ax.set_title(
+            "Percentage of Compute Cells Active per Cycle",
+            fontsize=18,
+        ) """
 
     # Add a larger second title
     avg_cells_active_percent_num = float(avg_cells_active_percent)
-    plt.suptitle(
+    """ plt.suptitle(
         "Asynchronous BFS on a CCA Chip of "
         + str(dim_x)
         + " x "
@@ -406,16 +413,31 @@ def active_status_chart():
         + " Cells, Average Active Cells: "
         + f"{avg_cells_active_percent_num:.3g}"
         + "%",
-        fontsize=16,
+        fontsize=18,
         fontweight="bold",
-    )
+    ) """
+    # Format x-axis ticks to be in thousands
+    def format_thousands(x, pos):
+        return f"{x / 1000:.0f}K"
+
+
+    formatter = FuncFormatter(format_thousands)
+    ax.xaxis.set_major_formatter(formatter)
+
+    # Format y-axis ticks to be in thousands
+    def format_percentage(x, pos):
+        return f"{x:.0f}%"
+
+
+    formatter = FuncFormatter(format_percentage)
+    ax.yaxis.set_major_formatter(formatter)
 
 
 # print(matplotlib.matplotlib_fname())
 
 # Main
-congestion_charts()
-# active_status_chart()
+#congestion_charts()
+active_status_chart()
 
 # Display the plot
 plt.show()
