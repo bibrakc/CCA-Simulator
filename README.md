@@ -8,7 +8,7 @@ It can be used to design and deploy asynchronous message-driven computations and
 1. a computing instruction, which is contained in the predicate resolution and work in the user application action, or 
 2. the creation and staging of a new operon.
 
-It means that BFS and SSSP actions take $2$-$3$ cycles of compute, whereas Page Rank action takes anywhere from $3$-$70$ cycles of compute. When their diffusions are executed they in turn take cycles proportional to the amount of \textit{local edge-list size}.
+It means that BFS and SSSP actions take $2$ to $3$ cycles of compute, whereas Page Rank action takes anywhere from $3$ to $70$ cycles of compute. When their diffusions are executed they in turn take cycles proportional to the amount of \textit{local edge-list size}.
 
 ## Demo of Message-Driven Execution
 <img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="800"/>
