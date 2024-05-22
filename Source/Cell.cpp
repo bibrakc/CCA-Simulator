@@ -198,6 +198,35 @@ Cell::add_neighbor_compute_cells()
             }
         }
 
+        // Connect this Cell to the outside world using the IO Channel.
+        // TODO: Currently, only supporting data in the system not out. Therefore, not implementing
+        // this to make things simple. Will come back later and see how this would be implemented.
+        /* if (this->primary_network_type == 0) { // Mesh
+
+            // Only for first and last row since the IO Channel is connected to the north and south
+            // of the chip.
+            if (this->cooridates.second == 0 || this->cooridates.second == this->dim_y - 1) {
+
+                if (this->shape == computeCellShape::square) {
+
+                    // Note: The coordinates are of type unsigned int and we need to do arithematics
+                    // that may give negative int values. Therefore, we cast them to signed int.
+                    auto coordinate_signed =
+                        convert_internal_type_of_pair<int32_t>(this->cooridates);
+                    int32_t const cc_coordinate_x = coordinate_signed.first;
+                    int32_t const cc_coordinate_y = coordinate_signed.second;
+
+                    // If this CC belongs to the north IO channel then assign south neighbor.
+                    if (cc_coordinate_y == 0) {
+
+                    }
+                    // If this CC belongs to the south IO channel then assign north neighbor.
+                    else if (cc_coordinate_y == this->dim_y - 1) {
+                    }
+                }
+            }
+        } */
+
     } else if (this->shape == computeCellShape::block_1D) {
 
         std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -364,8 +393,9 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t d
 }
 
 auto
-Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate, computeCellShape shape_, u_int32_t dim_y)
-    -> u_int32_t
+Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
+                           computeCellShape shape_,
+                           u_int32_t dim_y) -> u_int32_t
 {
 
     if (shape_ == computeCellShape::square) {
@@ -619,8 +649,8 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
 }
 
 auto
-Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
-    -> std::vector<u_int32_t>
+Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/,
+                                                      u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
     // This has deadlock :(
 
@@ -683,8 +713,8 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/, u
 }
 
 auto
-Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
-    -> std::vector<u_int32_t>
+Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/,
+                                                  u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
     // Algorithm == west first adaptive
@@ -1006,8 +1036,8 @@ row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y
 }
 
 auto
-Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
-    -> std::vector<u_int32_t>
+Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
+                                          u_int32_t dst_cc_id) -> std::vector<u_int32_t>
 {
 
     // Algorithm == mixed first.

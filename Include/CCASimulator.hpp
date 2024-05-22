@@ -107,15 +107,19 @@ class CCASimulator
     // Number of SinkCells per CCA chip.
     u_int64_t total_sink_cells;
 
-    // Total CCA Cells (including Sink Cells)
+    // Total CCA Cells (including Sink Cells).
     u_int64_t total_compute_cells;
 
-    // Memory per compute cell and the total combined memory of this CCA chip
+    // Memory per compute cell and the total combined memory of this CCA chip.
     u_int64_t memory_per_cc;
     u_int64_t total_chip_memory;
 
-    // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s)
+    // Declare the CCA Chip that is composed of Compute Cell(s) and any SinkCell(s).
     std::vector<std::shared_ptr<Cell>> CCA_chip;
+
+    // Declare the I/O Channels (north and south) that are composed of Compute Cell(s) connecting to
+    // their correcponsing CCs in the CCA Chip. Index: 0 is north and 1 is south.
+    std::vector<std::shared_ptr<Cell>> IO_Channel[2];
 
     // High bandwidth network type. This is the primary network. By default the mesh. But can be
     // Torus and more.
@@ -124,7 +128,7 @@ class CCASimulator
     // 1: Torus
     u_int32_t primary_network_type{};
 
-    // The routing policy and algorithms id for the mesh network
+    // The routing policy and algorithms id for the mesh network.
     u_int32_t mesh_routing_policy_id;
 
     // ID of the host. Just like Compute Cells have Id the host also has. This is useful for
@@ -146,13 +150,13 @@ class CCASimulator
     u_long total_current_run_cycles{};
     u_long total_cycles{};
 
-    // Seconds layer network
+    // Seconds layer network.
     HtreeNetwork htree_network;
 
-    // Registers and manages the function events
+    // Registers and manages the function events.
     FunctionEventManager function_events;
 
-    // To record various measurements of the system to be used for analysis
+    // To record various measurements of the system to be used for analysis.
     CCASimulatorStatistics cca_statistics;
 
     CCASimulator(computeCellShape shape_in,
@@ -230,11 +234,9 @@ class CCASimulator
         }
 
         os << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
-           << " KB"
-           << "\n\tTotal Chip Memory: "
+           << " KB" << "\n\tTotal Chip Memory: "
            << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
-           << " MB"
-           << "\n\tMesh Type: " << this->primary_network_type
+           << " MB" << "\n\tMesh Type: " << this->primary_network_type
            << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n";
 
         if (this->hdepth != 0) {
@@ -265,8 +267,7 @@ class CCASimulator
         this->output_description_in_a_single_line(os);
 
         os << "congestion_policy\n"
-           << "constant_threshold"
-           << "\t" << curently_congested_threshold << "\n";
+           << "constant_threshold" << "\t" << curently_congested_threshold << "\n";
 
         std::string queues_text = "single";
         u_int32_t size_of_diffuse_queue = 0;
@@ -338,43 +339,47 @@ class CCASimulator
         }
     }
 
-    static inline auto get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y)
-        -> Coordinates;
+    static inline auto get_compute_cell_coordinates(u_int32_t cc_id,
+                                                    u_int32_t dim_y) -> Coordinates;
 
     auto cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates;
 
     auto cc_cooridinate_to_id(Coordinates cc_cooridinate) -> u_int32_t;
 
-    // The main chip creation function
+    // The main chip creation function.
     void create_the_chip();
+
+    // The IO channels creation function.
+    void create_IO_channels();
 
     // Register a function event
     auto register_function_event(handler_func function_event_handler) -> CCAFunctionEvent;
 
-    // Return the memory used in bytes
+    // Return the memory used in bytes.
     auto get_host_memory_used() -> u_int32_t;
-    // In bytes
+    // In bytes.
     auto get_host_memory_curr_ptr_offset() -> u_int32_t;
-    // Get memory left in bytes
+    // Get memory left in bytes.
     auto host_memory_available_in_bytes() -> u_int32_t;
 
-    // Create a CCATerminator object on host and return the address
+    // Create a CCATerminator object on host and return the address.
     auto create_terminator() -> std::optional<Address>;
 
-    // Check for termination of the diffusion
+    // Check for termination of the diffusion.
     auto is_diffusion_active(Address terminator_in) -> bool;
 
     // Utility to set a terminator.
     void reset_terminator(Address terminator_in);
 
-    auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator, void* obj, size_t size_of_obj)
-        -> std::optional<Address>;
+    auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
+                                          void* obj,
+                                          size_t size_of_obj) -> std::optional<Address>;
 
     void germinate_action(const Action& action_to_germinate);
 
     void run_simulation(Address app_terminator);
 
-    // Output simulation statistics and details
+    // Output simulation statistics and details.
     void print_statistics(std::ofstream& output_file);
 
     // Output simulation active animation per CC per cycle.
@@ -388,12 +393,12 @@ class CCASimulator
 
   private:
     // Create the chip. It includes creating the cells and initializing them with IDs and their
-    // types and more
+    // types and more.
     void create_square_cell_htree_chip();
 
     // Create the chip of type square cells with only mesh connetion. There is not htree or any
     // second layer network involved. It includes creating the cells and initializing them with IDs
-    // and their types and more
+    // and their types and more.
     void create_square_cell_mesh_only_chip();
 };
 

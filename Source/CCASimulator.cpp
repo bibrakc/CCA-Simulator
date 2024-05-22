@@ -193,6 +193,38 @@ CCASimulator::create_square_cell_mesh_only_chip()
     }
 }
 
+// Create the I/O Channels comprising of compute cells and connect them vertically to their
+// corresponding CCs in the CCA chip.
+void
+CCASimulator::create_IO_channels()
+{
+
+    // Create north and south channel. CC ids from 0 to `dim_x-1` are north channel CCs and rest are
+    // for south.
+    for (u_int32_t i = 0; i < 2; i++) {
+        for (u_int32_t j = 0; j < this->dim_x; j++) {
+            u_int32_t const cc_id = i * this->dim_x + j;
+            // Create individual compute cells of computeCellShape shape_of_compute_cells
+            this->IO_Channel[i].push_back(
+                std::make_shared<ComputeCell>(cc_id,
+                                              CellType::io_cell,
+                                              shape_of_compute_cells,
+                                              this->function_events.null_event_id,
+                                              this->function_events.null_event_true_id,
+                                              this->function_events.error_event_id,
+                                              this->dim_x,
+                                              this->dim_y,
+                                              this->hx,
+                                              this->hy,
+                                              this->hdepth,
+                                              this->memory_per_cc,
+                                              this->host_memory,
+                                              this->primary_network_type,
+                                              this->mesh_routing_policy_id));
+        }
+    }
+}
+
 void
 CCASimulator::create_the_chip()
 {
@@ -200,6 +232,7 @@ CCASimulator::create_the_chip()
     if (this->shape_of_compute_cells == computeCellShape::square) {
         if (this->hdepth == 0) {
             this->create_square_cell_mesh_only_chip();
+            this->create_IO_channels();
         } else {
             this->create_square_cell_htree_chip();
         }

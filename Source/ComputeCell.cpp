@@ -88,6 +88,59 @@ ComputeCell::memory_available_in_bytes() -> u_int32_t
     return this->memory_size_in_bytes - get_memory_used();
 }
 
+// Assigns neighbors from I/O Channel to CCA Chip not the other way around.
+void
+ComputeCell::add_IO_neighbor_compute_cells()
+{
+    /*
+         Left = 0 index
+         Up = 1 index
+         Right = 2 index
+         Down = 3 index
+     */
+
+    // Only for first and last row since the IO Channel is connected to the north and south of the
+    // chip.
+    if (this->cooridates.second == 0 || this->cooridates.second == this->dim_y - 1) {
+
+        if (this->shape == computeCellShape::square) {
+
+            u_int32_t const cc_coordinate_x = this->cooridates.first;
+            u_int32_t const cc_coordinate_y = this->cooridates.second;
+
+            // Assign null west (left) channel.
+            this->add_neighbor(std::nullopt);
+
+            // Assign Up neighbor.
+            // If this CC belongs to the south IO channel then assign north neighbor.
+            if (cc_coordinate_y == this->dim_y - 1) {
+                Coordinates up_neighbor_cordinates(cc_coordinate_x, this->dim_y - 1);
+                auto up_neighbor_id =
+                    Cell::cc_cooridinate_to_id(up_neighbor_cordinates, this->shape, this->dim_y);
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_cordinates));
+            } else { // It is north IO and doesnt have a north neighbor in the CCA Chip.
+                this->add_neighbor(std::nullopt);
+            }
+
+            // Assign null east (right) channel.
+            this->add_neighbor(std::nullopt);
+
+            // Assign Down neighbor.
+            // If this CC belongs to the north IO channel then assign south neighbor.
+            if (cc_coordinate_y == 0) {
+                Coordinates down_neighbor_cordinates(cc_coordinate_x, 0);
+                auto down_neighbor_id =
+                    Cell::cc_cooridinate_to_id(down_neighbor_cordinates, this->shape, this->dim_y);
+                this->add_neighbor(
+                    std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_cordinates));
+            } else { // It is south IO and doesnt have a south neighbor in the CCA Chip.
+                this->add_neighbor(std::nullopt);
+            }
+        }
+    }
+}
+
 // Returns the offset in memory for this newly created object. Also copies the object from host to
 // Compute Cell
 auto
