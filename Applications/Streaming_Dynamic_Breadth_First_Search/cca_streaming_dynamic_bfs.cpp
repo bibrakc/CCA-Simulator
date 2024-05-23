@@ -46,7 +46,10 @@ CCAFunctionEvent dynamic_bfs_work;
 CCAFunctionEvent dynamic_bfs_diffuse_predicate;
 CCAFunctionEvent dynamic_bfs_diffuse;
 
-CCAFunctionEvent dynamic_bfs_edge_insert_continuation;
+CCAFunctionEvent dynamic_bfs_insert_edge_predicate;
+CCAFunctionEvent dynamic_bfs_insert_edge_work;
+CCAFunctionEvent dynamic_bfs_insert_edge_diffuse_predicate;
+CCAFunctionEvent dynamic_bfs_insert_edge_diffuse;
 
 auto
 main(int argc, char** argv) -> int
@@ -93,11 +96,11 @@ main(int argc, char** argv) -> int
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
-    input_graph.transfer_graph_host_to_cca<BFSVertex<ghost_type_level_1>>(
+    /* input_graph.transfer_graph_host_to_cca<BFSVertex<ghost_type_level_1>>(
         cca_square_simulator,
         allocator,
         std::optional<u_int32_t>(cmd_args.root_vertex),
-        cmd_args.shuffle_switch);
+        cmd_args.shuffle_switch); */
 
     /*
     std::vector<u_int32_t> vertices_inbound_degree_zero =
@@ -129,8 +132,14 @@ main(int argc, char** argv) -> int
         cca_square_simulator.register_function_event(dynamic_bfs_diffuse_predicate_func);
     dynamic_bfs_diffuse = cca_square_simulator.register_function_event(dynamic_bfs_diffuse_func);
 
-    dynamic_bfs_edge_insert_continuation =
-        cca_square_simulator.register_function_event(dynamic_bfs_edge_insert_continuation_func);
+    dynamic_bfs_insert_edge_predicate =
+        cca_square_simulator.register_function_event(dynamic_bfs_insert_edge_predicate_func);
+    dynamic_bfs_insert_edge_work =
+        cca_square_simulator.register_function_event(dynamic_bfs_insert_edge_work_func);
+    dynamic_bfs_insert_edge_diffuse_predicate = cca_square_simulator.register_function_event(
+        dynamic_bfs_insert_edge_diffuse_predicate_func);
+    dynamic_bfs_insert_edge_diffuse =
+        cca_square_simulator.register_function_event(dynamic_bfs_insert_edge_diffuse_func);
 
     std::optional<Address> dynamic_bfs_terminator = cca_square_simulator.create_terminator();
     if (!dynamic_bfs_terminator) {
@@ -141,62 +150,54 @@ main(int argc, char** argv) -> int
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
          dynamic_increment++) {
 
-        if (dynamic_increment == 1) {
-            // Only put the BFS seed action on a single vertex.
-            // In this case BFS root = root_vertex
-            auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
+        // Read edges from the increament file and then insert then and germinate actions.
+        std::string input_graph_inc_path =
+            cmd_args.input_graph_path + "_" + std::to_string(dynamic_increment) + ".tsv";
+        std::vector<EdgeTuple> new_edges =
+            input_graph.read_dnyamic_graph_increment<true>(input_graph_inc_path);
+        std::cout << "\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
+                  << "\n";
 
-            BFSArguments root_level_to_send;
-            root_level_to_send.level = 0;
-            // Origin vertex from where this action came. Host not used. Put any value;
-            root_level_to_send.src_vertex_id = 99999;
+        // Transfer the edges to IO channels. The function will create an action reponsible to
+        // edge insertion that will contain the edge.
+        input_graph.transfer_graph_edges_increment_host_to_io_channel<
+            BFSVertex<RecursiveParallelVertex<Address, edges_min>>>(
+            cca_square_simulator,
+            new_edges,
+            dynamic_bfs_terminator.value(),
+            dynamic_bfs_insert_edge_predicate,
+            dynamic_bfs_insert_edge_work,
+            dynamic_bfs_insert_edge_diffuse_predicate,
+            dynamic_bfs_insert_edge_diffuse);
 
-            ActionArgumentType const args_x =
-                cca_create_action_argument<BFSArguments>(root_level_to_send);
+        std::cout << "Transfered to the IO Channels\n";
 
-            // Insert a seed action into the CCA chip that will help start the diffusion.
-            cca_square_simulator.germinate_action(Action(vertex_addr,
-                                                         dynamic_bfs_terminator.value(),
-                                                         actionType::germinate_action,
-                                                         true,
-                                                         args_x,
-                                                         dynamic_bfs_predicate,
-                                                         dynamic_bfs_work,
-                                                         dynamic_bfs_diffuse_predicate,
-                                                         dynamic_bfs_diffuse));
-        } else {
+        // Only put the BFS seed action on a single vertex.
+        // In this case BFS root = root_vertex
+        /* auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
 
-            // Read edges from the increament file and then insert then and germinate actions.
-            std::string input_graph_inc_path =
-                cmd_args.input_graph_path + "_" + std::to_string(dynamic_increment) + ".tsv";
-            std::vector<EdgeTuple> new_edges =
-                input_graph.read_dnyamic_graph_increment<true>(input_graph_inc_path);
-            std::cout << "\n\nRead " << new_edges.size() << " edges from " << input_graph_inc_path
-                      << "\n";
+        BFSArguments root_level_to_send;
+        root_level_to_send.level = 0;
+        // Origin vertex from where this action came. Host not used. Put any value;
+        root_level_to_send.src_vertex_id = 99999;
 
-            // cca_square_simulator.transfer_graph_edges_increment_to_IO_channels();
-            // Transfer the edges to IO channels. The function will create an action reponsible to
-            // edge insertion that will contain the edge.
-            /* void transfer_graph_edges_increment_to_IO_channels(std::vector<EdgeTuple> new_edges);
-             */
+        ActionArgumentType const args_x =
+            cca_create_action_argument<BFSArguments>(root_level_to_send);
 
-            input_graph.transfer_graph_edges_increment_host_to_io_channel<
-                BFSVertex<RecursiveParallelVertex<Address, edges_min>>>(
-                cca_square_simulator,
-                new_edges,
-                cmd_args.root_vertex,
-                dynamic_bfs_terminator.value(),
-                dynamic_bfs_edge_insert_continuation);
+        // Insert a seed action into the CCA chip that will help start the diffusion.
+        cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                     dynamic_bfs_terminator.value(),
+                                                     actionType::germinate_action,
+                                                     true,
+                                                     args_x,
+                                                     dynamic_bfs_predicate,
+                                                     dynamic_bfs_work,
+                                                     dynamic_bfs_diffuse_predicate,
+                                                     dynamic_bfs_diffuse)); */
 
-            input_graph.transfer_graph_edges_increment_host_to_cca<
-                BFSVertex<RecursiveParallelVertex<Address, edges_min>>>(
-                cca_square_simulator,
-                new_edges,
-                cmd_args.root_vertex,
-                dynamic_bfs_terminator.value(),
-                dynamic_bfs_edge_insert_continuation);
+        if (dynamic_increment == 2) {
+            break;
         }
-
         ///////////
 
         /* auto vertex_addr_to_dst = input_graph.get_vertex_address_in_cca(0);

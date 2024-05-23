@@ -79,6 +79,15 @@ struct VertexInfo
     }
 };
 
+// This is what the action carries as payload.
+struct InsertEdgeArguments
+{
+    // Address of the vertex to which this edge points to.
+    Address dst_vertex_addrs;
+    // Weight along the edge.
+    u_int32_t edge_weight{};
+};
+
 template<class VertexType>
 class Graph
 {
@@ -593,38 +602,73 @@ class Graph
     // For streaming dynamic graphs transfer the new edgelist. Note: this function does not accept
     // creation of new vertices, although its not an issue and can be done easily in the future.
     template<class VertexTypeOfAddress>
-    void transfer_graph_edges_increment_host_to_io_channel(CCASimulator& cca_simulator,
-                                                           std::vector<EdgeTuple>& new_edges,
-                                                           u_int32_t root_vertex,
-                                                           Address terminator,
-                                                           CCAFunctionEvent continuation)
+    void transfer_graph_edges_increment_host_to_io_channel(
+        CCASimulator& cca_simulator,
+        std::vector<EdgeTuple>& new_edges,
+        Address terminator,
+        CCAFunctionEvent insert_edge_predicate,
+        CCAFunctionEvent insert_edge_work,
+        CCAFunctionEvent insert_edge_diffuse_predicate,
+        CCAFunctionEvent insert_edge_diffuse)
     {
+        assert(cca_simulator.primary_network_type == 0);
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.
         static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
                       "edge type must be of type Address");
 
-        std::cout << "Inserting increment of new edges: " << std::endl;
+        std::cout
+            << "Inserting increment of new edges as actions that will stream into the CCA chip. "
+            << std::endl;
 
-        // Not sure if this is thread safe anymore... #pragma omp parallel for
-        for (u_int32_t i = 0; i < new_edges.size(); i++) {
+        // Number of CCs in a single channel.
+        u_int32_t size_of_a_single_channel = cca_simulator.IO_Channel[0].size();
+        // Each CC in the IO channels gets a chunk of edges that will be sent to the CCA chip.
+        u_int32_t chunk_size = new_edges.size() / (size_of_a_single_channel * 2);
+        // The last CC in the IO channels (meaning the last in the south channel) gets the left over
+        // edges.
+        u_int32_t left_over_chunk_edges = new_edges.size() % (size_of_a_single_channel * 2);
 
-            u_int32_t const src_vertex_id = new_edges[i].from;
-            u_int32_t const dst_vertex_id = new_edges[i].to;
-            u_int32_t const edge_weight = new_edges[i].weight;
+        // Loop on the number of channels, in this case 2.
+        for (u_int32_t i = 0; i < 2; i++) {
+            // Loop over the CCs in the IO channel.
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < cca_simulator.IO_Channel[i].size(); j++) {
+                auto io_compute_cell =
+                    std::dynamic_pointer_cast<ComputeCell>(cca_simulator.IO_Channel[i][j]);
+                u_int32_t stride = (chunk_size * size_of_a_single_channel * i) + (chunk_size * j);
+                u_int32_t my_chunk_size = chunk_size;
+                if ((i == 1) && (j == (size_of_a_single_channel - 1))) {
+                    my_chunk_size += left_over_chunk_edges;
+                }
+                for (u_int32_t e = stride; e < stride + my_chunk_size; e++) {
+                    // new_edges[e] < --use this edge to construct the action of insert_edge;
 
-            if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
-                    cca_simulator,
-                    /*  allocator, */
-                    this->vertex_addresses[src_vertex_id],
-                    this->vertex_addresses[dst_vertex_id],
-                    edge_weight,
-                    root_vertex,
-                    terminator,
-                    continuation)) {
-                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
-                          << edge_weight << ") not inserted successfully.\n";
-                exit(0);
+                    u_int32_t const src_vertex_id = new_edges[e].from;
+                    u_int32_t const dst_vertex_id = new_edges[e].to;
+                    u_int32_t const edge_weight = new_edges[e].weight;
+
+                    const Address src_vertex_addr = this->vertex_addresses[src_vertex_id];
+                    const Address dst_vertex_addr = this->vertex_addresses[dst_vertex_id];
+
+                    InsertEdgeArguments edge_to_send;
+                    edge_to_send.dst_vertex_addrs = dst_vertex_addr;
+                    edge_to_send.edge_weight = edge_weight;
+
+                    const ActionArgumentType args_for_insert_edge =
+                        cca_create_action_argument<InsertEdgeArguments>(edge_to_send);
+
+                    io_compute_cell->diffuse(Action(
+                        src_vertex_addr,
+                        terminator,
+                        actionType::application_action, // TODO: see if this can be io_action?
+                        true,
+                        args_for_insert_edge,
+                        insert_edge_predicate,
+                        insert_edge_work,
+                        insert_edge_diffuse_predicate,
+                        insert_edge_diffuse));
+                }
             }
         }
     }

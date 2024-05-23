@@ -89,7 +89,7 @@ target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-pa
 target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} streaming_cca_dynamic_bfs.cpp)
+add_executable(${executable_name} cca_streaming_dynamic_bfs.cpp)
 
 target_include_directories(${executable_name} PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}
@@ -101,5 +101,5 @@ target_include_directories(${executable_name} PUBLIC
 # Enable debugging
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-set_source_files_properties(streaming_cca_dynamic_bfs.cpp PROPERTIES LANGUAGE CXX)
+set_source_files_properties(cca_streaming_dynamic_bfs.cpp PROPERTIES LANGUAGE CXX)
 target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)

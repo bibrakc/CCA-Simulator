@@ -56,7 +56,7 @@ struct BFSArguments
     u_int32_t src_vertex_id;
 };
 
-// This is what the continuation for insert edge carries as payload.
+/* // This is what the continuation for insert edge carries as payload.
 struct BFSArgumentsEdgeInsertContinuation
 {
     u_int32_t level;
@@ -66,7 +66,12 @@ struct BFSArgumentsEdgeInsertContinuation
     u_int32_t edge_weight;
 
     u_int32_t root_vertex; // Perhaps not needed.
-};
+}; */
+
+/* struct BFSArgumentsInsertEdgeForGhost : public InsertEdgeArguments
+{
+    u_int32_t level{};
+}; */
 
 template<typename Vertex_T>
 struct BFSVertex : Vertex_T
@@ -80,26 +85,6 @@ struct BFSVertex : Vertex_T
         this->id = id_in;
         this->number_of_edges = 0;
         this->total_number_of_vertices = total_number_of_vertices_in;
-    }
-
-    auto edge_insert_continuation_argument(Address dst_vertex_addr_in,
-                                           u_int32_t edge_weight_in,
-                                           u_int32_t root_vertex_in) -> ActionArgumentType
-    {
-        BFSArgumentsEdgeInsertContinuation arg_continuation;
-        arg_continuation.level = this->bfs_level;
-        arg_continuation.src_vertex_id = this->id;
-
-        arg_continuation.dst_vertex_addr = dst_vertex_addr_in;
-        arg_continuation.edge_weight = edge_weight_in;
-
-        arg_continuation.root_vertex = root_vertex_in;
-
-        /* std::cout << "edge_insert_continuation_argument: dst_vertex_addr_in: " <<
-           dst_vertex_addr_in
-                  << "\n"; */
-
-        return cca_create_action_argument<BFSArgumentsEdgeInsertContinuation>(arg_continuation);
     }
 
     // Nothing to do.
@@ -116,12 +101,16 @@ extern CCAFunctionEvent dynamic_bfs_work;
 extern CCAFunctionEvent dynamic_bfs_diffuse_predicate;
 extern CCAFunctionEvent dynamic_bfs_diffuse;
 
-extern CCAFunctionEvent dynamic_bfs_edge_insert_continuation;
+extern CCAFunctionEvent dynamic_bfs_insert_edge_predicate;
+extern CCAFunctionEvent dynamic_bfs_insert_edge_work;
+extern CCAFunctionEvent dynamic_bfs_insert_edge_diffuse_predicate;
+extern CCAFunctionEvent dynamic_bfs_insert_edge_diffuse;
 
 template<typename ghost_type>
 inline auto
-dynamic_bfs_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
-    -> Closure
+dynamic_bfs_predicate_T(ComputeCell& cc,
+                        const Address addr,
+                        const ActionArgumentType args) -> Closure
 {
     cc.apply_CPI(1);
 
@@ -188,11 +177,12 @@ dynamic_bfs_work_func(ComputeCell& cc,
 
 template<typename ghost_type>
 inline auto
-dynamic_bfs_diffuse_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
-    -> Closure
+dynamic_bfs_diffuse_predicate_T(ComputeCell& cc,
+                                const Address addr,
+                                const ActionArgumentType args) -> Closure
 {
     cc.apply_CPI(1);
-    
+
     // First check whether this is a ghost vertex. If it is then always predicate true.
     // parent word is used in the sense that `RecursiveParallelVertex` is the parent class.
     auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
@@ -293,53 +283,83 @@ dynamic_bfs_diffuse_func(ComputeCell& cc,
     INVOKE_HANDLER_3(dynamic_bfs_diffuse_T, cc, addr, args);
 }
 
-template<typename ghost_type>
+// For the streaming edge insertion.
+
 inline auto
-dynamic_bfs_edge_insert_continuation_T(ComputeCell& cc,
+dynamic_bfs_insert_edge_predicate_func(ComputeCell& cc,
                                        const Address addr,
+                                       actionType /* action_type_in */,
                                        const ActionArgumentType args) -> Closure
 {
+    // Set to always true because the edge must always be inserted and its work needs to be
+    // performed.
+    return Closure(cc.null_true_event, nullptr);
+}
 
-    BFSArgumentsEdgeInsertContinuation const bfs_args =
-        cca_get_action_argument<BFSArgumentsEdgeInsertContinuation>(args);
+template<typename ghost_type>
+inline auto
+dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
+                               const Address addr,
+                               const ActionArgumentType args) -> Closure
+{
+    /* // First check whether this is a ghost vertex. If it is then use the
+    // `BFSArgumentsInsertEdgeForGhost` to get the bfs level that came from the root RPVO.
+    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
 
-    u_int32_t current_level = bfs_args.level;
-
-    /* if (current_level == BFSVertex<ghost_type>::max_level) {
-        std::cout << "undefined level Not diffusing the continuation\n";
-        return 0;
+    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
+        return Closure(cc.null_true_event, nullptr);
     } */
 
-    BFSArguments level_to_send;
-    level_to_send.level = current_level + 1;
-    level_to_send.src_vertex_id = bfs_args.src_vertex_id;
+    // Get the vertex object.
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
+    // Insert the edge.
+    if (v->number_of_edges == v->local_edgelist_size) {
+        std::cerr << "Fatal: Cannot insert edge as the vertex is out of edgelist" << std::endl;
+        exit(0);
+    }
 
-    ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
+    cc.apply_CPI(LOAD_STORE_CPI * 2);
+    v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
+    if constexpr (weighted_edge) {
+        v->edges[v->number_of_edges].weight = insert_edge_args.edge_weight;
+    }
+    // Only increments the currect ghost/root vertex edges.
+    cc.apply_CPI(ADD_CPI);
+    v->number_of_edges++;
+    // Increment the global edges count for this vertex. For a ghost vertex this is all the
+    // edges contains in itself in its edge list and all in its child ghost vertices.
+    v->outbound_degree++;
 
-    /* std::cout << "dynamic_bfs_edge_insert_continuation_func || vertex: "
-              << level_to_send.src_vertex_id << ", level to send: " << level_to_send.level
-              << ", bfs_args.dst_vertex_addr: " << bfs_args.dst_vertex_addr << "\n";
- */
-    cc.diffuse(Action(bfs_args.dst_vertex_addr,
-                      addr,
-                      actionType::application_action,
-                      true,
-                      args_x,
-                      dynamic_bfs_predicate,
-                      dynamic_bfs_work,
-                      dynamic_bfs_diffuse_predicate,
-                      dynamic_bfs_diffuse));
+    return Closure(cc.null_true_event, nullptr);
+    // return Closure(cc.null_false_event, nullptr);
+}
 
+inline auto
+dynamic_bfs_insert_edge_work_func(ComputeCell& cc,
+                                  const Address addr,
+                                  actionType /* action_type_in */,
+                                  const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(dynamic_bfs_insert_edge_work_T, cc, addr, args);
+}
+
+inline auto
+dynamic_bfs_insert_edge_diffuse_predicate_func(ComputeCell& cc,
+                                               const Address addr,
+                                               actionType /* action_type_in */,
+                                               const ActionArgumentType args) -> Closure
+{
     return Closure(cc.null_false_event, nullptr);
 }
 
 inline auto
-dynamic_bfs_edge_insert_continuation_func(ComputeCell& cc,
-                                          const Address addr,
-                                          actionType /* action_type_in */,
-                                          const ActionArgumentType args) -> Closure
+dynamic_bfs_insert_edge_diffuse_func(ComputeCell& cc,
+                                     const Address addr,
+                                     actionType /* action_type_in */,
+                                     const ActionArgumentType args) -> Closure
 {
-    INVOKE_HANDLER_3(dynamic_bfs_edge_insert_continuation_T, cc, addr, args);
+    return Closure(cc.null_false_event, nullptr);
 }
 
 inline void
