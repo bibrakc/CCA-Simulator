@@ -267,7 +267,13 @@ class ComputeCell : public Cell
         // actions onto itself in case of a diffusion that requires pushing to itself.
         // 2: ghost edges, 5: just because.
         this->action_queue = FixedSizeQueue<Action>(action_queue_size, edges_max + 2 + 5);
-        this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
+        if (this->type == CellType::io_cell) {
+            // Make it some large size since it will be needed for diffusing actions that edges from
+            // the IO channels to the CCA chip.
+            this->diffuse_queue = FixedSizeQueue<Action>(8192); // 16384
+        } else {
+            this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
+        }
 
         // Experimental for scheduling.
         // this->prefer_diffuse_queue = false;

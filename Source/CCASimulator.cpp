@@ -507,11 +507,24 @@ CCASimulator::run_simulation(Address app_terminator)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip, &this->function_events);
         }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->run_a_computation_cycle(this->CCA_chip,
+                                                                &this->function_events);
+            }
+        }
 
 // Prepare communication cycle
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle(this->CCA_chip);
+        }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->prepare_a_communication_cycle(this->CCA_chip);
+            }
         }
 
         if (this->htree_network.hdepth != 0) {
@@ -526,6 +539,12 @@ CCASimulator::run_simulation(Address app_terminator)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->run_a_communication_cycle(this->CCA_chip);
+            }
+        }
 
         if (this->htree_network.hdepth != 0) {
 #pragma omp parallel for
@@ -538,6 +557,12 @@ CCASimulator::run_simulation(Address app_terminator)
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->essential_house_keeping_cycle(this->CCA_chip);
+        }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->essential_house_keeping_cycle(this->CCA_chip);
+            }
         }
 
         // Check for termination. Not needed now since the terminator is implemented but keeping it
@@ -562,6 +587,18 @@ CCASimulator::run_simulation(Address app_terminator)
                 // std::cout <<"CC: " << i << " is active\n";
             }
         }
+        // Check for termination of IO Channels.
+        u_int32_t sum_global_active_cc_io_channel_local = 0;
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for reduction(+ : sum_global_active_cc_io_channel_local)
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                const u_int32_t is_cell_active = this->IO_Channel[i][j]->is_compute_cell_active();
+                if (is_cell_active) {
+                    sum_global_active_cc_io_channel_local++;
+                    // std::cout <<"CC: " << i << " is active\n";
+                }
+            }
+        }
 
         if constexpr (animation_switch) {
             this->cca_statistics.individual_cells_active_status_per_cycle.push_back(
@@ -578,7 +615,8 @@ CCASimulator::run_simulation(Address app_terminator)
             }
         }
 
-        if (sum_global_active_cc_local || sum_global_active_htree) {
+        if (sum_global_active_cc_local || sum_global_active_htree ||
+            sum_global_active_cc_io_channel_local) {
             is_system_active = true;
         }
         double const percent_CCs_active = 100.0 * static_cast<double>(sum_global_active_cc_local) /
@@ -597,12 +635,6 @@ CCASimulator::run_simulation(Address app_terminator)
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         this->total_cycles++;
         this->total_current_run_cycles++;
-
-// Set new cycle # for every Cell: Experimental
-#pragma omp parallel for
-        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            this->CCA_chip[i]->current_cycle++;
-        }
 
         // Find whether to run the next cycle or not? This is based on the termination method being
         // used. When termination_switch == true, it uses the ack based Dijkstra–Scholten algorithm

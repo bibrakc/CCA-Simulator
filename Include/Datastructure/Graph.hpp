@@ -551,14 +551,53 @@ class Graph
         return new_edges;
     }
 
-    // For dynamic graphs transfer the new edgelist. Note: this function does not accept creation of
-    // new vertices, although its not an issue and can be done easily in the future.
+    // For batched dynamic graphs transfer the new edgelist. Note: this function does not accept
+    // creation of new vertices, although its not an issue and can be done easily in the future.
     template<class VertexTypeOfAddress>
     void transfer_graph_edges_increment_host_to_cca(CCASimulator& cca_simulator,
                                                     std::vector<EdgeTuple>& new_edges,
                                                     u_int32_t root_vertex,
                                                     Address terminator,
                                                     CCAFunctionEvent continuation)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        std::cout << "Inserting increment of new edges: " << std::endl;
+
+        // Not sure if this is thread safe anymore... #pragma omp parallel for
+        for (u_int32_t i = 0; i < new_edges.size(); i++) {
+
+            u_int32_t const src_vertex_id = new_edges[i].from;
+            u_int32_t const dst_vertex_id = new_edges[i].to;
+            u_int32_t const edge_weight = new_edges[i].weight;
+
+            if (!this->insert_edge_by_address_with_continuation<VertexTypeOfAddress>(
+                    cca_simulator,
+                    /*  allocator, */
+                    this->vertex_addresses[src_vertex_id],
+                    this->vertex_addresses[dst_vertex_id],
+                    edge_weight,
+                    root_vertex,
+                    terminator,
+                    continuation)) {
+                std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
+                          << edge_weight << ") not inserted successfully.\n";
+                exit(0);
+            }
+        }
+    }
+
+    // For streaming dynamic graphs transfer the new edgelist. Note: this function does not accept
+    // creation of new vertices, although its not an issue and can be done easily in the future.
+    template<class VertexTypeOfAddress>
+    void transfer_graph_edges_increment_host_to_io_channel(CCASimulator& cca_simulator,
+                                                           std::vector<EdgeTuple>& new_edges,
+                                                           u_int32_t root_vertex,
+                                                           Address terminator,
+                                                           CCAFunctionEvent continuation)
     {
 
         // The vertex object that exists on the CCA needs to have edges of type `Address`.

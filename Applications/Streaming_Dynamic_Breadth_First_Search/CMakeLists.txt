@@ -1,6 +1,6 @@
 # BSD 3-Clause License
 # 
-# Copyright (c) 2023-2024, Bibrak Qamar
+# Copyright (c) 2024, Bibrak Qamar
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@
 
 cmake_minimum_required(VERSION 3.26)
 
-set(executable_name Dynamic_BFS_CCASimulator)
+set(executable_name Streaming_Dynamic_BFS_CCASimulator)
 project(${executable_name} LANGUAGES CXX)
 
 # Set C++ standard to C++20
@@ -89,7 +89,7 @@ target_compile_options(CCASimulator PRIVATE -Werror -Wall -Wextra -Wno-unused-pa
 target_link_libraries(CCASimulator PUBLIC OpenMP::OpenMP_CXX)
 
 # Add the executable for the cca_sssp.cpp source file
-add_executable(${executable_name} cca_dynamic_bfs.cpp)
+add_executable(${executable_name} streaming_cca_dynamic_bfs.cpp)
 
 target_include_directories(${executable_name} PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}
@@ -101,5 +101,5 @@ target_include_directories(${executable_name} PUBLIC
 # Enable debugging
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-set_source_files_properties(cca_dynamic_bfs.cpp PROPERTIES LANGUAGE CXX)
+set_source_files_properties(streaming_cca_dynamic_bfs.cpp PROPERTIES LANGUAGE CXX)
 target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
