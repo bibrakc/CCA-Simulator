@@ -313,15 +313,8 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
     // Get the vertex object.
     auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
     InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
-    // Insert the edge.
-    /* if (v->id == 1 || 1) {
 
-        std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
-                  << ", v->number_of_edges: " << v->number_of_edges
-                  << ", v->local_edgelist_size: " << v->local_edgelist_size << ", addr: " << addr
-                  << ", ptr is: " << static_cast<int*>(cc.get_object(addr)) << std::endl;
-        // return Closure(cc.null_true_event, nullptr);
-    } */
+    // Insert the edge.
     if (v->number_of_edges == v->local_edgelist_size) {
         std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
                   << ", v->number_of_edges: " << v->number_of_edges
@@ -333,7 +326,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
         exit(0);
     }
 
-    //cc.apply_CPI(LOAD_STORE_CPI * 2);
+    // cc.apply_CPI(LOAD_STORE_CPI * 2);
     v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
     if constexpr (weighted_edge) {
         v->edges[v->number_of_edges].weight = insert_edge_args.edge_weight;
@@ -358,12 +351,57 @@ dynamic_bfs_insert_edge_work_func(ComputeCell& cc,
     INVOKE_HANDLER_3(dynamic_bfs_insert_edge_work_T, cc, addr, args);
 }
 
+template<typename ghost_type>
+inline auto
+dynamic_bfs_insert_edge_diffuse_predicate_T(ComputeCell& cc,
+                                            const Address addr,
+                                            const ActionArgumentType args) -> Closure
+{
+    // Get the vertex object.
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+    if (BFSVertex<ghost_type>::max_level == v->bfs_level) {
+        return Closure(cc.null_false_event, nullptr);
+    }
+    return Closure(cc.null_true_event, nullptr);
+}
+
 inline auto
 dynamic_bfs_insert_edge_diffuse_predicate_func(ComputeCell& cc,
                                                const Address addr,
                                                actionType /* action_type_in */,
                                                const ActionArgumentType args) -> Closure
 {
+    INVOKE_HANDLER_3(dynamic_bfs_insert_edge_diffuse_predicate_T, cc, addr, args);
+}
+
+template<typename ghost_type>
+inline auto
+dynamic_bfs_insert_edge_diffuse_T(ComputeCell& cc,
+                                  const Address addr,
+                                  const ActionArgumentType args) -> Closure
+{
+
+    // Get the vertex object.
+    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
+
+    // send to insert_edge_args.dst_vertex_addrs;
+    BFSArguments level_to_send;
+    level_to_send.level = v->bfs_level + 1;
+    level_to_send.src_vertex_id = v->id;
+
+    ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);
+
+    cc.diffuse(Action(insert_edge_args.dst_vertex_addrs,
+                      addr,
+                      actionType::application_action,
+                      true,
+                      args_x,
+                      dynamic_bfs_predicate,
+                      dynamic_bfs_work,
+                      dynamic_bfs_diffuse_predicate,
+                      dynamic_bfs_diffuse));
+
     return Closure(cc.null_false_event, nullptr);
 }
 
@@ -373,7 +411,7 @@ dynamic_bfs_insert_edge_diffuse_func(ComputeCell& cc,
                                      actionType /* action_type_in */,
                                      const ActionArgumentType args) -> Closure
 {
-    return Closure(cc.null_false_event, nullptr);
+    INVOKE_HANDLER_3(dynamic_bfs_insert_edge_diffuse_T, cc, addr, args);
 }
 
 inline void
