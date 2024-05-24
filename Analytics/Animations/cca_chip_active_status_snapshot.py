@@ -208,8 +208,10 @@ else:
 def update(frame):
     grid.set_array(grid_data[frame + start_from])
     # Set the title for each frame
-    """ ax.set_title(
-        'CCA Chip Activation Per Compute Cell - Cycle # {}'.format(frame+start_from), fontsize=14) """
+    ax.set_title(
+        f"CCA Chip Activation Per Compute Cell - Cycle # {frame + start_from}/{cycles}",
+        fontsize=14,
+    )
 
     if frame == 1 and htree_draw == True:
         draw_h_tree(x_htree, y_htree, length_htree, depth_htree)
@@ -221,7 +223,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=75
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=25
 )  # Increase the interval
 
 # Set the grid cell size and ticks

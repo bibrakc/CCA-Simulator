@@ -56,7 +56,7 @@ terminator_acknowledgement_func(ComputeCell& cc,
     return Closure(static_cast<CCAFunctionEvent>(0), nullptr); // TODO: provide cc.null_event
 }
 
-// Get the object memory location at address addr_in
+// Get the object memory location at address `addr_in`.
 auto
 ComputeCell::get_object(Address addr_in) const -> void*
 {
@@ -64,6 +64,7 @@ ComputeCell::get_object(Address addr_in) const -> void*
         assert(addr_in.type == adressType::host_address);
         return (this->host_memory.get() + addr_in.addr);
     }
+    assert(this->id == addr_in.cc_id);
     return (this->memory.get() + addr_in.addr);
 }
 
@@ -92,6 +93,9 @@ ComputeCell::memory_available_in_bytes() -> u_int32_t
 void
 ComputeCell::add_IO_neighbor_compute_cells()
 {
+
+    // Only for first and last row since the IO Channel is connected to the north and south of the
+    // chip.
     /*
          Left = 0 index
          Up = 1 index
@@ -99,44 +103,39 @@ ComputeCell::add_IO_neighbor_compute_cells()
          Down = 3 index
      */
 
-    // Only for first and last row since the IO Channel is connected to the north and south of the
-    // chip.
-    if (this->cooridates.second == 0 || this->cooridates.second == this->dim_y - 1) {
+    if (this->shape == computeCellShape::square) {
 
-        if (this->shape == computeCellShape::square) {
+        u_int32_t const cc_coordinate_x = this->cooridates.first;
+        u_int32_t const cc_coordinate_y = this->cooridates.second;
 
-            u_int32_t const cc_coordinate_x = this->cooridates.first;
-            u_int32_t const cc_coordinate_y = this->cooridates.second;
+        // Assign null west (left) channel.
+        this->add_neighbor(std::nullopt);
 
-            // Assign null west (left) channel.
+        // Assign Up neighbor.
+        // If this CC belongs to the south IO channel then assign north neighbor.
+        if (cc_coordinate_y == 1) {
+            Coordinates up_neighbor_cordinates(cc_coordinate_x, this->dim_y - 1);
+            auto up_neighbor_id =
+                Cell::cc_cooridinate_to_id(up_neighbor_cordinates, this->shape, this->dim_y);
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_cordinates));
+        } else { // It is north IO and doesnt have a north neighbor in the CCA Chip.
             this->add_neighbor(std::nullopt);
+        }
 
-            // Assign Up neighbor.
-            // If this CC belongs to the south IO channel then assign north neighbor.
-            if (cc_coordinate_y == this->dim_y - 1) {
-                Coordinates up_neighbor_cordinates(cc_coordinate_x, this->dim_y - 1);
-                auto up_neighbor_id =
-                    Cell::cc_cooridinate_to_id(up_neighbor_cordinates, this->shape, this->dim_y);
-                this->add_neighbor(
-                    std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_cordinates));
-            } else { // It is north IO and doesnt have a north neighbor in the CCA Chip.
-                this->add_neighbor(std::nullopt);
-            }
+        // Assign null east (right) channel.
+        this->add_neighbor(std::nullopt);
 
-            // Assign null east (right) channel.
+        // Assign Down neighbor.
+        // If this CC belongs to the north IO channel then assign south neighbor.
+        if (cc_coordinate_y == 0) {
+            Coordinates down_neighbor_cordinates(cc_coordinate_x, 0);
+            auto down_neighbor_id =
+                Cell::cc_cooridinate_to_id(down_neighbor_cordinates, this->shape, this->dim_y);
+            this->add_neighbor(
+                std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_cordinates));
+        } else { // It is south IO and doesnt have a south neighbor in the CCA Chip.
             this->add_neighbor(std::nullopt);
-
-            // Assign Down neighbor.
-            // If this CC belongs to the north IO channel then assign south neighbor.
-            if (cc_coordinate_y == 0) {
-                Coordinates down_neighbor_cordinates(cc_coordinate_x, 0);
-                auto down_neighbor_id =
-                    Cell::cc_cooridinate_to_id(down_neighbor_cordinates, this->shape, this->dim_y);
-                this->add_neighbor(
-                    std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_cordinates));
-            } else { // It is south IO and doesnt have a south neighbor in the CCA Chip.
-                this->add_neighbor(std::nullopt);
-            }
         }
     }
 }
@@ -644,14 +643,30 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                    << ", with id: " << operon.first.src_cc_id << "\n"; */
                         //}
 
-                        // Get the route using Routing 0
-                        std::optional<u_int32_t> routing_cell_id =
-                            Routing::get_next_move<ComputeCell>(
-                                CCA_chip, operon, this->id, this->mesh_routing_policy);
+                        std::vector<u_int32_t> channels_to_send;
+                        // In case the cell belongs to the IO Channels.
+                        if (this->type == CellType::io_cell) {
+                            const u_int32_t total_cells = this->dim_x * this->dim_y;
+                            const u_int32_t io_channel_size = this->dim_x;
+                            if ((this->id > total_cells) &&
+                                (this->id <= (total_cells + io_channel_size))) {
+                                // This is in the north channel.
+                                channels_to_send.push_back(3);
+                            } else {
+                                // std::cout << "CC ID: " << this->id << ", returned path 1 i.e.
+                                // up\n";
+                                channels_to_send.push_back(1); // This is in the south channel.
+                            }
+                        } else {
 
-                        std::vector<u_int32_t> const channels_to_send =
-                            this->get_route_towards_cc_id(operon.first.src_cc_id,
-                                                          routing_cell_id.value());
+                            // Get the route using Routing 0
+                            std::optional<u_int32_t> routing_cell_id =
+                                Routing::get_next_move<ComputeCell>(
+                                    CCA_chip, operon, this->id, this->mesh_routing_policy);
+
+                            channels_to_send = this->get_route_towards_cc_id(
+                                operon.first.src_cc_id, routing_cell_id.value());
+                        }
 
                         // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
                         /*  std::cout << "\n";
@@ -908,16 +923,31 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
             // Flush the channel buffer
             this->staging_operon_from_logic = std::nullopt;
         } else {
+            std::vector<u_int32_t> channels_to_send;
+            // In case the cell belongs to the IO Channels.
+            if (this->type == CellType::io_cell) {
+                const u_int32_t total_cells = this->dim_x * this->dim_y;
+                const u_int32_t io_channel_size = this->dim_x;
+                if ((this->id > total_cells) && (this->id <= (total_cells + io_channel_size))) {
+                    // This is in the north channel.
+                    channels_to_send.push_back(3);
+                } else {
+                    // std::cout << "CC ID: " << this->id << ", returned path 1 i.e.
+                    // up\n";
+                    channels_to_send.push_back(1); // This is in the south channel.
+                }
+            } else {
 
-            // Get the route using Routing 0
-            std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<ComputeCell>(
-                CCA_chip, operon_, this->id, this->mesh_routing_policy);
+                // Get the route using Routing 0
+                std::optional<u_int32_t> routing_cell_id = Routing::get_next_move<ComputeCell>(
+                    CCA_chip, operon_, this->id, this->mesh_routing_policy);
 
-            // Based on the routing algorithm and the shape of CCs it will return which neighbor
-            // to pass this operon to. The returned value is the index [0...number of neighbors)
-            // coresponding clockwise the channel id of the physical shape.
-            std::vector<u_int32_t> const channels_to_send =
-                this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
+                // Based on the routing algorithm and the shape of CCs it will return which neighbor
+                // to pass this operon to. The returned value is the index [0...number of neighbors)
+                // coresponding clockwise the channel id of the physical shape.
+                channels_to_send =
+                    this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
+            }
 
             // Always use the default virtual channel 0 as this is the begining of the journey for
             // this operon. It shouldn't matter for deadlocks.

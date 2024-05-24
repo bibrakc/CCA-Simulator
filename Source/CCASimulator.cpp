@@ -201,9 +201,12 @@ CCASimulator::create_IO_channels()
 
     // Create north and south channel. CC ids from 0 to `dim_x-1` are north channel CCs and rest are
     // for south.
+
+    // +1 is beacuse host_id is last cca chip cell id + 1
+    const u_int32_t start_io_channel_id_index_from = this->CCA_chip.size() + 1;
     for (u_int32_t i = 0; i < 2; i++) {
         for (u_int32_t j = 0; j < this->dim_x; j++) {
-            u_int32_t const cc_id = i * this->dim_x + j;
+            u_int32_t const cc_id = start_io_channel_id_index_from + (i * this->dim_x + j);
             // Create individual compute cells of computeCellShape shape_of_compute_cells
             this->IO_Channel[i].push_back(
                 std::make_shared<ComputeCell>(cc_id,

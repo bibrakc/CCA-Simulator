@@ -79,7 +79,8 @@ main(int argc, char** argv) -> int
 
     // Read the input data graph.
     std::string input_graph_inc_1_path = cmd_args.input_graph_path + ".edgelist_1";
-    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_inc_1_path);
+    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_inc_1_path,
+                                                                          true);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
@@ -90,17 +91,20 @@ main(int argc, char** argv) -> int
     // allocator from the center of the chip and later provide the `root` vertex to the graph
     // initializer in `transfer_graph_host_to_cca`.
     u_int32_t center_of_the_chip = (cca_square_simulator.dim_x * (cca_square_simulator.dim_y / 2)) +
-                                   (cca_square_simulator.dim_y / 2);
-    // center_of_the_chip = 0;
+                                   (cca_square_simulator.dim_x / 2);
+     center_of_the_chip = 0;
     CyclicMemoryAllocator allocator(center_of_the_chip, cca_square_simulator.total_compute_cells);
 
     // Note: here we use BFSSimpleVertex<Address> since the vertex object is now going to be sent to
     // the CCA chip and there the address type is Address (not u_int32_t ID).
-    /* input_graph.transfer_graph_host_to_cca<BFSVertex<ghost_type_level_1>>(
+    input_graph.create_graph_vertices_host_to_cca<BFSVertex<ghost_type_level_1>>(
         cca_square_simulator,
         allocator,
         std::optional<u_int32_t>(cmd_args.root_vertex),
-        cmd_args.shuffle_switch); */
+        cmd_args.shuffle_switch);
+
+    // input_graph.print_vertices<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
+    //  exit(0);
 
     /*
     std::vector<u_int32_t> vertices_inbound_degree_zero =
@@ -150,6 +154,10 @@ main(int argc, char** argv) -> int
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
          dynamic_increment++) {
 
+        /* if (dynamic_increment == 2) {
+            break;
+        } */
+
         // Read edges from the increament file and then insert then and germinate actions.
         std::string input_graph_inc_path =
             cmd_args.input_graph_path + "_" + std::to_string(dynamic_increment) + ".tsv";
@@ -172,31 +180,30 @@ main(int argc, char** argv) -> int
 
         std::cout << "Transfered to the IO Channels\n";
 
-        // Only put the BFS seed action on a single vertex.
-        // In this case BFS root = root_vertex
-        /* auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
+        if (dynamic_increment == 10) {
 
-        BFSArguments root_level_to_send;
-        root_level_to_send.level = 0;
-        // Origin vertex from where this action came. Host not used. Put any value;
-        root_level_to_send.src_vertex_id = 99999;
+            // Only put the BFS seed action on a single vertex.
+            // In this case BFS root = root_vertex
+            auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
 
-        ActionArgumentType const args_x =
-            cca_create_action_argument<BFSArguments>(root_level_to_send);
+            BFSArguments root_level_to_send;
+            root_level_to_send.level = 0;
+            // Origin vertex from where this action came. Host not used. Put any value;
+            root_level_to_send.src_vertex_id = 99999;
 
-        // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(Action(vertex_addr,
-                                                     dynamic_bfs_terminator.value(),
-                                                     actionType::germinate_action,
-                                                     true,
-                                                     args_x,
-                                                     dynamic_bfs_predicate,
-                                                     dynamic_bfs_work,
-                                                     dynamic_bfs_diffuse_predicate,
-                                                     dynamic_bfs_diffuse)); */
+            ActionArgumentType const args_x =
+                cca_create_action_argument<BFSArguments>(root_level_to_send);
 
-        if (dynamic_increment == 2) {
-            break;
+            // Insert a seed action into the CCA chip that will help start the diffusion.
+            cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                         dynamic_bfs_terminator.value(),
+                                                         actionType::germinate_action,
+                                                         true,
+                                                         args_x,
+                                                         dynamic_bfs_predicate,
+                                                         dynamic_bfs_work,
+                                                         dynamic_bfs_diffuse_predicate,
+                                                         dynamic_bfs_diffuse));
         }
         ///////////
 
@@ -235,12 +242,15 @@ main(int argc, char** argv) -> int
                   << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
                   << std::endl;
 
-        // Verify results.
-        if (cmd_args.verify_results) {
-            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
-                cmd_args, input_graph, cca_square_simulator, dynamic_increment);
+        if (dynamic_increment == 10) {
+            // Verify results.
+            if (cmd_args.verify_results) {
+                verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
+                    cmd_args, input_graph, cca_square_simulator, dynamic_increment);
+            }
         }
     }
+    input_graph.validate_vertices_sent_to_cca<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
 
     write_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
         cmd_args, input_graph, cca_square_simulator);

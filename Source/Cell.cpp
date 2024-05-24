@@ -933,15 +933,8 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
 {
     std::vector<u_int32_t> paths;
 
-    // In case the cell belongs to the IO Channels.
-    if (this->type == CellType::io_cell) {
-        if (this->id < this->dim_x) { // This is in the north channel.
-            paths.push_back(3);
-        } else {
-            paths.push_back(1); // This is in the south channel.
-        }
-        return paths;
-    }
+    // In case the cell belongs to the IO Channels. It shouldnt be there.
+    assert(this->type != CellType::io_cell);
 
     // If the cell belongs to the CCA chip.
     if (this->primary_network_type == 0) { // Mesh

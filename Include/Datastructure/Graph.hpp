@@ -270,7 +270,7 @@ class Graph
 
         // Create a vector of ids of all vertices values from root to N cyclically
         std::vector<u_int32_t> vertex_ids;
-        for (u_int32_t i = starting_vertex_id; i <= this->total_vertices; ++i) {
+        for (u_int32_t i = starting_vertex_id; i < this->total_vertices; ++i) {
             vertex_ids.push_back(i);
         }
         for (u_int32_t i = 0; i < starting_vertex_id; ++i) {
@@ -299,6 +299,129 @@ class Graph
         }
 
         return vertex_ids;
+    }
+
+    template<class VertexTypeOfAddress>
+    void create_graph_vertices_host_to_cca(CCASimulator& cca_simulator,
+                                           MemoryAllocator& allocator,
+                                           std::optional<u_int32_t> start_vertex_id,
+                                           bool shuffle_enabled)
+    {
+
+        // The vertex object that exists on the CCA needs to have edges of type `Address`.
+        static_assert(std::is_same_v<decltype(VertexTypeOfAddress::edges[0].edge), Address>,
+                      "edge type must be of type Address");
+
+        std::vector<u_int32_t> vertex_ids =
+            make_vertices_list(start_vertex_id, shuffle_enabled, this->total_vertices);
+
+        // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
+        // constructor everytime.
+        VertexTypeOfAddress vertex_(0, this->total_vertices);
+        // std::cout << "vertex_.local_edgelist_size: " << vertex_.local_edgelist_size << "\n";
+        for (int i = 0; i < vertex_ids.size(); i++) {
+            int current_vertex_id = vertex_ids[i];
+
+            // Put a vertex in memory with id = current_vertex_id
+            vertex_.id = current_vertex_id;
+
+            // Get the Address of this vertex allocated on the CCA chip. Note here we use
+            // VertexType<Address> since the object is now going to be sent to the CCA chip and
+            // there the address type is Address (not u_int32_t ID)
+            std::optional<Address> vertex_addr = cca_simulator.allocate_and_insert_object_on_cc(
+                allocator, &vertex_, sizeof(VertexTypeOfAddress));
+
+            if (!vertex_addr) {
+                std::cerr << "Error! Memory not allocated for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
+                std::cerr << "Error! Vertex initialization failed for Vertex ID: "
+                          << this->vertices[current_vertex_id].id << "\n";
+                exit(0);
+            }
+
+            // Insert into the vertex_addresses map
+            this->vertex_addresses[current_vertex_id] = vertex_addr.value();
+        }
+    }
+
+    template<class VertexTypeOfAddress>
+    void print_vertices(CCASimulator& cca_simulator)
+    {
+        for (const auto& vertex_addr_pair : this->vertex_addresses) {
+            /* if (vertex_addr_pair.first > 0) {
+                break;
+            } */
+            auto* vertex = static_cast<VertexTypeOfAddress*>(
+                cca_simulator.get_object(vertex_addr_pair.second));
+            std::cout << "v id: " << vertex->id
+                      << ", local_edgelist_size: " << vertex->local_edgelist_size
+                      << ", cc id: " << vertex_addr_pair.second.cc_id
+                      << ", addrs: " << vertex_addr_pair.second << "ptr is : "
+                      << static_cast<int*>(cca_simulator.get_object(vertex_addr_pair.second))
+                      << "\n";
+        }
+    }
+
+    template<class VertexTypeOfAddress>
+    void validate_vertices_sent_to_cca(CCASimulator& cca_simulator)
+    {
+        // This is a hacky way. Keep cells greater than vertices and allocate vertices from cc 0.
+        assert(cca_simulator.total_compute_cells > this->total_vertices);
+        std::cout
+            << "\nValidating number of edges for graph read and sent to the device matches?\n";
+        bool valid = true;
+        for (int i = 0; i < this->total_vertices; i++) {
+            u_int32_t const vertex_id_at_host = this->vertices[i].id;
+            u_int32_t const number_of_edges_at_host = this->vertices[i].number_of_edges;
+
+            const auto vertex_addr = this->vertex_addresses[vertex_id_at_host];
+            auto* vertex = static_cast<VertexTypeOfAddress*>(cca_simulator.get_object(vertex_addr));
+            assert(vertex_id_at_host == vertex->id);
+            if (vertex->number_of_edges != number_of_edges_at_host) {
+                valid = false;
+                std::cout << "v id: " << vertex->id
+                          << ", vertex->number_of_edges: " << vertex->number_of_edges
+                          << ", number_of_edges_at_host: " << number_of_edges_at_host
+                          << ", cc id: " << vertex_addr.cc_id << "\n";
+            }
+
+            std::vector<u_int32_t> host_side_vertex_edges;
+            std::vector<u_int32_t> device_side_vertex_edges;
+            for (int e = 0; e < vertex->number_of_edges; e++) {
+
+                host_side_vertex_edges.emplace_back(this->vertices[i].edges[e].edge);
+                device_side_vertex_edges.emplace_back(vertex->edges[e].edge.cc_id);
+            }
+            // Sort both vectors
+            std::sort(host_side_vertex_edges.begin(), host_side_vertex_edges.end());
+            std::sort(device_side_vertex_edges.begin(), device_side_vertex_edges.end());
+
+            // Compare the sorted vectors
+            if (host_side_vertex_edges != device_side_vertex_edges) {
+                valid = false;
+
+                std::cout << "Host, v id: " << vertex->id << ", [";
+                for (const auto& edge : host_side_vertex_edges) {
+                    std::cout << edge << ", ";
+                }
+                std::cout << "]\n";
+
+                std::cout << "Device, v id: " << vertex->id << ", [";
+                for (const auto& edge : device_side_vertex_edges) {
+                    std::cout << edge << ", ";
+                }
+                std::cout << "]\n";
+            }
+        }
+        if (valid) {
+            std::cout << ANSI_COLOR_GREEN << "Data is valid!!\n" << ANSI_COLOR_RESET;
+        } else {
+            std::cout << ANSI_COLOR_RED << "Data is not valid!!\n" << ANSI_COLOR_RESET;
+        }
     }
 
     template<class VertexTypeOfAddress>
@@ -629,6 +752,9 @@ class Graph
         // edges.
         u_int32_t left_over_chunk_edges = new_edges.size() % (size_of_a_single_channel * 2);
 
+        /* std::cout << "IO CC ID: " << io_compute_cell->id << ", sending edge (" << src_vertex_id
+                  << " ," << dst_vertex_id << ", w:" << edge_weight << ")\n"; */
+
         // Loop on the number of channels, in this case 2.
         for (u_int32_t i = 0; i < 2; i++) {
             // Loop over the CCs in the IO channel.
@@ -636,6 +762,7 @@ class Graph
             for (u_int32_t j = 0; j < cca_simulator.IO_Channel[i].size(); j++) {
                 auto io_compute_cell =
                     std::dynamic_pointer_cast<ComputeCell>(cca_simulator.IO_Channel[i][j]);
+
                 u_int32_t stride = (chunk_size * size_of_a_single_channel * i) + (chunk_size * j);
                 u_int32_t my_chunk_size = chunk_size;
                 if ((i == 1) && (j == (size_of_a_single_channel - 1))) {
@@ -671,9 +798,39 @@ class Graph
                 }
             }
         }
+
+        /*   for (u_int32_t e = 0; e < new_edges.size(); e++) {
+              auto io_compute_cell =
+                  std::dynamic_pointer_cast<ComputeCell>(cca_simulator.IO_Channel[0][0]);
+
+              u_int32_t const src_vertex_id = new_edges[e].from;
+              u_int32_t const dst_vertex_id = new_edges[e].to;
+              u_int32_t const edge_weight = new_edges[e].weight;
+
+              const Address src_vertex_addr = this->vertex_addresses[src_vertex_id];
+              const Address dst_vertex_addr = this->vertex_addresses[dst_vertex_id];
+
+              InsertEdgeArguments edge_to_send;
+              edge_to_send.dst_vertex_addrs = dst_vertex_addr;
+              edge_to_send.edge_weight = edge_weight;
+
+              const ActionArgumentType args_for_insert_edge =
+                  cca_create_action_argument<InsertEdgeArguments>(edge_to_send);
+
+              io_compute_cell->diffuse(
+                  Action(src_vertex_addr,
+                         terminator,
+                         actionType::application_action, // TODO: see if this can be io_action?
+                         true,
+                         args_for_insert_edge,
+                         insert_edge_predicate,
+                         insert_edge_work,
+                         insert_edge_diffuse_predicate,
+                         insert_edge_diffuse));
+          } */
     }
 
-    Graph(const std::string& input_graph_path)
+    Graph(const std::string& input_graph_path, bool dont_read_edges_yet)
     {
 
         // Generate or read the input data graph
@@ -701,13 +858,15 @@ class Graph
             this->vertices[i].number_of_edges = 0;
         }
 
-        // Read from file and insert edges
-        u_int32_t vertex_from = 0;
-        u_int32_t vertex_to = 0;
-        u_int32_t weight = 0;
-        for (int i = 0; i < this->total_edges; i++) {
-            fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
-            this->add_edge(this->vertices[vertex_from], vertex_to, weight);
+        if (!dont_read_edges_yet) {
+            // Read from file and insert edges
+            u_int32_t vertex_from = 0;
+            u_int32_t vertex_to = 0;
+            u_int32_t weight = 0;
+            for (int i = 0; i < this->total_edges; i++) {
+                fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
+                this->add_edge(this->vertices[vertex_from], vertex_to, weight);
+            }
         }
         fclose(input_graph_file_handler);
     }

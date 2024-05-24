@@ -314,12 +314,26 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
     auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
     InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
     // Insert the edge.
+    /* if (v->id == 1 || 1) {
+
+        std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
+                  << ", v->number_of_edges: " << v->number_of_edges
+                  << ", v->local_edgelist_size: " << v->local_edgelist_size << ", addr: " << addr
+                  << ", ptr is: " << static_cast<int*>(cc.get_object(addr)) << std::endl;
+        // return Closure(cc.null_true_event, nullptr);
+    } */
     if (v->number_of_edges == v->local_edgelist_size) {
+        std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
+                  << ", v->number_of_edges: " << v->number_of_edges
+                  << ", v->local_edgelist_size: " << v->local_edgelist_size << ", addr: " << addr
+                  << ", dst addrs: " << insert_edge_args.dst_vertex_addrs
+                  << ", w: " << insert_edge_args.edge_weight << std::endl;
+        std::cout << "551 is ptr: " << static_cast<int*>(cc.get_object(addr)) << "\n";
         std::cerr << "Fatal: Cannot insert edge as the vertex is out of edgelist" << std::endl;
         exit(0);
     }
 
-    cc.apply_CPI(LOAD_STORE_CPI * 2);
+    //cc.apply_CPI(LOAD_STORE_CPI * 2);
     v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
     if constexpr (weighted_edge) {
         v->edges[v->number_of_edges].weight = insert_edge_args.edge_weight;

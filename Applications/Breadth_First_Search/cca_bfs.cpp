@@ -73,8 +73,8 @@ main(int argc, char** argv) -> int
     cca_square_simulator.print_discription(std::cout);
 
     // Read the input data graph.
-    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(
-        cmd_args.input_graph_path);
+    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(cmd_args.input_graph_path,
+                                                                          false);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 
