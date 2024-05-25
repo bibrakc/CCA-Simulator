@@ -151,32 +151,6 @@ main(int argc, char** argv) -> int
         exit(0);
     }
 
-    /* if (dynamic_increment == 10) {
-
-        // Only put the BFS seed action on a single vertex.
-        // In this case BFS root = root_vertex
-        auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
-
-        BFSArguments root_level_to_send;
-        root_level_to_send.level = 0;
-        // Origin vertex from where this action came. Host not used. Put any value;
-        root_level_to_send.src_vertex_id = 99999;
-
-        ActionArgumentType const args_x =
-            cca_create_action_argument<BFSArguments>(root_level_to_send);
-
-        // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(Action(vertex_addr,
-                                                     dynamic_bfs_terminator.value(),
-                                                     actionType::germinate_action,
-                                                     true,
-                                                     args_x,
-                                                     dynamic_bfs_predicate,
-                                                     dynamic_bfs_work,
-                                                     dynamic_bfs_diffuse_predicate,
-                                                     dynamic_bfs_diffuse));
-    } */
-
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
          dynamic_increment++) {
 
@@ -204,34 +178,14 @@ main(int argc, char** argv) -> int
 
         ///////////
 
-        if (dynamic_increment == 1) {
+        /* if (dynamic_increment == 1) {
             // Set the root to 0 by hand.
 
             const auto vertex_addr = input_graph.vertex_addresses[cmd_args.root_vertex];
             auto* vertex = static_cast<BFSVertex<ghost_type_level_1>*>(
                 cca_square_simulator.get_object(vertex_addr));
             vertex->bfs_level = 0;
-        }
-
-        /* auto vertex_addr_to_dst = input_graph.get_vertex_address_in_cca(0);
-
-        BFSArguments root_level_to_send_dst;
-        root_level_to_send_dst.level = 0;
-        // Origin vertex from where this action came. Host not used. Put any value;
-        root_level_to_send_dst.src_vertex_id = 99999;
-
-        ActionArgumentType const args_x_dst =
-            cca_create_action_argument<BFSArguments>(root_level_to_send_dst);
-
-        // Insert a seed action into the CCA chip that will help start the diffusion.
-        cca_square_simulator.germinate_action(Action(vertex_addr_to_dst,
-                                                     bfs_terminator.value(),
-                                                     actionType::germinate_action,
-                                                     true,
-                                                     args_x_dst,
-                                                     bfs_predicate,
-                                                     bfs_work,
-                                                     bfs_diffuse)); */
+        } */
 
         ////////////
 
@@ -248,13 +202,41 @@ main(int argc, char** argv) -> int
                   << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
                   << std::endl;
 
-        // Verify results.
-        if (cmd_args.verify_results) {
-            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
-                cmd_args, input_graph, cca_square_simulator, dynamic_increment);
+        if (dynamic_increment == 10) {
+
+            // Only put the BFS seed action on a single vertex.
+            // In this case BFS root = root_vertex
+            auto vertex_addr = input_graph.get_vertex_address_in_cca(cmd_args.root_vertex);
+
+            BFSArguments root_level_to_send;
+            root_level_to_send.level = 0;
+            // Origin vertex from where this action came. Host not used. Put any value;
+            root_level_to_send.src_vertex_id = 99999;
+
+            ActionArgumentType const args_x =
+                cca_create_action_argument<BFSArguments>(root_level_to_send);
+
+            // Insert a seed action into the CCA chip that will help start the diffusion.
+            cca_square_simulator.germinate_action(Action(vertex_addr,
+                                                         dynamic_bfs_terminator.value(),
+                                                         actionType::germinate_action,
+                                                         true,
+                                                         args_x,
+                                                         dynamic_bfs_predicate,
+                                                         dynamic_bfs_work,
+                                                         dynamic_bfs_diffuse_predicate,
+                                                         dynamic_bfs_diffuse));
+
+            cca_square_simulator.run_simulation(dynamic_bfs_terminator.value());
+            // Verify results.
+            if (cmd_args.verify_results) {
+                verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
+                    cmd_args, input_graph, cca_square_simulator, dynamic_increment);
+            }
         }
     }
-    input_graph.validate_vertices_sent_to_cca<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
+
+    // input_graph.validate_vertices_sent_to_cca<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
 
     write_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
         cmd_args, input_graph, cca_square_simulator);

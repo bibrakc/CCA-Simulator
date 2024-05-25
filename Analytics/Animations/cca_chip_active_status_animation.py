@@ -107,7 +107,7 @@ for i, frame in enumerate(frames):
 
 
 # Create a figure and axis for the animation
-fig, ax = plt.subplots(figsize=(14, 10))
+fig, ax = plt.subplots(figsize=(7, 7.5))
 
 # Set the parameters for the H-tree
 x_htree = (dim_x / 2) - 16.5
@@ -148,12 +148,9 @@ legend_elements = [
 
 # Place the legend above the plot
 # ax.legend(handles=legend_elements, bbox_to_anchor=(0.5, 1.21), loc='upper center', handler_map={tuple: HandlerTuple(ndivide=None)})
-ax.legend(
+""" ax.legend(
     handles=legend_elements, bbox_to_anchor=(1.65, 1), loc="upper right", fontsize=14
-)
-
-
-
+) """
 
 # Recursive function to draw the H-tree
 def draw_h_tree(x, y, length, depth):
@@ -195,7 +192,7 @@ def update(frame):
     # Set the title for each frame
     ax.set_title(
         f"CCA Chip Activation Per Compute Cell - Cycle # {frame + start_from}/{cycles}",
-        fontsize=14,
+        fontsize=12,
     )
 
     if frame == 1 and htree_draw == True:
@@ -208,7 +205,7 @@ def update(frame):
 frames_to_show = cycles - start_from
 # Create the animation
 ani = animation.FuncAnimation(
-    fig, update, frames=range(0, frames_to_show, skip_frames), interval=60
+    fig, update, frames=range(0, frames_to_show, skip_frames), interval=18
 )  # Increase the interval
 
 # Set the grid cell size and ticks
@@ -223,9 +220,10 @@ ax.set_xlabel("Columns of Compute Cells", fontsize=16)
 ax.set_ylabel("Rows of Compute Cells", fontsize=16)
 # Add a larger second title
 routing_algorithm = "Dimension Ordered Horizontal First Routing"
-graph_size = "Erdős–Rényi Graph with Verices=1024 and Edges=10240"
+#graph_size = "Erdős–Rényi Graph with Verices=1024 and Edges=10240"
+graph_size = "Graph with Verices=1000 and Edges=Dynamic as it grows"
 plt.suptitle(
-    "Asynchronous BFS on a CCA Chip of "
+    "Asynchronous Streaming Dynanmic BFS on a CCA Chip of "
     + str(dim_x)
     + " x "
     + str(dim_y)
@@ -233,17 +231,17 @@ plt.suptitle(
     + routing_algorithm
     + "\n"
     + graph_size,
-    fontsize=16,
+    fontsize=12,
 )
 
 TH = "ON"
 SH = "ON"
-output_filename = "BFS_" + str(dim_x) + "x" + str(dim_y) + "_v_1024_e_10240_th_" + TH + "_SH_" + SH
+output_filename = "Streaming_Dynamic_BFS_" + str(dim_x) + "x" + str(dim_y) + "_v_1000_e_dynamic_th_" + TH + "_SH_" + SH
 # Save the animation as an MP4 file
-""" ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520) """
+ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520)
 
 # Save the animation as a GIF file
-ani.save(output_filename+'.gif', writer='pillow', dpi=100)
+#ani.save(output_filename+'.gif', writer='pillow', dpi=45)
 # ani.save(output_filename, writer='pillow', dpi=70, interval=50)
 
 # Display the plot

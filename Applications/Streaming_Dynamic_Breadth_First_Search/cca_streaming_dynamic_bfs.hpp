@@ -338,6 +338,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
     // edges contains in itself in its edge list and all in its child ghost vertices.
     v->outbound_degree++;
 
+    return Closure(cc.null_false_event, nullptr);
     return Closure(cc.null_true_event, nullptr);
     // return Closure(cc.null_false_event, nullptr);
 }

@@ -320,8 +320,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        ax.set_xlim(0, 600000)  # Set the x-axis limit
-        ax.set_ylim(0, 1500)  # Set the y-axis limit
+        #ax.set_xlim(0, 600000)  # Set the x-axis limit
+        #ax.set_ylim(0, 1500)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()
@@ -436,8 +436,8 @@ def active_status_chart():
 # print(matplotlib.matplotlib_fname())
 
 # Main
-#congestion_charts()
-active_status_chart()
+congestion_charts()
+#active_status_chart()
 
 # Display the plot
 plt.show()
