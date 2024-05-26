@@ -56,18 +56,6 @@ struct BFSArguments
     u_int32_t src_vertex_id;
 };
 
-/* // This is what the continuation for insert edge carries as payload.
-struct BFSArgumentsEdgeInsertContinuation
-{
-    u_int32_t level;
-    u_int32_t src_vertex_id; // maybe not needed.
-
-    Address dst_vertex_addr;
-    u_int32_t edge_weight;
-
-    u_int32_t root_vertex; // Perhaps not needed.
-}; */
-
 /* struct BFSArgumentsInsertEdgeForGhost : public InsertEdgeArguments
 {
     u_int32_t level{};

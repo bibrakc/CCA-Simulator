@@ -202,7 +202,7 @@ main(int argc, char** argv) -> int
                   << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
                   << std::endl;
 
-        if (dynamic_increment == 10) {
+        if (dynamic_increment == 3) {
 
             // Only put the BFS seed action on a single vertex.
             // In this case BFS root = root_vertex
