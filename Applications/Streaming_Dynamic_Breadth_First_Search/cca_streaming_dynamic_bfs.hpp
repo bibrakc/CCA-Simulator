@@ -291,29 +291,92 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
                                const Address addr,
                                const ActionArgumentType args) -> Closure
 {
-    /* // First check whether this is a ghost vertex. If it is then use the
-    // `BFSArgumentsInsertEdgeForGhost` to get the bfs level that came from the root RPVO.
-    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
-
-    if (parent_recursive_parralel_vertex->is_ghost_vertex) {
-        return Closure(cc.null_true_event, nullptr);
-    } */
 
     // Get the vertex object.
-    auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
-    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
+    // auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+
+    // First check whether this is a ghost vertex. If it is then use the
+    // `BFSArgumentsInsertEdgeForGhost` to get the bfs level that came from the root RPVO.
+    // auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
+    auto* v = static_cast<ghost_type*>(cc.get_object(addr));
 
     // Insert the edge.
     if (v->number_of_edges == v->local_edgelist_size) {
-        std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
+        /* std::cerr << "cc id: " << cc.id << ", v->id:" << v->id
                   << ", v->number_of_edges: " << v->number_of_edges
                   << ", v->local_edgelist_size: " << v->local_edgelist_size << ", addr: " << addr
                   << ", dst addrs: " << insert_edge_args.dst_vertex_addrs
                   << ", w: " << insert_edge_args.edge_weight << std::endl;
         std::cout << "551 is ptr: " << static_cast<int*>(cc.get_object(addr)) << "\n";
         std::cerr << "Fatal: Cannot insert edge as the vertex is out of edgelist" << std::endl;
-        exit(0);
+        exit(0); */
+
+        if (v->ghost_vertices[v->next_insertion_in_ghost_iterator].is_empty()) {
+
+            std::cout << "v id: " << v->id
+                      << ", creating ghost, v->next_insertion_in_ghost_iterator: "
+                      << v->next_insertion_in_ghost_iterator << "\n";
+            ghost_type new_ghost_vertex;
+
+            // This won't really be used just giving the ghost the same id as parent.
+            new_ghost_vertex.id = v->id;
+            // Let is know about the graph size. Not sure whether this will be ever used...
+            new_ghost_vertex.total_number_of_vertices = v->total_number_of_vertices;
+            // Important to make sure to mark this as the ghost.
+            new_ghost_vertex.is_ghost_vertex = true;
+
+            /* std::optional<Address> ghost_vertex_addr = cc.allocate_and_insert_object_on_cc(
+                this->ghost_vertex_allocator, &new_ghost_vertex, sizeof(ghost_type)); */
+            std::optional<Address> ghost_vertex_addr =
+                cc.create_object_in_memory(&new_ghost_vertex, sizeof(ghost_type));
+
+            if (ghost_vertex_addr == std::nullopt) {
+                std::cerr
+                    << "Error: Not able to allocate ghost vertex dst: << " //<< dst_vertex_addr
+                    << "\n";
+                exit(0);
+            }
+
+            v->ghost_vertices[v->next_insertion_in_ghost_iterator] = ghost_vertex_addr.value();
+
+            auto* ghost_vertex_accessor = static_cast<ghost_type*>(
+                cc.get_object(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get()));
+
+            // This defines the center of vicinity for allocation. Currently, using the
+            // ghost_vertex itself as the center of vicinity. That makes more sense than to have
+            // the root non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is
+            // currently not used but keeping it for future use for benchmarking.
+            /* const u_int32_t source_vertex_cc_id_to_use =
+                this->ghost_vertices[this->next_insertion_in_ghost_iterator].get().cc_id; */
+            ghost_vertex_accessor->ghost_vertex_allocator =
+                VicinityMemoryAllocator(cc.cooridates, 2, 2, cc.dim_x, cc.dim_y, cc.shape);
+        }
+
+        cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
+                          addr,
+                          actionType::application_action,
+                          true,
+                          args,
+                          dynamic_bfs_insert_edge_predicate,
+                          dynamic_bfs_insert_edge_work,
+                          dynamic_bfs_insert_edge_diffuse_predicate,
+                          dynamic_bfs_insert_edge_diffuse));
+        // Increment the global edges count for this vertex. For a ghost vertex this is all the
+        // edges contains in itself in its edge list and all in its child ghost vertices.
+        v->outbound_degree++;
+        std::cout << "\tv id: " << v->id << ", v->outbound_degree: " << v->outbound_degree
+                  << ", v->next_insertion_in_ghost_iterator: "
+                  << static_cast<int>(v->next_insertion_in_ghost_iterator) << "\n";
+        bool arbitrate_ghost = v->outbound_degree % edges_min == 0;
+        if (arbitrate_ghost) {
+            v->next_insertion_in_ghost_iterator =
+                (v->next_insertion_in_ghost_iterator + 1) % v->ghost_vertices_max_degree;
+        }
+
+        return Closure(cc.null_false_event, nullptr);
     }
+
+    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
 
     // cc.apply_CPI(LOAD_STORE_CPI * 2);
     v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
@@ -327,9 +390,12 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
     // edges contains in itself in its edge list and all in its child ghost vertices.
     v->outbound_degree++;
 
+    // When we are doing batched streaming BFS, in the final increment we germinate BFS action and
+    // that goes the BFS like a static bfs.
     return Closure(cc.null_false_event, nullptr);
-    return Closure(cc.null_true_event, nullptr);
-    // return Closure(cc.null_false_event, nullptr);
+
+    // When we are doing streaming BFS
+    // return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto

@@ -51,7 +51,7 @@ class LCO_Future
     // The local value.
     T local_val{};
 
-    // The actions that pending on this future. Right now just hardcoding it to be 5 later may be
+    // The actions pending on this future. Right now just hardcoding it to be 5 later may be
     // made flexible.
     inline static constexpr u_int32_t queue_max_size = 3;
     // Action queue[queue_max_size];
@@ -79,9 +79,9 @@ class LCO_Future
     // TODO: Not sure where and how to use it... for now...
     // bool is_ready{};
 
-    auto is_empty() -> bool { return (this->state == lcoFutureState::empty); }
-    auto is_fulfilled() -> bool { return (this->state == lcoFutureState::fulfilled); }
-    auto is_pending() -> bool { return (this->state == lcoFutureState::pending); }
+    inline auto is_empty() -> bool { return (this->state == lcoFutureState::empty); }
+    inline auto is_fulfilled() -> bool { return (this->state == lcoFutureState::fulfilled); }
+    inline auto is_pending() -> bool { return (this->state == lcoFutureState::pending); }
 
     void reset() { assert(false && "reset() is not implemented yet!"); }
 
@@ -100,7 +100,11 @@ class LCO_Future
     // Assignment, set.
     LCO_Future<T>& operator=(const T& other)
     {
+        assert(this->is_empty() or this->is_pending());
+
         this->local_val = other;
+        this->state = lcoFutureState::fulfilled;
+
         return *this;
     }
 
