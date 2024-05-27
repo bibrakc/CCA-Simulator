@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Datastructures
 #include "Graph.hpp"
-#include "RecursiveParallelVertex.hpp"
+#include "StreamingRecursiveParallelVertex.hpp"
 
 #include "cmdparser.hpp"
 
@@ -229,9 +229,10 @@ dynamic_bfs_diffuse_T(ComputeCell& cc, const Address addr, const ActionArgumentT
     // therefore using the derived pointer. It works for both. First diffuse to the ghost vertices.
     for (u_int32_t ghosts_iterator = 0; ghosts_iterator < ghost_type::ghost_vertices_max_degree;
          ghosts_iterator++) {
-        if (v->ghost_vertices[ghosts_iterator].has_value()) {
+        if (v->ghost_vertices[ghosts_iterator].is_fulfilled()) {
+            // if (v->ghost_vertices[ghosts_iterator].has_value()) {
 
-            cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].value(),
+            cc.diffuse(Action(v->ghost_vertices[ghosts_iterator].get(),
                               addr,
                               actionType::application_action,
                               true,
