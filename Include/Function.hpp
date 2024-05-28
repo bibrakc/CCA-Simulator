@@ -83,4 +83,45 @@ error_func(ComputeCell& /* cc */,
            actionType /* action_type_in */,
            const ActionArgumentType /*args*/) -> Closure;
 
+// This is what the action of `allocate_func` carries as payload.
+struct AllocateArguments
+{
+    // Address of the vertex that requested memory allocation.
+    Address src_vertex_addrs;
+    // The index of the Future LCO within the vertex object's ghost_vertices. It will be sent back.
+    u_int8_t ghost_vertices_future_lco_index;
+
+    // Size in bytes requested.
+    u_int32_t size_in_bytes{};
+
+    // The continuation to trigger at the src_vertex_addrs's cc
+    CCAFunctionEvent continuation;
+
+    // Id of the vertex and total number of vertices in the graph. These are not really needed but
+    // we are setting them for any potential debugging needs.
+    u_int32_t vertex_id;
+    u_int32_t total_number_of_vertices;
+};
+
+// This is what the action of `allocate_func` send back as payload.
+struct AllocateReturnArguments
+{
+    // Address of the newly allocated memory.
+    Address new_memory_addrs;
+
+    // The index of the Future LCO within the vertex object's ghost_vertices. It will be sent back.
+    u_int8_t ghost_vertices_future_lco_index;
+
+    // TODO: currently assuming that it doesn't send error reply such that it was not able to
+    // allocate.
+};
+
+// Allocate memory and return the address to the calling continuation defined by CCAFunctionEvent
+// passed in arguments.
+auto
+allocate_func(ComputeCell& cc,
+              const Address addr,
+              actionType /* action_type_in */,
+              const ActionArgumentType args) -> Closure;
+
 #endif // FUNCTION_HPP

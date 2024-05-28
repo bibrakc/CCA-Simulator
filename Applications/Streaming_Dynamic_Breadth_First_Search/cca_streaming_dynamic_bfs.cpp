@@ -51,6 +51,9 @@ CCAFunctionEvent dynamic_bfs_insert_edge_work;
 CCAFunctionEvent dynamic_bfs_insert_edge_diffuse_predicate;
 CCAFunctionEvent dynamic_bfs_insert_edge_diffuse;
 
+CCAFunctionEvent allocate;
+CCAFunctionEvent dynamic_bfs_insert_edge_continuation_ghost_allocate_return;
+
 auto
 main(int argc, char** argv) -> int
 {
@@ -144,6 +147,11 @@ main(int argc, char** argv) -> int
         dynamic_bfs_insert_edge_diffuse_predicate_func);
     dynamic_bfs_insert_edge_diffuse =
         cca_square_simulator.register_function_event(dynamic_bfs_insert_edge_diffuse_func);
+
+    allocate = cca_square_simulator.register_function_event(allocate_bfs_func);
+    dynamic_bfs_insert_edge_continuation_ghost_allocate_return =
+        cca_square_simulator.register_function_event(
+            dynamic_bfs_insert_edge_continuation_ghost_allocate_return_func);
 
     std::optional<Address> dynamic_bfs_terminator = cca_square_simulator.create_terminator();
     if (!dynamic_bfs_terminator) {

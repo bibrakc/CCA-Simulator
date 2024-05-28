@@ -56,6 +56,9 @@ struct FunctionEventManager
     // Used for undefined event and if it is triggered then the simulation exits with exist(0).
     CCAFunctionEvent error_event_id;
 
+    // Allocate memroy and return the newly created object's Address.
+    CCAFunctionEvent allocate_event_id;
+
     // Special system events:
     // Acknowledgement event id for termination detection.
     CCAFunctionEvent acknowledgement_event_id;
@@ -75,6 +78,7 @@ struct FunctionEventManager
         , null_event_id(register_function_event(null_func))
         , null_event_true_id(register_function_event(null_true_func))
         , error_event_id(register_function_event(error_func))
+        , allocate_event_id(register_function_event(allocate_func))
         , acknowledgement_event_id(register_function_event(terminator_acknowledgement_func))
     {
     }

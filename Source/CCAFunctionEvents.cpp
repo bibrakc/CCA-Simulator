@@ -70,6 +70,20 @@ error_func(ComputeCell& cc,
     return Closure(cc.error_event, nullptr);
 }
 
+// Allocate memory and return the address to the calling continuation defined by CCAFunctionEvent
+// passed in arguments.
+auto
+allocate_func(ComputeCell& cc,
+              const Address addr,
+              actionType /* action_type_in */,
+              const ActionArgumentType args) -> Closure
+{
+
+    std::cout << "cc id: " << cc.id << ", called Allocate! But wont do anything!!\n";
+
+    return Closure(cc.error_event, nullptr);
+}
+
 handler_func
 FunctionEventManager::get_acknowledgement_event_handler()
 {

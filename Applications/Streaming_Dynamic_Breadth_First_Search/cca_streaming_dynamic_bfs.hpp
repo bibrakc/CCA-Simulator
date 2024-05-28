@@ -94,6 +94,9 @@ extern CCAFunctionEvent dynamic_bfs_insert_edge_work;
 extern CCAFunctionEvent dynamic_bfs_insert_edge_diffuse_predicate;
 extern CCAFunctionEvent dynamic_bfs_insert_edge_diffuse;
 
+extern CCAFunctionEvent allocate;
+extern CCAFunctionEvent dynamic_bfs_insert_edge_continuation_ghost_allocate_return;
+
 template<typename ghost_type>
 inline auto
 dynamic_bfs_predicate_T(ComputeCell& cc,
@@ -272,8 +275,73 @@ dynamic_bfs_diffuse_func(ComputeCell& cc,
     INVOKE_HANDLER_3(dynamic_bfs_diffuse_T, cc, addr, args);
 }
 
-// For the streaming edge insertion.
+// TODO: This is not the purist way. Will have to implement a way in which we call the system
+// allocate and then have it initialize the ghost vertex there. But right now putting both function
+// in a single function here.
+template<typename ghost_type>
+inline auto
+allocate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -> Closure
+{
 
+    AllocateArguments const allocate_request_args =
+        cca_get_action_argument<AllocateArguments>(args);
+
+    ghost_type new_ghost_vertex;
+
+    // This won't really be used just giving the ghost the same id as parent.
+    new_ghost_vertex.id = allocate_request_args.vertex_id;
+    // Let is know about the graph size. Not sure whether this will be ever used...
+    new_ghost_vertex.total_number_of_vertices = allocate_request_args.total_number_of_vertices;
+    // Important to make sure to mark this as the ghost.
+    new_ghost_vertex.is_ghost_vertex = true;
+
+    // This defines the center of vicinity for allocation. Currently, using the
+    // ghost_vertex itself as the center of vicinity. That makes more sense than to have
+    // the root non-ghost vertex as the center of vicinity.
+    new_ghost_vertex.ghost_vertex_allocator =
+        VicinityMemoryAllocator(cc.cooridates, 2, 2, cc.dim_x, cc.dim_y, cc.shape);
+
+    std::optional<Address> ghost_vertex_addr =
+        cc.create_object_in_memory(&new_ghost_vertex, allocate_request_args.size_in_bytes);
+
+    if (ghost_vertex_addr == std::nullopt) {
+        std::cerr << "Error: Not able to allocate ghost vertex dst: << " //<< dst_vertex_addr
+                  << "\n";
+        exit(0);
+    }
+
+    // cc.apply_CPI(1);
+    AllocateReturnArguments allocated_memory;
+    allocated_memory.new_memory_addrs = ghost_vertex_addr.value();
+    allocated_memory.ghost_vertices_future_lco_index =
+        allocate_request_args.ghost_vertices_future_lco_index;
+
+    ActionArgumentType allocate_reply_back_args =
+        cca_create_action_argument<AllocateReturnArguments>(allocated_memory);
+
+    cc.diffuse(Action(allocate_request_args.src_vertex_addrs,
+                      addr,
+                      actionType::application_action, // TODO: later have runtime_action
+                      true,
+                      allocate_reply_back_args,
+                      cc.null_true_event,
+                      allocate_request_args.continuation,
+                      cc.null_false_event,
+                      cc.null_false_event));
+
+    return Closure(cc.null_false_event, nullptr);
+}
+
+inline auto
+allocate_bfs_func(ComputeCell& cc,
+                  const Address addr,
+                  actionType /* action_type_in */,
+                  const ActionArgumentType args) -> Closure
+{
+    INVOKE_HANDLER_3(allocate_T, cc, addr, args);
+}
+
+// For the streaming edge insertion.
 inline auto
 dynamic_bfs_insert_edge_predicate_func(ComputeCell& cc,
                                        const Address addr,
@@ -283,6 +351,53 @@ dynamic_bfs_insert_edge_predicate_func(ComputeCell& cc,
     // Set to always true because the edge must always be inserted and its work needs to be
     // performed.
     return Closure(cc.null_true_event, nullptr);
+}
+
+// This is the continuation anonymous action.
+template<typename ghost_type>
+inline auto
+dynamic_bfs_insert_edge_continuation_ghost_allocate_return_T(ComputeCell& cc,
+                                                             const Address addr,
+                                                             const ActionArgumentType args)
+    -> Closure
+{
+
+    auto* v = static_cast<ghost_type*>(cc.get_object(addr));
+
+    AllocateReturnArguments const allocate_return_args =
+        cca_get_action_argument<AllocateReturnArguments>(args);
+
+    const u_int8_t ghost_future_lco_index = allocate_return_args.ghost_vertices_future_lco_index;
+    v->ghost_vertices[ghost_future_lco_index] = allocate_return_args.new_memory_addrs;
+
+    // for loop in Future LCO's queue and send actions along to the ghost.
+    while (auto closure = v->ghost_vertices[ghost_future_lco_index].dequeue()) {
+        // for (int i = 0; i < v->ghost_vertices[ghost_future_lco_index].queue_size; i++) {
+
+        std::cout << "v id: " << v->id << ", dequeueing, ghost_future_lco_index: "
+                  << static_cast<u_int8_t>(ghost_future_lco_index) << "\n";
+
+        cc.diffuse(Action(v->ghost_vertices[ghost_future_lco_index].get(),
+                          addr,
+                          actionType::application_action,
+                          true,
+                          closure.value().second,
+                          dynamic_bfs_insert_edge_predicate,
+                          dynamic_bfs_insert_edge_work,
+                          dynamic_bfs_insert_edge_diffuse_predicate,
+                          dynamic_bfs_insert_edge_diffuse));
+    }
+    return Closure(cc.null_false_event, nullptr);
+}
+
+inline auto
+dynamic_bfs_insert_edge_continuation_ghost_allocate_return_func(ComputeCell& cc,
+                                                                const Address addr,
+                                                                actionType /* action_type_in */,
+                                                                const ActionArgumentType args)
+    -> Closure
+{
+    INVOKE_HANDLER_3(dynamic_bfs_insert_edge_continuation_ghost_allocate_return_T, cc, addr, args);
 }
 
 template<typename ghost_type>
@@ -315,54 +430,68 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
 
             std::cout << "v id: " << v->id
                       << ", creating ghost, v->next_insertion_in_ghost_iterator: "
-                      << v->next_insertion_in_ghost_iterator << "\n";
-            ghost_type new_ghost_vertex;
+                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n";
 
-            // This won't really be used just giving the ghost the same id as parent.
-            new_ghost_vertex.id = v->id;
-            // Let is know about the graph size. Not sure whether this will be ever used...
-            new_ghost_vertex.total_number_of_vertices = v->total_number_of_vertices;
-            // Important to make sure to mark this as the ghost.
-            new_ghost_vertex.is_ghost_vertex = true;
-
-            /* std::optional<Address> ghost_vertex_addr = cc.allocate_and_insert_object_on_cc(
-                this->ghost_vertex_allocator, &new_ghost_vertex, sizeof(ghost_type)); */
-            std::optional<Address> ghost_vertex_addr =
-                cc.create_object_in_memory(&new_ghost_vertex, sizeof(ghost_type));
-
-            if (ghost_vertex_addr == std::nullopt) {
-                std::cerr
-                    << "Error: Not able to allocate ghost vertex dst: << " //<< dst_vertex_addr
-                    << "\n";
+            if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
+                    Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
+                std::cerr << "Error: Not able to enqueue in ghost future \n";
                 exit(0);
             }
 
-            v->ghost_vertices[v->next_insertion_in_ghost_iterator] = ghost_vertex_addr.value();
+            v->ghost_vertices[v->next_insertion_in_ghost_iterator].set_state(
+                lcoFutureState::pending);
 
-            auto* ghost_vertex_accessor = static_cast<ghost_type*>(
-                cc.get_object(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get()));
+            // Send alloc to
+            const u_int32_t cc_id_that_allocates =
+                v->ghost_vertex_allocator.get_next_available_cc(cc);
 
-            // This defines the center of vicinity for allocation. Currently, using the
-            // ghost_vertex itself as the center of vicinity. That makes more sense than to have
-            // the root non-ghost vertex as the center of vicinity. The `src_vertex_cc_id` is
-            // currently not used but keeping it for future use for benchmarking.
-            /* const u_int32_t source_vertex_cc_id_to_use =
-                this->ghost_vertices[this->next_insertion_in_ghost_iterator].get().cc_id; */
-            ghost_vertex_accessor->ghost_vertex_allocator =
-                VicinityMemoryAllocator(cc.cooridates, 2, 2, cc.dim_x, cc.dim_y, cc.shape);
+            AllocateArguments allocation_request;
+            allocation_request.src_vertex_addrs = addr;
+            allocation_request.ghost_vertices_future_lco_index =
+                v->next_insertion_in_ghost_iterator;
+            allocation_request.size_in_bytes = sizeof(ghost_type);
+
+            allocation_request.continuation =
+                dynamic_bfs_insert_edge_continuation_ghost_allocate_return;
+
+            ActionArgumentType const args_to_allocate =
+                cca_create_action_argument<AllocateArguments>(allocation_request);
+
+            cc.diffuse(Action(Address(cc_id_that_allocates, 0),
+                              addr,
+                              actionType::application_action, // TODO: later have runtime_action
+                              true,
+                              args_to_allocate,
+                              cc.null_true_event,
+                              allocate, // cc.allocate_event,
+                              cc.null_false_event,
+                              cc.null_false_event));
+
+        } else if (v->ghost_vertices[v->next_insertion_in_ghost_iterator].is_pending()) {
+
+            std::cout << "v id: " << v->id
+                      << ", pending state found, v->next_insertion_in_ghost_iterator: "
+                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n";
+
+            if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
+                    Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
+                std::cerr << "Error: Not able to enqueue in ghost future \n";
+                exit(0);
+            }
+
+        } else { // The ghost exists
+            cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
+                              addr,
+                              actionType::application_action,
+                              true,
+                              args,
+                              dynamic_bfs_insert_edge_predicate,
+                              dynamic_bfs_insert_edge_work,
+                              dynamic_bfs_insert_edge_diffuse_predicate,
+                              dynamic_bfs_insert_edge_diffuse));
         }
-
-        cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
-                          addr,
-                          actionType::application_action,
-                          true,
-                          args,
-                          dynamic_bfs_insert_edge_predicate,
-                          dynamic_bfs_insert_edge_work,
-                          dynamic_bfs_insert_edge_diffuse_predicate,
-                          dynamic_bfs_insert_edge_diffuse));
         // Increment the global edges count for this vertex. For a ghost vertex this is all the
-        // edges contains in itself in its edge list and all in its child ghost vertices.
+        // edges contained in itself in its edge list and all in its child ghost vertices.
         v->outbound_degree++;
         std::cout << "\tv id: " << v->id << ", v->outbound_degree: " << v->outbound_degree
                   << ", v->next_insertion_in_ghost_iterator: "
@@ -374,28 +503,31 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
         }
 
         return Closure(cc.null_false_event, nullptr);
+    } else {
+
+        InsertEdgeArguments const insert_edge_args =
+            cca_get_action_argument<InsertEdgeArguments>(args);
+
+        // cc.apply_CPI(LOAD_STORE_CPI * 2);
+        v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
+        if constexpr (weighted_edge) {
+            v->edges[v->number_of_edges].weight = insert_edge_args.edge_weight;
+        }
+        // Only increments the currect ghost/root vertex edges.
+        cc.apply_CPI(ADD_CPI);
+        v->number_of_edges++;
+        // Increment the global edges count for this vertex. For a ghost vertex this is all the
+        // edges contains in itself in its edge list and all in its child ghost vertices.
+        v->outbound_degree++;
+
+        // When we are doing batched streaming BFS, in the final increment we germinate BFS action
+        // and that goes the BFS like a static bfs.
+        return Closure(cc.null_false_event, nullptr);
+
+        // When we are doing streaming BFS
+        // return Closure(cc.null_true_event, nullptr);
     }
-
-    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
-
-    // cc.apply_CPI(LOAD_STORE_CPI * 2);
-    v->edges[v->number_of_edges].edge = insert_edge_args.dst_vertex_addrs;
-    if constexpr (weighted_edge) {
-        v->edges[v->number_of_edges].weight = insert_edge_args.edge_weight;
-    }
-    // Only increments the currect ghost/root vertex edges.
-    cc.apply_CPI(ADD_CPI);
-    v->number_of_edges++;
-    // Increment the global edges count for this vertex. For a ghost vertex this is all the
-    // edges contains in itself in its edge list and all in its child ghost vertices.
-    v->outbound_degree++;
-
-    // When we are doing batched streaming BFS, in the final increment we germinate BFS action and
-    // that goes the BFS like a static bfs.
     return Closure(cc.null_false_event, nullptr);
-
-    // When we are doing streaming BFS
-    // return Closure(cc.null_true_event, nullptr);
 }
 
 inline auto

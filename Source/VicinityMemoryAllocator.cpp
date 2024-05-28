@@ -71,6 +71,19 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
 }
 
 auto
+VicinityMemoryAllocator::get_next_available_cc(ComputeCell& cc) -> u_int32_t
+{
+    // Currently not supporting H-tree network as not checking for SinkCells.
+    assert(cc.hdepth == 0);
+
+    u_int32_t const cc_available = this->next_cc_id;
+    this->next_cc_id =
+        Cell::cc_cooridinate_to_id(this->generate_random_coordinates(), cc.shape, this->cca_dim_y);
+
+    return cc_available;
+}
+
+auto
 VicinityMemoryAllocator::generate_random_coordinates() -> Coordinates
 {
 

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef LCO_FUTURE_HPP
 #define LCO_FUTURE_HPP
 
-#include "Action.hpp"
+#include "Function.hpp"
 
 enum class lcoFutureState : u_int32_t
 {
@@ -53,23 +53,40 @@ class LCO_Future
 
     // The actions pending on this future. Right now just hardcoding it to be 5 later may be
     // made flexible.
-    inline static constexpr u_int32_t queue_max_size = 3;
+    inline static constexpr u_int32_t queue_max_size = 10;
     // Action queue[queue_max_size];
     // CCAFunctionEvent: the continuation, ActionArgumentType: whatever that is needed to resume the
     // continuation.
-    std::pair<CCAFunctionEvent, ActionArgumentType> queue[queue_max_size];
+    Closure queue[queue_max_size];
     u_int32_t queue_size{}; // Current size of the queue.
+    uint32_t queue_head{};  // Points to the front of the queue (dequeue point).
+    uint32_t queue_tail{};  // Points to the next position to enqueue.
 
-    [[nodiscard]] auto enqueue_action(Action action) -> bool
+    [[nodiscard]] auto enqueue(Closure continuation_closure) -> bool
     {
+
         if (this->queue_size == LCO_Future::queue_max_size) {
             return false;
         }
 
-        this->queue[this->queue_size] = action;
+        this->queue[this->queue_tail] = continuation_closure;
+        this->queue_tail = (this->queue_tail + 1) % queue_max_size;
         ++this->queue_size;
 
         return true;
+    }
+
+    auto dequeue() -> std::optional<Closure>
+    {
+        if (this->queue_size == 0) {
+            return std::nullopt; // Queue is empty
+        }
+
+        Closure continuation_closure = this->queue[this->queue_head];
+        this->queue_head = (this->queue_head + 1) % queue_max_size;
+        --this->queue_size;
+
+        return continuation_closure;
     }
 
     // State of the future lco.
@@ -84,6 +101,7 @@ class LCO_Future
     inline auto is_pending() -> bool { return (this->state == lcoFutureState::pending); }
 
     void reset() { assert(false && "reset() is not implemented yet!"); }
+    void set_state(lcoFutureState state_in) { this->state = state_in; }
 
     auto get() -> T
     {
