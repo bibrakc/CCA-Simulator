@@ -158,7 +158,7 @@ main(int argc, char** argv) -> int
         std::cerr << "Error! Memory not allocated for dynamic_bfs_terminator \n";
         exit(0);
     }
-
+    auto start = std::chrono::steady_clock::now();
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
          dynamic_increment++) {
 
@@ -186,31 +186,23 @@ main(int argc, char** argv) -> int
 
         ///////////
 
-        /* if (dynamic_increment == 1) {
+        if (dynamic_increment == 1) {
             // Set the root to 0 by hand.
 
             const auto vertex_addr = input_graph.vertex_addresses[cmd_args.root_vertex];
             auto* vertex = static_cast<BFSVertex<ghost_type_level_1>*>(
                 cca_square_simulator.get_object(vertex_addr));
             vertex->bfs_level = 0;
-        } */
+        }
 
         ////////////
 
         std::cout << "\nStarting Execution on the CCA Chip:\n\n";
-        auto start = std::chrono::steady_clock::now();
         cca_square_simulator.run_simulation(dynamic_bfs_terminator.value());
-        auto end = std::chrono::steady_clock::now();
-
         std::cout << "Increment Cycles: " << cca_square_simulator.total_current_run_cycles
                   << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
 
-        std::cout << "Program elapsed time (This has nothing to do with the simulation "
-                     "itself): "
-                  << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
-                  << std::endl;
-
-        if (dynamic_increment == 2) {
+        /* if (dynamic_increment == cmd_args.increments) {
 
             // Only put the BFS seed action on a single vertex.
             // In this case BFS root = root_vertex
@@ -235,14 +227,28 @@ main(int argc, char** argv) -> int
                                                          dynamic_bfs_diffuse_predicate,
                                                          dynamic_bfs_diffuse));
 
+            std::cout << "\nStarting Execution on the CCA Chip:\n\n";
             cca_square_simulator.run_simulation(dynamic_bfs_terminator.value());
+            std::cout << "Increment Cycles: " << cca_square_simulator.total_current_run_cycles
+                      << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
+
             // Verify results.
             if (cmd_args.verify_results) {
                 verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
                     cmd_args, input_graph, cca_square_simulator, dynamic_increment);
             }
+        } */
+        // Verify results.
+        if (cmd_args.verify_results) {
+            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
+                cmd_args, input_graph, cca_square_simulator, dynamic_increment);
         }
     }
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Program elapsed time (This has nothing to do with the simulation "
+                 "itself): "
+              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " s"
+              << std::endl;
 
     // input_graph.validate_vertices_sent_to_cca<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
 

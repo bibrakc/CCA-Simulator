@@ -56,10 +56,10 @@ struct BFSArguments
     u_int32_t src_vertex_id;
 };
 
-/* struct BFSArgumentsInsertEdgeForGhost : public InsertEdgeArguments
+struct InsertEdgeArgumentsBFS : public InsertEdgeArguments
 {
     u_int32_t level{};
-}; */
+};
 
 template<typename Vertex_T>
 struct BFSVertex : Vertex_T
@@ -374,14 +374,29 @@ dynamic_bfs_insert_edge_continuation_ghost_allocate_return_T(ComputeCell& cc,
     while (auto closure = v->ghost_vertices[ghost_future_lco_index].dequeue()) {
         // for (int i = 0; i < v->ghost_vertices[ghost_future_lco_index].queue_size; i++) {
 
-        std::cout << "v id: " << v->id << ", dequeueing, ghost_future_lco_index: "
-                  << static_cast<u_int8_t>(ghost_future_lco_index) << "\n";
+        /* std::cout << "v id: " << v->id << ", dequeueing, ghost_future_lco_index: "
+                  << static_cast<u_int8_t>(ghost_future_lco_index) << "\n"; */
+
+        ActionArgumentType args_for_ghost = closure.value().second;
+        if (!v->is_ghost_vertex) {
+            InsertEdgeArguments const insert_edge_args =
+                cca_get_action_argument<InsertEdgeArguments>(args_for_ghost);
+
+            auto* root_rpvo_bfs_vertex = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+
+            InsertEdgeArgumentsBFS send_to_ghost;
+            send_to_ghost.dst_vertex_addrs = insert_edge_args.dst_vertex_addrs;
+            send_to_ghost.edge_weight = insert_edge_args.edge_weight;
+            send_to_ghost.level = root_rpvo_bfs_vertex->bfs_level;
+
+            args_for_ghost = cca_create_action_argument<InsertEdgeArgumentsBFS>(send_to_ghost);
+        }
 
         cc.diffuse(Action(v->ghost_vertices[ghost_future_lco_index].get(),
                           addr,
                           actionType::application_action,
                           true,
-                          closure.value().second,
+                          args_for_ghost,
                           dynamic_bfs_insert_edge_predicate,
                           dynamic_bfs_insert_edge_work,
                           dynamic_bfs_insert_edge_diffuse_predicate,
@@ -413,6 +428,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
     // First check whether this is a ghost vertex. If it is then use the
     // `BFSArgumentsInsertEdgeForGhost` to get the bfs level that came from the root RPVO.
     // auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));
+
     auto* v = static_cast<ghost_type*>(cc.get_object(addr));
 
     // Insert the edge.
@@ -428,9 +444,9 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
 
         if (v->ghost_vertices[v->next_insertion_in_ghost_iterator].is_empty()) {
 
-            std::cout << "v id: " << v->id
+            /* std::cout << "v id: " << v->id
                       << ", creating ghost, v->next_insertion_in_ghost_iterator: "
-                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n";
+                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n"; */
 
             if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
                     Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
@@ -469,9 +485,9 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
 
         } else if (v->ghost_vertices[v->next_insertion_in_ghost_iterator].is_pending()) {
 
-            std::cout << "v id: " << v->id
+            /* std::cout << "v id: " << v->id
                       << ", pending state found, v->next_insertion_in_ghost_iterator: "
-                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n";
+                      << static_cast<u_int8_t>(v->next_insertion_in_ghost_iterator) << "\n"; */
 
             if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
                     Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
@@ -480,22 +496,51 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
             }
 
         } else { // The ghost exists
-            cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
-                              addr,
-                              actionType::application_action,
-                              true,
-                              args,
-                              dynamic_bfs_insert_edge_predicate,
-                              dynamic_bfs_insert_edge_work,
-                              dynamic_bfs_insert_edge_diffuse_predicate,
-                              dynamic_bfs_insert_edge_diffuse));
+
+            if (v->is_ghost_vertex) {
+                cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
+                                  addr,
+                                  actionType::application_action,
+                                  true,
+                                  args,
+                                  dynamic_bfs_insert_edge_predicate,
+                                  dynamic_bfs_insert_edge_work,
+                                  dynamic_bfs_insert_edge_diffuse_predicate,
+                                  dynamic_bfs_insert_edge_diffuse));
+            } else {
+
+                InsertEdgeArguments const insert_edge_args =
+                    cca_get_action_argument<InsertEdgeArguments>(args);
+
+                auto* root_rpvo_bfs_vertex =
+                    static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+
+                InsertEdgeArgumentsBFS send_to_ghost;
+                send_to_ghost.dst_vertex_addrs = insert_edge_args.dst_vertex_addrs;
+                send_to_ghost.edge_weight = insert_edge_args.edge_weight;
+                send_to_ghost.level = root_rpvo_bfs_vertex->bfs_level;
+
+                const ActionArgumentType args_for_ghost =
+                    cca_create_action_argument<InsertEdgeArgumentsBFS>(send_to_ghost);
+
+                cc.diffuse(Action(v->ghost_vertices[v->next_insertion_in_ghost_iterator].get(),
+                                  addr,
+                                  actionType::application_action,
+                                  true,
+                                  args_for_ghost,
+                                  dynamic_bfs_insert_edge_predicate,
+                                  dynamic_bfs_insert_edge_work,
+                                  dynamic_bfs_insert_edge_diffuse_predicate,
+                                  dynamic_bfs_insert_edge_diffuse));
+            }
         }
+
         // Increment the global edges count for this vertex. For a ghost vertex this is all the
         // edges contained in itself in its edge list and all in its child ghost vertices.
         v->outbound_degree++;
-        std::cout << "\tv id: " << v->id << ", v->outbound_degree: " << v->outbound_degree
-                  << ", v->next_insertion_in_ghost_iterator: "
-                  << static_cast<int>(v->next_insertion_in_ghost_iterator) << "\n";
+        /*  std::cout << "\tv id: " << v->id << ", v->outbound_degree: " << v->outbound_degree
+                   << ", v->next_insertion_in_ghost_iterator: "
+                   << static_cast<int>(v->next_insertion_in_ghost_iterator) << "\n"; */
         bool arbitrate_ghost = v->outbound_degree % edges_min == 0;
         if (arbitrate_ghost) {
             v->next_insertion_in_ghost_iterator =
@@ -522,10 +567,25 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
 
         // When we are doing batched streaming BFS, in the final increment we germinate BFS action
         // and that goes the BFS like a static bfs.
-        return Closure(cc.null_false_event, nullptr);
+        //return Closure(cc.null_false_event, nullptr);
 
         // When we are doing streaming BFS
-        // return Closure(cc.null_true_event, nullptr);
+        if (v->is_ghost_vertex) {
+            return Closure(cc.null_true_event, nullptr);
+        } else {
+
+            auto* root_rpvo_bfs_vertex = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
+
+            InsertEdgeArgumentsBFS send_to_ghost;
+            send_to_ghost.dst_vertex_addrs = insert_edge_args.dst_vertex_addrs;
+            send_to_ghost.edge_weight = insert_edge_args.edge_weight;
+            send_to_ghost.level = root_rpvo_bfs_vertex->bfs_level;
+
+            const ActionArgumentType args_for_ghost =
+                cca_create_action_argument<InsertEdgeArgumentsBFS>(send_to_ghost);
+
+            return Closure(cc.null_true_event, args_for_ghost);
+        }
     }
     return Closure(cc.null_false_event, nullptr);
 }
@@ -547,7 +607,11 @@ dynamic_bfs_insert_edge_diffuse_predicate_T(ComputeCell& cc,
 {
     // Get the vertex object.
     auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
-    if (BFSVertex<ghost_type>::max_level == v->bfs_level) {
+
+    InsertEdgeArgumentsBFS const insert_edge_bfs_args =
+        cca_get_action_argument<InsertEdgeArgumentsBFS>(args);
+
+    if (BFSVertex<ghost_type>::max_level == insert_edge_bfs_args.level) {
         return Closure(cc.null_false_event, nullptr);
     }
     return Closure(cc.null_true_event, nullptr);
@@ -571,11 +635,12 @@ dynamic_bfs_insert_edge_diffuse_T(ComputeCell& cc,
 
     // Get the vertex object.
     auto* v = static_cast<BFSVertex<ghost_type>*>(cc.get_object(addr));
-    InsertEdgeArguments const insert_edge_args = cca_get_action_argument<InsertEdgeArguments>(args);
+    InsertEdgeArgumentsBFS const insert_edge_args =
+        cca_get_action_argument<InsertEdgeArgumentsBFS>(args);
 
     // send to insert_edge_args.dst_vertex_addrs;
     BFSArguments level_to_send;
-    level_to_send.level = v->bfs_level + 1;
+    level_to_send.level = insert_edge_args.level + 1;
     level_to_send.src_vertex_id = v->id;
 
     ActionArgumentType const args_x = cca_create_action_argument<BFSArguments>(level_to_send);

@@ -436,8 +436,8 @@ def active_status_chart():
 # print(matplotlib.matplotlib_fname())
 
 # Main
-congestion_charts()
-#active_status_chart()
+#congestion_charts()
+active_status_chart()
 
 # Display the plot
 plt.show()
