@@ -1,0 +1,665 @@
+Compiling and running.
+Compiling Streaming_Dynamic_Breadth_First_Search
+-- The CXX compiler identification is GNU 11.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/cray/pe/gcc/11.2.0/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring constants as:
+-- 	THROTTLE: true
+-- 	RECVBUFFSIZE: 4
+-- 	ANIMATION: false
+-- 	ACTIVE_PERCENT: true
+-- 	ACTIONQUEUESIZE: 512
+-- 	DIFFUSE_QUEUE_SIZE: 1024
+-- 	VICINITY: 2
+-- 	WEIGHT: false
+-- 	MIN_EDGES_PER_VERTEX: 25
+-- 	MAXEDGESPERVERTEX: 25
+-- 	GHOST_CHILDREN: 3
+-- 	TERMINATION: false
+-- 	THROTTLE_CONGESTION_THRESHOLD: 45
+-- 	RHIZOME_SIZE: 2
+-- 	RHIZOME_INDEGREE_CUTOFF: 10
+-- 	SPLIT_QUEUES: true
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Configuring done (1.5s)
+-- Generating done (0.1s)
+-- Build files have been written to: /N/u/bchandio/BigRed200/Research/git_repos/benchmarks_CCA/SANDY24/Snowball_Sampling/500K/build
+[  5%] Building CXX object CMakeFiles/CCACommons.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Operon.cpp.o
+[ 11%] Building CXX object CMakeFiles/CCACommons.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/types.cpp.o
+[ 17%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Cell.cpp.o
+[ 29%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/ComputeCell.cpp.o
+[ 29%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CCASimulator.cpp.o
+[ 35%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CCAFunctionEvents.cpp.o
+[ 41%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CyclicMemoryAllocator.cpp.o
+[ 47%] Linking CXX static library libCCACommons.a
+[ 47%] Built target CCACommons
+[ 52%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/VicinityMemoryAllocator.cpp.o
+[ 58%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/SinkCell.cpp.o
+[ 64%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Terminator.cpp.o
+[ 70%] Building CXX object CMakeFiles/HtreeNework.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/HtreeNode.cpp.o
+[ 76%] Building CXX object CMakeFiles/HtreeNework.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/HtreeNetwork.cpp.o
+[ 82%] Linking CXX static library libCCASimulator.a
+[ 82%] Built target CCASimulator
+[ 88%] Linking CXX static library libHtreeNework.a
+[ 88%] Built target HtreeNework
+[ 94%] Building CXX object CMakeFiles/Streaming_Dynamic_BFS_CCASimulator.dir/cca_streaming_dynamic_bfs.cpp.o
+[100%] Linking CXX executable Streaming_Dynamic_BFS_CCASimulator
+[100%] Built target Streaming_Dynamic_BFS_CCASimulator
+Running Streaming_Dynamic_Breadth_First_Search
+Parsing Commandline Arguments: 
+Creating the simulation environment that includes the CCA Chip: 
+
+CCA Chip Details:
+	Shape: square
+	Dim: 32 x 32
+	Total Compute Cells: 1024
+	Memory Per Compute Cell: 2048 KB
+	Total Chip Memory: 2048 MB
+	Mesh Type: 0
+	Routing Policy: 0
+The graph: /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball.edgelist_1 has total_vertices: 500000 with 222847 egdes.
+Allocating vertices cyclically on the CCA Chip: 
+Vertex id 0 will be allocated first by the allocator. Then the rest of the vertices will follow based on the allocator type.
+Shuffled the vertex id list for random allocation of vertices. May help with synthetic graphs where the graph generator didn't do a good job.
+
+
+Read 222847 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_1.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 0, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 1000, CCs Active: 87.4023%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 2000, CCs Active: 87.5977%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 3000, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 4000, CCs Active: 99.5117%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 5000, CCs Active: 98.8281%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 6000, CCs Active: 99.1211%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 7000, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 8000, CCs Active: 99.6094%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 9000, CCs Active: 98.6328%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 10000, CCs Active: 97.5586%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 11000, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 12000, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 13000, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 14000, CCs Active: 83.3984%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 15000, CCs Active: 56.25%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 16000, CCs Active: 33.3984%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 17000, CCs Active: 22.0703%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 18000, CCs Active: 3.125%, htree Active: -nan%
+Increment Cycles: 18497, Total Cycles: 18497
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 328912 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_2.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 18497, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 19497, CCs Active: 88.7695%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 20497, CCs Active: 93.0664%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 21497, CCs Active: 90.7227%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 22497, CCs Active: 92.9688%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 23497, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 24497, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 25497, CCs Active: 96.1914%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 26497, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 27497, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 28497, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 29497, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 30497, CCs Active: 90.0391%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 31497, CCs Active: 1.66016%, htree Active: -nan%
+Increment Cycles: 13075, Total Cycles: 31572
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 513890 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_3.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 31572, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 32572, CCs Active: 88.7695%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 33572, CCs Active: 89.1602%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 34572, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 35572, CCs Active: 93.0664%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 36572, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 37572, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 38572, CCs Active: 95.1172%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 39572, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 40572, CCs Active: 95.1172%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 41572, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 42572, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 43572, CCs Active: 97.4609%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 44572, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 45572, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 46572, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 47572, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 48572, CCs Active: 96.3867%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 49572, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 50572, CCs Active: 92.3828%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 51572, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 52572, CCs Active: 37.6953%, htree Active: -nan%
+Increment Cycles: 21488, Total Cycles: 53060
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 709723 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_4.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 53060, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 54060, CCs Active: 87.5977%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 55060, CCs Active: 89.8438%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 56060, CCs Active: 90.1367%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 57060, CCs Active: 92.7734%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 58060, CCs Active: 93.6523%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 59060, CCs Active: 91.6992%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 60060, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 61060, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 62060, CCs Active: 93.9453%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 63060, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 64060, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 65060, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 66060, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 67060, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 68060, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 69060, CCs Active: 97.4609%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 70060, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 71060, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 72060, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 73060, CCs Active: 97.9492%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 74060, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 75060, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 76060, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 77060, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 78060, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 79060, CCs Active: 95.8984%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 80060, CCs Active: 78.9062%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 81060, CCs Active: 45.1172%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 82060, CCs Active: 4.29688%, htree Active: -nan%
+Increment Cycles: 29094, Total Cycles: 82154
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 904420 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_5.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 82154, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 83154, CCs Active: 88.3789%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 84154, CCs Active: 89.6484%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 85154, CCs Active: 90.625%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 86154, CCs Active: 91.6992%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 87154, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 88154, CCs Active: 92.4805%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 89154, CCs Active: 93.3594%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 90154, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 91154, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 92154, CCs Active: 93.75%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 93154, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 94154, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 95154, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 96154, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 97154, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 98154, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 99154, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 100154, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 101154, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 102154, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 103154, CCs Active: 95.8984%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 104154, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 105154, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 106154, CCs Active: 95.8008%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 107154, CCs Active: 98.3398%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 108154, CCs Active: 98.7305%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 109154, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 110154, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 111154, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 112154, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 113154, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 114154, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 115154, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 116154, CCs Active: 92.0898%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 117154, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 118154, CCs Active: 44.1406%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 119154, CCs Active: 13.2812%, htree Active: -nan%
+Increment Cycles: 37394, Total Cycles: 119548
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 1101941 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_6.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 119548, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 120548, CCs Active: 87.793%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 121548, CCs Active: 88.2812%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 122548, CCs Active: 92.1875%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 123548, CCs Active: 91.6016%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 124548, CCs Active: 92.1875%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 125548, CCs Active: 92.6758%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 126548, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 127548, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 128548, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 129548, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 130548, CCs Active: 95.8984%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 131548, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 132548, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 133548, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 134548, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 135548, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 136548, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 137548, CCs Active: 94.043%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 138548, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 139548, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 140548, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 141548, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 142548, CCs Active: 98.3398%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 143548, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 144548, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 145548, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 146548, CCs Active: 93.9453%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 147548, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 148548, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 149548, CCs Active: 93.2617%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 150548, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 151548, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 152548, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 153548, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 154548, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 155548, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 156548, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 38000, Total cycles: 157548, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 39000, Total cycles: 158548, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 40000, Total cycles: 159548, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 41000, Total cycles: 160548, CCs Active: 83.3984%, htree Active: -nan%
+End of current run cycle # 42000, Total cycles: 161548, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 43000, Total cycles: 162548, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 44000, Total cycles: 163548, CCs Active: 93.5547%, htree Active: -nan%
+End of current run cycle # 45000, Total cycles: 164548, CCs Active: 82.4219%, htree Active: -nan%
+End of current run cycle # 46000, Total cycles: 165548, CCs Active: 37.793%, htree Active: -nan%
+End of current run cycle # 47000, Total cycles: 166548, CCs Active: 6.64062%, htree Active: -nan%
+Increment Cycles: 47291, Total Cycles: 166839
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 1297078 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_7.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 166839, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 167839, CCs Active: 86.1328%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 168839, CCs Active: 88.9648%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 169839, CCs Active: 92.4805%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 170839, CCs Active: 91.8945%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 171839, CCs Active: 91.8945%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 172839, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 173839, CCs Active: 92.5781%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 174839, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 175839, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 176839, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 177839, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 178839, CCs Active: 93.6523%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 179839, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 180839, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 181839, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 182839, CCs Active: 99.707%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 183839, CCs Active: 99.8047%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 184839, CCs Active: 99.0234%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 185839, CCs Active: 99.4141%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 186839, CCs Active: 99.5117%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 187839, CCs Active: 99.8047%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 188839, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 189839, CCs Active: 99.2188%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 190839, CCs Active: 98.5352%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 191839, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 192839, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 193839, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 194839, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 195839, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 196839, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 197839, CCs Active: 97.5586%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 198839, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 199839, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 200839, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 201839, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 202839, CCs Active: 96.3867%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 203839, CCs Active: 97.0703%, htree Active: -nan%
+End of current run cycle # 38000, Total cycles: 204839, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 39000, Total cycles: 205839, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 40000, Total cycles: 206839, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 41000, Total cycles: 207839, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 42000, Total cycles: 208839, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 43000, Total cycles: 209839, CCs Active: 95.1172%, htree Active: -nan%
+End of current run cycle # 44000, Total cycles: 210839, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 45000, Total cycles: 211839, CCs Active: 97.4609%, htree Active: -nan%
+End of current run cycle # 46000, Total cycles: 212839, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 47000, Total cycles: 213839, CCs Active: 97.3633%, htree Active: -nan%
+End of current run cycle # 48000, Total cycles: 214839, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 49000, Total cycles: 215839, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 50000, Total cycles: 216839, CCs Active: 92.9688%, htree Active: -nan%
+End of current run cycle # 51000, Total cycles: 217839, CCs Active: 81.8359%, htree Active: -nan%
+End of current run cycle # 52000, Total cycles: 218839, CCs Active: 67.4805%, htree Active: -nan%
+End of current run cycle # 53000, Total cycles: 219839, CCs Active: 69.4336%, htree Active: -nan%
+End of current run cycle # 54000, Total cycles: 220839, CCs Active: 40.625%, htree Active: -nan%
+End of current run cycle # 55000, Total cycles: 221839, CCs Active: 22.5586%, htree Active: -nan%
+End of current run cycle # 56000, Total cycles: 222839, CCs Active: 5.07812%, htree Active: -nan%
+Increment Cycles: 56340, Total Cycles: 223179
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 1501559 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_8.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 223179, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 224179, CCs Active: 89.9414%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 225179, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 226179, CCs Active: 90.4297%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 227179, CCs Active: 91.7969%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 228179, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 229179, CCs Active: 93.75%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 230179, CCs Active: 93.8477%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 231179, CCs Active: 91.8945%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 232179, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 233179, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 234179, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 235179, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 236179, CCs Active: 99.707%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 237179, CCs Active: 99.0234%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 238179, CCs Active: 98.1445%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 239179, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 240179, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 241179, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 242179, CCs Active: 96.3867%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 243179, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 244179, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 245179, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 246179, CCs Active: 94.6289%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 247179, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 248179, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 249179, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 250179, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 251179, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 252179, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 253179, CCs Active: 94.043%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 254179, CCs Active: 95.8008%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 255179, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 256179, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 257179, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 258179, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 259179, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 260179, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 38000, Total cycles: 261179, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 39000, Total cycles: 262179, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 40000, Total cycles: 263179, CCs Active: 96.1914%, htree Active: -nan%
+End of current run cycle # 41000, Total cycles: 264179, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 42000, Total cycles: 265179, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 43000, Total cycles: 266179, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 44000, Total cycles: 267179, CCs Active: 95.0195%, htree Active: -nan%
+End of current run cycle # 45000, Total cycles: 268179, CCs Active: 94.8242%, htree Active: -nan%
+End of current run cycle # 46000, Total cycles: 269179, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 47000, Total cycles: 270179, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 48000, Total cycles: 271179, CCs Active: 98.1445%, htree Active: -nan%
+End of current run cycle # 49000, Total cycles: 272179, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 50000, Total cycles: 273179, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 51000, Total cycles: 274179, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 52000, Total cycles: 275179, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 53000, Total cycles: 276179, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 54000, Total cycles: 277179, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 55000, Total cycles: 278179, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 56000, Total cycles: 279179, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 57000, Total cycles: 280179, CCs Active: 90.332%, htree Active: -nan%
+End of current run cycle # 58000, Total cycles: 281179, CCs Active: 76.7578%, htree Active: -nan%
+End of current run cycle # 59000, Total cycles: 282179, CCs Active: 72.6562%, htree Active: -nan%
+End of current run cycle # 60000, Total cycles: 283179, CCs Active: 87.4023%, htree Active: -nan%
+End of current run cycle # 61000, Total cycles: 284179, CCs Active: 38.8672%, htree Active: -nan%
+End of current run cycle # 62000, Total cycles: 285179, CCs Active: 14.5508%, htree Active: -nan%
+End of current run cycle # 63000, Total cycles: 286179, CCs Active: 3.61328%, htree Active: -nan%
+Increment Cycles: 63526, Total Cycles: 286705
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 1698228 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_9.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 286705, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 287705, CCs Active: 88.3789%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 288705, CCs Active: 90.2344%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 289705, CCs Active: 90.4297%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 290705, CCs Active: 90.8203%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 291705, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 292705, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 293705, CCs Active: 93.3594%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 294705, CCs Active: 92.6758%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 295705, CCs Active: 93.6523%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 296705, CCs Active: 93.457%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 297705, CCs Active: 91.7969%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 298705, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 299705, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 300705, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 301705, CCs Active: 94.1406%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 302705, CCs Active: 95.1172%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 303705, CCs Active: 99.2188%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 304705, CCs Active: 99.4141%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 305705, CCs Active: 98.6328%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 306705, CCs Active: 98.1445%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 307705, CCs Active: 97.3633%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 308705, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 309705, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 310705, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 311705, CCs Active: 94.4336%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 312705, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 313705, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 314705, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 315705, CCs Active: 96.3867%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 316705, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 317705, CCs Active: 96.3867%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 318705, CCs Active: 95.4102%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 319705, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 320705, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 321705, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 322705, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 323705, CCs Active: 94.3359%, htree Active: -nan%
+End of current run cycle # 38000, Total cycles: 324705, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 39000, Total cycles: 325705, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 40000, Total cycles: 326705, CCs Active: 93.2617%, htree Active: -nan%
+End of current run cycle # 41000, Total cycles: 327705, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 42000, Total cycles: 328705, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 43000, Total cycles: 329705, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 44000, Total cycles: 330705, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 45000, Total cycles: 331705, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 46000, Total cycles: 332705, CCs Active: 96.582%, htree Active: -nan%
+End of current run cycle # 47000, Total cycles: 333705, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 48000, Total cycles: 334705, CCs Active: 94.043%, htree Active: -nan%
+End of current run cycle # 49000, Total cycles: 335705, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 50000, Total cycles: 336705, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 51000, Total cycles: 337705, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 52000, Total cycles: 338705, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 53000, Total cycles: 339705, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 54000, Total cycles: 340705, CCs Active: 97.0703%, htree Active: -nan%
+End of current run cycle # 55000, Total cycles: 341705, CCs Active: 97.3633%, htree Active: -nan%
+End of current run cycle # 56000, Total cycles: 342705, CCs Active: 97.2656%, htree Active: -nan%
+End of current run cycle # 57000, Total cycles: 343705, CCs Active: 97.4609%, htree Active: -nan%
+End of current run cycle # 58000, Total cycles: 344705, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 59000, Total cycles: 345705, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 60000, Total cycles: 346705, CCs Active: 92.8711%, htree Active: -nan%
+End of current run cycle # 61000, Total cycles: 347705, CCs Active: 97.4609%, htree Active: -nan%
+End of current run cycle # 62000, Total cycles: 348705, CCs Active: 95.5078%, htree Active: -nan%
+End of current run cycle # 63000, Total cycles: 349705, CCs Active: 90.7227%, htree Active: -nan%
+End of current run cycle # 64000, Total cycles: 350705, CCs Active: 91.0156%, htree Active: -nan%
+End of current run cycle # 65000, Total cycles: 351705, CCs Active: 88.4766%, htree Active: -nan%
+End of current run cycle # 66000, Total cycles: 352705, CCs Active: 68.0664%, htree Active: -nan%
+End of current run cycle # 67000, Total cycles: 353705, CCs Active: 68.9453%, htree Active: -nan%
+End of current run cycle # 68000, Total cycles: 354705, CCs Active: 48.9258%, htree Active: -nan%
+End of current run cycle # 69000, Total cycles: 355705, CCs Active: 48.2422%, htree Active: -nan%
+End of current run cycle # 70000, Total cycles: 356705, CCs Active: 12.4023%, htree Active: -nan%
+End of current run cycle # 71000, Total cycles: 357705, CCs Active: 7.32422%, htree Active: -nan%
+Increment Cycles: 71399, Total Cycles: 358104
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 1895915 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Snowball_Sampling/500K/simulated_blockmodel_graph_500000_nodes_snowball_10.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 358104, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 359104, CCs Active: 86.1328%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 360104, CCs Active: 91.3086%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 361104, CCs Active: 93.0664%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 362104, CCs Active: 93.2617%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 363104, CCs Active: 91.2109%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 364104, CCs Active: 93.5547%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 365104, CCs Active: 92.2852%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 366104, CCs Active: 94.9219%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 367104, CCs Active: 92.6758%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 368104, CCs Active: 92.1875%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 369104, CCs Active: 94.4336%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 370104, CCs Active: 94.2383%, htree Active: -nan%
+End of current run cycle # 13000, Total cycles: 371104, CCs Active: 93.5547%, htree Active: -nan%
+End of current run cycle # 14000, Total cycles: 372104, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 15000, Total cycles: 373104, CCs Active: 92.6758%, htree Active: -nan%
+End of current run cycle # 16000, Total cycles: 374104, CCs Active: 92.2852%, htree Active: -nan%
+End of current run cycle # 17000, Total cycles: 375104, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 18000, Total cycles: 376104, CCs Active: 98.1445%, htree Active: -nan%
+End of current run cycle # 19000, Total cycles: 377104, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 20000, Total cycles: 378104, CCs Active: 99.8047%, htree Active: -nan%
+End of current run cycle # 21000, Total cycles: 379104, CCs Active: 99.8047%, htree Active: -nan%
+End of current run cycle # 22000, Total cycles: 380104, CCs Active: 99.6094%, htree Active: -nan%
+End of current run cycle # 23000, Total cycles: 381104, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 24000, Total cycles: 382104, CCs Active: 98.3398%, htree Active: -nan%
+End of current run cycle # 25000, Total cycles: 383104, CCs Active: 99.1211%, htree Active: -nan%
+End of current run cycle # 26000, Total cycles: 384104, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 27000, Total cycles: 385104, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 28000, Total cycles: 386104, CCs Active: 97.0703%, htree Active: -nan%
+End of current run cycle # 29000, Total cycles: 387104, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 30000, Total cycles: 388104, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 31000, Total cycles: 389104, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 32000, Total cycles: 390104, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 33000, Total cycles: 391104, CCs Active: 98.7305%, htree Active: -nan%
+End of current run cycle # 34000, Total cycles: 392104, CCs Active: 97.5586%, htree Active: -nan%
+End of current run cycle # 35000, Total cycles: 393104, CCs Active: 98.1445%, htree Active: -nan%
+End of current run cycle # 36000, Total cycles: 394104, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 37000, Total cycles: 395104, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 38000, Total cycles: 396104, CCs Active: 98.6328%, htree Active: -nan%
+End of current run cycle # 39000, Total cycles: 397104, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 40000, Total cycles: 398104, CCs Active: 95.3125%, htree Active: -nan%
+End of current run cycle # 41000, Total cycles: 399104, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 42000, Total cycles: 400104, CCs Active: 96.1914%, htree Active: -nan%
+End of current run cycle # 43000, Total cycles: 401104, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 44000, Total cycles: 402104, CCs Active: 93.75%, htree Active: -nan%
+End of current run cycle # 45000, Total cycles: 403104, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 46000, Total cycles: 404104, CCs Active: 95.7031%, htree Active: -nan%
+End of current run cycle # 47000, Total cycles: 405104, CCs Active: 94.5312%, htree Active: -nan%
+End of current run cycle # 48000, Total cycles: 406104, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 49000, Total cycles: 407104, CCs Active: 98.8281%, htree Active: -nan%
+End of current run cycle # 50000, Total cycles: 408104, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 51000, Total cycles: 409104, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 52000, Total cycles: 410104, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 53000, Total cycles: 411104, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 54000, Total cycles: 412104, CCs Active: 99.2188%, htree Active: -nan%
+End of current run cycle # 55000, Total cycles: 413104, CCs Active: 98.5352%, htree Active: -nan%
+End of current run cycle # 56000, Total cycles: 414104, CCs Active: 97.7539%, htree Active: -nan%
+End of current run cycle # 57000, Total cycles: 415104, CCs Active: 95.8984%, htree Active: -nan%
+End of current run cycle # 58000, Total cycles: 416104, CCs Active: 95.8008%, htree Active: -nan%
+End of current run cycle # 59000, Total cycles: 417104, CCs Active: 98.6328%, htree Active: -nan%
+End of current run cycle # 60000, Total cycles: 418104, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 61000, Total cycles: 419104, CCs Active: 98.4375%, htree Active: -nan%
+End of current run cycle # 62000, Total cycles: 420104, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 63000, Total cycles: 421104, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 64000, Total cycles: 422104, CCs Active: 94.8242%, htree Active: -nan%
+End of current run cycle # 65000, Total cycles: 423104, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 66000, Total cycles: 424104, CCs Active: 96.4844%, htree Active: -nan%
+End of current run cycle # 67000, Total cycles: 425104, CCs Active: 98.9258%, htree Active: -nan%
+End of current run cycle # 68000, Total cycles: 426104, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 69000, Total cycles: 427104, CCs Active: 99.0234%, htree Active: -nan%
+End of current run cycle # 70000, Total cycles: 428104, CCs Active: 96.875%, htree Active: -nan%
+End of current run cycle # 71000, Total cycles: 429104, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 72000, Total cycles: 430104, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 73000, Total cycles: 431104, CCs Active: 95.2148%, htree Active: -nan%
+End of current run cycle # 74000, Total cycles: 432104, CCs Active: 92.6758%, htree Active: -nan%
+End of current run cycle # 75000, Total cycles: 433104, CCs Active: 96.7773%, htree Active: -nan%
+End of current run cycle # 76000, Total cycles: 434104, CCs Active: 88.7695%, htree Active: -nan%
+End of current run cycle # 77000, Total cycles: 435104, CCs Active: 89.2578%, htree Active: -nan%
+End of current run cycle # 78000, Total cycles: 436104, CCs Active: 82.7148%, htree Active: -nan%
+End of current run cycle # 79000, Total cycles: 437104, CCs Active: 75.7812%, htree Active: -nan%
+End of current run cycle # 80000, Total cycles: 438104, CCs Active: 62.8906%, htree Active: -nan%
+End of current run cycle # 81000, Total cycles: 439104, CCs Active: 81.543%, htree Active: -nan%
+End of current run cycle # 82000, Total cycles: 440104, CCs Active: 71.582%, htree Active: -nan%
+End of current run cycle # 83000, Total cycles: 441104, CCs Active: 48.9258%, htree Active: -nan%
+End of current run cycle # 84000, Total cycles: 442104, CCs Active: 50.6836%, htree Active: -nan%
+End of current run cycle # 85000, Total cycles: 443104, CCs Active: 44.9219%, htree Active: -nan%
+End of current run cycle # 86000, Total cycles: 444104, CCs Active: 29.1992%, htree Active: -nan%
+End of current run cycle # 87000, Total cycles: 445104, CCs Active: 45.4102%, htree Active: -nan%
+End of current run cycle # 88000, Total cycles: 446104, CCs Active: 15.625%, htree Active: -nan%
+End of current run cycle # 89000, Total cycles: 447104, CCs Active: 4.78516%, htree Active: -nan%
+Increment Cycles: 89644, Total Cycles: 447748
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0mProgram elapsed time (This has nothing to do with the simulation itself): 263 s
+
+Writing results to output file: ./Output/dynamic_bfs_graph_DG_snowball_v_500000_e_10397360_trail_0_x_32_y_32_hb_0_th_ON_recvbuff_4_vicinity_2_ghosts_children_3_edges_min_25_edges_max_25_termimation_OFF_network_MESH_work_pruning_ON
+Statistics:
+	objects_allocated: 637416
+
+	actions_created: 20664396
+	actions_performed_work: 13961426
+	actions_false_on_predicate: 16877483
+	actions_false_predicate_percent: 81.6742
+	actions_overlaped: 9278021
+	action_overlap_percent: 44.8986
+
+	diffusions_created: 11795551
+	diffusions_performed_work: 11010285
+	diffusions_false_on_predicate: 654348
+	diffusions_filtered: 130918
+	Total diffusions_pruned: 785266
+	diffuse_prune_percent: 6.65731
+
+	operons_moved: 661698104
+Avg Objects per Compute Cell: 622.477
+Avg active cells percent = 90.3322
+Done!
