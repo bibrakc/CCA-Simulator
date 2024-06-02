@@ -48,3 +48,16 @@ CyclicMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_i
     /* std::cout << "next_cc_id: " << cc_available << "\n"; */
     return cc_available;
 }
+
+auto
+CyclicMemoryAllocator::get_next_available_cc(ComputeCell& cc) -> u_int32_t
+{
+    // Currently not supporting H-tree network as not checking for SinkCells.
+    assert(cc.hdepth == 0);
+
+    u_int32_t const cc_available = this->next_cc_id;
+    this->next_cc_id = (this->next_cc_id + 1) % (cc.dim_x * cc.dim_y);
+
+    /* std::cout << "next_cc_id: " << cc_available << "\n"; */
+    return cc_available;
+}

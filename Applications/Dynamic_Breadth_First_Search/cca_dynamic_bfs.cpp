@@ -76,7 +76,8 @@ main(int argc, char** argv) -> int
 
     // Read the input data graph.
     std::string input_graph_inc_1_path = cmd_args.input_graph_path + ".edgelist_1";
-    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_inc_1_path);
+    Graph<BFSVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_inc_1_path,
+                                                                          false);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 

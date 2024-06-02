@@ -55,6 +55,11 @@ class ComputeCell : public Cell
     // Get memory left in bytes
     auto memory_available_in_bytes() -> u_int32_t;
 
+    // Configure this Cell if it is IO Cell and assign neighbors in the CCA grid.
+    // TODO: Its not the best object oriented way. Should really create a new IOCell class like the
+    // SinkCell and ComputeCell and have this functionality in it.
+    void add_IO_neighbor_compute_cells();
+
     // Returns the offset in memory for this newly created object
     auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
@@ -86,8 +91,9 @@ class ComputeCell : public Cell
     auto send_operon(const Operon& operon_in) -> Task;
 
     // Construct an Operon
-    static auto construct_operon(u_int32_t src_cc_id, u_int32_t dst_cc_id, const Action& action)
-        -> Operon;
+    static auto construct_operon(u_int32_t src_cc_id,
+                                 u_int32_t dst_cc_id,
+                                 const Action& action) -> Operon;
 
     void diffuse(const Action& action);
 
@@ -95,7 +101,7 @@ class ComputeCell : public Cell
     // meaning there was instruction pending (see `pending_instructions` below) then don't perform
     // any new task in task_queue, action_queue, or diffuse_queue.
     auto decrement_CPI() -> bool;
-    
+
     // increaments `pending_instructions`.
     void apply_CPI(u_int32_t);
 
@@ -113,7 +119,10 @@ class ComputeCell : public Cell
     // Used in predicate and work functions of app as they return Closures.
     CCAFunctionEvent null_false_event;
     CCAFunctionEvent null_true_event;
+    // Special event.
     CCAFunctionEvent error_event;
+    // Runtime event related to memory management.
+    CCAFunctionEvent allocate_event;
 
     // Memory of the Compute Cell in bytes.
     u_int32_t memory_size_in_bytes;
@@ -164,6 +173,7 @@ class ComputeCell : public Cell
                 CCAFunctionEvent null_false_event_in,
                 CCAFunctionEvent null_true_event_in,
                 CCAFunctionEvent error_event_in,
+                CCAFunctionEvent allocate_event_in,
                 u_int32_t dim_x_in,
                 u_int32_t dim_y_in,
                 u_int32_t hx_in,
@@ -185,6 +195,7 @@ class ComputeCell : public Cell
         this->null_false_event = null_false_event_in;
         this->null_true_event = null_true_event_in;
         this->error_event = error_event_in;
+        this->allocate_event = allocate_event_in;
 
         this->dim_x = dim_x_in;
         this->dim_y = dim_y_in;
@@ -192,15 +203,22 @@ class ComputeCell : public Cell
         this->hx = hx_in;
         this->hy = hy_in;
         this->hdepth = hdepth_in;
-
-        this->cooridates = ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
+        if (this->type != CellType::io_cell) {
+            this->cooridates =
+                ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
+        } else {
+            const u_int32_t total_cells = (this->dim_x * this->dim_y) + 1;
+            u_int32_t id_x = (this->id - total_cells) % this->dim_x;
+            u_int32_t id_y = (this->id - total_cells) / this->dim_x;
+            this->cooridates = Coordinates(id_x, id_y); // This is in the IO Channel.
+        }
 
         this->sink_cell = this->get_cc_htree_sink_cell();
 
         this->memory_size_in_bytes = memory_per_cc_in_bytes;
         this->memory = std::make_unique<char[]>(this->memory_size_in_bytes);
-        this->memory_raw_ptr = memory.get();
-        this->memory_curr_ptr = memory_raw_ptr;
+        this->memory_raw_ptr = this->memory.get();
+        this->memory_curr_ptr = this->memory_raw_ptr;
 
         this->host_memory = std::move(host_memory_in);
         this->host_id = this->dim_x * this->dim_y;
@@ -209,7 +227,15 @@ class ComputeCell : public Cell
         this->primary_network_type = primary_network_type_in;
 
         // Assign neighbor CCs to this CC. This is based on the Shape and Dim.
-        this->add_neighbor_compute_cells();
+        if (this->type == CellType::io_cell) {
+            // Assign the neighors to the I/O Channels and the CCs in first and last row in the chip
+            // to the I/O Channel CCs.
+            this->add_IO_neighbor_compute_cells();
+        } else {
+            // Simply create the mesh chip network for this CC since it is part of the CCA Chip and
+            // not the IO Channel.
+            this->add_neighbor_compute_cells();
+        }
 
         this->staging_operon_from_logic = std::nullopt;
 
@@ -247,7 +273,13 @@ class ComputeCell : public Cell
         // actions onto itself in case of a diffusion that requires pushing to itself.
         // 2: ghost edges, 5: just because.
         this->action_queue = FixedSizeQueue<Action>(action_queue_size, edges_max + 2 + 5);
-        this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
+        if (this->type == CellType::io_cell) {
+            // Make it some large size since it will be needed for diffusing actions that edges from
+            // the IO channels to the CCA chip.
+            this->diffuse_queue = FixedSizeQueue<Action>(8192); // 16384
+        } else {
+            this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
+        }
 
         // Experimental for scheduling.
         // this->prefer_diffuse_queue = false;

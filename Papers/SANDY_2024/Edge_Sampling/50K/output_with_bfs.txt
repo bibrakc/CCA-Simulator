@@ -1,0 +1,284 @@
+Compiling and running.
+Compiling Streaming_Dynamic_Breadth_First_Search
+-- The CXX compiler identification is GNU 11.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/cray/pe/gcc/11.2.0/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring constants as:
+-- 	THROTTLE: true
+-- 	RECVBUFFSIZE: 4
+-- 	ANIMATION: false
+-- 	ACTIVE_PERCENT: true
+-- 	ACTIONQUEUESIZE: 512
+-- 	DIFFUSE_QUEUE_SIZE: 1024
+-- 	VICINITY: 2
+-- 	WEIGHT: false
+-- 	MIN_EDGES_PER_VERTEX: 25
+-- 	MAXEDGESPERVERTEX: 25
+-- 	GHOST_CHILDREN: 3
+-- 	TERMINATION: false
+-- 	THROTTLE_CONGESTION_THRESHOLD: 45
+-- 	RHIZOME_SIZE: 2
+-- 	RHIZOME_INDEGREE_CUTOFF: 10
+-- 	SPLIT_QUEUES: true
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Configuring done (1.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /N/u/bchandio/BigRed200/Research/git_repos/benchmarks_CCA/SANDY24/Edge_Sampling/50K/build
+[  5%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Cell.cpp.o
+[ 11%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CCASimulator.cpp.o
+[ 23%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/ComputeCell.cpp.o
+[ 23%] Building CXX object CMakeFiles/CCACommons.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Operon.cpp.o
+[ 29%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CyclicMemoryAllocator.cpp.o
+[ 35%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/CCAFunctionEvents.cpp.o
+[ 41%] Building CXX object CMakeFiles/CCACommons.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/types.cpp.o
+[ 47%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/VicinityMemoryAllocator.cpp.o
+[ 52%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/SinkCell.cpp.o
+[ 58%] Building CXX object CMakeFiles/CCASimulator.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/Terminator.cpp.o
+[ 64%] Linking CXX static library libCCACommons.a
+[ 64%] Built target CCACommons
+[ 70%] Building CXX object CMakeFiles/HtreeNework.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/HtreeNode.cpp.o
+[ 76%] Building CXX object CMakeFiles/HtreeNework.dir/N/u/bchandio/BigRed200/Research/git_repos/CCA-Simulator/Source/HtreeNetwork.cpp.o
+[ 82%] Linking CXX static library libCCASimulator.a
+[ 82%] Built target CCASimulator
+[ 88%] Linking CXX static library libHtreeNework.a
+[ 88%] Built target HtreeNework
+[ 94%] Building CXX object CMakeFiles/Streaming_Dynamic_BFS_CCASimulator.dir/cca_streaming_dynamic_bfs.cpp.o
+[100%] Linking CXX executable Streaming_Dynamic_BFS_CCASimulator
+[100%] Built target Streaming_Dynamic_BFS_CCASimulator
+Running Streaming_Dynamic_Breadth_First_Search
+Parsing Commandline Arguments: 
+Creating the simulation environment that includes the CCA Chip: 
+
+CCA Chip Details:
+	Shape: square
+	Dim: 32 x 32
+	Total Compute Cells: 1024
+	Memory Per Compute Cell: 1024 KB
+	Total Chip Memory: 1024 MB
+	Mesh Type: 0
+	Routing Policy: 0
+The graph: /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample.edgelist_1 has total_vertices: 50000 with 101682 egdes.
+Allocating vertices cyclically on the CCA Chip: 
+Vertex id 0 will be allocated first by the allocator. Then the rest of the vertices will follow based on the allocator type.
+Shuffled the vertex id list for random allocation of vertices. May help with synthetic graphs where the graph generator didn't do a good job.
+
+
+Read 101682 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_1.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 0, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 1000, CCs Active: 90.4297%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 2000, CCs Active: 29.1992%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 3000, CCs Active: 89.6484%, htree Active: -nan%
+Increment Cycles: 3877, Total Cycles: 3877
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 102012 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_2.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 3877, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 4877, CCs Active: 98.5352%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 5877, CCs Active: 99.1211%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 6877, CCs Active: 99.707%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 7877, CCs Active: 99.9023%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 8877, CCs Active: 99.5117%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 9877, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 10877, CCs Active: 95.8984%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 11877, CCs Active: 95.6055%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 12877, CCs Active: 92.4805%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 13877, CCs Active: 80.5664%, htree Active: -nan%
+End of current run cycle # 11000, Total cycles: 14877, CCs Active: 43.5547%, htree Active: -nan%
+End of current run cycle # 12000, Total cycles: 15877, CCs Active: 31.9336%, htree Active: -nan%
+Increment Cycles: 12610, Total Cycles: 16487
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101772 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_3.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 16487, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 17487, CCs Active: 99.4141%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 18487, CCs Active: 100%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 19487, CCs Active: 99.5117%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 20487, CCs Active: 99.707%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 21487, CCs Active: 99.6094%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 22487, CCs Active: 98.3398%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 23487, CCs Active: 96.0938%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 24487, CCs Active: 82.5195%, htree Active: -nan%
+End of current run cycle # 9000, Total cycles: 25487, CCs Active: 62.3047%, htree Active: -nan%
+End of current run cycle # 10000, Total cycles: 26487, CCs Active: 56.0547%, htree Active: -nan%
+Increment Cycles: 10897, Total Cycles: 27384
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101916 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_4.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 27384, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 28384, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 29384, CCs Active: 99.2188%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 30384, CCs Active: 99.8047%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 31384, CCs Active: 98.5352%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 32384, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 33384, CCs Active: 73.0469%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 34384, CCs Active: 35.3516%, htree Active: -nan%
+End of current run cycle # 8000, Total cycles: 35384, CCs Active: 24.8047%, htree Active: -nan%
+Increment Cycles: 8210, Total Cycles: 35594
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101634 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_5.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 35594, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 36594, CCs Active: 99.3164%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 37594, CCs Active: 99.6094%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 38594, CCs Active: 99.6094%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 39594, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 40594, CCs Active: 97.6562%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 41594, CCs Active: 50.4883%, htree Active: -nan%
+End of current run cycle # 7000, Total cycles: 42594, CCs Active: 2.05078%, htree Active: -nan%
+Increment Cycles: 7078, Total Cycles: 42672
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101254 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_6.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 42672, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 43672, CCs Active: 96.9727%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 44672, CCs Active: 98.0469%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 45672, CCs Active: 97.168%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 46672, CCs Active: 85.8398%, htree Active: -nan%
+Increment Cycles: 4498, Total Cycles: 47170
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101809 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_7.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 47170, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 48170, CCs Active: 98.8281%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 49170, CCs Active: 99.2188%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 50170, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 51170, CCs Active: 96.6797%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 52170, CCs Active: 50.4883%, htree Active: -nan%
+Increment Cycles: 5678, Total Cycles: 52848
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 102076 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_8.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 52848, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 53848, CCs Active: 99.1211%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 54848, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 55848, CCs Active: 98.4375%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 56848, CCs Active: 97.8516%, htree Active: -nan%
+End of current run cycle # 5000, Total cycles: 57848, CCs Active: 86.8164%, htree Active: -nan%
+End of current run cycle # 6000, Total cycles: 58848, CCs Active: 4.58984%, htree Active: -nan%
+Increment Cycles: 6323, Total Cycles: 59171
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 101645 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_9.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 59171, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 60171, CCs Active: 94.7266%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 61171, CCs Active: 95.9961%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 62171, CCs Active: 96.1914%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 63171, CCs Active: 58.7891%, htree Active: -nan%
+Increment Cycles: 4257, Total Cycles: 63428
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0m
+
+Read 102239 edges from /N/u/bchandio/BigRed200/Research/git_repos/Datasets/Dynamic/Edge_Sampling/50K/simulated_blockmodel_graph_50000_nodes_edgeSample_10.tsv
+Inserting increment of new edges as actions that will stream into the CCA chip. 
+Transfered to the IO Channels
+
+Starting Execution on the CCA Chip:
+
+End of current run cycle # 0, Total cycles: 63428, CCs Active: 6.25%, htree Active: -nan%
+End of current run cycle # 1000, Total cycles: 64428, CCs Active: 98.2422%, htree Active: -nan%
+End of current run cycle # 2000, Total cycles: 65428, CCs Active: 96.2891%, htree Active: -nan%
+End of current run cycle # 3000, Total cycles: 66428, CCs Active: 96.1914%, htree Active: -nan%
+End of current run cycle # 4000, Total cycles: 67428, CCs Active: 74.6094%, htree Active: -nan%
+Increment Cycles: 4297, Total Cycles: 67725
+
+Dynamic Breadth First Search Verification: 
+[32mAll values were correct. Verification Successful.
+[0mProgram elapsed time (This has nothing to do with the simulation itself): 38 s
+
+Writing results to output file: ./Output/dynamic_bfs_graph_DG_snowball_v_50000_e_1119721_trail_0_x_32_y_32_hb_0_th_ON_recvbuff_4_vicinity_2_ghosts_children_3_edges_min_25_edges_max_25_termimation_OFF_network_MESH_work_pruning_ON
+Statistics:
+	objects_allocated: 63739
+
+	actions_created: 3376829
+	actions_performed_work: 1664158
+	actions_false_on_predicate: 2730710
+	actions_false_predicate_percent: 80.8661
+	actions_overlaped: 1876957
+	action_overlap_percent: 55.5834
+
+	diffusions_created: 1447463
+	diffusions_performed_work: 1291594
+	diffusions_false_on_predicate: 111521
+	diffusions_filtered: 44348
+	Total diffusions_pruned: 155869
+	diffuse_prune_percent: 10.7684
+
+	operons_moved: 93839480
+Avg Objects per Compute Cell: 62.2451
+Avg active cells percent = 85.3463
+Done!

@@ -10,6 +10,7 @@ Measurements
 Datasets
 *.[Gg]if
 !BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif
+!Streaming_Dynamic_BFS_32x32_v_1000_egdeSample_SH_ON.gif
 *.[Mm]p4
 tmp
 bfs_square*

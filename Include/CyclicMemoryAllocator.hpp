@@ -40,10 +40,11 @@ class CyclicMemoryAllocator : public MemoryAllocator
 {
   public:
     auto get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t override;
+    auto get_next_available_cc(ComputeCell& cc) -> u_int32_t override;
 
     CyclicMemoryAllocator(u_int32_t source_cc_id, u_int32_t total_number_of_cc)
     {
-        this->next_cc_id = (source_cc_id + 1) % total_number_of_cc;
+        this->next_cc_id = (source_cc_id) % total_number_of_cc;
     }
 
     CyclicMemoryAllocator() = default;

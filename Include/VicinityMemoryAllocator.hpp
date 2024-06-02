@@ -82,6 +82,7 @@ class VicinityMemoryAllocator : public MemoryAllocator
     }
 
     auto get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t override;
+    auto get_next_available_cc(ComputeCell& cc) -> u_int32_t override;
 
     VicinityMemoryAllocator() = default;
 

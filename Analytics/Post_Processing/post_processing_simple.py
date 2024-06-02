@@ -320,8 +320,8 @@ def congestion_charts():
     for ax in axes:
         ax.xaxis.set_major_formatter(FuncFormatter(thousands_formatter))
         ax.yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
-        ax.set_xlim(0, 600000)  # Set the x-axis limit
-        ax.set_ylim(0, 1500)  # Set the y-axis limit
+        #ax.set_xlim(0, 600000)  # Set the x-axis limit
+        #ax.set_ylim(0, 1500)  # Set the y-axis limit
 
     # Adjust spacing between subplots
     plt.tight_layout()
@@ -339,7 +339,7 @@ def active_status_chart():
     )
 
     # Create the line plot using sns.lineplot
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 5.8))
     sns.lineplot(
         x="Cycle#",
         y="Cells_Active_Percent",
@@ -362,11 +362,12 @@ def active_status_chart():
     ax.set_xlabel("Cycles", fontsize=18)
     ax.set_ylabel("Percent of Cells Active", fontsize=18)
     # Increase font size of x and y ticks
-    ax.tick_params(axis="x", labelsize=14)
-    ax.tick_params(axis="y", labelsize=14)
+    ax.tick_params(axis="x", labelsize=18)
+    ax.tick_params(axis="y", labelsize=18)
 
     # Set the legend location to upper right
-    ax.legend(loc='upper right')
+    # ax.legend(loc='upper right')
+    ax.legend(loc='lower left')
 
     throttle_text = "OFF"
     if throttle == 1:
@@ -431,6 +432,7 @@ def active_status_chart():
 
     formatter = FuncFormatter(format_percentage)
     ax.yaxis.set_major_formatter(formatter)
+    ax.set_yticks(range(0, 110, 10))
 
 
 # print(matplotlib.matplotlib_fname())

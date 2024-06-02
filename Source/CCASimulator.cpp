@@ -135,6 +135,7 @@ CCASimulator::create_square_cell_htree_chip()
                                                   this->function_events.null_event_id,
                                                   this->function_events.null_event_true_id,
                                                   this->function_events.error_event_id,
+                                                  this->function_events.allocate_event_id,
                                                   this->dim_x,
                                                   this->dim_y,
                                                   this->hx,
@@ -176,6 +177,7 @@ CCASimulator::create_square_cell_mesh_only_chip()
                                               this->function_events.null_event_id,
                                               this->function_events.null_event_true_id,
                                               this->function_events.error_event_id,
+                                              this->function_events.allocate_event_id,
                                               this->dim_x,
                                               this->dim_y,
                                               this->hx,
@@ -193,6 +195,42 @@ CCASimulator::create_square_cell_mesh_only_chip()
     }
 }
 
+// Create the I/O Channels comprising of compute cells and connect them vertically to their
+// corresponding CCs in the CCA chip.
+void
+CCASimulator::create_IO_channels()
+{
+
+    // Create north and south channel. CC ids from 0 to `dim_x-1` are north channel CCs and rest are
+    // for south.
+
+    // +1 is beacuse host_id is last cca chip cell id + 1
+    const u_int32_t start_io_channel_id_index_from = this->CCA_chip.size() + 1;
+    for (u_int32_t i = 0; i < 2; i++) {
+        for (u_int32_t j = 0; j < this->dim_x; j++) {
+            u_int32_t const cc_id = start_io_channel_id_index_from + (i * this->dim_x + j);
+            // Create individual compute cells of computeCellShape shape_of_compute_cells
+            this->IO_Channel[i].push_back(
+                std::make_shared<ComputeCell>(cc_id,
+                                              CellType::io_cell,
+                                              shape_of_compute_cells,
+                                              this->function_events.null_event_id,
+                                              this->function_events.null_event_true_id,
+                                              this->function_events.error_event_id,
+                                              this->function_events.allocate_event_id,
+                                              this->dim_x,
+                                              this->dim_y,
+                                              this->hx,
+                                              this->hy,
+                                              this->hdepth,
+                                              this->memory_per_cc,
+                                              this->host_memory,
+                                              this->primary_network_type,
+                                              this->mesh_routing_policy_id));
+        }
+    }
+}
+
 void
 CCASimulator::create_the_chip()
 {
@@ -200,6 +238,7 @@ CCASimulator::create_the_chip()
     if (this->shape_of_compute_cells == computeCellShape::square) {
         if (this->hdepth == 0) {
             this->create_square_cell_mesh_only_chip();
+            this->create_IO_channels();
         } else {
             this->create_square_cell_htree_chip();
         }
@@ -474,11 +513,24 @@ CCASimulator::run_simulation(Address app_terminator)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_computation_cycle(this->CCA_chip, &this->function_events);
         }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->run_a_computation_cycle(this->CCA_chip,
+                                                                &this->function_events);
+            }
+        }
 
 // Prepare communication cycle
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->prepare_a_communication_cycle(this->CCA_chip);
+        }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->prepare_a_communication_cycle(this->CCA_chip);
+            }
         }
 
         if (this->htree_network.hdepth != 0) {
@@ -493,6 +545,12 @@ CCASimulator::run_simulation(Address app_terminator)
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->run_a_communication_cycle(this->CCA_chip);
         }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->run_a_communication_cycle(this->CCA_chip);
+            }
+        }
 
         if (this->htree_network.hdepth != 0) {
 #pragma omp parallel for
@@ -505,6 +563,12 @@ CCASimulator::run_simulation(Address app_terminator)
 #pragma omp parallel for
         for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
             this->CCA_chip[i]->essential_house_keeping_cycle(this->CCA_chip);
+        }
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                this->IO_Channel[i][j]->essential_house_keeping_cycle(this->CCA_chip);
+            }
         }
 
         // Check for termination. Not needed now since the terminator is implemented but keeping it
@@ -529,6 +593,18 @@ CCASimulator::run_simulation(Address app_terminator)
                 // std::cout <<"CC: " << i << " is active\n";
             }
         }
+        // Check for termination of IO Channels.
+        u_int32_t sum_global_active_cc_io_channel_local = 0;
+        for (u_int32_t i = 0; i < 2; i++) {
+#pragma omp parallel for reduction(+ : sum_global_active_cc_io_channel_local)
+            for (u_int32_t j = 0; j < this->IO_Channel[i].size(); j++) {
+                const u_int32_t is_cell_active = this->IO_Channel[i][j]->is_compute_cell_active();
+                if (is_cell_active) {
+                    sum_global_active_cc_io_channel_local++;
+                    // std::cout <<"CC: " << i << " is active\n";
+                }
+            }
+        }
 
         if constexpr (animation_switch) {
             this->cca_statistics.individual_cells_active_status_per_cycle.push_back(
@@ -545,7 +621,8 @@ CCASimulator::run_simulation(Address app_terminator)
             }
         }
 
-        if (sum_global_active_cc_local || sum_global_active_htree) {
+        if (sum_global_active_cc_local || sum_global_active_htree ||
+            sum_global_active_cc_io_channel_local) {
             is_system_active = true;
         }
         double const percent_CCs_active = 100.0 * static_cast<double>(sum_global_active_cc_local) /
@@ -564,12 +641,6 @@ CCASimulator::run_simulation(Address app_terminator)
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         this->total_cycles++;
         this->total_current_run_cycles++;
-
-// Set new cycle # for every Cell: Experimental
-#pragma omp parallel for
-        for (u_int32_t i = 0; i < this->CCA_chip.size(); i++) {
-            this->CCA_chip[i]->current_cycle++;
-        }
 
         // Find whether to run the next cycle or not? This is based on the termination method being
         // used. When termination_switch == true, it uses the ack based Dijkstra–Scholten algorithm
