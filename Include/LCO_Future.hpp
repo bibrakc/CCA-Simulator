@@ -53,7 +53,7 @@ class LCO_Future
 
     // The actions pending on this future. Right now just hardcoding it to be 5 later may be
     // made flexible.
-    inline static constexpr u_int32_t queue_max_size = 30;
+    inline static constexpr u_int32_t queue_max_size = 55;
     // Action queue[queue_max_size];
     // CCAFunctionEvent: the continuation, ActionArgumentType: whatever that is needed to resume the
     // continuation.

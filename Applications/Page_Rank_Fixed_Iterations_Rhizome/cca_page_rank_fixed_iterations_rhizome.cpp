@@ -80,7 +80,7 @@ main(int argc, char** argv) -> int
 
     // Read the input data graph.
     Graph<PageRankFixedIterationsVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(
-        cmd_args.input_graph_path);
+        cmd_args.input_graph_path, false);
 
     // Get the vertices with degree values equal to 0.
     std::vector<u_int32_t> vertices_inbound_degree_zero =

@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -567,7 +567,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
 
         // When we are doing batched streaming BFS, in the final increment we germinate BFS action
         // and that goes the BFS like a static bfs.
-        //return Closure(cc.null_false_event, nullptr);
+        // return Closure(cc.null_false_event, nullptr);
 
         // When we are doing streaming BFS
         if (v->is_ghost_vertex) {

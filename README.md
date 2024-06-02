@@ -11,9 +11,17 @@ It can be used to design and deploy asynchronous message-driven computations and
 It means that BFS and SSSP actions take $2$ to $3$ cycles of compute, whereas Page Rank action takes anywhere from $3$ to $70$ cycles of compute. When their diffusions are executed they in turn take cycles proportional to the amount of local *edge-list* size.
 
 ## Demo of Message-Driven Execution
-<img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="800"/>
+### Static Graph BFS
+<img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="700"/>
 
-<img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="800"/>
+### Dynamic Graph BFS
+<img src="Analytics/Animations/Streaming_Dynamic_BFS_32x32_v_1000_egdeSample_SH_ON.gif" alt="Animation" width="700"/>
+
+### Legend
+<img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="700"/>
 
 ## Graph Applications
 The [Applications](/Applications/) directory contains asynchronous message-driven applications written using the CCASimulator. Please browser through each application for build and run instructions.
+
+## Tests
+The [Tests/Run_All_Apps](/Tests/Run_All_Apps) directory contains a convenient script that runs all compiles and runs all the apps. It also performs validation of the computed results.

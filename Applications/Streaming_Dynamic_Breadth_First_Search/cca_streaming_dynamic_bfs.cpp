@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2023, Bibrak Qamar
+Copyright (c) 2024, Bibrak Qamar
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -109,28 +109,6 @@ main(int argc, char** argv) -> int
     // input_graph.print_vertices<BFSVertex<ghost_type_level_1>>(cca_square_simulator);
     //  exit(0);
 
-    /*
-    std::vector<u_int32_t> vertices_inbound_degree_zero =
-        input_graph.get_vertices_ids_with_zero_in_degree();
-
-    std::cout << "Vertices with in degree value 0: \n";
-    for (const auto& vertex_id : vertices_inbound_degree_zero) {
-        std::cout << vertex_id
-                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
-    }
-    std::cout << std::endl; */
-
-    // Get the vertices with out degree values equal to 0.
-    /* std::vector<u_int32_t> vertices_outbound_degree_zero =
-        input_graph.get_vertices_ids_with_zero_out_degree();
-
-    std::cout << "Vertices with out degree value 0: \n";
-    for (const auto& vertex_id : vertices_outbound_degree_zero) {
-        std::cout << vertex_id
-                  << ", out_degree: " << input_graph.vertices[vertex_id].outbound_degree << "\n";
-    }
-    std::cout << std::endl; */
-
     // Register the BFS action functions for predicate, work, and diffuse.
     dynamic_bfs_predicate =
         cca_square_simulator.register_function_event(dynamic_bfs_predicate_func);
@@ -158,6 +136,17 @@ main(int argc, char** argv) -> int
         std::cerr << "Error! Memory not allocated for dynamic_bfs_terminator \n";
         exit(0);
     }
+
+    ///////////
+
+    // Set the root level to 0 by hand.
+    const auto vertex_addr = input_graph.vertex_addresses[cmd_args.root_vertex];
+    auto* vertex =
+        static_cast<BFSVertex<ghost_type_level_1>*>(cca_square_simulator.get_object(vertex_addr));
+    vertex->bfs_level = 0;
+
+    ////////////
+
     auto start = std::chrono::steady_clock::now();
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
          dynamic_increment++) {
@@ -184,23 +173,16 @@ main(int argc, char** argv) -> int
 
         std::cout << "Transfered to the IO Channels\n";
 
-        ///////////
-
-        if (dynamic_increment == 1) {
-            // Set the root to 0 by hand.
-
-            const auto vertex_addr = input_graph.vertex_addresses[cmd_args.root_vertex];
-            auto* vertex = static_cast<BFSVertex<ghost_type_level_1>*>(
-                cca_square_simulator.get_object(vertex_addr));
-            vertex->bfs_level = 0;
-        }
-
-        ////////////
-
         std::cout << "\nStarting Execution on the CCA Chip:\n\n";
         cca_square_simulator.run_simulation(dynamic_bfs_terminator.value());
         std::cout << "Increment Cycles: " << cca_square_simulator.total_current_run_cycles
                   << ", Total Cycles: " << cca_square_simulator.total_cycles << "\n";
+
+        // Verify results.
+        if (cmd_args.verify_results) {
+            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
+                cmd_args, input_graph, cca_square_simulator, dynamic_increment);
+        }
 
         /* if (dynamic_increment == cmd_args.increments) {
 
@@ -238,11 +220,6 @@ main(int argc, char** argv) -> int
                     cmd_args, input_graph, cca_square_simulator, dynamic_increment);
             }
         } */
-        // Verify results.
-        if (cmd_args.verify_results) {
-            verify_results<BFSVertex<SimpleVertex<host_edge_type, edges_min>>>(
-                cmd_args, input_graph, cca_square_simulator, dynamic_increment);
-        }
     }
     auto end = std::chrono::steady_clock::now();
     std::cout << "Program elapsed time (This has nothing to do with the simulation "

@@ -71,7 +71,7 @@ main(int argc, char** argv) -> int
 
     // Read the input data graph.
     Graph<SSSPVertex<SimpleVertex<host_edge_type, edges_min>>> input_graph(
-        cmd_args.input_graph_path);
+        cmd_args.input_graph_path, false);
 
     std::cout << "Allocating vertices cyclically on the CCA Chip: \n";
 

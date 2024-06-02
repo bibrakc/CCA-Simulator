@@ -40,8 +40,8 @@ CMAKE_INPUT_OPTIONS=(
    -D ANIMATION=false
    -D VICINITY=2
    -D TERMINATION=false
-   -D MIN_EDGES_PER_VERTEX=5
-   -D MAXEDGESPERVERTEX=10
+   -D MIN_EDGES_PER_VERTEX=10
+   -D MAXEDGESPERVERTEX=15
    -D GHOST_CHILDREN=3
    -D THROTTLE_CONGESTION_THRESHOLD=22
    -D RECVBUFFSIZE=4
@@ -140,5 +140,19 @@ cmake --build build -j 6
 
 echo "Running Dynamic_Breadth_First_Search"
 ./build/Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -increments 10 -shuffle -verify
+
+echo "Done!"
+
+NETWORK="0" # Streaming currently only supported for pure Mesh.
+
+echo "Compiling Streaming_Dynamic_Breadth_First_Search"
+rm -rf build
+
+CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Streaming_Dynamic_Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
+
+cmake --build build -j 6
+
+echo "Running Streaming_Dynamic_Breadth_First_Search"
+./build/Streaming_Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG_Streaming -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -increments 10 -shuffle -verify
 
 echo "Done!"

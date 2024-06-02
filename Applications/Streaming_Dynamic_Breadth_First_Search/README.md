@@ -3,7 +3,7 @@
 
 ## Building Using CMake
 To compile the application, execute the following `cmake` commands to generate the executable.
-> `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true`
+> `$ CC=gcc-13 CXX=g++-13 cmake -S . -B build -D THROTTLE=true -D THROTTLE_CONGESTION_THRESHOLD=45 -D RECVBUFFSIZE=4 -D ACTIONQUEUESIZE=2048 -D DIFFUSE_QUEUE_SIZE=4096 -D MIN_EDGES_PER_VERTEX=30`
 
 > `$ cmake --build build`
 
@@ -21,11 +21,8 @@ To compile the application, execute the following `cmake` commands to generate t
 ## Executing
 Assuming the current directory is `/Applications/Streaming_Dynamic_Breadth_First_Search`
 ### Using Only Mesh/Torus Netowrk
-> `$ ./build/Streaming_Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG -od ./Output -s square -root 0 -m 90000 -hx 64 -hy 64 -hdepth 0 -hb 0 -route 0 -mesh 0 -increments 10 -shuffle -verify`
+> `$ ./build/Streaming_Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG -od ./Output -s square -root 0 -m 90000 -hx 32 -hy 32 -hdepth 0 -hb 0 -route 0 -mesh 0 -increments 10 -shuffle -verify`
 
 - `-mesh 1`: represents the Torus mesh. `0`: is pure mesh. Only pure mesh is supported for now.
 - Make sure to have the output `-od ./Output` directory created before runing the application.
 - `-shuffle`: to toggle shuffling of vertices for better load balancing.
-
-### Using Low-Latency Network (Htree) -- NOT TESTED -- DEPRECATED
-> `$ ./build/Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/20K/streamingEdge_lowOverlap_lowBlockSizeVar_20000_nodes -g DG -od ./Output -s square -root 0 -m 90000 -hx 3 -hy 3 -hdepth 4 -hb 128 -route 0 -mesh 0 -increments 10 -shuffle -verify`
