@@ -241,8 +241,8 @@ output_filename = "Streaming_Dynamic_BFS_" + str(dim_x) + "x" + str(dim_y) + "_v
 # ani.save(output_filename+'.mp4', writer='ffmpeg', dpi=520)
 
 # Save the animation as a GIF file
-# ani.save(output_filename+'.gif', writer='pillow', dpi=45)
+ani.save(output_filename+'.gif', writer='pillow', dpi=60)
 # ani.save(output_filename, writer='pillow', dpi=70, interval=50)
 
 # Display the plot
-plt.show()
+#plt.show()

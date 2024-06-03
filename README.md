@@ -12,13 +12,13 @@ It means that BFS and SSSP actions take $2$ to $3$ cycles of compute, whereas Pa
 
 ## Demo of Message-Driven Execution
 ### Static Graph BFS
-<img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="700"/>
+<img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="600"/>
 
 ### Dynamic Graph BFS
-<img src="Analytics/Animations/Streaming_Dynamic_BFS_32x32_v_1000_egdeSample_SH_ON.gif" alt="Animation" width="700"/>
+<img src="Analytics/Animations/Streaming_Dynamic_BFS_32x32_v_1000_egdeSample_SH_ON.gif" alt="Animation" width="600"/>
 
 ### Legend
-<img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="700"/>
+<img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="600"/>
 
 ## Graph Applications
 The [Applications](/Applications/) directory contains asynchronous message-driven applications written using the CCASimulator. Please browser through each application for build and run instructions.
