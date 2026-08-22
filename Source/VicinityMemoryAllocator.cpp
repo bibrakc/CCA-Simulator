@@ -45,12 +45,20 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
         this->source_cc, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y);
 
     // Skip the Cell if it is not of type ComputeCell or of the source cc id
+    u_int32_t iterations = 0;
+    u_int32_t const max_iterations = cca_simulator.total_compute_cells * 2;
     while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell ||
            this->next_cc_id == source_cc_id) {
         // Get next `next_cc_id`
         this->next_cc_id = Cell::cc_coordinate_to_id(this->generate_random_coordinates(),
                                                       cca_simulator.shape_of_compute_cells,
                                                       this->cca_dim_y);
+        if (++iterations > max_iterations) {
+            std::cerr << "VicinityMemoryAllocator: could not find a valid ComputeCell within "
+                         "vicinity after "
+                      << max_iterations << " attempts\n";
+            exit(EXIT_FAILURE);
+        }
     }
     u_int32_t const cc_available = this->next_cc_id;
     this->next_cc_id = Cell::cc_coordinate_to_id(

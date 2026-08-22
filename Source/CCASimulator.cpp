@@ -285,11 +285,10 @@ CCASimulator::get_object(Address addr_in) const -> void*
         return (this->host_memory.get() + addr_in.addr);
     }
 
-    // dynamic_pointer_cast to go down/across class hierarchy
-    auto compute_cell = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[addr_in.cc_id]);
-    if (!compute_cell) {
-        std::cerr << "Bug! Invalid addr in CCASimulator::get_object\n";
-    }
+    // Objects are always stored on ComputeCells (or SinkCells which derive from ComputeCell)
+    assert(this->CCA_chip[addr_in.cc_id]->type == CellType::compute_cell ||
+           this->CCA_chip[addr_in.cc_id]->type == CellType::sink_cell);
+    auto compute_cell = std::static_pointer_cast<ComputeCell>(this->CCA_chip[addr_in.cc_id]);
     return compute_cell->get_object(addr_in);
 }
 
@@ -338,21 +337,16 @@ CCASimulator::allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
     // Get the ID of the compute cell where this vertex is to be allocated.
     u_int32_t const cc_id = allocator.get_next_available_cc(*this);
 
-    auto cc_ptr = std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
+    auto cc_ptr = std::static_pointer_cast<ComputeCell>(this->CCA_chip[cc_id]);
     return cc_ptr->create_object_in_memory(obj, size_of_obj);
 }
 
 void
 CCASimulator::germinate_action(const Action& action_to_germinate)
 {
-    // dynamic_pointer_cast to go down/across class hierarchy
+    // static_pointer_cast is safe here — allocator only returns ComputeCell IDs
     auto compute_cell =
-        std::dynamic_pointer_cast<ComputeCell>(this->CCA_chip[action_to_germinate.obj_addr.cc_id]);
-
-    if (!compute_cell) {
-        std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
-        exit(EXIT_FAILURE);
-    }
+        std::static_pointer_cast<ComputeCell>(this->CCA_chip[action_to_germinate.obj_addr.cc_id]);
 
     if (!compute_cell->insert_action(action_to_germinate, false)) {
         std::cerr << "germinate_action failed to insert in the action_queue. Fatal. Think about "
@@ -492,6 +486,9 @@ void
 CCASimulator::run_simulation(Address app_terminator)
 {
     this->total_current_run_cycles = 0;
+
+    // Reserve capacity for per-cycle statistics to avoid repeated reallocations
+    this->cca_statistics.active_status.reserve(4096);
 
     bool is_system_active = true;
     bool run_next_cycle = true;
