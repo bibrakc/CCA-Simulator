@@ -290,7 +290,10 @@ class CCASimulator
                 this->cca_statistics.active_status[i].cells_active_percent;
         }
 
-        this->cca_statistics.avg_cells_active_percent /= this->cca_statistics.active_status.size();
+        if (!this->cca_statistics.active_status.empty()) {
+            this->cca_statistics.avg_cells_active_percent /=
+                this->cca_statistics.active_status.size();
+        }
 
         std::cout << "\nAvg active cells percent = "
                   << this->cca_statistics.avg_cells_active_percent << "\n";
