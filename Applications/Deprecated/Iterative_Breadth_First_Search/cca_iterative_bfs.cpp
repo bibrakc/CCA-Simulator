@@ -108,8 +108,8 @@ main(int argc, char** argv) -> int
     // Check if bfs_iterative_deepening_max is not already in the sequence. If not then add it.
     if (iteration_deeepening_space.back() < cmd_args.bfs_iterative_deepening_max) {
         iteration_deeepening_space.push_back(cmd_args.bfs_iterative_deepening_max);
-    } 
-   
+    }
+
     /* std::cout << "iteration_deeepening_space: \n";
     for (auto x : iteration_deeepening_space) {
         std::cout << x << ", ";

@@ -243,9 +243,11 @@ class CCASimulator
         }
 
         os << "\n\tMemory Per Compute Cell: " << this->memory_per_cc / static_cast<double>(1024)
-           << " KB" << "\n\tTotal Chip Memory: "
+           << " KB"
+           << "\n\tTotal Chip Memory: "
            << static_cast<double>(this->total_chip_memory / static_cast<double>(1024 * 1024))
-           << " MB" << "\n\tMesh Type: " << this->primary_network_type
+           << " MB"
+           << "\n\tMesh Type: " << this->primary_network_type
            << "\n\tRouting Policy: " << this->mesh_routing_policy_id << "\n";
 
         if (this->hdepth != 0) {
@@ -276,7 +278,8 @@ class CCASimulator
         this->output_description_in_a_single_line(os);
 
         os << "congestion_policy\n"
-           << "constant_threshold" << "\t" << curently_congested_threshold << "\n";
+           << "constant_threshold"
+           << "\t" << curently_congested_threshold << "\n";
 
         std::string queues_text = "single";
         u_int32_t size_of_diffuse_queue = 0;
@@ -351,8 +354,8 @@ class CCASimulator
         }
     }
 
-    static inline auto get_compute_cell_coordinates(u_int32_t cc_id,
-                                                    u_int32_t dim_y) -> Coordinates;
+    static inline auto get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y)
+        -> Coordinates;
 
     auto cc_id_to_coordinate(u_int32_t cc_id) -> Coordinates;
 
@@ -384,8 +387,9 @@ class CCASimulator
     void reset_terminator(Address terminator_in);
 
     [[nodiscard]] auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
-                                          void* obj,
-                                          size_t size_of_obj) -> std::optional<Address>;
+                                                        void* obj,
+                                                        size_t size_of_obj)
+        -> std::optional<Address>;
 
     void germinate_action(const Action& action_to_germinate);
 

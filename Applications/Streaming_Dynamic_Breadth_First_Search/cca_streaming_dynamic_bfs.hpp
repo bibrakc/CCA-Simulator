@@ -99,9 +99,8 @@ extern CCAFunctionEvent dynamic_bfs_insert_edge_continuation_ghost_allocate_retu
 
 template<typename ghost_type>
 inline auto
-dynamic_bfs_predicate_T(ComputeCell& cc,
-                        const Address addr,
-                        const ActionArgumentType args) -> Closure
+dynamic_bfs_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
+    -> Closure
 {
     cc.apply_CPI(1);
 
@@ -168,9 +167,8 @@ dynamic_bfs_work_func(ComputeCell& cc,
 
 template<typename ghost_type>
 inline auto
-dynamic_bfs_diffuse_predicate_T(ComputeCell& cc,
-                                const Address addr,
-                                const ActionArgumentType args) -> Closure
+dynamic_bfs_diffuse_predicate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
+    -> Closure
 {
     cc.apply_CPI(1);
 
@@ -417,9 +415,8 @@ dynamic_bfs_insert_edge_continuation_ghost_allocate_return_func(ComputeCell& cc,
 
 template<typename ghost_type>
 inline auto
-dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
-                               const Address addr,
-                               const ActionArgumentType args) -> Closure
+dynamic_bfs_insert_edge_work_T(ComputeCell& cc, const Address addr, const ActionArgumentType args)
+    -> Closure
 {
 
     // Get the vertex object.

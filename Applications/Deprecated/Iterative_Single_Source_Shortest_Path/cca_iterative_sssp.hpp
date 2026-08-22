@@ -122,7 +122,8 @@ sssp_iterative_predicate_func(ComputeCell& cc,
     // the distance for the first time.
     if (v->parent.type == addressType::invalid_address) {
         /* std::cout << v->id
-                  << ": in predicate: parent addressType::invalid_address, sssp_args.depth_current: "
+                  << ": in predicate: parent addressType::invalid_address, sssp_args.depth_current:
+           "
                   << sssp_args.depth_current << ", sssp_args.depth_max: " << sssp_args.depth_max
                   << ", sssp_args.src_vertex_id: " << sssp_args.src_vertex_id << "\n"; */
         return 1;

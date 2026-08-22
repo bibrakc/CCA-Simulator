@@ -61,7 +61,8 @@ class ComputeCell : public Cell
     void add_IO_neighbor_compute_cells();
 
     // Returns the offset in memory for this newly created object
-    [[nodiscard]] auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
+    [[nodiscard]] auto create_object_in_memory(void* obj, size_t size_of_obj)
+        -> std::optional<Address>;
 
     [[nodiscard]] auto insert_action(const Action& action, bool priority) -> bool;
 
@@ -91,9 +92,8 @@ class ComputeCell : public Cell
     auto send_operon(const Operon& operon_in) -> Task;
 
     // Construct an Operon
-    static auto construct_operon(u_int32_t src_cc_id,
-                                 u_int32_t dst_cc_id,
-                                 const Action& action) -> Operon;
+    static auto construct_operon(u_int32_t src_cc_id, u_int32_t dst_cc_id, const Action& action)
+        -> Operon;
 
     void diffuse(const Action& action);
 
@@ -276,7 +276,6 @@ class ComputeCell : public Cell
         } else {
             this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
         }
-
     }
 
     ~ComputeCell() override = default;

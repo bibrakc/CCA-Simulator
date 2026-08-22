@@ -77,8 +77,8 @@ struct Routing
             if (!use_mesh_network && src_dst_are_on_different_sink_cells) {
                 assert(current_compute_cell->sink_cell != std::nullopt);
                 return Cell::cc_coordinate_to_id(current_compute_cell->sink_cell.value(),
-                                                  current_compute_cell->shape,
-                                                  current_compute_cell->dim_y);
+                                                 current_compute_cell->shape,
+                                                 current_compute_cell->dim_y);
             }
             return dst_cc_id;
 
@@ -127,8 +127,8 @@ struct Routing
 
             // Route it in second layer netowrk
             return Cell::cc_coordinate_to_id(current_compute_cell->sink_cell.value(),
-                                              current_compute_cell->shape,
-                                              current_compute_cell->dim_y);
+                                             current_compute_cell->shape,
+                                             current_compute_cell->dim_y);
         } else {
             // This means that SinkCell returns std::nullptr, which means it will send the
             // operon  to the low latency Htree network.s
