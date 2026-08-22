@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSTANTS_HPP
 
 #include <stdint.h>
+#include <string_view>
 
 // For older gcc compiler or something.
 #ifndef u_int32_t
@@ -41,9 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // ANSI escape codes for color to be used in std::cout statements, especially verification.
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_GREEN "\x1b[32m"
-#define ANSI_COLOR_RESET "\x1b[0m"
+inline constexpr std::string_view ANSI_COLOR_RED = "\x1b[31m";
+inline constexpr std::string_view ANSI_COLOR_GREEN = "\x1b[32m";
+inline constexpr std::string_view ANSI_COLOR_RESET = "\x1b[0m";
 
 // Set it to true/false
 inline constexpr bool debug_code = false;

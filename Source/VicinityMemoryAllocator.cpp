@@ -41,19 +41,19 @@ std::mutex VicinityMemoryAllocator::rand_mutex;
 auto
 VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t
 {
-    u_int32_t source_cc_id = Cell::cc_cooridinate_to_id(
+    u_int32_t source_cc_id = Cell::cc_coordinate_to_id(
         this->source_cc, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y);
 
     // Skip the Cell if it is not of type ComputeCell or of the source cc id
     while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell ||
            this->next_cc_id == source_cc_id) {
         // Get next `next_cc_id`
-        this->next_cc_id = Cell::cc_cooridinate_to_id(this->generate_random_coordinates(),
+        this->next_cc_id = Cell::cc_coordinate_to_id(this->generate_random_coordinates(),
                                                       cca_simulator.shape_of_compute_cells,
                                                       this->cca_dim_y);
     }
     u_int32_t const cc_available = this->next_cc_id;
-    this->next_cc_id = Cell::cc_cooridinate_to_id(
+    this->next_cc_id = Cell::cc_coordinate_to_id(
         this->generate_random_coordinates(), cca_simulator.shape_of_compute_cells, this->cca_dim_y);
 
     /*
@@ -63,7 +63,7 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
       // rows
       auto source_rows = static_cast<int>(this->source_cc.second);
 
-      auto [random_x, random_y] = Cell::cc_id_to_cooridinate(
+      auto [random_x, random_y] = Cell::cc_id_to_coordinate(
           cc_available, cca_simulator.shape_of_compute_cells, this->cca_dim_y);
       std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
                 << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"
@@ -81,7 +81,7 @@ VicinityMemoryAllocator::get_next_available_cc(ComputeCell& cc) -> u_int32_t
 
     u_int32_t const cc_available = this->next_cc_id;
     this->next_cc_id =
-        Cell::cc_cooridinate_to_id(this->generate_random_coordinates(), cc.shape, this->cca_dim_y);
+        Cell::cc_coordinate_to_id(this->generate_random_coordinates(), cc.shape, this->cca_dim_y);
 
     return cc_available;
 }

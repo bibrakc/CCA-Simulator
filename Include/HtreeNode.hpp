@@ -65,7 +65,7 @@ struct HtreeNode
     void run_a_communication_cylce();
 
     int id;
-    Coordinates cooridinates;
+    Coordinates coordinates;
 
     std::shared_ptr<HtreeNode> in_first;  // up or left
     std::shared_ptr<HtreeNode> in_second; // down or right
@@ -114,8 +114,8 @@ struct HtreeNode
     HtreeNode(int index, int x, int y, int in_bandhwidth_in, int out_bandhwidth_in)
     {
         this->id = index;
-        this->cooridinates.first = x;
-        this->cooridinates.second = y;
+        this->coordinates.first = x;
+        this->coordinates.second = y;
 
         this->in_first = nullptr;
         this->in_second = nullptr;

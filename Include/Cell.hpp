@@ -140,7 +140,7 @@ struct ComputeCellStatistics
     // Print all the stats in a single line
     void output_results_in_a_single_line(std::ostream& os,
                                          u_int32_t cc_id,
-                                         Coordinates cc_cooridinates);
+                                         Coordinates cc_coordinates);
 
     // Overloading <<
     friend auto operator<<(std::ostream& os, const ComputeCellStatistics& stat) -> std::ostream&
@@ -231,7 +231,7 @@ class Cell
 
     // Coordinates of this Cell in the CCA chip. It depends on the Chip dinemsions and
     // shapes of Cells.
-    Coordinates cooridates;
+    Coordinates coordinates;
 
     // Shape of the Cell
     computeCellShape shape;
@@ -308,19 +308,19 @@ class Cell
 
     static auto get_number_of_neighbors(computeCellShape) -> u_int32_t;
 
-    static auto cc_id_to_cooridinate(u_int32_t cc_id,
+    static auto cc_id_to_coordinate(u_int32_t cc_id,
                                      computeCellShape shape,
                                      u_int32_t dim_y) -> Coordinates;
 
-    static auto cc_cooridinate_to_id(Coordinates cc_cooridinate,
+    static auto cc_coordinate_to_id(Coordinates cc_coordinate,
                                      computeCellShape shape_,
                                      u_int32_t dim_y) -> u_int32_t;
 
     inline auto cc_exists(SignedCoordinates cc_coordinate) -> bool;
 
-    auto should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool;
+    auto should_I_use_mesh(Coordinates src_cc_coordinate, Coordinates dst_cc_coordinate) -> bool;
 
-    auto check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool;
+    auto check_cut_off_distance(Coordinates dst_cc_coordinate) -> bool;
 
     void add_neighbor(std::optional<std::pair<u_int32_t, Coordinates>> neighbor_compute_cell);
 
@@ -385,8 +385,8 @@ class Cell
 
     friend auto operator<<(std::ostream& os, const Cell& cc) -> std::ostream&
     {
-        os << "CC Id: " << cc.id << ", CC Coordinates: (" << cc.cooridates.first << ", "
-           << cc.cooridates.second << ")\n";
+        os << "CC Id: " << cc.id << ", CC Coordinates: (" << cc.coordinates.first << ", "
+           << cc.coordinates.second << ")\n";
 
         os << "\t Neighbors: ";
         for (auto& neighbor : cc.neighbor_compute_cells) {

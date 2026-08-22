@@ -204,13 +204,13 @@ class ComputeCell : public Cell
         this->hy = hy_in;
         this->hdepth = hdepth_in;
         if (this->type != CellType::io_cell) {
-            this->cooridates =
-                ComputeCell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
+            this->coordinates =
+                ComputeCell::cc_id_to_coordinate(this->id, this->shape, this->dim_y);
         } else {
             const u_int32_t total_cells = (this->dim_x * this->dim_y) + 1;
             u_int32_t id_x = (this->id - total_cells) % this->dim_x;
             u_int32_t id_y = (this->id - total_cells) / this->dim_x;
-            this->cooridates = Coordinates(id_x, id_y); // This is in the IO Channel.
+            this->coordinates = Coordinates(id_x, id_y); // This is in the IO Channel.
         }
 
         this->sink_cell = this->get_cc_htree_sink_cell();

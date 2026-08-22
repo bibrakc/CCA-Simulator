@@ -145,7 +145,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
-    auto insert_edge_recurssively(CCASimulator& cca_simulator,
+    auto insert_edge_recursively(CCASimulator& cca_simulator,
                                   u_int32_t src_vertex_cc_id,
                                   Address_T dst_vertex_addr,
                                   u_int32_t edge_weight,
@@ -176,14 +176,14 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                     static_cast<ghost_type_level_1*>(cca_simulator.get_object(
                         this->ghost_vertices[this->next_insertion_in_ghost_iterator].value()));
 
-                success = ghost_vertex_accessor->insert_edge_recurssively(
+                success = ghost_vertex_accessor->insert_edge_recursively(
                     cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight, RPVO_level + 1);
             } else {
                 auto* ghost_vertex_accessor =
                     static_cast<ghost_type_level_greater_than_1*>(cca_simulator.get_object(
                         this->ghost_vertices[this->next_insertion_in_ghost_iterator].value()));
 
-                success = ghost_vertex_accessor->insert_edge_recurssively(
+                success = ghost_vertex_accessor->insert_edge_recursively(
                     cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight, RPVO_level + 1);
             }
 
@@ -238,7 +238,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
 
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
-    auto insert_edge_recurssively(CCASimulator& cca_simulator,
+    auto insert_edge_recursively(CCASimulator& cca_simulator,
                                   u_int32_t src_vertex_cc_id,
                                   Address_T this_vertex_addr_in,
                                   Address_T dst_vertex_addr,
@@ -248,7 +248,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                                   CCAFunctionEvent continuation,
                                   u_int32_t RPVO_level) -> bool
     {
-        /* std::cout << "insert_edge_recurssively: this_vertex_addr_in: " << this_vertex_addr_in
+        /* std::cout << "insert_edge_recursively: this_vertex_addr_in: " << this_vertex_addr_in
                   << ", dst_vertex_addr: " << dst_vertex_addr << "\n"; */
 
         if (this->number_of_edges == edgelist_size) {
@@ -284,7 +284,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                     static_cast<ghost_type_level_1*>(cca_simulator.get_object(ghost_vertex_addr));
 
                 success =
-                    ghost_vertex_accessor->insert_edge_recurssively(cca_simulator,
+                    ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
                                                                     source_vertex_cc_id_to_use,
                                                                     ghost_vertex_addr,
                                                                     dst_vertex_addr,
@@ -298,7 +298,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                     cca_simulator.get_object(ghost_vertex_addr));
 
                 success =
-                    ghost_vertex_accessor->insert_edge_recurssively(cca_simulator,
+                    ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
                                                                     source_vertex_cc_id_to_use,
                                                                     ghost_vertex_addr,
                                                                     dst_vertex_addr,
@@ -363,7 +363,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     {
         assert(!this->is_ghost_vertex);
 
-        return this->insert_edge_recurssively(
+        return this->insert_edge_recursively(
             cca_simulator, src_vertex_cc_id, dst_vertex_addr, edge_weight, 0);
     }
 
@@ -379,7 +379,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     {
         assert(!this->is_ghost_vertex);
 
-        return this->insert_edge_recurssively(cca_simulator,
+        return this->insert_edge_recursively(cca_simulator,
                                               src_vertex_cc_id,
                                               src_vertex_addr,
                                               dst_vertex_addr,
@@ -418,7 +418,7 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             }
 
             this->ghost_vertex_allocator = VicinityMemoryAllocator(
-                Cell::cc_id_to_cooridinate(
+                Cell::cc_id_to_coordinate(
                     source_cc_id, cca_simulator.shape_of_compute_cells, cca_simulator.dim_y),
                 vicinity_rows,
                 vicinity_cols,

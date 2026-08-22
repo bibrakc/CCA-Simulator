@@ -65,7 +65,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     if (!this->is_compute_cell_active()) {
         return;
     }
-    /* std::cout << this->id << ": Sink Cell " << this->cooridates << "  prepare_a_cycle : " <<
+    /* std::cout << this->id << ": Sink Cell " << this->coordinates << "  prepare_a_cycle : " <<
        *this
               << "\n"; */
 
@@ -125,8 +125,8 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             this->get_route_towards_cc_id(operon.first.src_cc_id,
                                                           routing_cell_id.value());
 
-                        u_int32_t const cc_column = this->cooridates.first;
-                        u_int32_t const cc_row = this->cooridates.second;
+                        u_int32_t const cc_column = this->coordinates.first;
+                        u_int32_t const cc_row = this->coordinates.second;
                         bool const is_cell_top_border = cc_row == 0;
                         bool const is_cell_bottom_border = cc_row == this->dim_x - 1;
 
@@ -171,7 +171,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                     } else {
 
                         Coordinates const dst_cc_coordinates =
-                            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+                            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
                         // Send to the second layer Htree network using the sink hole
                         // First form a CooridiantedOperon to send
                         CoordinatedOperon const coordinated_operon(dst_cc_coordinates, operon);
@@ -413,7 +413,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                             this->send_channel_per_neighbor_contention_count[i].increment();
                             left_over_operons.push_back(operon);
 
-                            /* std::cout << "SC : " << this->cooridates << " Not able to push on "
+                            /* std::cout << "SC : " << this->coordinates << " Not able to push on "
                                       << *CCA_chip[neighbor_id_] << " i = " << i << " distance class
                                = "
                                       << this->send_channel_per_neighbor_current_distance_class[i]

@@ -104,9 +104,9 @@ class Graph
     std::shared_ptr<VertexType[]> vertices;
 
     // Store the CCA address of vertices in a map so as to retrieve easily for edge insertion and
-    // other tasks like printing for debuging and solution checking.
-    // TODO: Why is this a map? It can easily be a vector.
-    std::map<u_int32_t, Address> vertex_addresses;
+    // Maps vertex IDs to their allocated addresses on the CCA chip. Used for edge insertion and
+    // other tasks like printing for debugging and solution checking.
+    std::vector<Address> vertex_addresses;
 
     // Holds information about the inbound degree for rhizomes and their addresses.
     // TODO: Investigate: strange that it would occasionally throw memory errors in destructor when
@@ -319,6 +319,10 @@ class Graph
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
+
+        // Resize vertex_addresses to hold all vertex addresses by ID
+        this->vertex_addresses.resize(this->total_vertices);
+
         // std::cout << "vertex_.local_edgelist_size: " << vertex_.local_edgelist_size << "\n";
         for (int i = 0; i < vertex_ids.size(); i++) {
             int current_vertex_id = vertex_ids[i];
@@ -344,7 +348,7 @@ class Graph
                 exit(EXIT_FAILURE);
             }
 
-            // Insert into the vertex_addresses map
+            // Store the vertex address
             this->vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
     }
@@ -352,17 +356,14 @@ class Graph
     template<class VertexTypeOfAddress>
     void print_vertices(CCASimulator& cca_simulator)
     {
-        for (const auto& vertex_addr_pair : this->vertex_addresses) {
-            /* if (vertex_addr_pair.first > 0) {
-                break;
-            } */
+        for (size_t i = 0; i < this->vertex_addresses.size(); i++) {
             auto* vertex = static_cast<VertexTypeOfAddress*>(
-                cca_simulator.get_object(vertex_addr_pair.second));
+                cca_simulator.get_object(this->vertex_addresses[i]));
             std::cout << "v id: " << vertex->id
                       << ", local_edgelist_size: " << vertex->local_edgelist_size
-                      << ", cc id: " << vertex_addr_pair.second.cc_id
-                      << ", addrs: " << vertex_addr_pair.second << "ptr is : "
-                      << static_cast<int*>(cca_simulator.get_object(vertex_addr_pair.second))
+                      << ", cc id: " << this->vertex_addresses[i].cc_id
+                      << ", addrs: " << this->vertex_addresses[i] << "ptr is : "
+                      << static_cast<int*>(cca_simulator.get_object(this->vertex_addresses[i]))
                       << "\n";
         }
     }
@@ -442,6 +443,12 @@ class Graph
         // Putting `vertex_` in a scope so as to not have it in the for loop and avoid calling the
         // constructor everytime.
         VertexTypeOfAddress vertex_(0, this->total_vertices);
+
+        // Resize vertex_addresses to hold all vertex addresses by ID
+        if (this->vertex_addresses.size() < static_cast<size_t>(this->total_vertices)) {
+            this->vertex_addresses.resize(this->total_vertices);
+        }
+
         for (int i = 0; i < vertex_ids.size(); i++) {
             int current_vertex_id = vertex_ids[i];
 
@@ -466,7 +473,7 @@ class Graph
                 exit(EXIT_FAILURE);
             }
 
-            // Insert into the vertex_addresses map
+            // Store the vertex address
             this->vertex_addresses[current_vertex_id] = vertex_addr.value();
         }
 
@@ -850,7 +857,7 @@ class Graph
 
         std::cout << "The graph: " << input_graph_path
                   << " has total_vertices: " << this->total_vertices << " with "
-                  << this->total_edges << " egdes." << std::endl;
+                  << this->total_edges << " edges." << std::endl;
 
         // this->vertices = std::make_shared<VertexType[]>(this->total_vertices);
         std::shared_ptr<VertexType[]> const vertices_(new VertexType[this->total_vertices],

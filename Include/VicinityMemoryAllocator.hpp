@@ -78,7 +78,7 @@ class VicinityMemoryAllocator : public MemoryAllocator
         assert(this->spread_cols <= this->cca_dim_x / 2); */
 
         // Initialize `next_cc_id`
-        this->next_cc_id = Cell::cc_cooridinate_to_id(
+        this->next_cc_id = Cell::cc_coordinate_to_id(
             this->generate_random_coordinates(), shape_of_cc, this->cca_dim_y);
     }
 

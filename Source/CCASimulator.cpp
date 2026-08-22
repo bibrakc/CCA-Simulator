@@ -60,17 +60,17 @@ CCASimulator::get_compute_cell_coordinates(u_int32_t cc_id, u_int32_t dim_y) -> 
 }
 
 auto
-CCASimulator::cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates
+CCASimulator::cc_id_to_coordinate(u_int32_t cc_id) -> Coordinates
 {
-    return ComputeCell::cc_id_to_cooridinate(cc_id, this->shape_of_compute_cells, this->dim_y);
+    return ComputeCell::cc_id_to_coordinate(cc_id, this->shape_of_compute_cells, this->dim_y);
 }
 
 auto
-CCASimulator::cc_cooridinate_to_id(Coordinates cc_cooridinate) -> u_int32_t
+CCASimulator::cc_coordinate_to_id(Coordinates cc_coordinate) -> u_int32_t
 {
 
-    return ComputeCell::cc_cooridinate_to_id(
-        cc_cooridinate, this->shape_of_compute_cells, this->dim_y);
+    return ComputeCell::cc_coordinate_to_id(
+        cc_coordinate, this->shape_of_compute_cells, this->dim_y);
 }
 
 // Create the chip of type square cells with Htree. It includes creating the cells and initializing
@@ -281,7 +281,7 @@ auto
 CCASimulator::get_object(Address addr_in) const -> void*
 {
 
-    if (addr_in.type == adressType::host_address) {
+    if (addr_in.type == addressType::host_address) {
         return (this->host_memory.get() + addr_in.addr);
     }
 
@@ -303,7 +303,7 @@ CCASimulator::create_terminator() -> std::optional<Address>
 
     CCATerminator host_terminator;
     u_int32_t const obj_memory_addr_offset = get_host_memory_curr_ptr_offset();
-    Address host_terminator_addr(this->host_id, obj_memory_addr_offset, adressType::host_address);
+    Address host_terminator_addr(this->host_id, obj_memory_addr_offset, addressType::host_address);
 
     host_terminator.terminator.my_object = host_terminator_addr;
 
@@ -324,7 +324,7 @@ void
 CCASimulator::reset_terminator(Address terminator_in)
 {
     // For now this is only implemented for host type terminators.
-    assert(terminator_in.type == adressType::host_address);
+    assert(terminator_in.type == addressType::host_address);
 
     auto* terminator_obj = static_cast<CCATerminator*>(this->get_object(terminator_in));
     terminator_obj->terminator.reset();
@@ -423,7 +423,7 @@ CCASimulator::print_statistics(std::ofstream& output_file)
     // Output statistics for each compute cell
     ComputeCellStatistics::generate_label(output_file);
     for (auto& cc : this->CCA_chip) {
-        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->cooridates);
+        cc->statistics.output_results_in_a_single_line(output_file, cc->id, cc->coordinates);
         if (&cc != &this->CCA_chip.back()) {
             output_file << "\n";
         }
@@ -636,7 +636,7 @@ CCASimulator::run_simulation(Address app_terminator)
             std::cout << "End of current run cycle # " << this->total_current_run_cycles
                       << ", Total cycles: " << this->total_cycles
                       << ", CCs Active: " << percent_CCs_active
-                      << "%, htree Active: " << percent_htree_active << "%" << std::endl;
+                      << "%, htree Active: " << percent_htree_active << "%\n";
         }
         this->cca_statistics.active_status.emplace_back(percent_CCs_active, percent_htree_active);
         this->total_cycles++;

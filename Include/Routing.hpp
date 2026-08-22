@@ -60,7 +60,7 @@ struct Routing
             std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
         assert(current_compute_cell != nullptr);
 
-        Coordinates const dst_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const dst_cc_coordinates = Cell::cc_id_to_coordinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
         bool const use_mesh_network =
@@ -78,7 +78,7 @@ struct Routing
             // route it in second layer network
             if (!use_mesh_network && src_dst_are_on_different_sink_cells) {
                 assert(current_compute_cell->sink_cell != std::nullopt);
-                return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
+                return Cell::cc_coordinate_to_id(current_compute_cell->sink_cell.value(),
                                                   current_compute_cell->shape,
                                                   current_compute_cell->dim_y);
             }
@@ -112,10 +112,10 @@ struct Routing
             std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
         assert(current_compute_cell != nullptr);
 
-        Coordinates const src_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const src_cc_coordinates = Cell::cc_id_to_coordinate(
             src_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
-        Coordinates const dst_cc_coordinates = Cell::cc_id_to_cooridinate(
+        Coordinates const dst_cc_coordinates = Cell::cc_id_to_coordinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
 
         bool const use_mesh_network =
@@ -128,7 +128,7 @@ struct Routing
         if constexpr (std::is_same_v<SomeCellType, ComputeCell>) {
 
             // Route it in second layer netowrk
-            return Cell::cc_cooridinate_to_id(current_compute_cell->sink_cell.value(),
+            return Cell::cc_coordinate_to_id(current_compute_cell->sink_cell.value(),
                                               current_compute_cell->shape,
                                               current_compute_cell->dim_y);
         } else {
