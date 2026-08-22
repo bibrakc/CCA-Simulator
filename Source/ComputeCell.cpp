@@ -218,10 +218,10 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
 
     // Increament the deficit for termination detection if actionType !=
     // terminator_acknowledgement_action
-    actionType const action_type = operon_in.second.action_type;
+    actionType const action_type = operon_in.action.action_type;
     if (action_type == actionType::application_action ||
         action_type == actionType::germinate_action) {
-        Address const addr = operon_in.second.origin_addr;
+        Address const addr = operon_in.action.origin_addr;
         auto* obj = static_cast<Object*>(this->get_object(addr));
 
         obj->terminator.deficit++;
@@ -251,7 +251,7 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
             // Debug prints
             if constexpr (debug_code) {
                 std::cout << "Sending operon from cc: " << this->id
-                          << " to cc: " << operon_in.first.dst_cc_id << "\n";
+                          << " to cc: " << operon_in.routing.dst_cc_id << "\n";
             }
 
             // Actual work of sending
@@ -264,8 +264,7 @@ ComputeCell::construct_operon(const u_int32_t src_cc_id,
                               const u_int32_t dst_cc_id,
                               const Action& action) -> Operon
 {
-    return std::pair<SourceDestinationPair, Action>(SourceDestinationPair(src_cc_id, dst_cc_id),
-                                                    action);
+    return Operon(SourceDestinationPair(src_cc_id, dst_cc_id), action);
 }
 
 void
@@ -623,13 +622,13 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         continue;
                     }
 
-                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+                    u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
                     // Bug check: Make sure the destination is not a Sink Cell
                     assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
 
                     // Check if this operon is destined for this compute cell
                     if (this->id == dst_cc_id) {
-                        if (this->insert_action(operon.second, false)) {
+                        if (this->insert_action(operon.action, false)) {
 
                             operon_was_inserted_or_sent = true;
                         } else {
@@ -639,7 +638,7 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
 
                     } else {
-                        // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                        // if (operon.routing.src_cc_id == 43 && operon.routing.dst_cc_id == 125) {
                         /*  std::cout << "\n";
 
                          std::cout
@@ -647,12 +646,12 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                              << ", with id: " << this->id << "\n";
                          std::cout << "operon dst: "
                                    << this->cc_id_to_coordinate(
-                                          operon.first.dst_cc_id, this->shape, this->dim_y)
-                                   << ", with id: " << operon.first.dst_cc_id << "\n";
+                                          operon.routing.dst_cc_id, this->shape, this->dim_y)
+                                   << ", with id: " << operon.routing.dst_cc_id << "\n";
                          std::cout << "operon src: "
                                    << this->cc_id_to_coordinate(
-                                          operon.first.src_cc_id, this->shape, this->dim_y)
-                                   << ", with id: " << operon.first.src_cc_id << "\n"; */
+                                          operon.routing.src_cc_id, this->shape, this->dim_y)
+                                   << ", with id: " << operon.routing.src_cc_id << "\n"; */
                         //}
 
                         std::vector<u_int32_t> channels_to_send;
@@ -677,10 +676,10 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                     CCA_chip, operon, this->id, this->mesh_routing_policy);
 
                             channels_to_send = this->get_route_towards_cc_id(
-                                operon.first.src_cc_id, routing_cell_id.value());
+                                operon.routing.src_cc_id, routing_cell_id.value());
                         }
 
-                        // if (operon.first.src_cc_id == 43 && operon.first.dst_cc_id == 125) {
+                        // if (operon.routing.src_cc_id == 43 && operon.routing.dst_cc_id == 125) {
                         /*  std::cout << "\n";
                          std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
                         //}
@@ -920,7 +919,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
     if (this->staging_operon_from_logic) {
 
         Operon operon_ = this->staging_operon_from_logic.value();
-        u_int32_t const dst_cc_id = operon_.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon_.routing.dst_cc_id;
 
         // Bug check: Make sure the destination is not a Sink Cell
         assert(CCA_chip[dst_cc_id]->type != CellType::sink_cell);
@@ -928,7 +927,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
         // Check if this operon is destined for this compute cell
         // Meaning both src and dst vertices are on the same compute cell?
         if (this->id == dst_cc_id) {
-            if (!this->insert_action(operon_.second, true)) {
+            if (!this->insert_action(operon_.action, true)) {
                 // action_queue is full. Therefore, just return without doing anything. Contended.
                 return;
             }
@@ -958,7 +957,7 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                 // to pass this operon to. The returned value is the index [0...number of neighbors)
                 // coresponding clockwise the channel id of the physical shape.
                 channels_to_send =
-                    this->get_route_towards_cc_id(operon_.first.src_cc_id, routing_cell_id.value());
+                    this->get_route_towards_cc_id(operon_.routing.src_cc_id, routing_cell_id.value());
             }
 
             // Always use the default virtual channel 0 as this is the begining of the journey for
@@ -1010,7 +1009,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
                     std::vector<Operon> left_over_operons;
                     for (Operon const& operon : send_operons) {
-                        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+                        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
                         // Check if this operon is destined for this compute cell
                         assert(this->id != dst_cc_id);

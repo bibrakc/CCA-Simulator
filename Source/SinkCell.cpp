@@ -105,7 +105,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         continue;
                     }
 
-                    u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+                    u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
                     // Check if this operon is destined for this compute cell
                     // Bug check with assert: A SinkCell cannot invoke an action
@@ -122,7 +122,7 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         // Pass it on within the mesh network since the destination is close by.
 
                         std::vector<u_int32_t> const channels_to_send =
-                            this->get_route_towards_cc_id(operon.first.src_cc_id,
+                            this->get_route_towards_cc_id(operon.routing.src_cc_id,
                                                           routing_cell_id.value());
 
                         u_int32_t const cc_column = this->coordinates.first;
@@ -214,18 +214,18 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     std::vector<Operon> left_over_operons;
     for (Operon operon : recv_operons) {
 
-        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
         if (this->mesh_routing_policy == 1) {
-            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.first.src_cc_id
+            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.routing.src_cc_id
                         << "\n"; */
-            operon.first.src_cc_id = this->id;
+            operon.routing.src_cc_id = this->id;
         }
 
         std::vector<u_int32_t> const channels_to_send =
-            this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
+            this->get_route_towards_cc_id(operon.routing.src_cc_id, dst_cc_id);
 
         // Always use the default virtual channel 0 as this is the begining of the journey for
         // this operon when it came out of the low latency network h-tree. It shouldn't matter for
@@ -304,18 +304,18 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CC
     std::vector<Operon> left_over_operons;
     for (Operon operon : recv_operons) {
 
-        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
         if (this->mesh_routing_policy == 1) {
-            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.first.src_cc_id
+            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.routing.src_cc_id
                         << "\n"; */
-            operon.first.src_cc_id = this->id;
+            operon.routing.src_cc_id = this->id;
         }
 
         std::vector<u_int32_t> const channels_to_send =
-            this->get_route_towards_cc_id(operon.first.src_cc_id, dst_cc_id);
+            this->get_route_towards_cc_id(operon.routing.src_cc_id, dst_cc_id);
 
         // Always use the default virtual channel 0 as this is the begining of the journey for
         // this operon when it came out of the low latency network h-tree. It shouldn't matter for
@@ -397,7 +397,7 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     std::vector<Operon> left_over_operons;
                     for (Operon const& operon : send_operons) {
 
-                        u_int32_t const dst_cc_id = operon.first.dst_cc_id;
+                        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
                         // Check if this operon is destined for this compute/sink cell. If it does
                         // then it is a bug

@@ -287,7 +287,7 @@ HtreeNode::run_a_communication_cylce()
         for (Operon const& operon : send_operons) {
 
             /* std::cout
-                << this->id << ": HtreeNode. Operon for cc: " << operon.first.dst_cc_id
+                << this->id << ": HtreeNode. Operon for cc: " << operon.second.routing.dst_cc_id
                 << " will be sent to sink cell depending on its recv queue. Coord of sink cell: \n";
              */
 
