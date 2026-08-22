@@ -194,7 +194,7 @@ ComputeCell::insert_action(const Action& action, bool priority)
     } else {
         return false;
         // std::cerr << "action_queue full. Fatal!" << std::endl;
-        // exit(0);
+        // exit(EXIT_FAILURE);
     }
 }
 
@@ -233,7 +233,7 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
                           << " staging_operon_from_logic buffer is full! The program shouldn't "
                              "have come "
                              "to send_operon\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             // Debug prints
@@ -350,7 +350,7 @@ ComputeCell::execute_action(void* function_events)
                                diffuse_predicate.second == nullptr) {
                         if (!this->diffuse_queue.push(action)) { // diffuse body is lazy evaluated.
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
-                            exit(0);
+                            exit(EXIT_FAILURE);
                         }
                         this->statistics.diffusions_created++;
                     } else { // diffuse predicate including body is lazy evaluated.
@@ -360,7 +360,7 @@ ComputeCell::execute_action(void* function_events)
 
                         if (!this->diffuse_queue.push(action)) {
                             std::cerr << "diffuse_queue full. Can not push. Fatal." << std::endl;
-                            exit(0);
+                            exit(EXIT_FAILURE);
                         }
                         this->statistics.diffusions_created++;
                     }
@@ -405,14 +405,14 @@ ComputeCell::execute_action(void* function_events)
             this->statistics.actions_acknowledgement_invoked++;
         } else {
             std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
         // Increament the counter for actions that were invoked
         this->statistics.actions_invoked++;
         return;
     }
     std::cerr << "Bug! Cannot execute action as the action_queue is empty! It shouldn't be here\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void
@@ -477,7 +477,7 @@ ComputeCell::execute_diffusion_phase(void* function_events)
             }
         } else {
             std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
         // Increament the counter for actions that were invoked
         // this->statistics.actions_invoked++;
@@ -486,7 +486,7 @@ ComputeCell::execute_diffusion_phase(void* function_events)
     }
     std::cerr << "Bug! Cannot execute diffuse phase as the diffuse_queue is empty! It shouldn't be "
                  "here\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void
@@ -530,7 +530,7 @@ ComputeCell::filter_diffusion(void* function_events)
                 //  put it back into the queue
                 if (!this->diffuse_queue.push(action)) {
                     std::cerr << "diffuse_queue full. How is this possible? Bug!" << std::endl;
-                    exit(0);
+                    exit(EXIT_FAILURE);
                 }
 
             } else {
@@ -552,7 +552,7 @@ ComputeCell::filter_diffusion(void* function_events)
             }
         } else {
             std::cerr << "Bug! Unsupported action type. It shouldn't be here\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
         // Increament the counter for actions that were invoked
         // this->statistics.actions_invoked++;
@@ -561,7 +561,7 @@ ComputeCell::filter_diffusion(void* function_events)
     }
     std::cerr << "Bug! Cannot execute diffuse phase as the diffuse_queue is empty! It shouldn't be "
                  "here\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void

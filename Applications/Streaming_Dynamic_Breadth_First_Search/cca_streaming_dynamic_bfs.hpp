@@ -307,7 +307,7 @@ allocate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -
     if (ghost_vertex_addr == std::nullopt) {
         std::cerr << "Error: Not able to allocate ghost vertex dst: << " //<< dst_vertex_addr
                   << "\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     // cc.apply_CPI(1);
@@ -440,7 +440,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
                   << ", w: " << insert_edge_args.edge_weight << std::endl;
         std::cout << "551 is ptr: " << static_cast<int*>(cc.get_object(addr)) << "\n";
         std::cerr << "Fatal: Cannot insert edge as the vertex is out of edgelist" << std::endl;
-        exit(0); */
+        exit(EXIT_FAILURE); */
 
         if (v->ghost_vertices[v->next_insertion_in_ghost_iterator].is_empty()) {
 
@@ -451,7 +451,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
             if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
                     Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
                 std::cerr << "Error: Not able to enqueue in ghost future \n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             v->ghost_vertices[v->next_insertion_in_ghost_iterator].set_state(
@@ -492,7 +492,7 @@ dynamic_bfs_insert_edge_work_T(ComputeCell& cc,
             if (!v->ghost_vertices[v->next_insertion_in_ghost_iterator].enqueue(
                     Closure(dynamic_bfs_insert_edge_continuation_ghost_allocate_return, args))) {
                 std::cerr << "Error: Not able to enqueue in ghost future \n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
         } else { // The ghost exists
@@ -802,11 +802,11 @@ struct BFSCommandLineArguments
         if (hdepth != 0) {
             if (!(hx % 2)) {
                 std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             if (!(hy % 2)) {
                 std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -818,7 +818,7 @@ struct BFSCommandLineArguments
             shape_of_compute_cells = computeCellShape::square;
         } else {
             std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
 };
@@ -853,13 +853,13 @@ verify_results(const BFSCommandLineArguments& cmd_args,
         std::getline(file, line);
         if (!(std::istringstream(line) >> root_in_file)) {
             std::cerr << "Invalid root (source) value.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         if (root_in_file != cmd_args.root_vertex) {
             std::cerr << "root vertex in file and root vertex used to run the program miss match. "
                          "Please use the same root in both for verification. Failed!\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         u_int32_t node_id;

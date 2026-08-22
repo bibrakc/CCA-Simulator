@@ -370,11 +370,11 @@ struct BFSIterativeCommandLineArguments
         if (hdepth != 0) {
             if (!(hx % 2)) {
                 std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             if (!(hy % 2)) {
                 std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -386,7 +386,7 @@ struct BFSIterativeCommandLineArguments
             shape_of_compute_cells = computeCellShape::square;
         } else {
             std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
 };
@@ -418,13 +418,13 @@ verify_results(const BFSIterativeCommandLineArguments& cmd_args,
         std::getline(file, line);
         if (!(std::istringstream(line) >> root_in_file)) {
             std::cerr << "Invalid root (source) value.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         if (root_in_file != cmd_args.root_vertex) {
             std::cerr << "root vertex in file and root vertex used to run the program miss match. "
                          "Please use the same root in both for verification. Failed!\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         u_int32_t node_id;

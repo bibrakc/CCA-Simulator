@@ -177,7 +177,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         if (ghost_vertex_addr == std::nullopt) {
             std::cerr << "Error: Not able to allocate ghost vertex dst: << " //<< dst_vertex_addr
                       << "\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         this->ghost_vertices[this->next_insertion_in_ghost_iterator] = ghost_vertex_addr;
@@ -307,7 +307,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     {
         std::cerr << "This is not tested RhizomeRecursiveParallelVertex insert_edge_recurssively"
                   << std::endl;
-        exit(0);
+        exit(EXIT_FAILURE);
         /* std::cout << "insert_edge_recurssively: this_vertex_addr_in: " << this_vertex_addr_in
                   << ", dst_vertex_addr: " << dst_vertex_addr << "\n"; */
 
@@ -466,7 +466,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     auto insert_edge(host_edge_type dst_vertex_addr, u_int32_t edge_weight) -> bool
     {
         std::cerr << "Not a valid use of " << typeid(*this).name() << " type of Vertex!\n";
-        exit(0);
+        exit(EXIT_FAILURE);
 
         return false;
     }
@@ -510,7 +510,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
             return true;
         } else {
             std::cerr << "Allocator type not supported: " << typeid(Allocator_T).name() << "\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
     RhizomeRecursiveParallelVertex() = default;

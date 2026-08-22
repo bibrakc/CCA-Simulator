@@ -131,7 +131,7 @@ class Graph
         if (!vertex.insert_edge(dst_vertex_id, weight)) {
             std::cerr << "Error! add_edge() Edge (" << vertex.id << ", " << dst_vertex_id
                       << ") cannot be inserted\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
         // Increment the in degree of the dst vertex.
         this->vertices[dst_vertex_id].inbound_degree++;
@@ -292,7 +292,7 @@ class Graph
             } else {
                 std::cout << "Root value not found in the shuffled array. How is that possible?"
                           << std::endl;
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             std::cout << "Shuffled the vertex id list for random allocation of vertices. May help "
                          "with synthetic graphs where the graph generator didn't do a good job."
@@ -335,13 +335,13 @@ class Graph
             if (!vertex_addr) {
                 std::cerr << "Error! Memory not allocated for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
                 std::cerr << "Error! Vertex initialization failed for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             // Insert into the vertex_addresses map
@@ -457,13 +457,13 @@ class Graph
             if (!vertex_addr) {
                 std::cerr << "Error! Memory not allocated for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             if (!this->init_vertex<VertexTypeOfAddress>(cca_simulator, vertex_addr.value())) {
                 std::cerr << "Error! Vertex initialization failed for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             // Insert into the vertex_addresses map
@@ -492,7 +492,7 @@ class Graph
                         edge_weight)) {
                     std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                               << edge_weight << ") not inserted successfully.\n";
-                    exit(0);
+                    exit(EXIT_FAILURE);
                 }
             }
         }
@@ -535,14 +535,14 @@ class Graph
             if (!vertex_addr) {
                 std::cerr << "Error! Memory not allocated for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
                                                                 vertex_addr.value())) {
                 std::cerr << "Error! Vertex initialization failed for Vertex ID: "
                           << this->vertices[current_vertex_id].id << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
 
             // Insert the address into the vertices_info vector.
@@ -574,7 +574,7 @@ class Graph
                     if (!vertex_addr) {
                         std::cerr << "Error! Memory not allocated for the Rhizome of Vertex ID: "
                                   << this->vertices[dst_vertex_id].id << "\n";
-                        exit(0);
+                        exit(EXIT_FAILURE);
                     }
 
                     if (!this->init_rhizome_vertex<VertexTypeOfAddress>(cca_simulator,
@@ -582,7 +582,7 @@ class Graph
                         std::cerr
                             << "Error! Vertex initialization failed for the Rhizome of Vertex ID: "
                             << this->vertices[dst_vertex_id].id << "\n";
-                        exit(0);
+                        exit(EXIT_FAILURE);
                     }
 
                     // Exchange the rhizome addresses between the rhizomes
@@ -601,7 +601,7 @@ class Graph
                             std::cerr
                                 << "Error! new set_rhizome failed for the Rhizome of Vertex ID: "
                                 << this->vertices[dst_vertex_id].id << "\n";
-                            exit(0);
+                            exit(EXIT_FAILURE);
                         }
                     }
 
@@ -620,7 +620,7 @@ class Graph
                             std::cerr << "Error! other_rhizome_vertex set_rhizome failed for the "
                                          "Rhizome of Vertex ID: "
                                       << this->vertices[dst_vertex_id].id << "\n";
-                            exit(0);
+                            exit(EXIT_FAILURE);
                         }
                     }
 
@@ -636,7 +636,7 @@ class Graph
                         edge_weight)) {
                     std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                               << edge_weight << ") not inserted successfully.\n";
-                    exit(0);
+                    exit(EXIT_FAILURE);
                 } else {
                     // Insertion was successful. Now increment the local count for inbound edges
                     // for dst vertex to be used to form Rhizomes.
@@ -656,7 +656,7 @@ class Graph
         // Check if the file is open
         if (!input_graph_file_handler.is_open()) {
             std::cerr << "The graph: " << input_graph_path << " failed to open\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         std::vector<EdgeTuple> new_edges;
@@ -718,7 +718,7 @@ class Graph
                     continuation)) {
                 std::cerr << "Error! Edge (" << src_vertex_id << ", " << dst_vertex_id << ", "
                           << edge_weight << ") not inserted successfully.\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -839,7 +839,7 @@ class Graph
 
         if ((input_graph_file_handler = fopen(input_graph_path.c_str(), "r")) == nullptr) {
             std::cout << "The graph: " << input_graph_path << " failed to openn\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
 
         // File format: line 1 has "vertices\tvertices" (same value repeated),

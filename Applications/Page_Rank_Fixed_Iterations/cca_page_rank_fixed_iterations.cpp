@@ -127,7 +127,7 @@ main(int argc, char** argv) -> int
         cca_square_simulator.create_terminator();
     if (!page_rank_fixed_iterations_terminator) {
         std::cerr << "Error! Memory not allocated for page_rank_fixed_iterations_terminator \n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     u_int32_t total_program_cycles = 0;
