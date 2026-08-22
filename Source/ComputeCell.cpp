@@ -870,7 +870,7 @@ ComputeCell::run_a_computation_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chi
                 // Both queues are non-empty, decide which one to use.
                 bool const diffuse_queue_is_getting_full =
                     this->diffuse_queue.is_percent_full(90.0);
-                bool const action_queue_near_full = this->diffuse_queue.is_percent_full(90.0);
+                bool const action_queue_near_full = this->action_queue.is_percent_full(90.0);
 
                 if (action_queue_near_full && this->diffuse_queue.has_room()) {
                     this->execute_action(function_events);
