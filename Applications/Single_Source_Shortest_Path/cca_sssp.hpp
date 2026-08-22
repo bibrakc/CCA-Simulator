@@ -305,7 +305,7 @@ configure_parser(cli::Parser& parser)
         "hbandwidth_max",
         64,
         "Max possible lanes in the htree joints. The htree is recursively constructred with end "
-        "nodes having 4 lanes (for sqaure cells) to the joint. Then in the next joint there are 8, "
+        "nodes having 4 lanes (for square cells) to the joint. Then in the next joint there are 8, "
         "then 16 and so on. There needs to be a max value to avoid exponential growth.");
 
     parser.set_optional<u_int32_t>(
