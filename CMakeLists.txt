@@ -38,6 +38,25 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Put all executables in build/ root for convenience
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+# ─── Sanitizer Support ───────────────────────────────────────────────────────
+# Usage: cmake -DSANITIZER=address|thread|undefined|memory
+if(DEFINED SANITIZER)
+    if(SANITIZER STREQUAL "address")
+        set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+    elseif(SANITIZER STREQUAL "thread")
+        set(SANITIZER_FLAGS "-fsanitize=thread -fno-omit-frame-pointer")
+    elseif(SANITIZER STREQUAL "undefined")
+        set(SANITIZER_FLAGS "-fsanitize=undefined -fno-omit-frame-pointer")
+    elseif(SANITIZER STREQUAL "memory")
+        set(SANITIZER_FLAGS "-fsanitize=memory -fno-omit-frame-pointer")
+    else()
+        message(FATAL_ERROR "Unknown SANITIZER value: ${SANITIZER}. Use: address, thread, undefined, or memory")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+    message(STATUS "Sanitizer enabled: ${SANITIZER} (${SANITIZER_FLAGS})")
+endif()
+
 # ─── Configuration Options with Defaults ─────────────────────────────────────
 if(NOT DEFINED THROTTLE)
     set(THROTTLE "true")

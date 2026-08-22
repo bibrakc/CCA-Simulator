@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: [main, make-cca-simulator-great]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-13]
+        build_type: [Release, Debug]
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
+
+    - name: Configure
+      env:
+        CC: ${{ matrix.compiler }}
+        CXX: g++-13
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DTHROTTLE=true \
+          -DANIMATION=false \
+          -DVICINITY=2 \
+          -DTERMINATION=false \
+          -DMIN_EDGES_PER_VERTEX=10 \
+          -DMAXEDGESPERVERTEX=15 \
+          -DGHOST_CHILDREN=3 \
+          -DTHROTTLE_CONGESTION_THRESHOLD=22 \
+          -DRECVBUFFSIZE=4 \
+          -DACTIONQUEUESIZE=2048 \
+          -DRHIZOME_INDEGREE_CUTOFF=10 \
+          -DSPLIT_QUEUES=true
+
+    - name: Build
+      run: cmake --build build -j$(nproc)
+
+    - name: Run tests
+      env:
+        OMP_NUM_THREADS: 4
+      run: |
+        mkdir -p build/Output
+        
+        echo "=== BFS ==="
+        ./build/BFS_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -hdepth 0 -hb 0 -route 0 -mesh 1 -shuffle -verify
+        
+        echo "=== BFS Rhizome ==="
+        ./build/BFS_Rhizome_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -hdepth 0 -hb 0 -route 0 -mesh 1 -shuffle -verify
+        
+        echo "=== SSSP ==="
+        ./build/SSSP_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -shuffle -verify
+        
+        echo "=== SSSP Rhizome ==="
+        ./build/SSSP_Rhizome_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -shuffle -verify
+        
+        echo "=== PageRank ==="
+        ./build/PageRank_Fixed_Iterations_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -iter 5 -shuffle -verify
+        
+        echo "=== PageRank Rhizome ==="
+        ./build/PageRank_Fixed_Iterations_Rhizome_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 3 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -iter 9 -verify
+        
+        echo "=== Dynamic BFS ==="
+        ./build/Dynamic_BFS_CCASimulator \
+          -f Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -increments 10 -shuffle -verify
+        
+        echo "=== Streaming Dynamic BFS ==="
+        ./build/Streaming_Dynamic_BFS_CCASimulator \
+          -f Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG_Streaming \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 0 -increments 10 -shuffle -verify
+
+  sanitizer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
+
+    - name: Configure with ASan + UBSan
+      env:
+        CC: gcc-13
+        CXX: g++-13
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DSANITIZER=address \
+          -DTHROTTLE=true \
+          -DANIMATION=false \
+          -DVICINITY=2 \
+          -DTERMINATION=false \
+          -DMIN_EDGES_PER_VERTEX=10 \
+          -DMAXEDGESPERVERTEX=15 \
+          -DGHOST_CHILDREN=3 \
+          -DTHROTTLE_CONGESTION_THRESHOLD=22 \
+          -DRECVBUFFSIZE=4 \
+          -DACTIONQUEUESIZE=2048 \
+          -DSPLIT_QUEUES=true
+
+    - name: Build
+      run: cmake --build build -j$(nproc)
+
+    - name: Run under sanitizer
+      env:
+        OMP_NUM_THREADS: 1
+        ASAN_OPTIONS: detect_leaks=0
+      run: |
+        mkdir -p build/Output
+        ./build/BFS_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -hdepth 0 -hb 0 -route 0 -mesh 1 -verify
+        ./build/SSSP_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
+          -od ./build/Output -s square -root 0 -m 90000 \
+          -hx 16 -hy 16 -route 0 -mesh 1 -verify
