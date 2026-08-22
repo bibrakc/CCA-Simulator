@@ -94,7 +94,7 @@ class FixedSizeQueue
     [[nodiscard]] auto push(const T& value, bool priority) -> bool
     {
         if (priority) {
-            if (underlying_queue.size() <= this->size_max) {
+            if (underlying_queue.size() < this->size_max) {
                 this->underlying_queue.push(value);
                 return true;
             }
