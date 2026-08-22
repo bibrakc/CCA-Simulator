@@ -61,7 +61,7 @@ auto
 ComputeCell::get_object(Address addr_in) const -> void*
 {
     if (addr_in.cc_id == this->host_id) {
-        assert(addr_in.type == adressType::host_address);
+        assert(addr_in.type == addressType::host_address);
         return (this->host_memory.get() + addr_in.addr);
     }
     assert(this->id == addr_in.cc_id);
@@ -105,8 +105,8 @@ ComputeCell::add_IO_neighbor_compute_cells()
 
     if (this->shape == computeCellShape::square) {
 
-        u_int32_t const cc_coordinate_x = this->cooridates.first;
-        u_int32_t const cc_coordinate_y = this->cooridates.second;
+        u_int32_t const cc_coordinate_x = this->coordinates.first;
+        u_int32_t const cc_coordinate_y = this->coordinates.second;
 
         // Assign null west (left) channel.
         this->add_neighbor(std::nullopt);
@@ -116,7 +116,7 @@ ComputeCell::add_IO_neighbor_compute_cells()
         if (cc_coordinate_y == 1) {
             Coordinates up_neighbor_cordinates(cc_coordinate_x, this->dim_y - 1);
             auto up_neighbor_id =
-                Cell::cc_cooridinate_to_id(up_neighbor_cordinates, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(up_neighbor_cordinates, this->shape, this->dim_y);
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_cordinates));
         } else { // It is north IO and doesnt have a north neighbor in the CCA Chip.
@@ -131,7 +131,7 @@ ComputeCell::add_IO_neighbor_compute_cells()
         if (cc_coordinate_y == 0) {
             Coordinates down_neighbor_cordinates(cc_coordinate_x, 0);
             auto down_neighbor_id =
-                Cell::cc_cooridinate_to_id(down_neighbor_cordinates, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(down_neighbor_cordinates, this->shape, this->dim_y);
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_cordinates));
         } else { // It is south IO and doesnt have a south neighbor in the CCA Chip.
@@ -188,10 +188,10 @@ ComputeCell::get_cc_htree_sink_cell() -> std::optional<Coordinates>
         return std::nullopt;
     }
 
-    u_int32_t const nearby_row = (this->hx / 2) + (this->cooridates.second / this->hx) * this->hx;
-    u_int32_t const nearby_col = (this->hy / 2) + (this->cooridates.first / this->hy) * this->hy;
+    u_int32_t const nearby_row = (this->hx / 2) + (this->coordinates.second / this->hx) * this->hx;
+    u_int32_t const nearby_col = (this->hy / 2) + (this->coordinates.first / this->hy) * this->hy;
 
-    // We store cooridinates from top-left therefore in a row it is (0,0), (1,0), (2,0), (3,0) ....
+    // We store coordinates from top-left therefore in a row it is (0,0), (1,0), (2,0), (3,0) ....
     // That is why the row is the second in the pair/tuple and the column is the first entry
     return Coordinates(nearby_col, nearby_row);
 }
@@ -643,14 +643,14 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         /*  std::cout << "\n";
 
                          std::cout
-                             << "inside prepare_a_communication_cycle for: " << this->cooridates
+                             << "inside prepare_a_communication_cycle for: " << this->coordinates
                              << ", with id: " << this->id << "\n";
                          std::cout << "operon dst: "
-                                   << this->cc_id_to_cooridinate(
+                                   << this->cc_id_to_coordinate(
                                           operon.first.dst_cc_id, this->shape, this->dim_y)
                                    << ", with id: " << operon.first.dst_cc_id << "\n";
                          std::cout << "operon src: "
-                                   << this->cc_id_to_cooridinate(
+                                   << this->cc_id_to_coordinate(
                                           operon.first.src_cc_id, this->shape, this->dim_y)
                                    << ", with id: " << operon.first.src_cc_id << "\n"; */
                         //}
@@ -685,8 +685,8 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                          std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
                         //}
 
-                        u_int32_t const cc_column = this->cooridates.first;
-                        u_int32_t const cc_row = this->cooridates.second;
+                        u_int32_t const cc_column = this->coordinates.first;
+                        u_int32_t const cc_row = this->coordinates.second;
 
                         bool const is_cell_top_border = cc_row == 0;
                         bool const is_cell_bottom_border = cc_row == this->dim_x - 1;
@@ -1025,7 +1025,7 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                             this->send_channel_per_neighbor_contention_count[i].increment();
 
                             /* std::cout
-                              << "\tCC : " << this->cooridates << " Not able to send to neighbor: "
+                              << "\tCC : " << this->coordinates << " Not able to send to neighbor: "
                               << this->neighbor_compute_cells[i].value().second << " i = " << i
                               << ", contention_count: max:"
                               <<

@@ -61,7 +61,7 @@ struct BFSIterativeVertex : Vertex_T
 
     BFSIterativeVertex(u_int32_t id_in, u_int32_t total_number_of_vertices_in)
         : bfs_level(BFSIterativeVertex::max_level)
-        , parent(0, 0, adressType::invalid_address)
+        , parent(0, 0, addressType::invalid_address)
     {
         this->id = id_in;
         this->number_of_edges = 0;
@@ -116,9 +116,9 @@ bfs_iterative_predicate_func(ComputeCell& cc,
 
     // This is the first time that this vertex has received an action. Predicate is true and update
     // the level for the first time.
-    if (v->parent.type == adressType::invalid_address) {
+    if (v->parent.type == addressType::invalid_address) {
         /* std::cout << v->id
-                  << ": in predicate: parent adressType::invalid_address, bfs_args.depth_current: "
+                  << ": in predicate: parent addressType::invalid_address, bfs_args.depth_current: "
                   << bfs_args.depth_current << ", bfs_args.depth_max: " << bfs_args.depth_max
                   << ", bfs_args.src_vertex_id: " << bfs_args.src_vertex_id << "\n"; */
         return 1;
@@ -303,7 +303,7 @@ configure_parser(cli::Parser& parser)
                                    0,
                                    "Depth of the Htree. This is the size of the Htree. \n\t0: No "
                                    "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
-                                   "as it recurssively constructs more...");
+                                   "as it recursively constructs more...");
 
     parser.set_optional<u_int32_t>(
         "hb",

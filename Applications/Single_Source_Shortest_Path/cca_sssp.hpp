@@ -298,7 +298,7 @@ configure_parser(cli::Parser& parser)
                                    0,
                                    "Depth of the Htree. This is the size of the Htree. \n\t0: No "
                                    "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
-                                   "as it recurssively constructs more...");
+                                   "as it recursively constructs more...");
 
     parser.set_optional<u_int32_t>(
         "hb",

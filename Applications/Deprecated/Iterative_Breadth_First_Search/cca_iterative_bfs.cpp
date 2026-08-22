@@ -129,7 +129,7 @@ main(int argc, char** argv) -> int
         root_distance_to_send.src_vertex_id = 99999; // host not used. Put any value;
         root_distance_to_send.depth_max = iterations;
         root_distance_to_send.depth_current = 0;
-        root_distance_to_send.src_vertex_addr = Address(0, 0, adressType::host_address);
+        root_distance_to_send.src_vertex_addr = Address(0, 0, addressType::host_address);
 
         ActionArgumentType const args_x =
             cca_create_action_argument<BFSIterativeArguments>(root_distance_to_send);

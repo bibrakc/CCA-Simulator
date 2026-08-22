@@ -105,7 +105,6 @@ Terminator::unsignal(ComputeCell& cc)
             cc.statistics.actions_pushed++;
             cc.statistics.actions_invoked++;
 
-            std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
             // Create an special acknowledgement action towards the parent in the
@@ -177,7 +176,6 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_pushed++;
             cc.statistics.actions_invoked++;
 
-            std::cout << "Host Terminator Acknowledgement Sent!\n";
         } else {
 
             // Create an special acknowledgement action towards the parent in the
@@ -237,7 +235,6 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_pushed++;
             cc.statistics.actions_invoked++;
 
-            std::cout << "Host Terminator Acknowledgement Sent!\n";
 
         } else {
 

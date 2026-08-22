@@ -38,7 +38,7 @@ HtreeNode::operator<<(std::ostream& os) -> std::ostream&
 {
 
     if (this->in_first == nullptr && this->in_second == nullptr) {
-        os << "[" << this->id << " -> " << this->cooridinates
+        os << "[" << this->id << " -> " << this->coordinates
            << " {Coverage 1: " << this->coverage_top_left
            << ", Coverage 2: " << this->coverage_bottom_right << "}]\n";
     } else {
@@ -126,7 +126,7 @@ HtreeNode::transfer(const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& re
         exit(EXIT_FAILURE);
     }
 
-    // std::cout << this->cooridinates << ": HtreeNode transfer\n";
+    // std::cout << this->coordinates << ": HtreeNode transfer\n";
 
     std::shared_ptr<FixedSizeQueue<CoordinatedOperon>> const current_send_channel = send.value();
 
@@ -145,7 +145,7 @@ HtreeNode::transfer_send_to_recv(
     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> send,
     std::optional<std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>> recv)
 {
-    // std::cout << this->cooridinates << ": HtreeNode transfer_send_to_recv\n";
+    // std::cout << this->coordinates << ": HtreeNode transfer_send_to_recv\n";
 
     if (send == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer_send_to_recv: send_channel cannot be null\n";

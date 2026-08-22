@@ -68,7 +68,7 @@ Cell::add_neighbor_compute_cells()
 
         // Note: The coordinates are of type unsigned int and we need to do arithematics that
         // may give negative int values. Therefore, we cast them to signed int
-        auto coordinate_signed = convert_internal_type_of_pair<int32_t>(this->cooridates);
+        auto coordinate_signed = convert_internal_type_of_pair<int32_t>(this->coordinates);
         int32_t const cc_coordinate_x = coordinate_signed.first;
         int32_t const cc_coordinate_y = coordinate_signed.second;
 
@@ -84,7 +84,7 @@ Cell::add_neighbor_compute_cells()
             auto left_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(left_neighbor);
 
             auto left_neighbor_id =
-                Cell::cc_cooridinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
@@ -96,7 +96,7 @@ Cell::add_neighbor_compute_cells()
                     convert_internal_type_of_pair<u_int32_t>(left_neighbor);
 
                 auto left_neighbor_id =
-                    Cell::cc_cooridinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
+                    Cell::cc_coordinate_to_id(left_neighbor_unsigned, this->shape, this->dim_y);
 
                 this->add_neighbor(
                     std::pair<u_int32_t, Coordinates>(left_neighbor_id, left_neighbor_unsigned));
@@ -117,7 +117,7 @@ Cell::add_neighbor_compute_cells()
             auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
 
             auto up_neighbor_id =
-                Cell::cc_cooridinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
@@ -127,7 +127,7 @@ Cell::add_neighbor_compute_cells()
                 auto up_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(up_neighbor);
 
                 auto up_neighbor_id =
-                    Cell::cc_cooridinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
+                    Cell::cc_coordinate_to_id(up_neighbor_unsigned, this->shape, this->dim_y);
 
                 this->add_neighbor(
                     std::pair<u_int32_t, Coordinates>(up_neighbor_id, up_neighbor_unsigned));
@@ -147,7 +147,7 @@ Cell::add_neighbor_compute_cells()
             auto right_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(right_neighbor);
 
             auto right_neighbor_id =
-                Cell::cc_cooridinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
@@ -158,7 +158,7 @@ Cell::add_neighbor_compute_cells()
                     convert_internal_type_of_pair<u_int32_t>(right_neighbor);
 
                 auto right_neighbor_id =
-                    Cell::cc_cooridinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
+                    Cell::cc_coordinate_to_id(right_neighbor_unsigned, this->shape, this->dim_y);
 
                 this->add_neighbor(
                     std::pair<u_int32_t, Coordinates>(right_neighbor_id, right_neighbor_unsigned));
@@ -178,7 +178,7 @@ Cell::add_neighbor_compute_cells()
             auto down_neighbor_unsigned = convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
             auto down_neighbor_id =
-                Cell::cc_cooridinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
+                Cell::cc_coordinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
 
             this->add_neighbor(
                 std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
@@ -189,7 +189,7 @@ Cell::add_neighbor_compute_cells()
                     convert_internal_type_of_pair<u_int32_t>(down_neighbor);
 
                 auto down_neighbor_id =
-                    Cell::cc_cooridinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
+                    Cell::cc_coordinate_to_id(down_neighbor_unsigned, this->shape, this->dim_y);
 
                 this->add_neighbor(
                     std::pair<u_int32_t, Coordinates>(down_neighbor_id, down_neighbor_unsigned));
@@ -205,14 +205,14 @@ Cell::add_neighbor_compute_cells()
 
             // Only for first and last row since the IO Channel is connected to the north and south
             // of the chip.
-            if (this->cooridates.second == 0 || this->cooridates.second == this->dim_y - 1) {
+            if (this->coordinates.second == 0 || this->coordinates.second == this->dim_y - 1) {
 
                 if (this->shape == computeCellShape::square) {
 
                     // Note: The coordinates are of type unsigned int and we need to do arithematics
                     // that may give negative int values. Therefore, we cast them to signed int.
                     auto coordinate_signed =
-                        convert_internal_type_of_pair<int32_t>(this->cooridates);
+                        convert_internal_type_of_pair<int32_t>(this->coordinates);
                     int32_t const cc_coordinate_x = coordinate_signed.first;
                     int32_t const cc_coordinate_y = coordinate_signed.second;
 
@@ -267,10 +267,10 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
 void
 ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
                                                        u_int32_t cc_id,
-                                                       Coordinates cc_cooridinates)
+                                                       Coordinates cc_coordinates)
 {
-    os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_cooridinates.first
-       << "\t" << cc_cooridinates.second << "\t" << this->objects_allocated << "\t"
+    os << cc_id << "\t" << Cell::get_cell_type_name(this->type) << "\t" << cc_coordinates.first
+       << "\t" << cc_coordinates.second << "\t" << this->objects_allocated << "\t"
 
        << this->actions_created << "\t" << this->actions_invoked << "\t"
        << this->actions_performed_work << "\t" << this->actions_false_on_predicate << "\t"
@@ -374,7 +374,7 @@ Cell::get_number_of_neighbors(computeCellShape shape_in) -> u_int32_t
 }
 
 auto
-Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t dim_y) -> Coordinates
+Cell::cc_id_to_coordinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t dim_y) -> Coordinates
 {
 
     if (shape_ == computeCellShape::square) {
@@ -386,14 +386,14 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t d
 }
 
 auto
-Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
+Cell::cc_coordinate_to_id(Coordinates cc_coordinate,
                            computeCellShape shape_,
                            u_int32_t dim_y) -> u_int32_t
 {
 
     if (shape_ == computeCellShape::square) {
-        auto [x, y] = cc_cooridinate;
-        // std::cout << "cc_cooridinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
+        auto [x, y] = cc_coordinate;
+        // std::cout << "cc_coordinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
         // + x << "\n";
         return (y * dim_y) + x;
     }
@@ -403,7 +403,7 @@ Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
 }
 
 auto
-Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_cooridinate) -> bool
+Cell::should_I_use_mesh(Coordinates src_cc_coordinate, Coordinates dst_cc_coordinate) -> bool
 {
     if (this->shape == computeCellShape::square) {
 
@@ -416,8 +416,8 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
                                int bound_cols,
                                int bound_rows) */
 
-        auto [src_col, src_row] = src_cc_cooridinate;
-        auto [dst_col, dst_row] = dst_cc_cooridinate;
+        auto [src_col, src_row] = src_cc_coordinate;
+        auto [dst_col, dst_row] = dst_cc_coordinate;
 
         int const src_col_int = static_cast<int>(src_col);
         int const src_row_int = static_cast<int>(src_row);
@@ -469,8 +469,8 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
           if (hops_to_destination < max_hops_before_switching_to_low_latency_network) {
               return true;
           } */
-        /* std::cout << "CC: " << this->id << ", src = " << src_cc_cooridinate
-                  << ", dst = " << dst_cc_cooridinate
+        /* std::cout << "CC: " << this->id << ", src = " << src_cc_coordinate
+                  << ", dst = " << dst_cc_coordinate
                   << ", max_hops_before_switching_to_low_latency_network: "
                   << max_hops_before_switching_to_low_latency_network
                   << ", hops_to_destination: " << hops_to_destination << ", predicate: "
@@ -498,8 +498,8 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
            << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
            << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
            << "\n";
- std::cout << "CC: " << this->id << ", src: " << src_cc_cooridinate
-           << ", dst: " << dst_cc_cooridinate << "\n"; */
+ std::cout << "CC: " << this->id << ", src: " << src_cc_coordinate
+           << ", dst: " << dst_cc_coordinate << "\n"; */
 
         /*   return false; */
     }
@@ -560,11 +560,11 @@ Cell::essential_house_keeping_cycle(std::vector<std::shared_ptr<Cell>>& /*CCA_ch
 }
 
 auto
-Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
+Cell::check_cut_off_distance(Coordinates dst_cc_coordinate) -> bool
 {
     if (this->shape == computeCellShape::square) {
-        auto [src_col, src_row] = this->cooridates;
-        auto [dst_col, dst_row] = dst_cc_cooridinate;
+        auto [src_col, src_row] = this->coordinates;
+        auto [dst_col, dst_row] = dst_cc_coordinate;
 
         // TODO: later make this distance customizable, either at compile time or runtime
         // TODO: Look at narrow_cast and see if we should use that.
@@ -613,23 +613,23 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         if constexpr (debug_code) {
             std::cout << "cc id : " << this->id << " dst_cc_coordinates = ("
                       << dst_cc_coordinates.first << ", " << dst_cc_coordinates.second
-                      << ") -- origin = ( " << this->cooridates.first << ", "
-                      << this->cooridates.second << ")\n";
+                      << ") -- origin = ( " << this->coordinates.first << ", "
+                      << this->coordinates.second << ")\n";
         }
         // First check vertically in y axis then horizontally in x axis
-        if (this->cooridates.second > dst_cc_coordinates.second) {
+        if (this->coordinates.second > dst_cc_coordinates.second) {
             return 1; // Clockwise 1 = up
         }
-        if (this->cooridates.second < dst_cc_coordinates.second) {
+        if (this->coordinates.second < dst_cc_coordinates.second) {
             return 3; // Clockwise 3 = down
-        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+        } else if (this->coordinates.first > dst_cc_coordinates.first) {
             return 0; // Clockwise 0 = left
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             return 2; // Clockwise 2 = right
         }
 
@@ -653,42 +653,42 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/,
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         std::vector<u_int32_t> paths;
 
-        if ((this->cooridates.first > dst_cc_coordinates.first) &&
-            (this->cooridates.second < dst_cc_coordinates.second)) {
+        if ((this->coordinates.first > dst_cc_coordinates.first) &&
+            (this->coordinates.second < dst_cc_coordinates.second)) {
             // 3rd Coordinate
             paths.push_back(0); // Clockwise 0 = left
             paths.push_back(3); // Clockwise 3 = down
-        } else if ((this->cooridates.first > dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first > dst_cc_coordinates.first) &&
+                   (this->coordinates.second > dst_cc_coordinates.second)) {
             // 1st Coordinate
             paths.push_back(0); // Clockwise 0 = left
             paths.push_back(1); // Clockwise 1 = up
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second > dst_cc_coordinates.second)) {
             // 2nd Coordinate
             // send up or right
             paths.push_back(1);
             paths.push_back(2);
 
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second < dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second < dst_cc_coordinates.second)) {
             // 4th Coordinate
             // send down or right
             paths.push_back(3);
             paths.push_back(2);
-        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+        } else if (this->coordinates.first > dst_cc_coordinates.first) {
             paths.push_back(0); // Clockwise 0 = left
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             // send to right
             paths.push_back(2);
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } else if (this->coordinates.second < dst_cc_coordinates.second) {
             // send to down
             paths.push_back(3);
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+        } else if (this->coordinates.second > dst_cc_coordinates.second) {
             // send to up
             paths.push_back(1);
         }
@@ -716,33 +716,33 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/,
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         std::vector<u_int32_t> paths;
 
         // West first routing restricts turns to the west side. Take west/left first if needed
-        if (this->cooridates.first > dst_cc_coordinates.first) {
+        if (this->coordinates.first > dst_cc_coordinates.first) {
             paths.push_back(0); // Clockwise 0 = left
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second > dst_cc_coordinates.second)) {
             // 2nd Coordinate
             // send up or right
             paths.push_back(1);
             paths.push_back(2);
 
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second < dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second < dst_cc_coordinates.second)) {
             // 4th Coordinate
             // send down or right
             paths.push_back(3);
             paths.push_back(2);
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             // send to right
             paths.push_back(2);
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } else if (this->coordinates.second < dst_cc_coordinates.second) {
             // send to down
             paths.push_back(3);
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+        } else if (this->coordinates.second > dst_cc_coordinates.second) {
             // send to up
             paths.push_back(1);
         }
@@ -779,33 +779,33 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_i
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         // West first routing restricts turns to the west side. Take west/left first if needed
         std::vector<u_int32_t> paths;
 
-        if (this->cooridates.first > dst_cc_coordinates.first) {
+        if (this->coordinates.first > dst_cc_coordinates.first) {
             paths.push_back(0); // Clockwise 0 = left
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second > dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second > dst_cc_coordinates.second)) {
 
             // send up or right
             // based on availablity send there. Right now just send to up
             paths.push_back(1);
 
-        } else if ((this->cooridates.first < dst_cc_coordinates.first) &&
-                   (this->cooridates.second < dst_cc_coordinates.second)) {
+        } else if ((this->coordinates.first < dst_cc_coordinates.first) &&
+                   (this->coordinates.second < dst_cc_coordinates.second)) {
 
             // send down or right
             // based on availablity send there. Right now just send to down
             paths.push_back(3);
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             // send to right
             paths.push_back(2);
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } else if (this->coordinates.second < dst_cc_coordinates.second) {
             // send to down
             paths.push_back(3);
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+        } else if (this->coordinates.second > dst_cc_coordinates.second) {
             // send to up
             paths.push_back(1);
         }
@@ -828,14 +828,14 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
 
     std::vector<u_int32_t> paths;
     if (this->primary_network_type == 0) { // Mesh
-        if (this->cooridates.second > dst_cc_coordinates.second) {
+        if (this->coordinates.second > dst_cc_coordinates.second) {
             paths.push_back(1); // Clockwise 1 = up
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } else if (this->coordinates.second < dst_cc_coordinates.second) {
             paths.push_back(3); // Clockwise 3 = down
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             // send to right
             paths.push_back(2);
-        } else if (this->cooridates.first > dst_cc_coordinates.first) {
+        } else if (this->coordinates.first > dst_cc_coordinates.first) {
             // send to left
             paths.push_back(0);
         }
@@ -843,13 +843,13 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
         return paths;
     } else if (this->primary_network_type == 1) { // Torus
 
-        if (this->cooridates.second != dst_cc_coordinates.second) {
+        if (this->coordinates.second != dst_cc_coordinates.second) {
 
-            if (this->cooridates.second < dst_cc_coordinates.second) {
+            if (this->coordinates.second < dst_cc_coordinates.second) {
                 int dst_to_down_edge = this->dim_x - dst_cc_coordinates.second;
-                int wraped_distance_y = dst_to_down_edge + this->cooridates.second;
+                int wraped_distance_y = dst_to_down_edge + this->coordinates.second;
 
-                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
                 /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
@@ -864,9 +864,9 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
                 return paths;
             } else {
                 int dst_to_up_edge = dst_cc_coordinates.second;
-                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->cooridates.second;
+                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->coordinates.second;
 
-                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
                 /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
@@ -881,11 +881,11 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
                 return paths;
             }
         } else {
-            if (this->cooridates.first < dst_cc_coordinates.first) {
+            if (this->coordinates.first < dst_cc_coordinates.first) {
                 int dst_to_right_edge = this->dim_y - dst_cc_coordinates.first;
-                int wraped_distance_x = dst_to_right_edge + this->cooridates.first;
+                int wraped_distance_x = dst_to_right_edge + this->coordinates.first;
 
-                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
 
                 /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
@@ -903,9 +903,9 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
                 return paths;
             } else {
                 int dst_to_left_edge = dst_cc_coordinates.first;
-                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->cooridates.first;
+                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->coordinates.first;
 
-                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
                 if (abs_distance_x <= wraped_distance_x) {
                     paths.push_back(0); // Clockwise 0 = left
@@ -932,26 +932,26 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
     // If the cell belongs to the CCA chip.
     if (this->primary_network_type == 0) { // Mesh
 
-        if (this->cooridates.first > dst_cc_coordinates.first) {
+        if (this->coordinates.first > dst_cc_coordinates.first) {
             paths.push_back(0); // Clockwise 0 = left
-        } else if (this->cooridates.first < dst_cc_coordinates.first) {
+        } else if (this->coordinates.first < dst_cc_coordinates.first) {
             // send to right
             paths.push_back(2);
-        } else if (this->cooridates.second > dst_cc_coordinates.second) {
+        } else if (this->coordinates.second > dst_cc_coordinates.second) {
             paths.push_back(1); // Clockwise 1 = up
-        } else if (this->cooridates.second < dst_cc_coordinates.second) {
+        } else if (this->coordinates.second < dst_cc_coordinates.second) {
             paths.push_back(3); // Clockwise 3 = down
         }
         return paths;
     } else if (this->primary_network_type == 1) { // Torus
 
-        if (this->cooridates.first != dst_cc_coordinates.first) {
+        if (this->coordinates.first != dst_cc_coordinates.first) {
 
-            if (this->cooridates.first < dst_cc_coordinates.first) {
+            if (this->coordinates.first < dst_cc_coordinates.first) {
                 int dst_to_right_edge = this->dim_y - dst_cc_coordinates.first;
-                int wraped_distance_x = dst_to_right_edge + this->cooridates.first;
+                int wraped_distance_x = dst_to_right_edge + this->coordinates.first;
 
-                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
 
                 /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
@@ -969,9 +969,9 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
                 return paths;
             } else {
                 int dst_to_left_edge = dst_cc_coordinates.first;
-                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->cooridates.first;
+                int wraped_distance_x = dst_to_left_edge + this->dim_y - this->coordinates.first;
 
-                int abs_distance_x = std::abs(static_cast<int>(this->cooridates.first) -
+                int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
                 if (abs_distance_x <= wraped_distance_x) {
                     paths.push_back(0); // Clockwise 0 = left
@@ -983,11 +983,11 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
             }
 
         } else {
-            if (this->cooridates.second < dst_cc_coordinates.second) {
+            if (this->coordinates.second < dst_cc_coordinates.second) {
                 int dst_to_down_edge = this->dim_x - dst_cc_coordinates.second;
-                int wraped_distance_y = dst_to_down_edge + this->cooridates.second;
+                int wraped_distance_y = dst_to_down_edge + this->coordinates.second;
 
-                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
                 /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
@@ -1003,9 +1003,9 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
             } else {
 
                 int dst_to_up_edge = dst_cc_coordinates.second;
-                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->cooridates.second;
+                int wraped_distance_y = dst_to_up_edge + this->dim_x - this->coordinates.second;
 
-                int abs_distance_y = std::abs(static_cast<int>(this->cooridates.second) -
+                int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
                 /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
@@ -1046,10 +1046,10 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         Coordinates const src_cc_coordinates =
-            Cell::cc_id_to_cooridinate(src_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(src_cc_id, this->shape, this->dim_y);
 
         // .first = col, .second = row
 
@@ -1094,7 +1094,7 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         // std::cout << "vertical_first_routing\n";
         return this->vertical_first_routing(dst_cc_coordinates);
@@ -1115,7 +1115,7 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vect
         // clockwise 0 = left, 1 = up, 2 = right, and 3 = down
 
         Coordinates const dst_cc_coordinates =
-            Cell::cc_id_to_cooridinate(dst_cc_id, this->shape, this->dim_y);
+            Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
         // std::cout << "horizontal_first_routing\n";
         return this->horizontal_first_routing(dst_cc_coordinates);

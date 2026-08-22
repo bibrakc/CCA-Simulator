@@ -353,9 +353,9 @@ class CCASimulator
     static inline auto get_compute_cell_coordinates(u_int32_t cc_id,
                                                     u_int32_t dim_y) -> Coordinates;
 
-    auto cc_id_to_cooridinate(u_int32_t cc_id) -> Coordinates;
+    auto cc_id_to_coordinate(u_int32_t cc_id) -> Coordinates;
 
-    auto cc_cooridinate_to_id(Coordinates cc_cooridinate) -> u_int32_t;
+    auto cc_coordinate_to_id(Coordinates cc_coordinate) -> u_int32_t;
 
     // The main chip creation function.
     void create_the_chip();

@@ -108,7 +108,7 @@ class SinkCell : public Cell
         this->hy = hy_in;
         this->hdepth = hdepth_in;
 
-        this->cooridates = Cell::cc_id_to_cooridinate(this->id, this->shape, this->dim_y);
+        this->coordinates = Cell::cc_id_to_coordinate(this->id, this->shape, this->dim_y);
 
         // Torus or Mesh?
         this->primary_network_type = primary_network_type_in;

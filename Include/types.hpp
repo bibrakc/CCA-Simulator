@@ -103,7 +103,7 @@ class FixedSizeQueue
     }
 
     // Get from front FIFO
-    [[nodiscard]] auto front() const -> T { return underlying_queue.front(); }
+    [[nodiscard]] auto front() const -> const T& { return underlying_queue.front(); }
 
     // Pop/Dequeue
     void pop() { underlying_queue.pop(); }

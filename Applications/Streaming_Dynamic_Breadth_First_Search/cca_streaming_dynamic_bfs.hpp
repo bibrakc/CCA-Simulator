@@ -299,7 +299,7 @@ allocate_T(ComputeCell& cc, const Address addr, const ActionArgumentType args) -
     // ghost_vertex itself as the center of vicinity. That makes more sense than to have
     // the root non-ghost vertex as the center of vicinity.
     new_ghost_vertex.ghost_vertex_allocator =
-        VicinityMemoryAllocator(cc.cooridates, 2, 2, cc.dim_x, cc.dim_y, cc.shape);
+        VicinityMemoryAllocator(cc.coordinates, 2, 2, cc.dim_x, cc.dim_y, cc.shape);
 
     std::optional<Address> ghost_vertex_addr =
         cc.create_object_in_memory(&new_ghost_vertex, allocate_request_args.size_in_bytes);
@@ -706,7 +706,7 @@ configure_parser(cli::Parser& parser)
                                    0,
                                    "Depth of the Htree. This is the size of the Htree. \n\t0: No "
                                    "Htree\n\t1: 1 Htree\n\t2: 5 Htrees "
-                                   "as it recurssively constructs more...");
+                                   "as it recursively constructs more...");
 
     parser.set_optional<u_int32_t>(
         "hb",

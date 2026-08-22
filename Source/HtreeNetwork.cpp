@@ -248,10 +248,10 @@ create_horizontal(int hx,
         center->in_second = nullptr;
         index++;
 
-        center->coverage_top_left = Coordinates(center->cooridinates.first - (hy / 2),
-                                                center->cooridinates.second - (hx / 2));
-        center->coverage_bottom_right = Coordinates(center->cooridinates.first + (hy / 2),
-                                                    center->cooridinates.second + (hx / 2));
+        center->coverage_top_left = Coordinates(center->coordinates.first - (hy / 2),
+                                                center->coordinates.second - (hx / 2));
+        center->coverage_bottom_right = Coordinates(center->coordinates.first + (hy / 2),
+                                                    center->coordinates.second + (hx / 2));
 
         return center;
     }
@@ -668,7 +668,7 @@ populate_coorodinates_to_ptr_map(std::map<Coordinates, std::shared_ptr<HtreeNode
 
         // End node in the Htree
         if (root->in_first == nullptr || root->in_second == nullptr) {
-            htree_end_nodes[root->cooridinates] = root;
+            htree_end_nodes[root->coordinates] = root;
         }
     }
 }

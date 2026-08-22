@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 
-enum class adressType : u_int8_t
+enum class addressType : u_int8_t
 {
     host_address = 0,
     cca_address,
@@ -47,12 +47,12 @@ struct Address
 {
   public:
     // CCA address or Host address? Default is CCA address.
-    adressType type;
+    addressType type{addressType::invalid_address};
 
     // Global ID of the compute cell where the address resides
-    u_int32_t cc_id;
+    u_int32_t cc_id{};
     // The offset to the memory of the compute cell
-    u_int32_t addr;
+    u_int32_t addr{};
 
     // Is true when this address is not pointing to any valid object
     // TODO: later can be used for garbage collection
@@ -61,13 +61,13 @@ struct Address
     Address() = default;
 
     Address(const u_int32_t id, const u_int32_t address_in)
-        : type(adressType::cca_address)
+        : type(addressType::cca_address)
         , cc_id(id)
         , addr(address_in)
     {
     }
 
-    Address(const u_int32_t id, const u_int32_t address_in, const adressType address_type_in)
+    Address(const u_int32_t id, const u_int32_t address_in, const addressType address_type_in)
         : type(address_type_in)
         , cc_id(id)
         , addr(address_in)

@@ -55,8 +55,8 @@ class LCO
     void set_val(T val_in) { this->val = val_in; }
 
     /*     LCO()
-            : action(Address(0, 0, adressType::invalid_address),
-                     Address(0, 0, adressType::invalid_address),
+            : action(Address(0, 0, addressType::invalid_address),
+                     Address(0, 0, addressType::invalid_address),
                      actionType::invalid_action,
                      false,
                      nullptr,
@@ -68,8 +68,8 @@ class LCO
         }
         LCO(T val_in)
             : val(val_in)
-            , action(Address(0, 0, adressType::invalid_address),
-                     Address(0, 0, adressType::invalid_address),
+            , action(Address(0, 0, addressType::invalid_address),
+                     Address(0, 0, addressType::invalid_address),
                      actionType::invalid_action,
                      false,
                      nullptr,
