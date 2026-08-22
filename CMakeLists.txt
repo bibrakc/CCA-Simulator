@@ -217,3 +217,18 @@ add_subdirectory(Applications/Page_Rank_Fixed_Iterations)
 add_subdirectory(Applications/Page_Rank_Fixed_Iterations_Rhizome)
 add_subdirectory(Applications/Dynamic_Breadth_First_Search)
 add_subdirectory(Applications/Streaming_Dynamic_Breadth_First_Search)
+
+# ─── Generated applications (compiler output) ────────────────────────────────
+set(CCA_GENERATED_APPLICATIONS_DIR "" CACHE PATH
+    "Optional directory containing compiler-generated CCA applications")
+
+if(NOT "${CCA_GENERATED_APPLICATIONS_DIR}" STREQUAL "")
+    if(EXISTS "${CCA_GENERATED_APPLICATIONS_DIR}/CMakeLists.txt")
+        add_subdirectory(
+            "${CCA_GENERATED_APPLICATIONS_DIR}"
+            "${CMAKE_BINARY_DIR}/generated-applications")
+    else()
+        message(WARNING "CCA_GENERATED_APPLICATIONS_DIR set but no CMakeLists.txt found: "
+                        "${CCA_GENERATED_APPLICATIONS_DIR}")
+    endif()
+endif()
