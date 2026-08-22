@@ -52,107 +52,119 @@ CMAKE_INPUT_OPTIONS=(
 
 HX=16
 HY=16
-#NETWORK=0 # Simple Mesh
 NETWORK=1 # Torus-Mesh
 
+FAILURES=0
+
 echo "Compiling and running all applications to check for any compilation error or bugs introduced during development. This is a very basic test with a simple small graph."
-rm -rf Output
-mkdir Output
+rm -rf ${BUILD_DIR}
+mkdir -p Output
 
-echo "Compiling Breadth_First_Search"
-rm -rf build
+# Auto-detect GCC for OpenMP support (Apple Clang lacks OpenMP)
+if command -v gcc-13 &>/dev/null; then
+    export CC=gcc-13 CXX=g++-13
+elif command -v gcc-15 &>/dev/null; then
+    export CC=gcc-15 CXX=g++-15
+elif command -v gcc-14 &>/dev/null; then
+    export CC=gcc-14 CXX=g++-14
+fi
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
+echo "Building all applications with unified build system..."
+cmake -S ${CCA_SIMULATOR} "${CMAKE_INPUT_OPTIONS[@]}"
+if [ $? -ne 0 ]; then
+    echo "ERROR: CMake configuration failed!"
+    exit 1
+fi
 
-cmake --build build -j 6
+cmake --build ${BUILD_DIR} -j $(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
+if [ $? -ne 0 ]; then
+    echo "ERROR: Build failed!"
+    exit 1
+fi
 
-echo "Running Breadth_First_Search"
-./build/BFS_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -hdepth 0 -hb 0 -route 0 -mesh ${NETWORK} -shuffle -verify
+echo "Build successful. Running tests..."
+echo ""
 
-echo "Done!"
+# Helper function to run a test and check result
+run_test() {
+    local name=$1
+    shift
+    echo "Running ${name}..."
+    local output
+    output=$("$@" 2>&1)
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        echo "ERROR: ${name} exited with code ${exit_code}"
+        FAILURES=$((FAILURES + 1))
+        return 1
+    fi
+    if echo "$output" | grep -q "Verification Failed\|Verification Unsuccessful"; then
+        echo "ERROR: ${name} verification FAILED!"
+        echo "$output" | grep -A1 "Verification"
+        FAILURES=$((FAILURES + 1))
+        return 1
+    fi
+    echo "$output" | grep "Verification"
+    echo "Done!"
+    echo ""
+}
 
-echo "Compiling Breadth_First_Search_Rhizome"
-rm -rf build
+run_test "Breadth_First_Search" \
+    ./${BUILD_DIR}/BFS_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -hdepth 0 -hb 0 -route 0 -mesh ${NETWORK} \
+    -shuffle -verify
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Breadth_First_Search_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
+run_test "Breadth_First_Search_Rhizome" \
+    ./${BUILD_DIR}/BFS_Rhizome_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -hdepth 0 -hb 0 -route 0 -mesh ${NETWORK} \
+    -shuffle -verify
 
-cmake --build build -j 6
+run_test "Single_Source_Shortest_Path" \
+    ./${BUILD_DIR}/SSSP_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} \
+    -shuffle -verify
 
-echo "Running Breadth_First_Search_Rhizome"
-./build/BFS_Rhizome_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -hdepth 0 -hb 0 -route 0 -mesh ${NETWORK} -shuffle -verify
+run_test "Single_Source_Shortest_Path_Rhizome" \
+    ./${BUILD_DIR}/SSSP_Rhizome_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} \
+    -shuffle -verify
 
-echo "Done!"
+run_test "Page_Rank_Fixed_Iterations" \
+    ./${BUILD_DIR}/PageRank_Fixed_Iterations_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} \
+    -iter 5 -shuffle -verify
 
-echo "Compiling Single_Source_Shortest_Path"
-rm -rf build
+run_test "Page_Rank_Fixed_Iterations_Rhizome" \
+    ./${BUILD_DIR}/PageRank_Fixed_Iterations_Rhizome_CCASimulator \
+    -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output \
+    -s square -root 3 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} \
+    -iter 9 -verify
 
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path "${CMAKE_INPUT_OPTIONS[@]}"
+run_test "Dynamic_Breadth_First_Search" \
+    ./${BUILD_DIR}/Dynamic_BFS_CCASimulator \
+    -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} \
+    -increments 10 -shuffle -verify
 
-cmake --build build -j 6
+NETWORK_STREAMING=0 # Streaming currently only supported for pure Mesh.
 
-echo "Running Single_Source_Shortest_Path"
-./build/SSSP_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -shuffle -verify
+run_test "Streaming_Dynamic_Breadth_First_Search" \
+    ./${BUILD_DIR}/Streaming_Dynamic_BFS_CCASimulator \
+    -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG_Streaming -od ./Output \
+    -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK_STREAMING} \
+    -increments 10 -shuffle -verify
 
-echo "Done!"
-
-echo "Compiling Single_Source_Shortest_Path_Rhizome"
-rm -rf build
-
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Single_Source_Shortest_Path_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
-
-cmake --build build -j 6
-
-echo "Running Single_Source_Shortest_Path_Rhizome"
-./build/SSSP_Rhizome_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -shuffle -verify
-
-echo "Done!"
-
-echo "Compiling Page_Rank_Fixed_Iterations"
-rm -rf build
-
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations "${CMAKE_INPUT_OPTIONS[@]}"
-
-cmake --build build -j 6
-
-echo "Running Page_Rank_Fixed_Iterations"
-./build/PageRank_Fixed_Iterations_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -iter 5 -shuffle -verify
-
-echo "Done!"
-
-echo "Compiling Page_Rank_Fixed_Iterations_Rhizome"
-rm -rf build
-
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Page_Rank_Fixed_Iterations_Rhizome "${CMAKE_INPUT_OPTIONS[@]}"
-
-cmake --build build -j 6
-
-echo "Running Page_Rank_Fixed_Iterations_Rhizome"
-./build/PageRank_Fixed_Iterations_Rhizome_CCASimulator -f ../../Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos -od ./Output -s square -root 3 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -iter 9 -verify
-
-echo "Done!"
-
-echo "Compiling Dynamic_Breadth_First_Search"
-rm -rf build
-
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Dynamic_Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
-
-cmake --build build -j 6
-
-echo "Running Dynamic_Breadth_First_Search"
-./build/Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -increments 10 -shuffle -verify
-
-echo "Done!"
-
-NETWORK="0" # Streaming currently only supported for pure Mesh.
-
-echo "Compiling Streaming_Dynamic_Breadth_First_Search"
-rm -rf build
-
-CC=gcc-13 CXX=g++-13 cmake -S ${CCA_SIMULATOR}/Applications/Streaming_Dynamic_Breadth_First_Search "${CMAKE_INPUT_OPTIONS[@]}"
-
-cmake --build build -j 6
-
-echo "Running Streaming_Dynamic_Breadth_First_Search"
-./build/Streaming_Dynamic_BFS_CCASimulator -f ../../Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG_Streaming -od ./Output -s square -root 0 -m 90000 -hx ${HX} -hy ${HY} -route 0 -mesh ${NETWORK} -increments 10 -shuffle -verify
-
-echo "Done!"
+echo ""
+echo "=========================================="
+if [ $FAILURES -eq 0 ]; then
+    echo "ALL TESTS PASSED"
+    exit 0
+else
+    echo "FAILURES: ${FAILURES} test(s) failed!"
+    exit 1
+fi
