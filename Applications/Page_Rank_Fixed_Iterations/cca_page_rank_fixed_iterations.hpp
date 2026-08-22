@@ -459,11 +459,11 @@ struct PageRankFixedIterationsCommandLineArguments
         if (hdepth != 0) {
             if (!(hx % 2)) {
                 std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             if (!(hy % 2)) {
                 std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -475,7 +475,7 @@ struct PageRankFixedIterationsCommandLineArguments
             shape_of_compute_cells = computeCellShape::square;
         } else {
             std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
 };

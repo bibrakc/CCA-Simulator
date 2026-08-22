@@ -114,7 +114,7 @@ main(int argc, char** argv) -> int
     std::optional<Address> sssp_terminator = cca_square_simulator.create_terminator();
     if (!sssp_terminator) {
         std::cerr << "Error! Memory not allocated for sssp_terminator \n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     // Insert a seed action into the CCA chip that will help start the diffusion.

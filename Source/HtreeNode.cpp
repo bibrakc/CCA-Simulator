@@ -123,7 +123,7 @@ HtreeNode::transfer(const std::shared_ptr<FixedSizeQueue<CoordinatedOperon>>& re
 {
     if (send == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer: send_channel cannot be null\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     // std::cout << this->cooridinates << ": HtreeNode transfer\n";
@@ -149,11 +149,11 @@ HtreeNode::transfer_send_to_recv(
 
     if (send == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer_send_to_recv: send_channel cannot be null\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
     if (recv == std::nullopt) {
         std::cerr << this->id << ": Bug! transfer_send_to_recv: recv_channel cannot be null\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     while (send.value()->size()) {

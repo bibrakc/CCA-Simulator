@@ -270,7 +270,7 @@ page_rank_fixed_iterations_work_T(ComputeCell& cc,
         // be returned from a single work function.
         if (!cc.insert_action(rhizome_collapse_page_rank, false)) {
             std::cerr << "rhizome collapse can not be inserted in action queue!" << std::endl;
-            exit(0);
+            exit(EXIT_FAILURE);
         } else {
             cc.statistics.actions_created++;
         }
@@ -304,7 +304,7 @@ page_rank_fixed_iterations_rhizome_collapse_T(ComputeCell& cc,
 
     if (parent_recursive_parralel_vertex->is_ghost_vertex) {
         std::cerr << "Bug! rhizome collapse can not happen on a ghost vertex." << std::endl;
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     auto* v = static_cast<PageRankFixedIterationsVertex<ghost_type>*>(cc.get_object(addr));
@@ -590,11 +590,11 @@ struct PageRankFixedIterationsCommandLineArguments
         if (hdepth != 0) {
             if (!(hx % 2)) {
                 std::cerr << "Invalid Input: hx must be odd! Provided value: " << hx << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
             if (!(hy % 2)) {
                 std::cerr << "Invalid Input: hy must be odd! Provided value: " << hy << "\n";
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -606,7 +606,7 @@ struct PageRankFixedIterationsCommandLineArguments
             shape_of_compute_cells = computeCellShape::square;
         } else {
             std::cerr << "Error: Compute cell shape type " << shape_arg << " not supported.\n";
-            exit(0);
+            exit(EXIT_FAILURE);
         }
     }
 };

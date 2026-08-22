@@ -140,7 +140,7 @@ main(int argc, char** argv) -> int
     if (!page_rank_nested_fixed_iterations_terminator) {
         std::cerr
             << "Error! Memory not allocated for page_rank_nested_fixed_iterations_terminator \n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     PageRankNestedFixedIterationsArguments germinate_arg_to_send;

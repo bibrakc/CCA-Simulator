@@ -102,7 +102,7 @@ CCASimulator::create_square_cell_htree_chip()
                 if (htree_node_address_entry == this->htree_network.htree_end_nodes.end()) {
                     // Key does not exist in the map
                     std::cout << "Bug! SinkCell not found" << std::endl;
-                    exit(0);
+                    exit(EXIT_FAILURE);
                 }
 
                 // Create the sink cells where the chip connects to the underlying
@@ -244,7 +244,7 @@ CCASimulator::create_the_chip()
         }
     } else {
         std::cerr << "Error! Cannot create chip of non-supported type cell shape\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -351,14 +351,14 @@ CCASimulator::germinate_action(const Action& action_to_germinate)
 
     if (!compute_cell) {
         std::cerr << "Bug! Compute Cell not found: " << action_to_germinate.obj_addr.cc_id << "\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     if (!compute_cell->insert_action(action_to_germinate, false)) {
         std::cerr << "germinate_action failed to insert in the action_queue. Fatal. Think about "
                      "what to do in this situation?"
                   << std::endl;
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     // Get the host terminator object for signal.

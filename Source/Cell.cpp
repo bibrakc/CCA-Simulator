@@ -61,7 +61,7 @@ Cell::add_neighbor_compute_cells()
 
     if (this->primary_network_type != 0 && this->primary_network_type != 1) {
         std::cerr << "primary_network_type: " << primary_network_type << " not supported!\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     if (this->shape == computeCellShape::square) {
@@ -230,12 +230,12 @@ Cell::add_neighbor_compute_cells()
     } else if (this->shape == computeCellShape::block_1D) {
 
         std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
-        exit(0);
+        exit(EXIT_FAILURE);
 
     } else {
         // Shape not supported
         std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -261,7 +261,7 @@ Cell::cc_exists(const SignedCoordinates cc_coordinate) -> bool
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void
@@ -376,7 +376,7 @@ Cell::get_number_of_neighbors(computeCellShape shape_in) -> u_int32_t
         default:
             std::cerr << "Shape: " << Cell::get_compute_cell_shape_name(shape_in)
                       << " not supported!\n";
-            exit(0);
+            exit(EXIT_FAILURE);
     }
 }
 
@@ -389,7 +389,7 @@ Cell::cc_id_to_cooridinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t d
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(shape_) << " not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -406,7 +406,7 @@ Cell::cc_cooridinate_to_id(Coordinates cc_cooridinate,
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(shape_) << " not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -512,7 +512,7 @@ Cell::should_I_use_mesh(Coordinates src_cc_cooridinate, Coordinates dst_cc_coori
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -585,7 +585,7 @@ Cell::check_cut_off_distance(Coordinates dst_cc_cooridinate) -> bool
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -645,7 +645,7 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -709,7 +709,7 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/,
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -773,7 +773,7 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/,
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 auto
@@ -826,7 +826,7 @@ Cell::get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_i
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 inline auto
@@ -925,7 +925,7 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
         }
     }
     std::cerr << "vertical_first_routing returning nothing. This is not OK!!! \n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 inline auto
@@ -1029,7 +1029,7 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
         }
     }
     std::cerr << "horizontal_first_routing returning nothing. This is not OK!!! \n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 inline auto
@@ -1086,7 +1086,7 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 // Dimension-ordered (Y-X) routing
@@ -1108,7 +1108,7 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 // Dimension-ordered (X-Y) routing
@@ -1129,7 +1129,7 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vect
     }
     // Shape or routing not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " or routing not supported!\n";
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void

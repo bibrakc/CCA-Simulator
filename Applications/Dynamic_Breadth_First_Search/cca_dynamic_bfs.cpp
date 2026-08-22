@@ -136,7 +136,7 @@ main(int argc, char** argv) -> int
     std::optional<Address> dynamic_bfs_terminator = cca_square_simulator.create_terminator();
     if (!dynamic_bfs_terminator) {
         std::cerr << "Error! Memory not allocated for dynamic_bfs_terminator \n";
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     for (u_int32_t dynamic_increment = 1; dynamic_increment <= cmd_args.increments;
