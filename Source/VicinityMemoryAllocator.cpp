@@ -33,6 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VicinityMemoryAllocator.hpp"
 #include "CCASimulator.hpp"
 
+// Define the static mutex
+std::mutex VicinityMemoryAllocator::rand_mutex;
+
 // Vicinity allocator across Compute Cells that are nearby a source Compute Cell.
 
 auto
@@ -104,8 +107,13 @@ VicinityMemoryAllocator::generate_random_coordinates() -> Coordinates
         std::min(source_rows + vicinity_spread_rows, static_cast<int>(this->cca_dim_x) - 1);
 
     // Generate random x and y coordinates within the boundaries.
-    u_int32_t random_x = min_x + (std::rand() % (max_x - min_x + 1));
-    u_int32_t random_y = min_y + (std::rand() % (max_y - min_y + 1));
+    u_int32_t random_x;
+    u_int32_t random_y;
+    {
+        std::lock_guard<std::mutex> lock(rand_mutex);
+        random_x = min_x + (std::rand() % (max_x - min_x + 1));
+        random_y = min_y + (std::rand() % (max_y - min_y + 1));
+    }
 
     /*  std::cout << "Source: (" << source_cols << ", " << source_rows << "), "
                << "Randomly generated coordinates: (" << random_x << ", " << random_y << ")"

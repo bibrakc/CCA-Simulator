@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "types.hpp"
 
 #include <cassert>
+#include <mutex>
 
 // Vicinity allocator across Compute Cells that are nearby a source Compute Cell.
 class VicinityMemoryAllocator : public MemoryAllocator
@@ -87,6 +88,9 @@ class VicinityMemoryAllocator : public MemoryAllocator
     VicinityMemoryAllocator() = default;
 
   private:
+    // Mutex to protect std::rand() calls from concurrent access in OpenMP parallel regions.
+    // std::rand() uses global state that is not thread-safe.
+    static std::mutex rand_mutex;
     auto generate_random_coordinates() -> Coordinates;
 };
 

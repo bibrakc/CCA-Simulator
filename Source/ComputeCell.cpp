@@ -150,6 +150,18 @@ ComputeCell::create_object_in_memory(void* obj_in, size_t size_of_obj) -> std::o
         return std::nullopt;
     }
 
+    // Align the memory pointer to the maximum fundamental alignment.
+    // This ensures objects placed in memory can be safely accessed via typed pointers.
+    constexpr size_t alignment = alignof(std::max_align_t);
+    uintptr_t ptr_val = reinterpret_cast<uintptr_t>(this->memory_curr_ptr);
+    uintptr_t aligned_ptr_val = (ptr_val + alignment - 1) & ~(alignment - 1);
+    size_t padding = aligned_ptr_val - ptr_val;
+
+    if (this->memory_available_in_bytes() < size_of_obj + padding) {
+        return std::nullopt;
+    }
+    this->memory_curr_ptr += padding;
+
     auto* cca_obj = static_cast<Object*>(obj_in);
 
     u_int32_t const obj_memory_addr_offset = get_memory_curr_ptr_offset();
