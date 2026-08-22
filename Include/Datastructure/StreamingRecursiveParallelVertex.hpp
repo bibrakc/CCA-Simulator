@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef RECURSIVE_PARALLEL_Vertex_HPP
-#define RECURSIVE_PARALLEL_Vertex_HPP
+#ifndef STREAMING_RECURSIVE_PARALLEL_Vertex_HPP
+#define STREAMING_RECURSIVE_PARALLEL_Vertex_HPP
 
 #include "Constants.hpp"
 #include "CyclicMemoryAllocator.hpp"
@@ -462,4 +462,4 @@ print_RecursiveParallelVertex(const RecursiveParallelVertex<Address, edgelist_si
     std::cout << std::endl;
 }
 
-#endif // RECURSIVE_PARALLEL_Vertex_HPP
+#endif // STREAMING_RECURSIVE_PARALLEL_Vertex_HPP
