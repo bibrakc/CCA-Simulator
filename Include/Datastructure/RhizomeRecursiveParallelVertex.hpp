@@ -127,8 +127,7 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     // anything. Right now using it in init() and set_rhizome() to update the configuration of
     // LCO_AND's N value.
     virtual void configure_derived_class_LCOs()
-    { /* std::cout << "I am a pure ghost!" << std::endl; */
-    }
+    { /* std::cout << "I am a pure ghost!" << std::endl; */ }
 
     [[nodiscard]] auto set_rhizome(std::optional<Address> rhizome_vertex_addr) -> bool
     {
@@ -202,10 +201,10 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
     auto insert_edge_recursively(CCASimulator& cca_simulator,
-                                  u_int32_t src_vertex_cc_id,
-                                  Address_T dst_vertex_addr,
-                                  u_int32_t edge_weight,
-                                  u_int32_t RPVO_level) -> bool
+                                 u_int32_t src_vertex_cc_id,
+                                 Address_T dst_vertex_addr,
+                                 u_int32_t edge_weight,
+                                 u_int32_t RPVO_level) -> bool
     {
 
         if (this->number_of_edges == edgelist_size) {
@@ -296,14 +295,14 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
     // Recurssively add edge into the ghost vertex
     // Insert an edge with weight
     auto insert_edge_recursively(CCASimulator& cca_simulator,
-                                  u_int32_t src_vertex_cc_id,
-                                  Address_T this_vertex_addr_in,
-                                  Address_T dst_vertex_addr,
-                                  u_int32_t edge_weight,
-                                  ActionArgumentType args_for_continuation,
-                                  Address terminator,
-                                  CCAFunctionEvent continuation,
-                                  u_int32_t RPVO_level) -> bool
+                                 u_int32_t src_vertex_cc_id,
+                                 Address_T this_vertex_addr_in,
+                                 Address_T dst_vertex_addr,
+                                 u_int32_t edge_weight,
+                                 ActionArgumentType args_for_continuation,
+                                 Address terminator,
+                                 CCAFunctionEvent continuation,
+                                 u_int32_t RPVO_level) -> bool
     {
         std::cerr << "This is not tested RhizomeRecursiveParallelVertex insert_edge_recursively"
                   << std::endl;
@@ -342,30 +341,28 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                 auto* ghost_vertex_accessor =
                     static_cast<ghost_type_level_1*>(cca_simulator.get_object(ghost_vertex_addr));
 
-                success =
-                    ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
-                                                                    source_vertex_cc_id_to_use,
-                                                                    ghost_vertex_addr,
-                                                                    dst_vertex_addr,
-                                                                    edge_weight,
-                                                                    args_for_continuation,
-                                                                    terminator,
-                                                                    continuation,
-                                                                    RPVO_level + 1);
+                success = ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
+                                                                         source_vertex_cc_id_to_use,
+                                                                         ghost_vertex_addr,
+                                                                         dst_vertex_addr,
+                                                                         edge_weight,
+                                                                         args_for_continuation,
+                                                                         terminator,
+                                                                         continuation,
+                                                                         RPVO_level + 1);
             } else {
                 auto* ghost_vertex_accessor = static_cast<ghost_type_level_greater_than_1*>(
                     cca_simulator.get_object(ghost_vertex_addr));
 
-                success =
-                    ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
-                                                                    source_vertex_cc_id_to_use,
-                                                                    ghost_vertex_addr,
-                                                                    dst_vertex_addr,
-                                                                    edge_weight,
-                                                                    args_for_continuation,
-                                                                    terminator,
-                                                                    continuation,
-                                                                    RPVO_level + 1);
+                success = ghost_vertex_accessor->insert_edge_recursively(cca_simulator,
+                                                                         source_vertex_cc_id_to_use,
+                                                                         ghost_vertex_addr,
+                                                                         dst_vertex_addr,
+                                                                         edge_weight,
+                                                                         args_for_continuation,
+                                                                         terminator,
+                                                                         continuation,
+                                                                         RPVO_level + 1);
             }
 
             if (success) {
@@ -452,14 +449,14 @@ struct RhizomeRecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
         assert(!this->is_ghost_vertex);
 
         return this->insert_edge_recursively(cca_simulator,
-                                              src_vertex_cc_id,
-                                              src_vertex_addr,
-                                              dst_vertex_addr,
-                                              edge_weight,
-                                              args_for_continuation,
-                                              terminator,
-                                              continuation,
-                                              0);
+                                             src_vertex_cc_id,
+                                             src_vertex_addr,
+                                             dst_vertex_addr,
+                                             edge_weight,
+                                             args_for_continuation,
+                                             terminator,
+                                             continuation,
+                                             0);
     }
 
     // Insert an edge with weight on the host.

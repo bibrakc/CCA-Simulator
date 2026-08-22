@@ -161,7 +161,8 @@ struct ComputeCellStatistics
         /* << "\n\tactions_pushed: " << stat.actions_pushed
                   << "\n\tactions_invoked: " << stat.actions_invoked */
 
-        os << "Statistics:" << "\n\tobjects_allocated: " << stat.objects_allocated
+        os << "Statistics:"
+           << "\n\tobjects_allocated: " << stat.objects_allocated
 
            << "\n"
 
@@ -308,13 +309,12 @@ class Cell
 
     static auto get_number_of_neighbors(computeCellShape) -> u_int32_t;
 
-    static auto cc_id_to_coordinate(u_int32_t cc_id,
-                                     computeCellShape shape,
-                                     u_int32_t dim_y) -> Coordinates;
+    static auto cc_id_to_coordinate(u_int32_t cc_id, computeCellShape shape, u_int32_t dim_y)
+        -> Coordinates;
 
     static auto cc_coordinate_to_id(Coordinates cc_coordinate,
-                                     computeCellShape shape_,
-                                     u_int32_t dim_y) -> u_int32_t;
+                                    computeCellShape shape_,
+                                    u_int32_t dim_y) -> u_int32_t;
 
     inline auto cc_exists(SignedCoordinates cc_coordinate) -> bool;
 
@@ -354,21 +354,21 @@ class Cell
     // Based on the routing algorithm and the shape of CCs it will return which neighbor to pass
     // this operon to. The returned value is the index [0...number of neighbors) coresponding
     // clockwise the channel id of the physical shape.
-    auto get_route_towards_cc_id(u_int32_t src_cc_id,
-                                 u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
     auto get_west_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
     auto get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
     auto get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
 
     // Experimental
 
-    auto get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                             u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
     auto get_adaptive_positive_only_routes_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
         -> std::vector<u_int32_t>;
 
-    auto get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                                     u_int32_t dst_cc_id) -> std::vector<u_int32_t>;
+    auto get_adaptive_west_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+        -> std::vector<u_int32_t>;
 
     inline auto horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;
     inline auto vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_int32_t>;

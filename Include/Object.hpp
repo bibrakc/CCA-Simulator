@@ -44,9 +44,7 @@ struct Object
 
     // Type tag. To be added.
 
-    Object()
-    { /* std::cout << "Object Constructor\n"; */
-    }
+    Object() { /* std::cout << "Object Constructor\n"; */ }
 };
 
 #endif // OBJECT_HPP

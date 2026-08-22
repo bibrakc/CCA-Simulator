@@ -207,7 +207,6 @@ Terminator::acknowledgement(ComputeCell& cc)
             cc.statistics.actions_pushed++;
             cc.statistics.actions_invoked++;
 
-
         } else {
 
             // Create an special acknowledgement action towards the parent in the

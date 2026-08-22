@@ -255,11 +255,12 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << "\t" << this->operons_moved
 
        << "\t" << this->action_queue_count.get_max_count() << "\t"
-       << this->task_queue_count.get_max_count() << "\t" << this->task_queue_count.get_total_count();
+       << this->task_queue_count.get_max_count() << "\t"
+       << this->task_queue_count.get_total_count();
 
     for (size_t i = 0; i < this->send_channel_per_neighbor_contention_count_record.size(); i++) {
-       os << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_max_count()
-          << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_total_count();
+        os << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_max_count()
+           << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_total_count();
     }
 }
 
@@ -356,9 +357,8 @@ Cell::cc_id_to_coordinate(u_int32_t cc_id, computeCellShape shape_, u_int32_t di
 }
 
 auto
-Cell::cc_coordinate_to_id(Coordinates cc_coordinate,
-                           computeCellShape shape_,
-                           u_int32_t dim_y) -> u_int32_t
+Cell::cc_coordinate_to_id(Coordinates cc_coordinate, computeCellShape shape_, u_int32_t dim_y)
+    -> u_int32_t
 {
 
     if (shape_ == computeCellShape::square) {
@@ -561,8 +561,8 @@ Cell::get_dimensional_route_towards_cc_id(u_int32_t dst_cc_id) -> u_int32_t
 }
 
 auto
-Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/,
-                                                      u_int32_t dst_cc_id) -> std::vector<u_int32_t>
+Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
     // This has deadlock :(
 
@@ -625,8 +625,8 @@ Cell::get_adaptive_positive_only_routes_towards_cc_id(u_int32_t /*src_cc_id*/,
 }
 
 auto
-Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/,
-                                                  u_int32_t dst_cc_id) -> std::vector<u_int32_t>
+Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
 
     // Algorithm == west first adaptive
@@ -914,8 +914,8 @@ row_chunks(u_int32_t cc_id, u_int32_t row, u_int32_t chunk_size, u_int32_t dim_y
 }
 
 auto
-Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
-                                          u_int32_t dst_cc_id) -> std::vector<u_int32_t>
+Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id, u_int32_t dst_cc_id)
+    -> std::vector<u_int32_t>
 {
 
     // Algorithm == mixed first.

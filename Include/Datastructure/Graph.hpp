@@ -852,7 +852,8 @@ class Graph
         // File format: line 1 has "vertices\tvertices" (same value repeated),
         // line 2 has "total_edges"
         u_int32_t total_vertices_duplicate = 0;
-        fscanf(input_graph_file_handler, "%d\t%d", &this->total_vertices, &total_vertices_duplicate);
+        fscanf(
+            input_graph_file_handler, "%d\t%d", &this->total_vertices, &total_vertices_duplicate);
         fscanf(input_graph_file_handler, "%d", &this->total_edges);
 
         std::cout << "The graph: " << input_graph_path

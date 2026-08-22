@@ -888,8 +888,8 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                 // Based on the routing algorithm and the shape of CCs it will return which neighbor
                 // to pass this operon to. The returned value is the index [0...number of neighbors)
                 // coresponding clockwise the channel id of the physical shape.
-                channels_to_send =
-                    this->get_route_towards_cc_id(operon_.routing.src_cc_id, routing_cell_id.value());
+                channels_to_send = this->get_route_towards_cc_id(operon_.routing.src_cc_id,
+                                                                 routing_cell_id.value());
             }
 
             // Always use the default virtual channel 0 as this is the begining of the journey for

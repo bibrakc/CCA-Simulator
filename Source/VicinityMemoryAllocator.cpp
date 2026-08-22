@@ -51,8 +51,8 @@ VicinityMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u
            this->next_cc_id == source_cc_id) {
         // Get next `next_cc_id`
         this->next_cc_id = Cell::cc_coordinate_to_id(this->generate_random_coordinates(),
-                                                      cca_simulator.shape_of_compute_cells,
-                                                      this->cca_dim_y);
+                                                     cca_simulator.shape_of_compute_cells,
+                                                     this->cca_dim_y);
         if (++iterations > max_iterations) {
             std::cerr << "VicinityMemoryAllocator: could not find a valid ComputeCell within "
                          "vicinity after "

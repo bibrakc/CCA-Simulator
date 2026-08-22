@@ -47,7 +47,7 @@ struct Address
 {
   public:
     // CCA address or Host address? Default is CCA address.
-    addressType type{addressType::invalid_address};
+    addressType type{ addressType::invalid_address };
 
     // Global ID of the compute cell where the address resides
     u_int32_t cc_id{};
