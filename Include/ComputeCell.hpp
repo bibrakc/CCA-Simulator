@@ -147,8 +147,6 @@ class ComputeCell : public Cell
     // clever.
     FixedSizeQueue<Action> diffuse_queue;
 
-    // bool prefer_diffuse_queue{};
-
     // TODO: maybe later make a function like this that gets from the queue in an intelligent matter
     // or depending on the policy. So it can be both FIFO and LIFO, maybe something even better
     // std::shared_ptr<Action> get_an_action();
@@ -241,7 +239,6 @@ class ComputeCell : public Cell
 
         this->mesh_routing_policy = mesh_routing_policy_id_in;
 
-        // this->distance_class_length = 2; //(this->hx * 15) + (this->hy * 15);
         this->number_of_virtual_channels = 4; // To avoid deadlock, espesially in Torus routing.
 
         this->recv_channel_per_neighbor.resize(
@@ -256,7 +253,6 @@ class ComputeCell : public Cell
             std::vector<FixedSizeQueue<Operon>>(this->number_of_virtual_channels,
                                                 FixedSizeQueue<Operon>(1)));
 
-        // this->send_channel_per_neighbor_current_distance_class.resize(this->number_of_neighbors);
         this->send_channel_per_neighbor_contention_count.resize(this->number_of_neighbors,
                                                                 MaxCounter());
 
@@ -281,8 +277,6 @@ class ComputeCell : public Cell
             this->diffuse_queue = FixedSizeQueue<Action>(diffuse_queue_size);
         }
 
-        // Experimental for scheduling.
-        // this->prefer_diffuse_queue = false;
     }
 
     ~ComputeCell() override = default;

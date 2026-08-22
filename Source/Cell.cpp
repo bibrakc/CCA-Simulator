@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Cell.hpp"
 
 #include <cmath>
-// #include <random>
 
 // Utility function to convert type of pair
 template<typename To, typename From>
@@ -197,35 +196,6 @@ Cell::add_neighbor_compute_cells()
                 this->add_neighbor(std::nullopt);
             }
         }
-
-        // Connect this Cell to the outside world using the IO Channel.
-        // TODO: Currently, only supporting data in the system not out. Therefore, not implementing
-        // this to make things simple. Will come back later and see how this would be implemented.
-        /* if (this->primary_network_type == 0) { // Mesh
-
-            // Only for first and last row since the IO Channel is connected to the north and south
-            // of the chip.
-            if (this->coordinates.second == 0 || this->coordinates.second == this->dim_y - 1) {
-
-                if (this->shape == computeCellShape::square) {
-
-                    // Note: The coordinates are of type unsigned int and we need to do arithematics
-                    // that may give negative int values. Therefore, we cast them to signed int.
-                    auto coordinate_signed =
-                        convert_internal_type_of_pair<int32_t>(this->coordinates);
-                    int32_t const cc_coordinate_x = coordinate_signed.first;
-                    int32_t const cc_coordinate_y = coordinate_signed.second;
-
-                    // If this CC belongs to the north IO channel then assign south neighbor.
-                    if (cc_coordinate_y == 0) {
-
-                    }
-                    // If this CC belongs to the south IO channel then assign north neighbor.
-                    else if (cc_coordinate_y == this->dim_y - 1) {
-                    }
-                }
-            }
-        } */
 
     } else if (this->shape == computeCellShape::block_1D) {
 
@@ -393,8 +363,6 @@ Cell::cc_coordinate_to_id(Coordinates cc_coordinate,
 
     if (shape_ == computeCellShape::square) {
         auto [x, y] = cc_coordinate;
-        // std::cout << "cc_coordinate_to_id: (" << x << ", " << y << ") ----> " << (y * this->dim)
-        // + x << "\n";
         return (y * dim_y) + x;
     }
     // Shape not supported
@@ -407,15 +375,6 @@ Cell::should_I_use_mesh(Coordinates src_cc_coordinate, Coordinates dst_cc_coordi
 {
     if (this->shape == computeCellShape::square) {
 
-        /*    bool isWithinBounds(int n_cols,
-                               int n_rows,
-                               int src_col,
-                               int src_row,
-                               int dst_col,
-                               int dst_row,
-                               int bound_cols,
-                               int bound_rows) */
-
         auto [src_col, src_row] = src_cc_coordinate;
         auto [dst_col, dst_row] = dst_cc_coordinate;
 
@@ -424,8 +383,6 @@ Cell::should_I_use_mesh(Coordinates src_cc_coordinate, Coordinates dst_cc_coordi
 
         int const dst_col_int = static_cast<int>(dst_col);
         int const dst_row_int = static_cast<int>(dst_row);
-
-        /*   const double percent = 0.80; */
 
         // Exponential decay function to calculate the percentage based on the distance
         // from the center
@@ -463,45 +420,7 @@ Cell::should_I_use_mesh(Coordinates src_cc_coordinate, Coordinates dst_cc_coordi
             return true;
         }
 
-        /*   int const max_hops_before_switching_to_low_latency_network = bound_cols + bound_rows;
-          int const hops_to_destination = abs(src_col - dst_col) + abs(src_row - dst_row);
-
-          if (hops_to_destination < max_hops_before_switching_to_low_latency_network) {
-              return true;
-          } */
-        /* std::cout << "CC: " << this->id << ", src = " << src_cc_coordinate
-                  << ", dst = " << dst_cc_coordinate
-                  << ", max_hops_before_switching_to_low_latency_network: "
-                  << max_hops_before_switching_to_low_latency_network
-                  << ", hops_to_destination: " << hops_to_destination << ", predicate: "
-                  << (hops_to_destination < max_hops_before_switching_to_low_latency_network)
-                  << "\n"; */
-
         return false;
-
-        /*
-                double num_unit_h_in_row = std::pow(2, this->hdepth - 1);
-                num_unit_h_in_row = num_unit_h_in_row + (num_unit_h_in_row / 2);
-                u_int32_t const mesh_usage_region_length_cols = num_unit_h_in_row * this->hy;
-                u_int32_t const mesh_usage_region_length_rows = num_unit_h_in_row * this->hx;
-
-                // TODO: later make this distance customizable, either at compile time or runtime.
-                // TODO: Look at narrow_cast and see if we should use that.
-                if ((abs(static_cast<int>(src_col) - static_cast<int>(dst_col)) <=
-                     static_cast<int>(mesh_usage_region_length_cols)) &&
-                    (abs(static_cast<int>(src_row) - static_cast<int>(dst_row)) <=
-                     static_cast<int>(mesh_usage_region_length_rows))) {
-                    return true;
-                }
-         */
-        /*  std::cout << "CC: " << this->id << ", num_unit_h_in_row = " << num_unit_h_in_row
-           << ", mesh_usage_region_length_cols = " << mesh_usage_region_length_cols
-           << ", mesh_usage_region_length_rows = " << mesh_usage_region_length_rows
-           << "\n";
- std::cout << "CC: " << this->id << ", src: " << src_cc_coordinate
-           << ", dst: " << dst_cc_coordinate << "\n"; */
-
-        /*   return false; */
     }
     // Shape not supported
     std::cerr << Cell::get_compute_cell_shape_name(this->shape) << " not supported!\n";
@@ -752,16 +671,6 @@ Cell::get_adaptive_west_first_route_towards_cc_id(u_int32_t /*src_cc_id*/,
                       << " Bug: routing not sucessful!\n";
         }
 
-        /* // Random number generator
-        std::random_device rd;
-        std::mt19937 generator(rd());
-
-        // Shuffle the paths
-        std::shuffle(paths.begin(), paths.end(), generator);
-
-        Note: Tried the randamization but it doesn't help with performance. Will come back to it
-        later. */
-
         return paths;
     }
     // Shape or routing not supported
@@ -852,10 +761,6 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
                 int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
-                /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
-                          << ", wraped_distance_y: " << wraped_distance_y
-                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
-
                 if (abs_distance_y <= wraped_distance_y) {
                     paths.push_back(3); // Clockwise 3 = down
                 } else {
@@ -868,10 +773,6 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
 
                 int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
-
-                /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
-                          << ", wraped_distance_y: " << wraped_distance_y
-                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
 
                 if (abs_distance_y <= wraped_distance_y) {
                     paths.push_back(1); // Clockwise 1 = up
@@ -888,16 +789,9 @@ Cell::vertical_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_in
                 int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
 
-                /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
-                          << ", wraped_distance: " << wraped_distance_x
-                          << ", abs_distance: " << abs_distance_x << "\n"; */
-
                 if (abs_distance_x <= wraped_distance_x) {
-                    // std::cout << "Move Right!\n";
-                    // send to right
                     paths.push_back(2);
                 } else {
-                    // std::cout << "Move Left!\n";
                     paths.push_back(0); // Clockwise 0 = left
                 }
                 return paths;
@@ -954,16 +848,10 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
                 int abs_distance_x = std::abs(static_cast<int>(this->coordinates.first) -
                                               static_cast<int>(dst_cc_coordinates.first));
 
-                /* std::cout << "dst_to_right_edge: " << dst_to_right_edge
-                          << ", wraped_distance: " << wraped_distance_x
-                          << ", abs_distance: " << abs_distance_x << "\n"; */
-
                 if (abs_distance_x <= wraped_distance_x) {
-                    // std::cout << "Move Right!\n";
                     // send to right
                     paths.push_back(2);
                 } else {
-                    // std::cout << "Move Left!\n";
                     paths.push_back(0); // Clockwise 0 = left
                 }
                 return paths;
@@ -990,10 +878,6 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
                 int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
 
-                /* td::cout << "dst_to_down_edge: " << dst_to_down_edge
-                          << ", wraped_distance_y: " << wraped_distance_y
-                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
-
                 if (abs_distance_y <= wraped_distance_y) {
                     paths.push_back(3); // Clockwise 3 = down
                 } else {
@@ -1007,10 +891,6 @@ Cell::horizontal_first_routing(Coordinates dst_cc_coordinates) -> std::vector<u_
 
                 int abs_distance_y = std::abs(static_cast<int>(this->coordinates.second) -
                                               static_cast<int>(dst_cc_coordinates.second));
-
-                /* std::cout << "dst_to_up_edge: " << dst_to_up_edge
-                          << ", wraped_distance_y: " << wraped_distance_y
-                          << ", abs_distance_y: " << abs_distance_y << "\n"; */
 
                 if (abs_distance_y <= wraped_distance_y) {
                     paths.push_back(1); // Clockwise 1 = up
@@ -1069,7 +949,6 @@ Cell::get_mixed_first_route_towards_cc_id(u_int32_t src_cc_id,
 
         // Route vertically first
         if (is_vertical_routing_operon) {
-            // std::cout << "vertical_first_routing\n";
             return this->vertical_first_routing(dst_cc_coordinates);
         } // Route horizontally first
         return this->horizontal_first_routing(dst_cc_coordinates);
@@ -1096,7 +975,6 @@ Cell::get_vertical_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vector
         Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
-        // std::cout << "vertical_first_routing\n";
         return this->vertical_first_routing(dst_cc_coordinates);
     }
     // Shape or routing not supported
@@ -1117,7 +995,6 @@ Cell::get_horizontal_first_route_towards_cc_id(u_int32_t dst_cc_id) -> std::vect
         Coordinates const dst_cc_coordinates =
             Cell::cc_id_to_coordinate(dst_cc_id, this->shape, this->dim_y);
 
-        // std::cout << "horizontal_first_routing\n";
         return this->horizontal_first_routing(dst_cc_coordinates);
     }
     // Shape or routing not supported

@@ -65,9 +65,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
     if (!this->is_compute_cell_active()) {
         return;
     }
-    /* std::cout << this->id << ": Sink Cell " << this->coordinates << "  prepare_a_cycle : " <<
-       *this
-              << "\n"; */
 
     // From the regular mesh recv channel to regular send channels
     // Move the operon from previous cycle recv channel to their destination: action queue or
@@ -219,8 +216,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
         if (this->mesh_routing_policy == 1) {
-            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.routing.src_cc_id
-                        << "\n"; */
             operon.routing.src_cc_id = this->id;
         }
 
@@ -236,9 +231,6 @@ SinkCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
         for (auto channel_to_send : channels_to_send) {
             if (this->send_channel_per_neighbor[channel_to_send][virtual_channel_to_use].push(
                     operon)) {
-
-                // Set to distance class 0
-                // this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
 
                 // Break out of the for loop. Discard other paths.
                 pushed = true;
@@ -309,8 +301,6 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CC
         // Since the operon has come from the Htree change its src id to the sink cell.
         // This is to make sure that the static routing algorithm of routing policy = 1 works
         if (this->mesh_routing_policy == 1) {
-            /*   std::cout << "SC: " << this->id << " operon old src: " << operon.routing.src_cc_id
-                        << "\n"; */
             operon.routing.src_cc_id = this->id;
         }
 
@@ -326,9 +316,6 @@ SinkCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& /*CC
         for (auto channel_to_send : channels_to_send) {
             if (this->send_channel_per_neighbor[channel_to_send][virtual_channel_to_use].push(
                     operon)) {
-
-                // Set to distance class 0 since this operon originates from this SinkCell
-                // this->send_channel_per_neighbor_current_distance_class[channel_to_send] = 0;
 
                 // Break out of the for loop. Discard other paths.
                 pushed = true;
@@ -413,11 +400,6 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                             this->send_channel_per_neighbor_contention_count[i].increment();
                             left_over_operons.push_back(operon);
 
-                            /* std::cout << "SC : " << this->coordinates << " Not able to push on "
-                                      << *CCA_chip[neighbor_id_] << " i = " << i << " distance class
-                               = "
-                                      << this->send_channel_per_neighbor_current_distance_class[i]
-                                      << "\n"; */
                         } else {
                             this->send_channel_per_neighbor_contention_count[i].reset();
                             this->statistics.operons_moved++;

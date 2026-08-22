@@ -82,24 +82,19 @@ class Action
            CCAFunctionEvent work_in,
            CCAFunctionEvent diffuse_predicate_in,
            CCAFunctionEvent diffuse_in)
+        : action_type(type)
+        , is_ready(ready)
+        , args(args_in)
+        , obj_addr(destination_vertex_addr_in)
+        , origin_addr(origin_vertex_addr_in)
+        , predicate(predicate_in)
+        , work(work_in)
+        , diffuse_predicate(diffuse_predicate_in)
+        , diffuse(diffuse_in)
     {
-        this->obj_addr = destination_vertex_addr_in;
-        this->origin_addr = origin_vertex_addr_in;
-
-        this->action_type = type;
-        this->is_ready = ready;
-
-        this->args = args_in;
-
-        this->predicate = predicate_in;
-        this->work = work_in;
-        this->diffuse_predicate = diffuse_predicate_in;
-        this->diffuse = diffuse_in;
     }
 
-    ~Action()
-    { /* std::cout << "Action class destructor" << std::endl;  */
-    }
+    ~Action() = default;
 };
 
 #endif // ACTION_HPP

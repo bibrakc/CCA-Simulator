@@ -495,12 +495,6 @@ CCASimulator::run_simulation(Address app_terminator)
 
     while (run_next_cycle) {
 
-        // For debugging. Uncomment this and comment out the above line of while loop. This will
-        // then run the simulation for only 3700 cycles.
-        /* u_int32_t count_temp = 0;
-        while (count_temp < 3700) {
-            count_temp++;  */
-
         is_system_active = false;
         run_next_cycle = false;
 
