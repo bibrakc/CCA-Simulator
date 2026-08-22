@@ -57,6 +57,7 @@ NETWORK=1 # Torus-Mesh
 FAILURES=0
 
 echo "Compiling and running all applications to check for any compilation error or bugs introduced during development. This is a very basic test with a simple small graph."
+START_TIME=$SECONDS
 rm -rf ${BUILD_DIR}
 mkdir -p Output
 
@@ -161,10 +162,13 @@ run_test "Streaming_Dynamic_Breadth_First_Search" \
 
 echo ""
 echo "=========================================="
+ELAPSED=$((SECONDS - START_TIME))
+TOTAL_TESTS=8
+PASSED=$((TOTAL_TESTS - FAILURES))
 if [ $FAILURES -eq 0 ]; then
-    echo "ALL TESTS PASSED"
+    echo "ALL TESTS PASSED (${PASSED}/${TOTAL_TESTS}) in ${ELAPSED}s"
     exit 0
 else
-    echo "FAILURES: ${FAILURES} test(s) failed!"
+    echo "FAILURES: ${FAILURES}/${TOTAL_TESTS} test(s) failed! (${ELAPSED}s)"
     exit 1
 fi
