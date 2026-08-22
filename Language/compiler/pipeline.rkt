@@ -66,19 +66,15 @@
 ;; We will add passes incrementally. For now just read-source and parse.
 
 (require "frontend/read-source.rkt"
-         "frontend/parse.rkt")
+         "frontend/parse.rkt"
+         "frontend/resolve.rkt"
+         "backend/emit-cpp.rkt")
 
 (define all-passes
   `((read-source    . ,read-source-pass)
     (parse          . ,parse-pass)
-    ;; Future passes:
-    ;; (desugar       . ,desugar-pass)
-    ;; (resolve       . ,resolve-pass)
-    ;; (typecheck     . ,typecheck-pass)
-    ;; (check-effects . ,check-effects-pass)
-    ;; (lower-actions . ,lower-actions-pass)
-    ;; (lower-rpvo    . ,lower-rpvo-pass)
-    ;; (emit-cpp      . ,emit-cpp-pass)
+    (resolve        . ,resolve-pass)
+    ;; emit-cpp is special — it needs an output dir, handled below
     ))
 
 ;; ─── Run pipeline ─────────────────────────────────────────────────────────────
@@ -100,7 +96,17 @@
              [diags '()])
     (cond
       [(null? remaining)
-       (pipeline-result #t ir diags)]
+       ;; If output-dir is specified and we ran all passes, emit C++
+       (if output-dir
+           (with-handlers ([exn:fail?
+                            (λ (e)
+                              (pipeline-result #f ir
+                                (append diags
+                                  (list (diagnostic 'error #f #f #f 'emit-cpp
+                                                    (exn-message e))))))])
+             (define files (emit-cpp-pass (list ir output-dir)))
+             (pipeline-result #t files diags))
+           (pipeline-result #t ir diags))]
       [else
        (define pass-name (caar remaining))
        (define pass-fn (cdar remaining))
