@@ -38,10 +38,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CCASimulator;
 class ComputeCell;
 
-// Base class for memroy allocation
+// Base class for memory allocation
 class MemoryAllocator
 {
   public:
+    virtual ~MemoryAllocator() = default;
+
     u_int32_t next_cc_id{};
     virtual auto get_next_available_cc(CCASimulator&) -> u_int32_t = 0;
     virtual auto get_next_available_cc(ComputeCell& cc) -> u_int32_t = 0;
