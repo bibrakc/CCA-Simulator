@@ -33,14 +33,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CyclicMemoryAllocator.hpp"
 #include "CCASimulator.hpp"
 
+#include <iostream>
+
 // Cyclic allocator across all Compute Cells
 
 auto
 CyclicMemoryAllocator::get_next_available_cc(CCASimulator& cca_simulator) -> u_int32_t
 {
     // Skip the Cell if it is not of type ComputeCell
+    u_int32_t iterations = 0;
     while (cca_simulator.CCA_chip[this->next_cc_id]->type != CellType::compute_cell) {
         this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;
+        if (++iterations > cca_simulator.total_compute_cells) {
+            std::cerr << "CyclicMemoryAllocator: no ComputeCell found after full sweep\n";
+            exit(EXIT_FAILURE);
+        }
     }
     u_int32_t const cc_available = this->next_cc_id;
     this->next_cc_id = (this->next_cc_id + 1) % cca_simulator.total_compute_cells;

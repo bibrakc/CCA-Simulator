@@ -53,12 +53,10 @@ struct Routing
         // u_int32_t src_cc_id = operon.first.src_cc_id;
         u_int32_t dst_cc_id = operon.first.dst_cc_id;
 
-        auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
-        assert(dst_compute_cell != nullptr);
+        auto dst_compute_cell = std::static_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
 
         std::shared_ptr<SomeCellType> const current_compute_cell =
-            std::dynamic_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
-        assert(current_compute_cell != nullptr);
+            std::static_pointer_cast<SomeCellType>(CCA_chip[current_cc_id]);
 
         Coordinates const dst_cc_coordinates = Cell::cc_id_to_coordinate(
             dst_cc_id, current_compute_cell->shape, current_compute_cell->dim_y);
