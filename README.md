@@ -1,27 +1,65 @@
 # CCA-Simulator
-Simulator for Continuum Computer Architecture (CCA) ([paper1](https://superfri.org/index.php/superfri/article/view/188), and [paper2](https://arxiv.org/abs/2402.02576)) class of designs.
+
+Simulator for the Continuum Computer Architecture (CCA) ([paper1](https://superfri.org/index.php/superfri/article/view/188), [paper2](https://doi.org/10.1016/j.future.2026.108394)) class of designs.
 
 ## Summary
-The CCA Simulator enables exploring design space of the CCA class of non-Von Neumann intelligent memory systems. These systems are concieved to be highly fine-grain parallel and use event-driven mechanisms to perform computation.
 
-It can be used to design and deploy asynchronous message-driven computations and understand the runtime behavior of AM-CCA configurations. The simulator is high-level enough to be programmed using the diffusive programming model, see our [paper3](https://arxiv.org/abs/2402.06086), and yet low-level enough to simulate individual operon movements between CCs. In a single simulation cycle, a message can traverse one hop from one CC to a neighboring CC. We make this assumption since AM-CCA channel links are $256$ bit wide and can easily send the small operons (messages) of our tested applications in a single flit cycle. Simultaneously, a single CC, can perform either of the two operations: 
-1. a computing instruction, which is contained in the predicate resolution and work in the user application action, or 
-2. the creation and staging of a new operon.
+The CCA-Simulator enables exploring the design space of non-Von Neumann intelligent memory systems based on the Continuum Computer Architecture. CCA systems are highly fine-grain parallel and use event-driven mechanisms to perform computation.
 
-It means that BFS and SSSP actions take $2$ to $3$ cycles of compute, whereas Page Rank action takes anywhere from $3$ to $70$ cycles of compute. When their diffusions are executed they in turn take cycles proportional to the amount of local *edge-list* size.
+The simulator supports the design and deployment of asynchronous message-driven graph computations. It is high-level enough to be programmed using the diffusive programming model, yet low-level enough to simulate individual operon (message) movements between Compute Cells (CCs).
+
+**Simulation model:** In a single cycle, a message traverses one hop between neighboring CCs. CCA channel links are 256-bit wide, allowing small operons to be sent in a single flit cycle. Simultaneously, a CC can perform one of two operations:
+1. A computing instruction (predicate resolution + work in the user application action), or
+2. The creation and staging of a new operon.
+
+This means BFS and SSSP actions take 2–3 cycles of compute, Page Rank actions take 3–70 cycles, and diffusions take cycles proportional to the local edge-list size.
 
 ## Demo of Message-Driven Execution
+
 ### Static Graph BFS
 <img src="Analytics/Animations/BFS_32x32_v_1024_e_10240_th_ON_SH_ON.gif" alt="Animation" width="600"/>
 
 ### Dynamic Graph BFS
+Streaming dynamic graph processing on CCA is documented in [paper3](https://doi.org/10.1145/3677333.3678146).
+
 <img src="Analytics/Animations/Streaming_Dynamic_BFS_32x32_v_1000_egdeSample_SH_ON.gif" alt="Animation" width="600"/>
 
 ### Legend
 <img src="Analytics/Animations/Legend_Animation.png" alt="Legend" width="600"/>
 
+## Building
+
+Requires a C++20 compiler with OpenMP support (e.g., GCC 13+) and CMake 3.20+.
+
+```bash
+CC=gcc-13 CXX=g++-13 cmake -S . -B build -DTHROTTLE=true
+cmake --build build -j$(nproc)
+```
+
+All executables are placed in `build/`. See the [Applications](/Applications/) directory for per-application details and configuration options.
+
 ## Graph Applications
-The [Applications](/Applications/) directory contains asynchronous message-driven applications written using the CCASimulator. Please browser through each application for build and run instructions.
+
+The simulator includes the following asynchronous message-driven graph applications:
+
+- **Breadth-First Search (BFS)** — with Rhizome variant for skewed graphs
+- **Single-Source Shortest Path (SSSP)** — with Rhizome variant
+- **Page Rank (Fixed Iterations)** — with Rhizome variant
+- **Dynamic BFS** — incremental edge insertions with BFS recomputation
+- **Streaming Dynamic BFS** — edges streamed into the CCA chip at runtime
 
 ## Tests
-The [Tests/Run_All_Apps](/Tests/Run_All_Apps) directory contains a convenient script that runs all compiles and runs all the apps. It also performs validation of the computed results.
+
+```bash
+cd Tests/Run_All_Apps && zsh run_all_apps.zsh
+```
+
+Builds all applications and runs verification against reference solutions. Reports pass/fail status and elapsed time.
+
+## Publications
+
+- B. Qamar Chandio, M. Brodowicz, T. Sterling, "A message-driven system for processing highly skewed graphs," *Future Generation Computer Systems*, vol. 180, 2026. [DOI](https://doi.org/10.1016/j.future.2026.108394)
+
+- B. Q. Chandio, M. Brodowicz, T. Sterling, "Structures and Techniques for Streaming Dynamic Graph Processing on Decentralized Message-Driven Systems," *ICPP Workshops '24*, 2024. [DOI](https://doi.org/10.1145/3677333.3678146)
+
+- B. Q. Chandio, M. Brodowicz, T. Sterling, "Exploring the Design Space for Message-Driven Systems for Dynamic Graph Processing Using CCA," *Parallel Processing and Applied Mathematics (PPAM)*, Springer, 2025. [DOI](https://doi.org/10.1007/978-3-031-85697-6_6)
