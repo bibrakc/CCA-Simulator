@@ -83,18 +83,18 @@ target_include_directories(CCACommons PUBLIC
 
 target_compile_options(CCACommons PRIVATE -Werror -Wall -Wextra)
 
-add_library(HtreeNework
+add_library(HtreeNetwork
             ${SourceDirectory}/HtreeNode.cpp
             ${SourceDirectory}/HtreeNetwork.cpp
             )
 
-target_include_directories(HtreeNework PUBLIC 
+target_include_directories(HtreeNetwork PUBLIC 
             ${IncludeDirectory}
             )
 
-target_compile_options(HtreeNework PRIVATE -Werror -Wall -Wextra)
+target_compile_options(HtreeNetwork PRIVATE -Werror -Wall -Wextra)
 
-target_link_libraries(HtreeNework PUBLIC CCACommons)
+target_link_libraries(HtreeNetwork PUBLIC CCACommons)
 
 add_library(CCASimulator
             ${SourceDirectory}/Cell.cpp
@@ -130,4 +130,4 @@ target_include_directories(${executable_name} PUBLIC
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 set_source_files_properties(cca_iterative_bfs.cpp PROPERTIES LANGUAGE CXX)
-target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNework)
+target_link_libraries(${executable_name} PRIVATE CCASimulator CCACommons HtreeNetwork)

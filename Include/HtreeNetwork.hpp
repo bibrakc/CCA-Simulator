@@ -50,7 +50,7 @@ class HtreeNetwork
         if (this->hdepth == 0) {
             return;
         }
-        std::cout << "HtreeNework constructor called\n";
+        std::cout << "HtreeNetwork constructor called\n";
         this->construct_htree_network();
     }
 

@@ -50,8 +50,8 @@ struct Routing
         // Routing 0: Aggresively use the htree if it exists. If its pure mesh then it defaults to
         // sending in the mesh. This is a static routing algrithm.
 
-        // u_int32_t src_cc_id = operon.first.src_cc_id;
-        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+        // u_int32_t src_cc_id = operon.routing.src_cc_id;
+        u_int32_t dst_cc_id = operon.routing.dst_cc_id;
 
         auto dst_compute_cell = std::static_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
 
@@ -100,8 +100,8 @@ struct Routing
                                               u_int32_t current_cc_id) -> std::optional<u_int32_t>
     {
         // Routing 1: Try to use the mesh network more often.
-        u_int32_t const src_cc_id = operon.first.src_cc_id;
-        u_int32_t dst_cc_id = operon.first.dst_cc_id;
+        u_int32_t const src_cc_id = operon.routing.src_cc_id;
+        u_int32_t dst_cc_id = operon.routing.dst_cc_id;
 
         /* auto dst_compute_cell = std::dynamic_pointer_cast<ComputeCell>(CCA_chip[dst_cc_id]);
         assert(dst_compute_cell != nullptr); */

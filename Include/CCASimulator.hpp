@@ -382,7 +382,7 @@ class CCASimulator
     // Utility to set a terminator.
     void reset_terminator(Address terminator_in);
 
-    auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
+    [[nodiscard]] auto allocate_and_insert_object_on_cc(MemoryAllocator& allocator,
                                           void* obj,
                                           size_t size_of_obj) -> std::optional<Address>;
 

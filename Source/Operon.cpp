@@ -37,8 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 auto
 operator<<(std::ostream& os, const Operon& operon_) -> std::ostream&
 {
-    os << "Operon: Src cc_id " << operon_.first.src_cc_id << ", Dst cc_id "
-       << operon_.first.dst_cc_id << " Action target addr: " << operon_.second.obj_addr;
+    os << "Operon: Src cc_id " << operon_.routing.src_cc_id << ", Dst cc_id "
+       << operon_.routing.dst_cc_id << " Action target addr: " << operon_.action.obj_addr;
 
     os << "\n";
     return os;

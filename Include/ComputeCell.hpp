@@ -61,7 +61,7 @@ class ComputeCell : public Cell
     void add_IO_neighbor_compute_cells();
 
     // Returns the offset in memory for this newly created object
-    auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
+    [[nodiscard]] auto create_object_in_memory(void* obj, size_t size_of_obj) -> std::optional<Address>;
 
     [[nodiscard]] auto insert_action(const Action& action, bool priority) -> bool;
 

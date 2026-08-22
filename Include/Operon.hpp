@@ -48,8 +48,19 @@ struct SourceDestinationPair
     }
 };
 
-// cc_id, Action
-using Operon = std::pair<SourceDestinationPair, Action>;
+// An Operon is the fundamental unit of communication in CCA — a message that carries an Action
+// from a source compute cell to a destination compute cell.
+struct Operon
+{
+    SourceDestinationPair routing;
+    Action action;
+
+    Operon(SourceDestinationPair routing_in, Action action_in)
+        : routing(routing_in)
+        , action(action_in)
+    {
+    }
+};
 
 // For Htree routing. At the end node of Htree that connects to a sink cell take the Coordinates out
 // and send the simple Operon to the CCA chip though the sink cell
