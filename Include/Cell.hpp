@@ -131,10 +131,10 @@ struct ComputeCellStatistics
               "\toperons_moved"
 
               "\tmax_action_queue\tmax_task_queue\ttotal_task_queue"
-              "\tleft_send_contention_max\tleft_send_contention_total"
-              "\tup_send_contention_max\tup_send_contention_total"
-              "\tright_send_contention_max\tright_send_contention_total"
-              "\tdown_send_contention_max\tdown_send_contention_total\n";
+              "\tneighbor_0_send_contention_max\tneighbor_0_send_contention_total"
+              "\tneighbor_1_send_contention_max\tneighbor_1_send_contention_total"
+              "\tneighbor_2_send_contention_max\tneighbor_2_send_contention_total"
+              "\tneighbor_3_send_contention_max\tneighbor_3_send_contention_total\n";
     }
 
     // Print all the stats in a single line

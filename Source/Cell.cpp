@@ -285,19 +285,12 @@ ComputeCellStatistics::output_results_in_a_single_line(std::ostream& os,
        << "\t" << this->operons_moved
 
        << "\t" << this->action_queue_count.get_max_count() << "\t"
-       << this->task_queue_count.get_max_count() << "\t" << this->task_queue_count.get_total_count()
+       << this->task_queue_count.get_max_count() << "\t" << this->task_queue_count.get_total_count();
 
-       << "\t" << this->send_channel_per_neighbor_contention_count_record[0].get_max_count() << "\t"
-       << this->send_channel_per_neighbor_contention_count_record[0].get_total_count()
-
-       << "\t" << this->send_channel_per_neighbor_contention_count_record[1].get_max_count() << "\t"
-       << this->send_channel_per_neighbor_contention_count_record[1].get_total_count()
-
-       << "\t" << this->send_channel_per_neighbor_contention_count_record[2].get_max_count() << "\t"
-       << this->send_channel_per_neighbor_contention_count_record[2].get_total_count()
-
-       << "\t" << this->send_channel_per_neighbor_contention_count_record[3].get_max_count() << "\t"
-       << this->send_channel_per_neighbor_contention_count_record[3].get_total_count();
+    for (size_t i = 0; i < this->send_channel_per_neighbor_contention_count_record.size(); i++) {
+       os << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_max_count()
+          << "\t" << this->send_channel_per_neighbor_contention_count_record[i].get_total_count();
+    }
 }
 
 auto
