@@ -347,7 +347,7 @@ Cell::get_compute_cell_shape_enum(const std::string& shape) -> computeCellShape
     }
     if (shape == "triangular") {
         return computeCellShape::triangular;
-    } else if (shape == "sqaure") {
+    } else if (shape == "square") {
         return computeCellShape::square;
     } else if (shape == "hexagon") {
         return computeCellShape::hexagon;
