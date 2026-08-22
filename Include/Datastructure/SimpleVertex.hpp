@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Constants.hpp"
 #include "Object.hpp"
 
+#include <array>
+
 using host_edge_type = u_int32_t;
 
 /* template<typename Address_T>
@@ -80,7 +82,7 @@ struct SimpleVertex : Object
     // graph is stored on the CCA then store it as a smaller edges[] array.
     static bool constexpr is_vertex_allocated_on_cca_device = std::is_same_v<Address_T, Address>;
     using Edges_t = std::conditional_t<is_vertex_allocated_on_cca_device,
-                                       Edge<Address>[edgelist_size],
+                                       std::array<Edge<Address>, edgelist_size>,
                                        std::vector<Edge<Address_T>>>;
     Edges_t edges{};
 

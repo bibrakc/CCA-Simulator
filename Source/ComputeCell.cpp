@@ -205,8 +205,6 @@ ComputeCell::insert_action(const Action& action, bool priority)
         return true;
     } else {
         return false;
-        // std::cerr << "action_queue full. Fatal!" << std::endl;
-        // exit(EXIT_FAILURE);
     }
 }
 
@@ -225,16 +223,6 @@ ComputeCell::send_operon(const Operon& operon_in) -> Task
         auto* obj = static_cast<Object*>(this->get_object(addr));
 
         obj->terminator.deficit++;
-
-        /* SimpleVertex<Address>* vertex = (SimpleVertex<Address>*)this->get_object(addr);
-        // print_SimpleVertex(vertex, addr);
-        if (vertex->id == 0) {
-            //  Signal that this object is active for termination detection
-            //  origin_addr is set to be parent if deficit == 0
-
-            std::cout << "Increamented the terminator deficit: " << obj->terminator.deficit
-                      << ", << vertex->terminator.deficit: " << vertex->terminator.deficit << "\n";
-        } */
     }
 
     return std::pair<taskType, Task_func>(
@@ -298,10 +286,6 @@ ComputeCell::execute_action(void* function_events)
                 std::cout << "Invalid addr! The vertex does not exist on this CC\n";
                 return;
             }
-            // When needed put the inlude header for that datastructure and print it here.
-            /* SimpleVertex<Address>* vertex =
-                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
-            print_SimpleVertex(vertex, action.obj_addr); */
         }
 
         if (action.action_type == actionType::application_action ||
@@ -316,24 +300,7 @@ ComputeCell::execute_action(void* function_events)
             // tasks.
             if constexpr (termination_switch) {
 
-                // When needed put the inlude header for that datastructure and print it here.
-                /* SimpleVertex<Address>* vertex =
-                    (SimpleVertex<Address>*)this->get_object(action.obj_addr);
-
-                // print_SimpleVertex(vertex, action.obj_addr);
-                if (vertex->id == 0) {
-                    // Signal that this object is active for termination detection
-                    // origin_addr is set to be parent if deficit == 0
-                    std::cout << "before term signal in execute action, deficit: "
-                              << vertex->terminator.deficit
-                              << ", parent: " << vertex->terminator.parent.has_value() << "\n";
-                } */
                 obj->terminator.signal(*this, action.origin_addr);
-                /* if (vertex->id == 0) {
-                    std::cout << "after term signal in execute action, deficit: "
-                              << vertex->terminator.deficit
-                              << ", parent: " << vertex->terminator.parent.has_value() << "\n";
-                } */
             }
             // if predicate
             Closure const predicate_resolution =
@@ -405,9 +372,6 @@ ComputeCell::execute_action(void* function_events)
                 // This action is discarded/subsumed
                 this->statistics.actions_false_on_predicate++;
             }
-            /* if constexpr (termination_switch) {
-                obj->terminator.unsignal(*this);
-            } */
         } else if (action.action_type == actionType::terminator_acknowledgement_action) {
 
             function_events_manager->get_acknowledgement_event_handler()(
@@ -449,10 +413,6 @@ ComputeCell::execute_diffusion_phase(void* function_events)
                 std::cout << "Invalid addr! The vertex does not exist on this CC\n";
                 return;
             }
-            // When needed put the inlude header for that datastructure and print it here.
-            /* SimpleVertex<Address>* vertex =
-                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
-            print_SimpleVertex(vertex, action.obj_addr); */
         }
 
         if (action.action_type == actionType::application_action ||
@@ -523,10 +483,6 @@ ComputeCell::filter_diffusion(void* function_events)
                 std::cout << "Invalid addr! The vertex does not exist on this CC\n";
                 return;
             }
-            // When needed put the inlude header for that datastructure and print it here.
-            /* SimpleVertex<Address>* vertex =
-                (SimpleVertex<Address>*)this->get_object(action.obj_addr);
-            print_SimpleVertex(vertex, action.obj_addr); */
         }
 
         if (action.action_type == actionType::application_action ||
@@ -638,21 +594,6 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                         }
 
                     } else {
-                        // if (operon.routing.src_cc_id == 43 && operon.routing.dst_cc_id == 125) {
-                        /*  std::cout << "\n";
-
-                         std::cout
-                             << "inside prepare_a_communication_cycle for: " << this->coordinates
-                             << ", with id: " << this->id << "\n";
-                         std::cout << "operon dst: "
-                                   << this->cc_id_to_coordinate(
-                                          operon.routing.dst_cc_id, this->shape, this->dim_y)
-                                   << ", with id: " << operon.routing.dst_cc_id << "\n";
-                         std::cout << "operon src: "
-                                   << this->cc_id_to_coordinate(
-                                          operon.routing.src_cc_id, this->shape, this->dim_y)
-                                   << ", with id: " << operon.routing.src_cc_id << "\n"; */
-                        //}
 
                         std::vector<u_int32_t> channels_to_send;
                         // In case the cell belongs to the IO Channels.
@@ -664,8 +605,6 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                                 // This is in the north channel.
                                 channels_to_send.push_back(3);
                             } else {
-                                // std::cout << "CC ID: " << this->id << ", returned path 1 i.e.
-                                // up\n";
                                 channels_to_send.push_back(1); // This is in the south channel.
                             }
                         } else {
@@ -678,11 +617,6 @@ ComputeCell::prepare_a_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip)
                             channels_to_send = this->get_route_towards_cc_id(
                                 operon.routing.src_cc_id, routing_cell_id.value());
                         }
-
-                        // if (operon.routing.src_cc_id == 43 && operon.routing.dst_cc_id == 125) {
-                        /*  std::cout << "\n";
-                         std::cout << "channels_to_send = " << channels_to_send[0] << "\n"; */
-                        //}
 
                         u_int32_t const cc_column = this->coordinates.first;
                         u_int32_t const cc_row = this->coordinates.second;
@@ -943,8 +877,6 @@ ComputeCell::prepare_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& C
                     // This is in the north channel.
                     channels_to_send.push_back(3);
                 } else {
-                    // std::cout << "CC ID: " << this->id << ", returned path 1 i.e.
-                    // up\n";
                     channels_to_send.push_back(1); // This is in the south channel.
                 }
             } else {
@@ -1022,16 +954,6 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
                                 operon, receiving_direction[i], virtual_channel_index)) {
 
                             this->send_channel_per_neighbor_contention_count[i].increment();
-
-                            /* std::cout
-                              << "\tCC : " << this->coordinates << " Not able to send to neighbor: "
-                              << this->neighbor_compute_cells[i].value().second << " i = " << i
-                              << ", contention_count: max:"
-                              <<
-                              this->send_channel_per_neighbor_contention_count[i].get_max_count()
-                              << ", contention_count: current : "
-                              << this->send_channel_per_neighbor_contention_count[i].get_count()
-                              << "\n";  */
 
                             left_over_operons.push_back(operon);
                         } else {

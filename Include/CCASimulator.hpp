@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MemoryAllocator.hpp"
 #include "Routing.hpp"
 
+#include <array>
 #include <type_traits>
 
 using u_long = unsigned long;
@@ -127,7 +128,7 @@ class CCASimulator
 
     // Declare the I/O Channels (north and south) that are composed of Compute Cell(s) connecting to
     // their correcponsing CCs in the CCA Chip. Index: 0 is north and 1 is south.
-    std::vector<std::shared_ptr<Cell>> IO_Channel[2];
+    std::array<std::vector<std::shared_ptr<Cell>>, 2> IO_Channel;
 
     // High bandwidth network type. This is the primary network. By default the mesh. But can be
     // Torus and more.
@@ -149,7 +150,7 @@ class CCASimulator
 
     // Memory of host in bytes. Used to store objects at host such as the root terminator provided
     // by the user.
-    static inline constexpr u_int32_t host_memory_size_in_bytes = 12048; // 2 KB
+    static inline constexpr u_int32_t host_memory_size_in_bytes = 12048; // ~12 KB
     char* host_memory_raw_ptr;
     char* host_memory_curr_ptr;
 

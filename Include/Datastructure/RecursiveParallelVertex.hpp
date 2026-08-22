@@ -248,8 +248,6 @@ struct RecursiveParallelVertex : SimpleVertex<Address_T, edgelist_size>
                                   CCAFunctionEvent continuation,
                                   u_int32_t RPVO_level) -> bool
     {
-        /* std::cout << "insert_edge_recursively: this_vertex_addr_in: " << this_vertex_addr_in
-                  << ", dst_vertex_addr: " << dst_vertex_addr << "\n"; */
 
         if (this->number_of_edges == edgelist_size) {
 
