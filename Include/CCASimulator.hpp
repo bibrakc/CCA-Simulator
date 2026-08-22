@@ -39,6 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MemoryAllocator.hpp"
 #include "Routing.hpp"
 
+#include <type_traits>
+
 using u_long = unsigned long;
 
 // The user uses this alias for `Object` to create `Terminator` since the object contains a
@@ -51,6 +53,9 @@ template<typename ApplicationArgumentType>
 inline auto
 cca_create_action_argument(const ApplicationArgumentType& src) -> ActionArgumentType
 {
+    static_assert(std::is_trivially_copyable_v<ApplicationArgumentType>,
+                  "ApplicationArgumentType must be trivially copyable for memcpy");
+
     ActionArgumentType const args_x(new char[sizeof(ApplicationArgumentType)],
                                     std::default_delete<char[]>());
     memcpy(args_x.get(), &src, sizeof(ApplicationArgumentType));
@@ -64,6 +69,9 @@ template<typename ApplicationArgumentType>
 inline auto
 cca_get_action_argument(const ActionArgumentType& src) -> ApplicationArgumentType
 {
+    static_assert(std::is_trivially_copyable_v<ApplicationArgumentType>,
+                  "ApplicationArgumentType must be trivially copyable for memcpy");
+
     ApplicationArgumentType app_args{};
     memcpy(&app_args, src.get(), sizeof(ApplicationArgumentType));
 
