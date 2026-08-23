@@ -32,7 +32,9 @@
 
 
 (require racket/port
-         racket/file)
+         racket/file
+         racket/path
+         racket/match)
 
 (provide read-source-pass)
 
@@ -86,4 +88,25 @@
   (when (null? forms)
     (error 'read-source "no declarations found in ~a" source-path))
 
-  forms)
+  ;; Resolve (require "relative-path.cca") forms by reading the referenced file
+  ;; and splicing its declarations in place of the require.
+  (define source-dir (let ([p (if (string? source-path) (string->path source-path) source-path)])
+                       (define dir (path-only p))
+                       (or dir (current-directory))))
+
+  (define (resolve-requires forms)
+    (apply append
+           (for/list ([form (in-list forms)])
+             (match form
+               [`(require ,rel-path)
+                #:when (string? rel-path)
+                ;; Read the required file relative to the current source file
+                (define required-path (build-path source-dir rel-path))
+                (unless (file-exists? required-path)
+                  (error 'read-source "required file not found: ~a (from ~a)" rel-path source-path))
+                (define required-forms (read-source-pass (path->string required-path)))
+                ;; Return the required file's forms (already recursively resolved)
+                required-forms]
+               [_ (list form)]))))
+
+  (resolve-requires forms))

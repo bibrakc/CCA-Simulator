@@ -1,0 +1,114 @@
+#lang cca
+
+;; BSD 3-Clause License
+;;
+;; Copyright (c) 2026, Bibrak Qamar
+;;
+;; Redistribution and use in source and binary forms, with or without
+;; modification, are permitted provided that the following conditions are met:
+;;
+;; 1. Redistributions of source code must retain the above copyright notice, this
+;;    list of conditions and the following disclaimer.
+;;
+;; 2. Redistributions in binary form must reproduce the above copyright notice,
+;;    this list of conditions and the following disclaimer in the documentation
+;;    and/or other materials provided with the distribution.
+;;
+;; 3. Neither the name of the copyright holder nor the names of its
+;;    contributors may be used to endorse or promote products derived from
+;;    this software without specific prior written permission.
+;;
+;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+;; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+;; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+;; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+;; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+;; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+;;; ═══════════════════════════════════════════════════════════════════════════════
+;;; BFS Driver — Host Program for Breadth-First Search
+;;; ═══════════════════════════════════════════════════════════════════════════════
+;;;
+;;; This file is the entry point that the compiler compiles into an executable.
+;;; It requires the BFS kernel and orchestrates the simulation using host-level
+;;; forms that translate directly to CCA-Simulator C++ API calls.
+;;; ═══════════════════════════════════════════════════════════════════════════════
+
+;; Import the BFS kernel (vertex type, constants, and action)
+(require "bfs-kernel.cca")
+
+;; Host-level program: each form maps to a simulator C++ API call
+(define-program "BFS_Generated_CCASimulator"
+
+  ;; ─── CLI arguments for simulator creation ───────────────────────────────────
+  (let ([shape (cli-arg "s" #:long-name "shape" #:type String #:required #t
+                        #:description "Shape of the compute cell")]
+        [hx (cli-arg "hx" #:long-name "htree_x" #:type UInt32 #:default 3
+                     #:description "Rows of Cells that are served by a single end Htree node. hx must be an odd value")]
+        [hy (cli-arg "hy" #:long-name "htree_y" #:type UInt32 #:default 5
+                     #:description "Columns of Cells that are served by a single end Htree node. hy must be an odd value")]
+        [memory (cli-arg "m" #:long-name "memory_per_cc" #:type UInt32 #:default 524288
+                         #:description "Memory per compute cell in bytes. Default is 0.5 MB")]
+        [mesh (cli-arg "mesh" #:long-name "mesh_type" #:type UInt32 #:default 0
+                       #:description "Type of the mesh: 0=Regular, 1=Torus")]
+        [routing (cli-arg "route" #:long-name "routing_policy" #:type UInt32 #:default 0
+                          #:description "Routing algorithm to use")]
+        [hdepth (cli-arg "hdepth" #:long-name "htree_depth" #:type UInt32 #:default 0
+                         #:description "Depth of the Htree. This is the size of the Htree. 0=No Htree, 1=1 Htree, 2=5 Htrees as it recursively constructs more")]
+        [hbandwidth (cli-arg "hb" #:long-name "hbandwidth_max" #:type UInt32 #:default 64
+                             #:description "Max possible lanes in the htree joints. The htree is recursively constructed with end nodes having 4 lanes (for square cells) to the joint. Then 8, then 16, and so on. There needs to be a max value to avoid exponential growth")])
+    (create-simulator
+      #:shape shape
+      #:dim-x hx #:dim-y hy
+      #:memory-per-cc memory
+      #:mesh-type mesh #:routing routing
+      #:htree-depth hdepth #:htree-bandwidth hbandwidth))
+
+  ;; ─── CLI arguments for graph loading ────────────────────────────────────────
+  (let ([graph-file (cli-arg "f" #:long-name "graphfile" #:type String #:required #t
+                             #:description "Path to the input data graph file")]
+        [graph-name (cli-arg "g" #:long-name "graphname" #:type String #:required #t
+                             #:description "Name of the input graph used to set the name of the output file. Example: Erdos or anything")])
+    (load-graph
+      #:file graph-file #:name graph-name
+      #:vertex-type BFSVertex
+      #:weighted #f))
+
+  ;; Register all actions with the simulator
+  (register-actions bfs-action)
+
+  ;; ─── CLI arguments for germination ──────────────────────────────────────────
+  (let ([root (cli-arg "root" #:long-name "bfsroot" #:type UInt32 #:required #t
+                       #:description "Root vertex for Breadth First Search (BFS)")]
+        [shuffle? (cli-flag "shuffle"
+                            #:long-name "shuffle_vertices"
+                            #:description "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex IDs. This appears to be the case for certain RMAT graphs")])
+    (germinate bfs-action
+      #:root root
+      #:arguments (0)
+      #:shuffle shuffle?))
+
+  ;; Run the simulation
+  (run)
+
+  ;; ─── CLI flag for verification ──────────────────────────────────────────────
+  (let ([verify? (cli-flag "verify"
+                           #:long-name "verification"
+                           #:description "Enable verification of the calculated levels with the levels provided in the accompanying .bfs file")])
+    (when verify?
+      (verify
+        #:field level
+        #:extension ".bfs")))
+
+  ;; ─── Write results to output file ──────────────────────────────────────────
+  (let ([output-dir (cli-arg "od" #:long-name "outputdirectory" #:type String #:default "./"
+                             #:description "Path to the output file directory. Default: ./")]
+        [trail (cli-arg "trail" #:long-name "trail_number" #:type UInt32 #:default 0
+                        #:description "Trail number for this experiment")])
+    (write-results
+      #:output-dir output-dir
+      #:trail trail)))
