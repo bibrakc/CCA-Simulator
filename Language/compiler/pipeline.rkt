@@ -68,12 +68,14 @@
 (require "frontend/read-source.rkt"
          "frontend/parse.rkt"
          "frontend/resolve.rkt"
+         "frontend/typecheck.rkt"
          "backend/emit-cpp.rkt")
 
 (define all-passes
   `((read-source    . ,read-source-pass)
     (parse          . ,parse-pass)
     (resolve        . ,resolve-pass)
+    (typecheck      . ,typecheck-pass)
     ;; emit-cpp is special — it needs an output dir, handled below
     ))
 
