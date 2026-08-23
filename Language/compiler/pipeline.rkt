@@ -39,7 +39,8 @@
          pipeline-diagnostics
          pipeline-ir
          display-diagnostics
-         pretty-print-ir)
+         pretty-print-ir
+         current-cost-model)
 
 ;; ─── Pipeline result ──────────────────────────────────────────────────────────
 (struct pipeline-result (success? ir diagnostics) #:transparent)
@@ -69,6 +70,7 @@
          "frontend/parse.rkt"
          "frontend/resolve.rkt"
          "frontend/typecheck.rkt"
+         "cost-model.rkt"
          "backend/emit-cpp.rkt")
 
 (define all-passes
@@ -82,7 +84,12 @@
 ;; ─── Run pipeline ─────────────────────────────────────────────────────────────
 (define (run-pipeline source-path
                       #:through [through-pass #f]
-                      #:output [output-dir #f])
+                      #:output [output-dir #f]
+                      #:cost-model-path [cost-model-path #f])
+  ;; Set cost model if user provided one
+  (when cost-model-path
+    (current-cost-model (load-cost-model cost-model-path)))
+
   (define passes-to-run
     (if through-pass
         (let loop ([ps all-passes] [acc '()])

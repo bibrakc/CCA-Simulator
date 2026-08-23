@@ -36,10 +36,18 @@
          racket/port
          racket/file
          "../ast.rkt"
+         "../cost-model.rkt"
          "../frontend/resolve.rkt"
          "cpp/cpp-ir.rkt")
 
-(provide emit-cpp-pass)
+(provide emit-cpp-pass
+         current-cost-model)
+
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Cost model parameter — defaults to the built-in model, can be overridden
+;; ═══════════════════════════════════════════════════════════════════════════════
+
+(define current-cost-model (make-parameter default-cost-model))
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
 ;; Main entry: emit all generated files
@@ -300,30 +308,36 @@
                              (mangle-cpp (param-decl-name p))))
                    ""))))
 
-   ;; Predicate handler
-   (list (cpp-raw-decl (emit-predicate-handler act-name vtx-name field-type
-                                                payload-field payload-params pred-expr)))
-
-   ;; Work handler
-   (list (cpp-raw-decl (emit-work-handler act-name vtx-name field-type
-                                           payload-field payload-params
-                                           work-field work-value)))
-
-   ;; Diffuse predicate handler
-   (list (cpp-raw-decl (emit-diffuse-predicate-handler act-name vtx-name field-type
-                                                        payload-field payload-params dpred-expr)))
-
-   ;; Diffuse handler
-   (list (cpp-raw-decl (emit-diffuse-handler act-name vtx-name field-type field-name field-init
-                                              payload-field payload-params
-                                              prop-arg-cpp prop-action-name)))))
+   ;; Compute CPI for each phase using the cost model
+   (let* ([model (current-cost-model)]
+          [pred-cpi (max 1 (compute-phase-cpi (action-decl-predicate act) model #:kind 'predicate))]
+          [work-cpi (max 1 (compute-phase-cpi (action-decl-work act) model #:kind 'work))]
+          [dpred-cpi (max 1 (compute-phase-cpi (action-decl-diffuse-predicate act) model #:kind 'diffuse-predicate))])
+     (append
+       ;; Predicate handler
+       (list (cpp-raw-decl (emit-predicate-handler act-name vtx-name field-type
+                                                    payload-field payload-params pred-expr
+                                                    pred-cpi)))
+       ;; Work handler
+       (list (cpp-raw-decl (emit-work-handler act-name vtx-name field-type
+                                               payload-field payload-params
+                                               work-field work-value
+                                               work-cpi)))
+       ;; Diffuse predicate handler
+       (list (cpp-raw-decl (emit-diffuse-predicate-handler act-name vtx-name field-type
+                                                            payload-field payload-params dpred-expr
+                                                            dpred-cpi)))
+       ;; Diffuse handler
+       (list (cpp-raw-decl (emit-diffuse-handler act-name vtx-name field-type field-name field-init
+                                                  payload-field payload-params
+                                                  prop-arg-cpp prop-action-name)))))))
 
 ;; ─── Handler generation functions ─────────────────────────────────────────────
 
-(define (emit-predicate-handler act-name vtx-name field-type payload-field payload-params pred-expr)
+(define (emit-predicate-handler act-name vtx-name field-type payload-field payload-params pred-expr cpi)
   (string-append
-   (format "template<typename ghost_type>\nauto\n~a_predicate_T(ComputeCell& cc,\n               const Address addr,\n               const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(1);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
-           act-name vtx-name vtx-name vtx-name)
+   (format "template<typename ghost_type>\nauto\n~a_predicate_T(ComputeCell& cc,\n               const Address addr,\n               const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(~a);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
+           act-name cpi vtx-name vtx-name vtx-name)
    ;; Declare payload params as locals
    (string-join
     (for/list ([p (in-list payload-params)])
@@ -338,10 +352,10 @@
            act-name act-name)))
 
 (define (emit-work-handler act-name vtx-name field-type payload-field payload-params
-                           work-field work-value)
+                           work-field work-value work-cpi)
   (string-append
-   (format "template<typename ghost_type>\nauto\n~a_work_T(ComputeCell& cc,\n           const Address addr,\n           const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(1);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
-           act-name vtx-name vtx-name vtx-name)
+   (format "template<typename ghost_type>\nauto\n~a_work_T(ComputeCell& cc,\n           const Address addr,\n           const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(~a);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
+           act-name work-cpi vtx-name vtx-name vtx-name)
    (string-join
     (for/list ([p (in-list payload-params)])
       (format "    ~a const ~a = action_args.~a;\n"
@@ -354,10 +368,10 @@
    (format "inline auto\n~a_work_func(ComputeCell& cc,\n             const Address addr,\n             actionType,\n             const ActionArgumentType args) -> Closure\n{\n    INVOKE_HANDLER_3(~a_work_T, cc, addr, args);\n}\n\n"
            act-name act-name)))
 
-(define (emit-diffuse-predicate-handler act-name vtx-name field-type payload-field payload-params dpred-expr)
+(define (emit-diffuse-predicate-handler act-name vtx-name field-type payload-field payload-params dpred-expr dpred-cpi)
   (string-append
-   (format "template<typename ghost_type>\nauto\n~a_diffuse_predicate_T(ComputeCell& cc,\n                       const Address addr,\n                       const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(1);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
-           act-name vtx-name vtx-name vtx-name)
+   (format "template<typename ghost_type>\nauto\n~a_diffuse_predicate_T(ComputeCell& cc,\n                       const Address addr,\n                       const ActionArgumentType args) -> Closure\n{\n    cc.apply_CPI(~a);\n\n    auto* parent_recursive_parralel_vertex = static_cast<ghost_type*>(cc.get_object(addr));\n\n    if (parent_recursive_parralel_vertex->is_ghost_vertex) {\n        return Closure(cc.null_true_event, nullptr);\n    }\n\n    auto* v = static_cast<~a<ghost_type>*>(cc.get_object(addr));\n    ~aArguments const action_args = cca_get_action_argument<~aArguments>(args);\n\n"
+           act-name dpred-cpi vtx-name vtx-name vtx-name)
    (string-join
     (for/list ([p (in-list payload-params)])
       (format "    ~a const ~a = action_args.~a;\n"
