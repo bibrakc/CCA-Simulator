@@ -52,9 +52,12 @@
 ;; ─── Name mangling ───────────────────────────────────────────────────────────
 (define (mangle-name sym)
   ;; Convert Scheme-style names to C++ identifiers
+  ;; - dashes become underscores
+  ;; - ! is stripped (used for mutation: set-vertex-level!)
+  ;; - ? becomes _p_0x3f (predicate suffix, avoids collision with non-? names)
   (define s (symbol->string sym))
-  (define mangled (string-replace (string-replace s "-" "_") "!" ""))
-  ;; Prefix with $ if it would conflict with C++ keywords
+  (define mangled (string-replace (string-replace (string-replace s "-" "_") "!" "") "?" "_p_0x3f"))
+  ;; Prefix with cca_ if it would conflict with C++ keywords
   (if (member mangled cpp-keywords) (string-append "cca_" mangled) mangled))
 
 (define cpp-keywords

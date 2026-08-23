@@ -94,6 +94,11 @@
        (set! applications
              (cons (parse-application name options) applications))]
 
+      [`(define-program ,binary-name ,host-forms ...)
+       ;; New-style driver program with host-level forms
+       (set! applications
+             (cons (parse-program-decl binary-name host-forms) applications))]
+
       [other
        (error 'parse "unrecognized top-level form: ~s" other)]))
 
@@ -348,3 +353,145 @@
        (loop (cddr remaining) (hash-set h (car remaining) (cadr remaining)))]
       [else
        (error 'parse-application "expected keyword, got: ~s" (car remaining))])))
+
+;; ─── define-program parsing (new-style driver with host-level forms) ──────────
+;; Parses host-level forms and synthesizes an application-decl that the emitter
+;; can use. The host forms are stored in the application-decl's 'verification'
+;; field (repurposed) as a list of host-form structs when the new style is used.
+;;
+;; For backward compatibility, when the emitter sees a list in the verification
+;; field, it knows to generate main() from host forms rather than the old template.
+
+(define (parse-program-decl binary-name host-forms)
+  (define parsed-host-forms (map parse-host-form host-forms))
+
+  ;; Flatten host-let bodies to find nested host forms for metadata extraction
+  (define (flatten-host-forms forms)
+    (apply append
+           (for/list ([hf (in-list forms)])
+             (match hf
+               [(host-let _ body) (cons hf (flatten-host-forms body))]
+               [_ (list hf)]))))
+
+  (define all-forms (flatten-host-forms parsed-host-forms))
+
+  ;; Extract key metadata from host forms for the application-decl
+  (define vertex-type
+    (for/or ([hf (in-list all-forms)])
+      (and (host-load-graph? hf)
+           (hash-ref (host-load-graph-options hf) 'vertex-type #f))))
+  (define root-action
+    (for/or ([hf (in-list all-forms)])
+      (and (host-germinate? hf)
+           (host-germinate-action-name hf))))
+  (define root-arguments
+    (for/or ([hf (in-list all-forms)])
+      (and (host-germinate? hf)
+           (hash-ref (host-germinate-options hf) 'arguments '()))))
+  (define result-field
+    (for/or ([hf (in-list all-forms)])
+      (and (host-when-verify? hf)
+           (hash-ref (host-when-verify-verify-options hf) 'field #f))))
+  (define verification-ext
+    (for/or ([hf (in-list all-forms)])
+      (and (host-when-verify? hf)
+           (hash-ref (host-when-verify-verify-options hf) 'extension #f))))
+
+  (application-decl
+   (string->symbol binary-name)
+   binary-name
+   (or vertex-type 'Unknown)
+   (or root-action 'unknown)
+   (or root-arguments '())
+   result-field
+   ;; Store host forms here — emitter detects list vs string to choose generation mode
+   parsed-host-forms
+   no-span))
+
+(define (parse-host-form form)
+  (match form
+    ;; let binding: binds CLI args/flags to names, body is a host operation
+    [`(let (,bindings ...) ,body-forms ...)
+     ;; Parse each binding — the value should be a cli-arg or cli-flag
+     (define parsed-bindings
+       (for/list ([b (in-list bindings)])
+         (match b
+           [`[,name ,val] (cons name (parse-host-value val))]
+           [_ (error 'parse-program "invalid let binding: ~s" b)])))
+     ;; Parse the body — should be one or more host forms
+     ;; The bindings' cli-arg/cli-flag values need to be collected for CLI setup
+     ;; but the actual host form uses the bound variable names
+     (define body-host-forms (map parse-host-form body-forms))
+     ;; Attach the CLI bindings to the first host form so emitter can collect them
+     ;; We wrap this in a special host-let struct
+     (host-let parsed-bindings body-host-forms)]
+
+    [`(create-simulator ,options ...)
+     (host-create-simulator (parse-host-options options))]
+
+    [`(load-graph ,options ...)
+     (host-load-graph (parse-host-options options))]
+
+    [`(register-actions ,action-names ...)
+     (host-register-actions action-names)]
+
+    [`(germinate ,action-name ,options ...)
+     (host-germinate action-name (parse-host-options options))]
+
+    [`(run)
+     (host-run)]
+
+    [`(write-results ,options ...)
+     (host-write-results (parse-host-options options))]
+
+    [`(when ,flag-ref (verify ,options ...))
+     ;; flag-ref is a symbol (let-bound variable name) referencing a cli-flag
+     ;; Store the variable name so the emitter generates if(<mangled-name>)
+     (define condition-var
+       (match flag-ref
+         [(? symbol?) flag-ref]
+         [`(cli-flag ,name ,opts ...)  (string->symbol name)]))
+     (host-when-verify (hash-set (parse-host-options options)
+                                 'condition-var condition-var))]
+
+    [other
+     (error 'parse-program "unrecognized host-level form: ~s" other)]))
+
+;; Parse keyword options in host forms, recognizing cli-arg and cli-flag values
+(define (parse-host-options opts)
+  (let loop ([remaining opts] [h (hash)])
+    (cond
+      [(null? remaining) h]
+      [(keyword? (car remaining))
+       (when (null? (cdr remaining))
+         (error 'parse-host-options "keyword ~a has no value" (car remaining)))
+       (define key (string->symbol (keyword->string (car remaining))))
+       (define val (parse-host-value (cadr remaining)))
+       (loop (cddr remaining) (hash-set h key val))]
+      [else
+       (error 'parse-host-options "expected keyword, got: ~s" (car remaining))])))
+
+;; Parse a value in a host option — could be a literal, symbol, or cli-arg/cli-flag
+(define (parse-host-value val)
+  (match val
+    [(? string?) val]
+    [(? number?) val]
+    [(? symbol?) val]
+    [(? boolean?) val]
+    [`(cli-arg ,name ,options ...)
+     (define opts (parse-host-options options))
+     (cli-arg-ref name
+                  (hash-ref opts 'long-name name)
+                  (hash-ref opts 'type 'String)
+                  (hash-ref opts 'default #f)
+                  (hash-ref opts 'required #f)
+                  (hash-ref opts 'description name))]
+    [`(cli-flag ,name ,options ...)
+     (define opts (parse-host-options options))
+     (cli-flag-ref name
+                   (hash-ref opts 'long-name name)
+                   (hash-ref opts 'description name))]
+    ;; A list of literals (e.g., root-arguments (0))
+    [`(,vals ...)
+     vals]
+    [_ val]))

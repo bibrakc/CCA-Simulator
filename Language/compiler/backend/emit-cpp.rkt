@@ -201,7 +201,11 @@
     [else (error 'cpp-op "unknown op: ~a" op)]))
 
 (define (mangle-cpp sym)
-  (string-replace (string-replace (symbol->string sym) "-" "_") "!" ""))
+  ;; Convert Scheme-style names to C++ identifiers
+  ;; - dashes become underscores
+  ;; - ! is stripped (mutation convention: set-vertex-level!)
+  ;; - ? becomes _p_0x3f (predicate/boolean convention: verify?, done?)
+  (string-replace (string-replace (string-replace (symbol->string sym) "-" "_") "!" "") "?" "_p_0x3f"))
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
 ;; Type helpers
@@ -498,22 +502,31 @@
    "\n"))
 
 (define (emit-main-function vtx actions app constants symbols vtx-name field-name field-init)
-  (string-append
-   "\nauto\nmain(int argc, char** argv) -> int\n{\n"
-   (emit-cli-block)
-   (emit-simulator-block)
-   (emit-graph-block vtx-name)
-   (emit-registration-block actions)
-   (emit-germination-block vtx-name actions field-name app)
-   (emit-run-block)
-   (emit-verification-block vtx-name field-name field-init app)
-   "    return 0;\n}\n"))
+  ;; Check if we have new-style host forms (list in verification field)
+  ;; or old-style metadata (string/symbol in verification field)
+  (define host-forms (application-decl-verification app))
+  (if (and (list? host-forms) (not (null? host-forms))
+           (or (host-create-simulator? (car host-forms))
+               (host-let? (car host-forms))))
+      ;; New style: generate from host-level forms
+      (emit-main-from-host-forms vtx actions app host-forms vtx-name field-name field-init)
+      ;; Old style: use the fixed template
+      (string-append
+       "\nauto\nmain(int argc, char** argv) -> int\n{\n"
+       (emit-cli-block)
+       (emit-simulator-block)
+       (emit-graph-block vtx-name)
+       (emit-registration-block actions)
+       (emit-germination-block vtx-name actions field-name app)
+       (emit-run-block)
+       (emit-verification-block vtx-name field-name field-init app)
+       "    return 0;\n}\n")))
 
 (define (emit-cli-block)
   "    cli::Parser parser(argc, argv);\n    parser.set_required<std::string>(\"f\", \"graphfile\", \"Path to the input data graph file\");\n    parser.set_required<std::string>(\"g\", \"graphname\", \"Name of the input graph\");\n    parser.set_required<std::string>(\"s\", \"shape\", \"Shape of the compute cell\");\n    parser.set_required<u_int32_t>(\"root\", \"bfsroot\", \"Root vertex for BFS\");\n    parser.set_optional<bool>(\"verify\", \"verification\", 0, \"Enable verification\");\n    parser.set_optional<u_int32_t>(\"m\", \"memory_per_cc\", 512 * 1024, \"Memory per CC in bytes\");\n    parser.set_optional<std::string>(\"od\", \"outputdirectory\", \"./\", \"Output directory\");\n    parser.set_optional<u_int32_t>(\"hx\", \"htree_x\", 3, \"Htree X\");\n    parser.set_optional<u_int32_t>(\"hy\", \"htree_y\", 5, \"Htree Y\");\n    parser.set_optional<u_int32_t>(\"hdepth\", \"htree_depth\", 0, \"Htree depth\");\n    parser.set_optional<u_int32_t>(\"hb\", \"hbandwidth_max\", 64, \"Htree max bandwidth\");\n    parser.set_optional<u_int32_t>(\"mesh\", \"mesh_type\", 0, \"Mesh type: 0=Regular, 1=Torus\");\n    parser.set_optional<u_int32_t>(\"route\", \"routing_policy\", 0, \"Routing algorithm\");\n    parser.set_optional<bool>(\"shuffle\", \"shuffle_vertices\", 0, \"Shuffle vertex list\");\n    parser.set_optional<u_int32_t>(\"trail\", \"trail_number\", 0, \"Trail number\");\n    parser.run_and_exit_if_error();\n\n    auto input_graph_path = parser.get<std::string>(\"f\");\n    auto graph_name = parser.get<std::string>(\"g\");\n    auto shape_arg = parser.get<std::string>(\"s\");\n    auto root_vertex = parser.get<u_int32_t>(\"root\");\n    auto verify = parser.get<bool>(\"verify\");\n    auto memory_per_cc = parser.get<u_int32_t>(\"m\");\n    auto output_dir = parser.get<std::string>(\"od\");\n    auto hdepth = parser.get<u_int32_t>(\"hdepth\");\n    auto hx = parser.get<u_int32_t>(\"hx\");\n    auto hy = parser.get<u_int32_t>(\"hy\");\n    auto hbandwidth_max = parser.get<u_int32_t>(\"hb\");\n    auto mesh_type = parser.get<u_int32_t>(\"mesh\");\n    auto routing_policy = parser.get<u_int32_t>(\"route\");\n    auto shuffle = parser.get<bool>(\"shuffle\");\n\n    if (hdepth == 0) { hbandwidth_max = 0; }\n\n")
 
 (define (emit-simulator-block)
-  "    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;\n    if (shape_arg == \"square\") {\n        shape_of_compute_cells = computeCellShape::square;\n    } else {\n        std::cerr << \"Error: shape \" << shape_arg << \" not supported.\\\\n\";\n        return EXIT_FAILURE;\n    }\n\n    CCASimulator cca_simulator(shape_of_compute_cells,\n                               hx, hy, hdepth, hbandwidth_max,\n                               memory_per_cc, mesh_type, routing_policy);\n\n    cca_simulator.print_discription(std::cout);\n\n")
+  "    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;\n    if (shape_arg == \"square\") {\n        shape_of_compute_cells = computeCellShape::square;\n    } else {\n        std::cerr << \"Error: shape \" << shape_arg << \" not supported.\\n\";\n        return EXIT_FAILURE;\n    }\n\n    CCASimulator cca_simulator(shape_of_compute_cells,\n                               hx, hy, hdepth, hbandwidth_max,\n                               memory_per_cc, mesh_type, routing_policy);\n\n    cca_simulator.print_discription(std::cout);\n\n")
 
 (define (emit-graph-block vtx-name)
   (format "    Graph<~a<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_path, false);\n\n    u_int32_t center_of_chip =\n        (cca_simulator.dim_x * (cca_simulator.dim_y / 2)) + (cca_simulator.dim_y / 2);\n    CyclicMemoryAllocator allocator(center_of_chip, cca_simulator.total_compute_cells);\n\n    input_graph.transfer_graph_host_to_cca<~a<ghost_type_level_1>>(\n        cca_simulator, allocator, std::optional<u_int32_t>(root_vertex), shuffle);\n\n    auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);\n\n"
@@ -543,12 +556,12 @@
       (format "    root_args.~a = ~a;\n" (mangle-cpp (param-decl-name p)) val))
     "")
    (format "\n    ActionArgumentType const args_x = cca_create_action_argument<~aArguments>(root_args);\n\n" vtx-name)
-   "    std::optional<Address> terminator = cca_simulator.create_terminator();\n    if (!terminator) {\n        std::cerr << \"Error! Memory not allocated for terminator\\\\n\";\n        return EXIT_FAILURE;\n    }\n\n"
+   "    std::optional<Address> terminator = cca_simulator.create_terminator();\n    if (!terminator) {\n        std::cerr << \"Error! Memory not allocated for terminator\\n\";\n        return EXIT_FAILURE;\n    }\n\n"
    (format "    cca_simulator.germinate_action(Action(vertex_addr,\n                                          terminator.value(),\n                                          actionType::germinate_action,\n                                          true,\n                                          args_x,\n                                          ~a_predicate,\n                                          ~a_work,\n                                          ~a_diffuse_predicate,\n                                          ~a_diffuse));\n\n"
            act-name act-name act-name act-name)))
 
 (define (emit-run-block)
-  "    std::cout << \"\\\\nStarting Execution:\\\\n\\\\n\";\n    auto start = std::chrono::steady_clock::now();\n    cca_simulator.run_simulation(terminator.value());\n    auto end = std::chrono::steady_clock::now();\n\n    std::cout << \"Total Cycles: \" << cca_simulator.total_cycles << \"\\\\n\";\n    std::cout << \"Elapsed: \"\n              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count()\n              << \" s\\\\n\";\n\n")
+  "    std::cout << \"\\nStarting Execution:\\n\\n\";\n    auto start = std::chrono::steady_clock::now();\n    cca_simulator.run_simulation(terminator.value());\n    auto end = std::chrono::steady_clock::now();\n\n    std::cout << \"Total Cycles: \" << cca_simulator.total_cycles << \"\\n\";\n    std::cout << \"Elapsed: \"\n              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count()\n              << \" s\\n\";\n\n")
 
 (define (emit-verification-block vtx-name field-name field-init app)
   (define verification (application-decl-verification app))
@@ -558,11 +571,11 @@
   (if verification
       (string-append
        "    if (verify) {\n"
-       (format "        std::cout << \"\\\\n~a Verification:\\\\n\";\n" app-name)
+       (format "        std::cout << \"\\n~a Verification:\\n\";\n" app-name)
        (format "        std::string verification_file = input_graph_path + \"~a\";\n" verify-ext)
        "        std::ifstream file(verification_file);\n"
        "        if (!file.is_open()) {\n"
-       "            std::cout << \"Failed to open: \" << verification_file << \"\\\\n\";\n"
+       "            std::cout << \"Failed to open: \" << verification_file << \"\\n\";\n"
        "        } else {\n"
        "            std::string line;\n"
        "            std::getline(file, line); // header\n"
@@ -570,7 +583,7 @@
        "            std::getline(file, line);\n"
        "            std::istringstream(line) >> root_in_file;\n"
        "            if (root_in_file != root_vertex) {\n"
-       "                std::cerr << \"Root mismatch in verification file!\\\\n\";\n"
+       "                std::cerr << \"Root mismatch in verification file!\\n\";\n"
        "                return EXIT_FAILURE;\n"
        "            }\n\n"
        "            std::vector<u_int32_t> control;\n"
@@ -589,15 +602,15 @@
        (format "                auto* vi = static_cast<~a<ghost_type_level_1>*>(cca_simulator.get_object(addr_i));\n" vtx-name)
        (format "                if (control[i] != vi->~a) {\n" field-name)
        (format "                    std::cout << \"Vertex \" << i << \": computed=\" << vi->~a\n" field-name)
-       "                              << \" expected=\" << control[i] << \"\\\\n\";\n"
+       "                              << \" expected=\" << control[i] << \"\\n\";\n"
        "                    errors++;\n"
        "                }\n"
        "            }\n"
        "            if (errors > 0) {\n"
-       "                std::cout << \"FAILED: \" << errors << \" errors\\\\n\";\n"
+       "                std::cout << \"FAILED: \" << errors << \" errors\\n\";\n"
        "                return EXIT_FAILURE;\n"
        "            } else {\n"
-       "                std::cout << \"PASSED\\\\n\";\n"
+       "                std::cout << \"PASSED\\n\";\n"
        "            }\n"
        "        }\n"
        "    }\n\n")
@@ -606,3 +619,369 @@
 ;; ─── Generate CMakeLists.txt ──────────────────────────────────────────────────
 (define (generate-cmake binary-name cpp-filename)
   (format "cca_add_application(NAME ~a SOURCE ~a)\n" binary-name cpp-filename))
+
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; New-style host generation from define-program forms
+;; Each host form translates to specific C++ API calls.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
+(define (emit-main-from-host-forms vtx actions app host-forms vtx-name field-name field-init)
+  (string-append
+   "\nauto\nmain(int argc, char** argv) -> int\n{\n"
+   ;; CLI parsing — derived from host form options
+   (emit-cli-from-host-forms host-forms)
+   ;; Generate code for each host form in order
+   (apply string-append (map (λ (hf) (emit-single-host-form hf vtx-name actions field-name field-init)) host-forms))
+   "    return 0;\n}\n"))
+
+(define (emit-cli-from-host-forms host-forms)
+  ;; Collect all (binding-name . cli-ref) pairs from host-let bindings
+  ;; and standalone cli-refs from host form options
+  (define arg-bindings '())  ; list of (cpp-name . cli-arg-ref)
+  (define flag-bindings '()) ; list of (cpp-name . cli-flag-ref)
+  (define seen-args (make-hash))
+  (define seen-flags (make-hash))
+
+  (define (collect-from-forms forms)
+    (for ([hf (in-list forms)])
+      (match hf
+        [(host-let bindings body)
+         (for ([b (in-list bindings)])
+           (define bname (car b))
+           (define bval (cdr b))
+           (match bval
+             [(? cli-arg-ref?)
+              (unless (hash-has-key? seen-args (cli-arg-ref-name bval))
+                (hash-set! seen-args (cli-arg-ref-name bval) #t)
+                (set! arg-bindings (cons (cons (mangle-cpp bname) bval) arg-bindings)))]
+             [(? cli-flag-ref?)
+              (unless (hash-has-key? seen-flags (cli-flag-ref-name bval))
+                (hash-set! seen-flags (cli-flag-ref-name bval) #t)
+                (set! flag-bindings (cons (cons (mangle-cpp bname) bval) flag-bindings)))]
+             [_ (void)]))
+         (collect-from-forms body)]
+        [(host-when-verify options)
+         (define vflag (hash-ref options 'verify-flag #f))
+         (when (and vflag (not (hash-has-key? seen-flags (cli-flag-ref-name vflag))))
+           (hash-set! seen-flags (cli-flag-ref-name vflag) #t)
+           ;; Use the flag's short name as the C++ variable (mangled)
+           (set! flag-bindings (cons (cons (mangle-cpp (string->symbol (cli-flag-ref-name vflag))) vflag) flag-bindings)))]
+        [_ (void)])))
+
+  (collect-from-forms host-forms)
+
+  (string-append
+   "    cli::Parser parser(argc, argv);\n"
+   ;; Required args
+   (string-join
+    (for/list ([ab (in-list (reverse arg-bindings))]
+               #:when (cli-arg-ref-required? (cdr ab)))
+      (define ref (cdr ab))
+      (format "    parser.set_required<~a>(\"~a\", \"~a\", \"~a\");\n"
+              (cli-type->cpp (cli-arg-ref-type ref))
+              (cli-arg-ref-name ref)
+              (cli-arg-ref-long-name ref)
+              (cli-arg-ref-description ref)))
+    "")
+   ;; Optional args
+   (string-join
+    (for/list ([ab (in-list (reverse arg-bindings))]
+               #:when (not (cli-arg-ref-required? (cdr ab))))
+      (define ref (cdr ab))
+      (define raw-default (or (cli-arg-ref-default ref) (cli-type-default (cli-arg-ref-type ref))))
+      ;; String defaults need C++ string literal quotes
+      (define default-val
+        (if (and (string? raw-default) (eq? (cli-arg-ref-type ref) 'String))
+            (format "\"~a\"" raw-default)
+            raw-default))
+      (format "    parser.set_optional<~a>(\"~a\", \"~a\", ~a, \"~a\");\n"
+              (cli-type->cpp (cli-arg-ref-type ref))
+              (cli-arg-ref-name ref)
+              (cli-arg-ref-long-name ref)
+              default-val
+              (cli-arg-ref-description ref)))
+    "")
+   ;; Bool flags
+   (string-join
+    (for/list ([fb (in-list (reverse flag-bindings))])
+      (define ref (cdr fb))
+      (format "    parser.set_optional<bool>(\"~a\", \"~a\", 0, \"~a\");\n"
+              (cli-flag-ref-name ref)
+              (cli-flag-ref-long-name ref)
+              (cli-flag-ref-description ref)))
+    "")
+   "    parser.run_and_exit_if_error();\n\n"
+   ;; Get all values — using the LET-BINDING NAME as the C++ variable
+   (string-join
+    (for/list ([ab (in-list (reverse arg-bindings))])
+      (define cpp-var (car ab))
+      (define ref (cdr ab))
+      (format "    auto ~a = parser.get<~a>(\"~a\");\n"
+              cpp-var
+              (cli-type->cpp (cli-arg-ref-type ref))
+              (cli-arg-ref-name ref)))
+    "")
+   (string-join
+    (for/list ([fb (in-list (reverse flag-bindings))])
+      (define cpp-var (car fb))
+      (define ref (cdr fb))
+      (format "    auto ~a = parser.get<bool>(\"~a\");\n"
+              cpp-var
+              (cli-flag-ref-name ref)))
+    "")
+   "\n"))
+
+(define (emit-single-host-form hf vtx-name actions field-name field-init)
+  (match hf
+    [(host-let bindings body)
+     ;; Let bindings are transparent — the CLI collection handles registration.
+     ;; Just emit the body forms. The bound names map to CLI var names.
+     (apply string-append (map (λ (b) (emit-single-host-form b vtx-name actions field-name field-init)) body))]
+
+    [(host-create-simulator options)
+     (define shape-val (hash-ref options 'shape 'square))
+     ;; Known shape enum values
+     (define known-shapes '(square))
+     (string-append
+      ;; Shape parsing — if it's a known literal enum, use directly; otherwise it's a variable
+      (cond
+        [(and (symbol? shape-val) (member shape-val known-shapes))
+         (format "    computeCellShape shape_of_compute_cells = computeCellShape::~a;\n\n" shape-val)]
+        [else
+         ;; shape-val is a variable (from a let-bound CLI arg)
+         (define shape-cpp (emit-option-value shape-val))
+         (string-append
+          "    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;\n"
+          (format "    if (~a == \"square\") {\n        shape_of_compute_cells = computeCellShape::square;\n    } else {\n        std::cerr << \"Error: Compute cell shape type \" << ~a << \" not supported.\\n\";\n        return EXIT_FAILURE;\n    }\n\n"
+                  shape-cpp shape-cpp))])
+      (format "    if (~a != 0) {\n        if (!(~a % 2)) { std::cerr << \"Invalid: hx must be odd!\\n\"; return EXIT_FAILURE; }\n        if (!(~a % 2)) { std::cerr << \"Invalid: hy must be odd!\\n\"; return EXIT_FAILURE; }\n    }\n"
+              (emit-option-value (hash-ref options 'htree-depth 0))
+              (emit-option-value (hash-ref options 'dim-x 3))
+              (emit-option-value (hash-ref options 'dim-y 5)))
+      (format "    if (~a == 0) { ~a = 0; }\n\n"
+              (emit-option-value (hash-ref options 'htree-depth 0))
+              (emit-option-value (hash-ref options 'htree-bandwidth 64)))
+      "    CCASimulator cca_simulator(shape_of_compute_cells,\n"
+      (format "                               ~a, ~a, ~a, ~a,\n"
+              (emit-option-value (hash-ref options 'dim-x 3))
+              (emit-option-value (hash-ref options 'dim-y 5))
+              (emit-option-value (hash-ref options 'htree-depth 0))
+              (emit-option-value (hash-ref options 'htree-bandwidth 64)))
+      (format "                               ~a, ~a, ~a);\n\n"
+              (emit-option-value (hash-ref options 'memory-per-cc 524288))
+              (emit-option-value (hash-ref options 'mesh-type 0))
+              (emit-option-value (hash-ref options 'routing 0)))
+      "    cca_simulator.print_discription(std::cout);\n\n")]
+
+    [(host-load-graph options)
+     (string-append
+      ;; Graph constructor's 2nd arg is 'dont_read_edges_yet' — always false
+      ;; (we always want edges loaded immediately)
+      (format "    Graph<~a<SimpleVertex<host_edge_type, edges_min>>> input_graph(~a, false);\n\n"
+              vtx-name
+              (emit-option-value (hash-ref options 'file "")))
+      (format "    u_int32_t center_of_chip =\n        (cca_simulator.dim_x * (cca_simulator.dim_y / 2)) + (cca_simulator.dim_y / 2);\n    CyclicMemoryAllocator allocator(center_of_chip, cca_simulator.total_compute_cells);\n\n"))]
+
+    [(host-register-actions action-names)
+     ;; Register all actions
+     (string-append
+      (string-join
+       (for/list ([aname (in-list action-names)])
+         (define act-cpp (mangle-cpp aname))
+         (format "    ~a_predicate = cca_simulator.register_function_event(~a_predicate_func);\n    ~a_work = cca_simulator.register_function_event(~a_work_func);\n    ~a_diffuse_predicate = cca_simulator.register_function_event(~a_diffuse_predicate_func);\n    ~a_diffuse = cca_simulator.register_function_event(~a_diffuse_func);\n"
+                 act-cpp act-cpp act-cpp act-cpp act-cpp act-cpp act-cpp act-cpp))
+       "\n")
+      "\n")]
+
+    [(host-germinate action-name options)
+     (define act-cpp (mangle-cpp action-name))
+     (define root-args (hash-ref options 'arguments '(0)))
+     (define payload-field (mangle-cpp (param-decl-name (car (action-decl-params (car actions))))))
+     (define root-val (emit-option-value (hash-ref options 'root 0)))
+     (define shuffle-val (emit-option-value (hash-ref options 'shuffle #f)))
+     (string-append
+      ;; Transfer graph to CCA (needs root and shuffle which are available here)
+      (format "    input_graph.transfer_graph_host_to_cca<~a<ghost_type_level_1>>(\n        cca_simulator, allocator, std::optional<u_int32_t>(~a), ~a);\n\n"
+              vtx-name root-val (or shuffle-val "false"))
+      (format "    auto vertex_addr = input_graph.get_vertex_address_in_cca(~a);\n\n" root-val)
+      (format "    ~aArguments root_args;\n" vtx-name)
+      (format "    root_args.~a = ~a;\n\n" payload-field (car root-args))
+      (format "    ActionArgumentType const args_x = cca_create_action_argument<~aArguments>(root_args);\n\n" vtx-name)
+      "    std::optional<Address> terminator = cca_simulator.create_terminator();\n"
+      "    if (!terminator) {\n"
+      "        std::cerr << \"Error! Memory not allocated for terminator\\n\";\n"
+      "        return EXIT_FAILURE;\n"
+      "    }\n\n"
+      (format "    cca_simulator.germinate_action(Action(vertex_addr,\n                                          terminator.value(),\n                                          actionType::germinate_action,\n                                          true,\n                                          args_x,\n                                          ~a_predicate,\n                                          ~a_work,\n                                          ~a_diffuse_predicate,\n                                          ~a_diffuse));\n\n"
+              act-cpp act-cpp act-cpp act-cpp))]
+
+    [(host-run)
+     (string-append
+      "    std::cout << \"\\nStarting Execution:\\n\\n\";\n"
+      "    auto start = std::chrono::steady_clock::now();\n"
+      "    cca_simulator.run_simulation(terminator.value());\n"
+      "    auto end = std::chrono::steady_clock::now();\n\n"
+      "    std::cout << \"Total Cycles: \" << cca_simulator.total_cycles << \"\\n\";\n"
+      "    std::cout << \"Elapsed: \"\n"
+      "              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count()\n"
+      "              << \" s\\n\";\n\n")]
+
+    [(host-when-verify options)
+     (define ext (hash-ref options 'extension ".bfs"))
+     (define field (hash-ref options 'field 'level))
+     (define field-cpp (mangle-cpp field))
+     (define condition-var (hash-ref options 'condition-var 'verify))
+     (define condition-cpp (mangle-cpp condition-var))
+     (string-append
+      (format "    if (~a) {\n" condition-cpp)
+      (format "        std::cout << \"\\nVerification:\\n\";\n")
+      (format "        std::string verification_file = graph_file + \"~a\";\n"
+              ext)
+      "        std::ifstream file(verification_file);\n"
+      "        if (!file.is_open()) {\n"
+      "            std::cout << \"Failed to open: \" << verification_file << \"\\n\";\n"
+      "        } else {\n"
+      "            std::string line;\n"
+      "            std::getline(file, line);\n"
+      "            u_int32_t root_in_file = 0;\n"
+      "            std::getline(file, line);\n"
+      "            std::istringstream(line) >> root_in_file;\n"
+      (format "            if (root_in_file != root) {\n")
+      "                std::cerr << \"Root mismatch in verification file!\\n\";\n"
+      "                return EXIT_FAILURE;\n"
+      "            }\n\n"
+      "            std::vector<u_int32_t> control;\n"
+      "            u_int32_t nid, bval;\n"
+      "            while (std::getline(file, line)) {\n"
+      "                std::istringstream iss(line);\n"
+      "                if (iss >> nid >> bval) {\n"
+      (format "                    while (nid != control.size()) { control.emplace_back(~a); }\n" field-init)
+      "                    control.emplace_back(bval);\n"
+      "                }\n"
+      "            }\n"
+      "            file.close();\n\n"
+      "            u_int32_t errors = 0;\n"
+      "            for (u_int32_t i = 0; i < control.size(); i++) {\n"
+      "                Address addr_i = input_graph.get_vertex_address_in_cca(i);\n"
+      (format "                auto* vi = static_cast<~a<ghost_type_level_1>*>(cca_simulator.get_object(addr_i));\n" vtx-name)
+      (format "                if (control[i] != vi->~a) {\n" field-cpp)
+      (format "                    std::cout << \"Vertex \" << i << \": computed=\" << vi->~a\n" field-cpp)
+      "                              << \" expected=\" << control[i] << \"\\n\";\n"
+      "                    errors++;\n"
+      "                }\n"
+      "            }\n"
+      "            if (errors > 0) {\n"
+      "                std::cout << \"FAILED: \" << errors << \" errors\\n\";\n"
+      "                return EXIT_FAILURE;\n"
+      "            } else {\n"
+      "                std::cout << \"PASSED\\n\";\n"
+      "            }\n"
+      "        }\n"
+      "    }\n\n")]
+
+    [(host-write-results options)
+     (define output-dir-val (emit-option-value (hash-ref options 'output-dir "./")))
+     (define trail-val (emit-option-value (hash-ref options 'trail 0)))
+     (string-append
+      "\n    // Write results\n"
+      (format "    std::string const output_file_name =\n        \"bfs_graph_\" + graph_name + \"_v_\" + std::to_string(input_graph.total_vertices) +\n        \"_e_\" + std::to_string(input_graph.total_edges) + \"_trail_\" +\n        std::to_string(~a) + cca_simulator.key_configurations_string();\n\n" trail-val)
+      (format "    std::string const output_file_path = ~a + \"/\" + output_file_name;\n" output-dir-val)
+      "    std::cout << \"\\nWriting results to output file: \" << output_file_path << \"\\n\";\n\n"
+      "    std::ofstream output_file(output_file_path);\n"
+      "    if (!output_file) {\n        std::cerr << \"Error! Output file not created\\n\";\n    }\n\n"
+      "    output_file << \"graph_file\\\\tvertices\\\\tedges\\\\troot_vertex\\n\"\n"
+      (format "                << graph_file << \"\\\\t\" << input_graph.total_vertices << \"\\\\t\"\n                << input_graph.total_edges << \"\\\\t\" << root << \"\\n\";\n\n")
+      "    cca_simulator.print_statistics(output_file);\n"
+      "    output_file.close();\n"
+      "    cca_simulator.print_animation(output_file_path);\n\n")]
+
+    [_ ""]))
+
+;; Emit an option value — cli-arg-ref becomes the variable name, literals become themselves
+(define (emit-option-value val)
+  (match val
+    [(cli-arg-ref name _ _ _ _ _) (mangle-cpp (string->symbol name))]
+    [(cli-flag-ref name _ _) (mangle-cpp (string->symbol name))]
+    [(? string?) (format "\"~a\"" val)]
+    [(? number?) (format "~a" val)]
+    [(? symbol?) (format "~a" (mangle-cpp val))]
+    [_ (format "~a" val)]))
+
+;; Convert CCA type symbols to C++ type strings for CLI parser
+(define (cli-type->cpp type)
+  (match type
+    ['UInt32 "u_int32_t"]
+    ['String "std::string"]
+    ['Boolean "bool"]
+    [_ "std::string"]))
+
+(define (cli-type-default type)
+  (match type
+    ['UInt32 "0"]
+    ['String "\"\""]
+    ['Boolean "0"]
+    [_ "\"\""]))
+
+;; Collect all cli-arg references from host forms (recursive through options hashes)
+(define (collect-cli-args host-forms)
+  (define args '())
+  (define seen (make-hash))
+  (for ([hf (in-list host-forms)])
+    (collect-cli-args-from-value hf args seen))
+  (hash-values seen))
+
+(define (collect-cli-args-from-value val args seen)
+  (match val
+    [(cli-arg-ref name _ _ _ _ _)
+     (unless (hash-has-key? seen name)
+       (hash-set! seen name val))]
+    [(host-create-simulator options) (collect-from-hash options seen)]
+    [(host-load-graph options) (collect-from-hash options seen)]
+    [(host-germinate _ options) (collect-from-hash options seen)]
+    [(host-when-verify options) (collect-from-hash options seen)]
+    [(host-let bindings body)
+     ;; Collect from the let bindings (cli-arg/cli-flag values)
+     (for ([b (in-list bindings)])
+       (collect-cli-args-from-value (cdr b) args seen))
+     ;; Collect from body forms
+     (for ([hf (in-list body)])
+       (collect-cli-args-from-value hf args seen))]
+    [_ (void)]))
+
+(define (collect-from-hash h seen)
+  (for ([v (in-hash-values h)])
+    (collect-cli-args-from-value v '() seen)))
+
+;; Collect all cli-flag references
+(define (collect-cli-flags host-forms)
+  (define flags '())
+  (define seen (make-hash))
+  (for ([hf (in-list host-forms)])
+    (collect-cli-flags-from-value hf seen))
+  (hash-values seen))
+
+(define (collect-cli-flags-from-value val seen)
+  (match val
+    [(cli-flag-ref name _ _)
+     (unless (hash-has-key? seen name)
+       (hash-set! seen name val))]
+    [(host-create-simulator options) (collect-flags-from-hash options seen)]
+    [(host-load-graph options) (collect-flags-from-hash options seen)]
+    [(host-germinate _ options) (collect-flags-from-hash options seen)]
+    [(host-when-verify options)
+     ;; The verify flag is already registered by the enclosing host-let binding.
+     ;; Don't create a duplicate here.
+     (void)]
+    [(host-write-results options) (collect-from-hash options seen)]
+    [(host-let bindings body)
+     ;; Collect from let bindings
+     (for ([b (in-list bindings)])
+       (collect-cli-flags-from-value (cdr b) seen))
+     ;; Collect from body
+     (for ([hf (in-list body)])
+       (collect-cli-flags-from-value hf seen))]
+    [_ (void)]))
+
+(define (collect-flags-from-hash h seen)
+  (for ([v (in-hash-values h)])
+    (collect-cli-flags-from-value v seen)))

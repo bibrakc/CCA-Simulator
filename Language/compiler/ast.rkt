@@ -129,3 +129,36 @@
 ;; ─── Program ──────────────────────────────────────────────────────────────────
 ;; The top-level container produced by the parser.
 (struct cca-program (constants vertex actions application span) #:transparent)
+
+;; ─── Host-level forms (inside define-program) ─────────────────────────────────
+;; These represent simulator API calls in the driver program.
+;; Each translates to a specific C++ statement or block in main().
+
+(struct host-create-simulator (options) #:transparent)
+;; options: hash of #:shape, #:dim-x, #:dim-y, #:memory-per-cc, etc.
+
+(struct host-load-graph (options) #:transparent)
+;; options: hash of #:file, #:name, #:vertex-type, #:weighted
+
+(struct host-register-actions (action-names) #:transparent)
+;; action-names: list of symbols naming actions to register
+
+(struct host-germinate (action-name options) #:transparent)
+;; options: hash of #:root, #:arguments, #:shuffle
+
+(struct host-run () #:transparent)
+;; No options — just calls run_simulation
+
+(struct host-write-results (options) #:transparent)
+;; options: hash of #:output-dir, #:trail
+
+(struct host-when-verify (verify-options) #:transparent)
+;; options: hash of #:field, #:extension
+
+(struct host-let (bindings body) #:transparent)
+;; bindings: list of (name . cli-arg-ref/cli-flag-ref) pairs
+;; body: list of host forms that can use the bound names
+
+;; cli-arg and cli-flag are represented as option values in the host forms
+(struct cli-arg-ref (name long-name type default required? description) #:transparent)
+(struct cli-flag-ref (name long-name description) #:transparent)
