@@ -852,9 +852,17 @@ class Graph
         // File format: line 1 has "vertices\tvertices" (same value repeated),
         // line 2 has "total_edges"
         u_int32_t total_vertices_duplicate = 0;
-        fscanf(
-            input_graph_file_handler, "%d\t%d", &this->total_vertices, &total_vertices_duplicate);
-        fscanf(input_graph_file_handler, "%d", &this->total_edges);
+        if (fscanf(input_graph_file_handler,
+                   "%d\t%d",
+                   &this->total_vertices,
+                   &total_vertices_duplicate) != 2) {
+            std::cerr << "Error reading vertex count from graph file\n";
+            exit(EXIT_FAILURE);
+        }
+        if (fscanf(input_graph_file_handler, "%d", &this->total_edges) != 1) {
+            std::cerr << "Error reading edge count from graph file\n";
+            exit(EXIT_FAILURE);
+        }
 
         std::cout << "The graph: " << input_graph_path
                   << " has total_vertices: " << this->total_vertices << " with "
@@ -876,7 +884,14 @@ class Graph
             u_int32_t vertex_to = 0;
             u_int32_t weight = 0;
             for (int i = 0; i < this->total_edges; i++) {
-                fscanf(input_graph_file_handler, "%d\t%d\t%d", &vertex_from, &vertex_to, &weight);
+                if (fscanf(input_graph_file_handler,
+                           "%d\t%d\t%d",
+                           &vertex_from,
+                           &vertex_to,
+                           &weight) != 3) {
+                    std::cerr << "Error reading edge " << i << " from graph file\n";
+                    exit(EXIT_FAILURE);
+                }
                 this->add_edge(this->vertices[vertex_from], vertex_to, weight);
             }
         }

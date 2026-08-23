@@ -384,11 +384,9 @@ SinkCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_chip
                     std::vector<Operon> left_over_operons;
                     for (Operon const& operon : send_operons) {
 
-                        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
-
                         // Check if this operon is destined for this compute/sink cell. If it does
                         // then it is a bug
-                        assert(this->id != dst_cc_id);
+                        assert(this->id != operon.routing.dst_cc_id);
                         // The neighbor of this compute cell cannot be null
                         assert(this->neighbor_compute_cells[i] != std::nullopt);
 
