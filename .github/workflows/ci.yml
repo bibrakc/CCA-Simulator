@@ -166,3 +166,63 @@ jobs:
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -verify
+
+  language-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Racket
+      uses: Bogdanp/setup-racket@v1.11
+      with:
+        architecture: x64
+        distribution: minimal
+        version: '9.3'
+
+    - name: Install rackunit
+      run: raco pkg install --auto --batch rackunit-lib
+
+    - name: Run compiler tests
+      run: racket Language/tests/run-tests.rkt
+
+    - name: Compile bfs.cca to C++
+      run: |
+        racket -e '
+          (require "Language/compiler/pipeline.rkt")
+          (define r (run-pipeline "Language/examples/bfs/bfs.cca"
+                                  #:output "generated-bfs"))
+          (unless (pipeline-success? r)
+            (error "Compilation failed"))
+          (printf "Generated: ~a\n" (pipeline-ir r))'
+
+    - name: Install C++ build dependencies
+      run: sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
+
+    - name: Build generated BFS application
+      env:
+        CC: gcc-13
+        CXX: g++-13
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DTHROTTLE=true \
+          -DANIMATION=false \
+          -DVICINITY=2 \
+          -DTERMINATION=false \
+          -DMIN_EDGES_PER_VERTEX=10 \
+          -DMAXEDGESPERVERTEX=15 \
+          -DGHOST_CHILDREN=3 \
+          -DTHROTTLE_CONGESTION_THRESHOLD=22 \
+          -DRECVBUFFSIZE=4 \
+          -DACTIONQUEUESIZE=2048 \
+          -DSPLIT_QUEUES=true \
+          -DCCA_GENERATED_APPLICATIONS_DIR="$PWD/generated-bfs"
+        cmake --build build --target BFS_Generated_CCASimulator -j$(nproc)
+
+    - name: Run generated BFS with verification
+      env:
+        OMP_NUM_THREADS: 4
+      run: |
+        ./build/BFS_Generated_CCASimulator \
+          -f Input_Graphs/Erdos-Renyi_ef_5_v_6.edgelist \
+          -g Erdos -s square -root 0 -verify
