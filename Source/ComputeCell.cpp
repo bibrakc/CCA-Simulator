@@ -941,10 +941,9 @@ ComputeCell::run_a_communication_cycle(std::vector<std::shared_ptr<Cell>>& CCA_c
 
                     std::vector<Operon> left_over_operons;
                     for (Operon const& operon : send_operons) {
-                        u_int32_t const dst_cc_id = operon.routing.dst_cc_id;
 
                         // Check if this operon is destined for this compute cell
-                        assert(this->id != dst_cc_id);
+                        assert(this->id != operon.routing.dst_cc_id);
                         assert(this->neighbor_compute_cells[i] != std::nullopt);
 
                         u_int32_t const neighbor_id_ =
