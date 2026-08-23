@@ -18,14 +18,36 @@
          resolved-program-application
          resolved-program-symbols)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Name resolution pass — builds a symbol table and validates references.
+;;
+;; This pass runs after parsing and before typechecking. It:
+;;   1. Registers all named entities (constants, fields, actions, vertex type)
+;;      into a symbol table with their C++-mangled names.
+;;   2. Validates cross-references:
+;;      - application's root-action references a defined action
+;;      - application's vertex-type references the defined vertex
+;;      - application's result-field references a defined field
+;;      - propagate targets in diffuse bodies reference defined actions
+;;   3. Performs name mangling (Scheme → C++ identifier conversion):
+;;      - Hyphens become underscores
+;;      - Bangs are removed
+;;      - C++ keywords get a "cca_" prefix
+;;
+;; Inputs:  cca-program struct (from parse-pass).
+;; Outputs: resolved-program struct (wraps the AST with a symbol table).
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Resolved program ─────────────────────────────────────────────────────────
 ;; After resolution, the program carries a symbol table mapping source names
 ;; to their kind, type, and C++ mangled name.
 
 (struct resolved-program (constants vertex actions application symbols) #:transparent)
 
+;; symbol-entry: one entry in the symbol table.
+;;   kind: 'constant, 'field, 'action, 'param, or 'vertex-type
+;;   cpp-name: the C++-safe mangled identifier
 (struct symbol-entry (name kind type cpp-name) #:transparent)
-;; kind: 'constant, 'field, 'action, 'param, 'vertex-type
 
 ;; ─── Name mangling ───────────────────────────────────────────────────────────
 (define (mangle-name sym)

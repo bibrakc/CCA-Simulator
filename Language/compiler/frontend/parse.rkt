@@ -38,6 +38,27 @@
 
 (provide parse-pass)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Parser pass — transforms S-expression datums into typed AST nodes.
+;;
+;; This is the second pass in the pipeline (after read-source). It pattern-matches
+;; each top-level S-expression form and constructs the corresponding AST struct.
+;;
+;; Recognized top-level forms:
+;;   (define-constant name : Type value)
+;;   (define-vertex Name [field : Type ...] ...)
+;;   (define-action Name (params ...) body)
+;;   (define-application Name #:keyword value ...)
+;;
+;; Action body parsing supports TWO syntaxes:
+;;   1. Canonical:  (predicate EXPR (work STMT...) (diffuse (predicate EXPR) STMT...))
+;;   2. Paper-compatible sugar: (predicate EXPR (begin STMT... (diffuse ...)))
+;;      where the last form in `begin` is the diffuse block.
+;;
+;; Inputs:  List of S-expression datums from read-source-pass.
+;; Outputs: A `cca-program` AST struct.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Parser pass ──────────────────────────────────────────────────────────────
 ;; Input: list of S-expression datums (from read-source)
 ;; Output: cca-program struct
@@ -128,15 +149,25 @@
     [other (error 'parse-param "invalid parameter: ~s" other)]))
 
 ;; ─── Action body parsing ──────────────────────────────────────────────────────
-;; Canonical form:
+;; The action body must decompose into four semantic phases:
+;;   1. predicate       — Boolean expression guarding activation
+;;   2. work            — statements that mutate the vertex
+;;   3. diffuse-predicate — Boolean expression guarding propagation
+;;   4. diffuse         — statements that propagate actions to neighbors
+;;
+;; Two concrete syntax forms are supported:
+;;
+;; Canonical form (explicit phases):
 ;;   (predicate EXPR (work STMT ...) (diffuse (predicate EXPR) STMT ...))
 ;;
-;; Paper-compatible sugar:
-;;   (predicate EXPR (begin STMT ... (diffuse (predicate EXPR STMT ...))))
+;; Paper-compatible sugar (inline begin block):
+;;   (predicate EXPR (begin STMT ... (diffuse (predicate EXPR) STMT ...)))
+;;   The last form in `begin` must be the `(diffuse ...)` block; everything
+;;   before it is the work phase.
 
 (define (parse-action-body body)
   (match body
-    ;; Canonical: (predicate EXPR (work ...) (diffuse (predicate EXPR) ...))
+    ;; Canonical: all four phases spelled out explicitly
     [`(predicate ,pred-expr
         (work ,work-stmts ...)
         (diffuse (predicate ,dpred-expr) ,diffuse-stmts ...))
@@ -145,18 +176,20 @@
              (parse-expr dpred-expr)
              (map parse-stmt diffuse-stmts))]
 
-    ;; Paper sugar: (predicate EXPR (begin WORK... (diffuse (predicate DPRED DIFFUSE...))))
+    ;; Paper sugar: work and diffuse merged in a begin block.
+    ;; We split on the last form, which must be `(diffuse ...)`.
     [`(predicate ,pred-expr
         (begin ,body-forms ...))
      (define-values (work-forms diffuse-form) (split-begin-body body-forms))
      (match diffuse-form
+       ;; Diffuse with its own predicate
        [`(diffuse (predicate ,dpred-expr ,diffuse-stmts ...))
         (values (parse-expr pred-expr)
                 (map parse-stmt work-forms)
                 (parse-expr dpred-expr)
                 (map parse-stmt diffuse-stmts))]
+       ;; Diffuse without a predicate — reuse the outer predicate
        [`(diffuse ,diffuse-stmts ...)
-        ;; No diffuse predicate; use same as outer predicate
         (values (parse-expr pred-expr)
                 (map parse-stmt work-forms)
                 (parse-expr pred-expr)
@@ -167,29 +200,37 @@
     [other
      (error 'parse-action-body "unrecognized action body shape: ~s" other)]))
 
-;; Split a begin body into work statements and a final diffuse form
+;; Splits a begin body into (work-stmts, final-diffuse-form).
+;; The last form in the list must be the diffuse block.
 (define (split-begin-body forms)
   (cond
     [(null? forms)
      (error 'parse-action-body "empty begin body")]
     [(null? (cdr forms))
-     ;; Last form must be diffuse
+     ;; Only one form — it must be the diffuse
      (values '() (car forms))]
     [else
+     ;; Recurse: everything except the last form is work
      (define-values (rest-work diffuse) (split-begin-body (cdr forms)))
      (values (cons (car forms) rest-work) diffuse)]))
 
 ;; ─── Expression parsing ───────────────────────────────────────────────────────
+;; Maps S-expressions to expression AST nodes. Dispatch order matters:
+;; literals and symbols are checked first, then compound forms by leading symbol.
 (define (parse-expr sexp)
   (match sexp
     [(? exact-nonnegative-integer?) (literal-expr no-span sexp (t-u32))]
     [(? boolean?) (literal-expr no-span sexp (t-bool))]
     [(? symbol?) (var-expr no-span sexp)]
+    ;; Primitive operations: arithmetic, comparison, logic
     [`(,(and op (or '+ '- '* '> '>= '< '<= '= 'eq? 'and 'or 'not)) ,args ...)
      (prim-expr no-span (normalize-op op) (map parse-expr args))]
+    ;; vertex-id is a special pseudo-field returning the vertex's network address
     [`(vertex-id ,target) (vertex-read-expr no-span 'id (parse-expr target))]
+    ;; vertex-FIELD accessor pattern: vertex-level, vertex-distance, etc.
     [`(,(and accessor (? vertex-field-accessor?)) ,target)
      (vertex-read-expr no-span (extract-field-name accessor) (parse-expr target))]
+    ;; Edge accessors: destination address and edge weight
     [`(edge-address ,target) (edge-read-expr no-span 'address (parse-expr target))]
     [`(edge-weight ,target) (edge-read-expr no-span 'weight (parse-expr target))]
     [`(let (,bindings ...) ,body)
@@ -200,11 +241,13 @@
      (if-expr no-span (parse-expr test) (parse-expr then) (parse-expr else-b))]
     [other (error 'parse-expr "unrecognized expression: ~s" other)]))
 
+;; Normalize Scheme-style operator names to canonical symbols
 (define (normalize-op op)
   (case op
-    [(eq?) '=]
+    [(eq?) '=]  ; eq? is an alias for structural equality in CCA
     [else op]))
 
+;; Detects symbols like vertex-level, vertex-distance (but NOT vertex-id or vertex-edges)
 (define (vertex-field-accessor? sym)
   (and (symbol? sym)
        (let ([s (symbol->string sym)])
@@ -213,22 +256,30 @@
               (not (string=? s "vertex-id"))
               (not (string=? s "vertex-edges"))))))
 
+;; Strips the "vertex-" prefix to get the field name symbol
 (define (extract-field-name accessor)
   (string->symbol (substring (symbol->string accessor) 7)))
 
 ;; ─── Statement parsing ────────────────────────────────────────────────────────
+;; Statements appear in work and diffuse phases. Two mutation syntaxes are
+;; supported: (set-vertex-FIELD! target value) and (set! (vertex-FIELD target) value).
 (define (parse-stmt sexp)
   (match sexp
+    ;; Mutation via set-vertex-FIELD! accessor (e.g., set-vertex-level!)
     [`(,(and setter (? set-field-accessor?)) ,target ,value)
      (set-field-stmt no-span (extract-set-field-name setter) (parse-expr target) (parse-expr value))]
+    ;; Mutation via set! form — alternative syntax
     [`(set! (,(and accessor (? vertex-field-accessor?)) ,target) ,value)
      (set-field-stmt no-span (extract-field-name accessor)
                      (parse-expr target)
                      (parse-expr value))]
+    ;; Edge iteration with typed edge variable
     [`(for-each ([,edge-var : Edge] (vertex-edges ,target)) ,body-stmts ...)
      (for-edges-stmt no-span edge-var (parse-expr target) (map parse-stmt body-stmts))]
+    ;; Edge iteration with any type annotation (flexibility for future edge types)
     [`(for-each ([,edge-var : ,_type] (vertex-edges ,target)) ,body-stmts ...)
      (for-edges-stmt no-span edge-var (parse-expr target) (map parse-stmt body-stmts))]
+    ;; Propagate: send an action to a destination with payload arguments
     [`(propagate ,action-name ,dest ,args ...)
      (propagate-stmt no-span action-name (parse-expr dest) (map parse-expr args))]
     [`(let (,bindings ...) ,body-stmts ...)
@@ -239,6 +290,7 @@
      (begin-stmt no-span (map parse-stmt stmts))]
     [other (error 'parse-stmt "unrecognized statement: ~s" other)]))
 
+;; Detects symbols like set-vertex-level! (prefix "set-vertex-", suffix "!")
 (define (set-field-accessor? sym)
   (and (symbol? sym)
        (let ([s (symbol->string sym)])
@@ -246,6 +298,7 @@
               (string=? (substring s 0 11) "set-vertex-")
               (string=? (substring s (- (string-length s) 1)) "!")))))
 
+;; Extracts field name from set-vertex-FIELD! → FIELD
 (define (extract-set-field-name setter)
   (define s (symbol->string setter))
   ;; set-vertex-FIELD! → FIELD

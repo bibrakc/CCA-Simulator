@@ -36,6 +36,35 @@
 
 (provide typecheck-pass)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Type & Effect Checker — validates CCA programs before code generation.
+;;
+;; This is the last analysis pass before emit-cpp. It enforces both type
+;; correctness and the CCA phase discipline (which effects are allowed where).
+;;
+;; What each check catches:
+;;   1. Expression type consistency — arithmetic on non-numeric types, etc.
+;;   2. Field access type matching — reading/writing vertex fields through
+;;      correctly-typed pointers.
+;;   3. Payload parameter scalar types — only trivially-copyable types can
+;;      travel in action messages (UInt32, Boolean, Address).
+;;   4. Action target is (Pointer VertexType) — ensures the first param is
+;;      a valid vertex pointer.
+;;   5. Propagate arity & types — argument count and types must match the
+;;      target action's parameter list.
+;;   6. Application root-arguments — germination args must match root-action params.
+;;   7. Phase effect discipline:
+;;      - Predicates must be pure (no mutation, no propagation) and Boolean.
+;;      - Work phase: may mutate vertex fields, must NOT propagate.
+;;      - Diffuse phase: may propagate, must NOT mutate vertex fields.
+;;      - Ghost-safety: diffuse propagation args must not read vertex fields
+;;        (because ghost vertices don't have valid field data).
+;;
+;; Inputs:  resolved-program (from resolve-pass).
+;; Outputs: The same resolved-program, unchanged, if all checks pass.
+;; Raises:  exn:fail with phase/message if any check fails.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Type & Effect Checker ────────────────────────────────────────────────────
 ;; Input:  resolved-program (from resolve-pass)
 ;; Output: resolved-program unchanged if valid
@@ -215,6 +244,10 @@
     f))
 
 ;; ─── Effect checking on statements ───────────────────────────────────────────
+;; Enforces the CCA phase discipline:
+;;   - 'work phase: set-field allowed, propagate forbidden
+;;   - 'diffuse phase: propagate allowed, set-field forbidden
+;; Also performs type-checking on sub-expressions within statements.
 
 ;; Check a statement in a given phase context
 ;; phase: 'work or 'diffuse
@@ -225,7 +258,7 @@
 (define (check-stmt stmt env vertex edge-vars phase actions)
   (match stmt
     [(set-field-stmt _ field target value)
-     ;; Effect: mutation
+     ;; Effect: mutation — forbidden in diffuse phase
      (when (eq? phase 'diffuse)
        (tc-error "diffuse" "mutation (set-field ~a) is not allowed in diffuse phase" field))
      ;; Type check: target must be a pointer
@@ -260,7 +293,7 @@
        (check-stmt s new-env vertex new-edge-vars phase actions))]
 
     [(propagate-stmt _ action-name destination args)
-     ;; Effect: propagation
+     ;; Effect: propagation — forbidden in work phase
      (when (eq? phase 'work)
        (tc-error "work" "propagate is not allowed in work phase"))
      ;; Type check destination: must be Address
@@ -328,6 +361,10 @@
     [_ (tc-error (symbol->string phase) "unknown statement form")]))
 
 ;; ─── Ghost-safety: check if an expression reads a vertex field ────────────────
+;; Ghost vertices in the CCA simulator are lightweight proxies that don't store
+;; actual vertex data. If a diffuse phase reads vertex fields and passes them as
+;; propagation arguments, those values would be stale/invalid on ghost vertices.
+;; This check prevents that unsafe pattern.
 
 (define (expr-reads-vertex-field? expr)
   (match expr

@@ -31,6 +31,22 @@
 
 
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; CCA Compiler CLI — command-line entry point.
+;;
+;; This module provides the user-facing CLI for the CCA-to-C++ compiler.
+;; It supports three modes:
+;;   --check    : Parse + resolve + typecheck only (no code generation)
+;;   --compile  : Full pipeline through C++ emission (requires --output)
+;;   --dump-ir  : Run pipeline up to a named pass, then pretty-print the IR
+;;
+;; Inputs:  A .cca source file path and optional flags.
+;; Outputs: Either diagnostic messages (on error), generated C++ files (--compile),
+;;          or IR dump (--dump-ir).
+;;
+;; Pipeline: read-source → parse → resolve → typecheck → emit-cpp
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 (require racket/cmdline
          racket/path
          "compiler/pipeline.rkt")
@@ -40,6 +56,7 @@
 (define current-dump-after (make-parameter #f))
 (define current-cost-model-path (make-parameter #f))
 
+;; Runs the pipeline through typecheck only, reporting success or diagnostics.
 (define (run-check source-path)
   (printf "Checking ~a...\n" source-path)
   (define result (run-pipeline source-path #:through 'typecheck
@@ -50,6 +67,7 @@
         (display-diagnostics (pipeline-diagnostics result))
         (exit 1))))
 
+;; Runs the full pipeline and writes generated C++ to output-dir.
 (define (run-compile source-path output-dir)
   (printf "Compiling ~a → ~a\n" source-path output-dir)
   (define result (run-pipeline source-path #:output output-dir
@@ -60,6 +78,7 @@
         (display-diagnostics (pipeline-diagnostics result))
         (exit 1))))
 
+;; Runs the pipeline up to a named pass and pretty-prints the resulting IR.
 (define (run-dump-ir source-path after-pass)
   (printf "Dumping IR after ~a for ~a\n" after-pass source-path)
   (define result (run-pipeline source-path #:through after-pass

@@ -42,6 +42,25 @@
          pretty-print-ir
          current-cost-model)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Compiler pipeline orchestrator.
+;;
+;; This module sequences the compiler passes and handles error propagation.
+;; The pass order is:  read-source → parse → resolve → typecheck → [emit-cpp]
+;;
+;; Design:
+;;   - Passes are stored in `all-passes` as (name . procedure) pairs.
+;;   - Each pass takes the previous pass's output (IR) and returns new IR.
+;;   - If a pass raises exn:fail, the pipeline stops and packages the error
+;;     as a diagnostic in the pipeline-result.
+;;   - emit-cpp is special: it needs an output directory, so it runs outside
+;;     the standard pass loop when --output is provided.
+;;   - The #:through argument allows stopping early (e.g., for --check or --dump-ir).
+;;
+;; Inputs:  Source file path + options (#:through, #:output, #:cost-model-path).
+;; Outputs: pipeline-result struct (success flag, final IR, diagnostics list).
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Pipeline result ──────────────────────────────────────────────────────────
 (struct pipeline-result (success? ir diagnostics) #:transparent)
 
@@ -63,8 +82,10 @@
   (pretty-print ir))
 
 ;; ─── Pass registry ────────────────────────────────────────────────────────────
-;; Each pass: (name . procedure)
-;; We will add passes incrementally. For now just read-source and parse.
+;; Ordered list of (name . procedure) pairs. The pipeline runs them sequentially,
+;; threading the output of each pass as input to the next.
+;; emit-cpp is NOT in this list because it requires an output directory argument
+;; and is handled as a post-processing step.
 
 (require "frontend/read-source.rkt"
          "frontend/parse.rkt"
@@ -90,22 +111,26 @@
   (when cost-model-path
     (current-cost-model (load-cost-model cost-model-path)))
 
+  ;; Determine which passes to run: all passes up to and including `through-pass`,
+  ;; or all passes if through-pass is #f.
   (define passes-to-run
     (if through-pass
         (let loop ([ps all-passes] [acc '()])
           (cond
-            [(null? ps) (reverse acc)]
+            [(null? ps) (reverse acc)]  ; through-pass not found → run all collected
             [(eq? (caar ps) through-pass)
-             (reverse (cons (car ps) acc))]
+             (reverse (cons (car ps) acc))]  ; include the target pass, then stop
             [else (loop (cdr ps) (cons (car ps) acc))]))
         all-passes))
 
+  ;; Execute passes sequentially, threading the IR through each.
+  ;; On failure, short-circuit and return diagnostics.
   (let loop ([remaining passes-to-run]
-             [ir source-path]
+             [ir source-path]        ; initial IR is just the file path string
              [diags '()])
     (cond
       [(null? remaining)
-       ;; If output-dir is specified and we ran all passes, emit C++
+       ;; All passes ran successfully. If output-dir specified, emit C++ as final step.
        (if output-dir
            (with-handlers ([exn:fail?
                             (λ (e)
@@ -119,6 +144,7 @@
       [else
        (define pass-name (caar remaining))
        (define pass-fn (cdar remaining))
+       ;; Wrap each pass in an exception handler to capture failures as diagnostics
        (define result
          (with-handlers ([exn:fail?
                           (λ (e)

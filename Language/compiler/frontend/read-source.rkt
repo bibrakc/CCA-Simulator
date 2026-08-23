@@ -36,6 +36,22 @@
 
 (provide read-source-pass)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Read-source pass — first stage of the CCA compiler pipeline.
+;;
+;; This pass converts a .cca file on disk into a list of S-expression datums
+;; that subsequent passes can pattern-match against. It does NOT evaluate
+;; any code — it reads the file purely as data.
+;;
+;; Key behavior:
+;;   - Strips the `#lang cca` line if present (Racket's reader would choke on it)
+;;   - Reads all remaining top-level forms using Racket's `read`
+;;   - Errors if the file doesn't exist or contains no forms
+;;
+;; Inputs:  File path (string or path object).
+;; Outputs: List of S-expression datums ready for the parse pass.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Read source pass ─────────────────────────────────────────────────────────
 ;; Input: file path (string or path)
 ;; Output: list of S-expressions (datums) read from the file

@@ -38,6 +38,23 @@
 (provide (all-defined-out))
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
+;; C++ Intermediate Representation — structured AST for generated C++ code.
+;;
+;; This module defines a typed IR for C++ source code and a pretty-printer that
+;; renders it to strings. Using a structured IR (rather than raw string
+;; concatenation) makes the emitter more maintainable and enables future passes
+;; like formatting or optimization on the C++ output.
+;;
+;; The IR mirrors C++ syntax at the declaration/statement/expression level:
+;;   - Top-level: includes, guards, structs, functions, constexpr vars
+;;   - Statements: variable decls, assignments, if/for blocks, returns
+;;   - Expressions: literals, identifiers, binary/unary ops, member access, casts
+;;
+;; Inputs:  Constructed by emit-cpp.rkt from CCA AST nodes.
+;; Outputs: Rendered to string via cpp-ir->string for file output.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
+;; ═══════════════════════════════════════════════════════════════════════════════
 ;; C++ IR Node Definitions
 ;; ═══════════════════════════════════════════════════════════════════════════════
 

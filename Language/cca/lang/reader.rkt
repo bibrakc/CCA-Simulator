@@ -38,21 +38,29 @@
 ;;   1. Reads all top-level S-expression forms as data (no evaluation)
 ;;   2. Wraps them in a module that runs the CCA compiler pipeline
 ;;
-;; Usage (after installing the cca collection):
-;;   racket -S Language examples/bfs/bfs.cca
+;; This module is the integration point between Racket's module system and the
+;; CCA compiler. It enables .cca files to be loaded with `racket -S Language file.cca`,
+;; which will parse and typecheck the program.
 ;;
-;; This parses and type-checks the program, printing the result.
-;; For full compilation to C++, use the CLI:
+;; For full compilation to C++, use the CLI instead:
 ;;   racket Language/main.rkt --compile --output <dir> <file.cca>
+;;
+;; Inputs:  A port (from Racket's reader protocol) containing CCA source.
+;; Outputs: A syntax object representing a Racket module that runs the pipeline.
+;; ═══════════════════════════════════════════════════════════════════════════════
 
 (require syntax/strip-context)
 
 (provide (rename-out [cca-read read]
                      [cca-read-syntax read-syntax]))
 
+;; Datum-based read — required by the reader protocol but delegates to read-syntax
 (define (cca-read in)
   (syntax->datum (cca-read-syntax #f in)))
 
+;; Syntax-based read — the main entry point for `#lang cca`.
+;; Reads all forms from the port, then wraps them in a Racket module that
+;; dynamically requires the compiler passes and runs them on the quoted forms.
 (define (cca-read-syntax src in)
   ;; Read all top-level datums from the port
   (define forms
@@ -62,7 +70,8 @@
           (reverse acc)
           (loop (cons datum acc)))))
 
-  ;; Wrap in a module that parses the quoted forms through the compiler
+  ;; Wrap in a module that parses the quoted forms through the compiler.
+  ;; Uses dynamic-require so the reader doesn't need compile-time deps on the compiler.
   (strip-context
    (datum->syntax
     #f
