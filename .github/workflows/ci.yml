@@ -9,43 +9,31 @@ on:
 jobs:
   format-check:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bibrakc/cca-simulator-ci:latest
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install clang-format-21
-      run: |
-        wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
-        echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq clang-format-21
-        clang-format-21 --version
-
     - name: Check code formatting
       run: |
+        clang-format-21 --version
         find Source Include Applications -name "*.cpp" -o -name "*.hpp" | \
           grep -v build | \
           xargs clang-format-21 --dry-run --Werror
 
   build-and-test:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bibrakc/cca-simulator-ci:latest
     needs: format-check
     strategy:
       matrix:
-        compiler: [gcc-13]
         build_type: [Release, Debug]
-    
+
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
-
     - name: Configure
-      env:
-        CC: ${{ matrix.compiler }}
-        CXX: g++-13
       run: |
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -70,49 +58,49 @@ jobs:
         OMP_NUM_THREADS: 4
       run: |
         mkdir -p build/Output
-        
+
         echo "=== BFS ==="
         ./build/BFS_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -hdepth 0 -hb 0 -route 0 -mesh 1 -shuffle -verify
-        
+
         echo "=== BFS Rhizome ==="
         ./build/BFS_Rhizome_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -hdepth 0 -hb 0 -route 0 -mesh 1 -shuffle -verify
-        
+
         echo "=== SSSP ==="
         ./build/SSSP_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -shuffle -verify
-        
+
         echo "=== SSSP Rhizome ==="
         ./build/SSSP_Rhizome_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -shuffle -verify
-        
+
         echo "=== PageRank ==="
         ./build/PageRank_Fixed_Iterations_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -iter 5 -shuffle -verify
-        
+
         echo "=== PageRank Rhizome ==="
         ./build/PageRank_Fixed_Iterations_Rhizome_CCASimulator \
           -f Input_Graphs/Erdos-Renyi_directed_ef_16_v_11.edgelist -g Erdos \
           -od ./build/Output -s square -root 3 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -iter 9 -verify
-        
+
         echo "=== Dynamic BFS ==="
         ./build/Dynamic_BFS_CCASimulator \
           -f Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG \
           -od ./build/Output -s square -root 0 -m 90000 \
           -hx 16 -hy 16 -route 0 -mesh 1 -increments 10 -shuffle -verify
-        
+
         echo "=== Streaming Dynamic BFS ==="
         ./build/Streaming_Dynamic_BFS_CCASimulator \
           -f Input_Graphs/Dynamic/1K/streamingEdge_lowOverlap_lowBlockSizeVar_1000_nodes -g DG_Streaming \
@@ -121,18 +109,12 @@ jobs:
 
   sanitizer:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bibrakc/cca-simulator-ci:latest
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
-
     - name: Configure with ASan + UBSan
-      env:
-        CC: gcc-13
-        CXX: g++-13
       run: |
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
@@ -169,18 +151,10 @@ jobs:
 
   language-test:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bibrakc/cca-simulator-ci:latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Racket
-      uses: Bogdanp/setup-racket@v1.11
-      with:
-        architecture: x64
-        distribution: minimal
-        version: '9.3'
-
-    - name: Install rackunit
-      run: raco pkg install --auto --batch rackunit-lib
 
     - name: Run compiler tests
       run: racket Language/tests/run-tests.rkt
@@ -195,13 +169,7 @@ jobs:
             (error "Compilation failed"))
           (printf "Generated: ~a\n" (pipeline-ir r))'
 
-    - name: Install C++ build dependencies
-      run: sudo apt-get install -y gcc-13 g++-13 cmake libomp-dev
-
     - name: Build generated BFS application
-      env:
-        CC: gcc-13
-        CXX: g++-13
       run: |
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Release \
