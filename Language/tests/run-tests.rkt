@@ -36,6 +36,8 @@
          racket/list
          "../compiler/frontend/read-source.rkt"
          "../compiler/frontend/parse.rkt"
+         "../compiler/frontend/resolve.rkt"
+         "../compiler/frontend/typecheck.rkt"
          "../compiler/ast.rkt")
 
 ;; ─── Reader tests ─────────────────────────────────────────────────────────────
@@ -167,11 +169,116 @@
                 (λ () (parse-pass '((define-mystery foo))))))
    ))
 
+;; ─── Typecheck tests ──────────────────────────────────────────────────────────
+;; Helper: build a resolved-program from raw AST for typecheck testing
+(define (make-test-resolved-program action-decl-node
+                                     #:constants [constants '()]
+                                     #:root-args [root-args '(0)])
+  (define vtx (vertex-decl 'TestVertex
+                           (list (field-decl 'level (t-u32) 'max-level #t '() no-span))
+                           no-span))
+  (define app (application-decl 'TestApp "Test" 'TestVertex
+                                (action-decl-name action-decl-node)
+                                root-args 'level #f no-span))
+  (define all-constants (cons (constant-decl 'max-level (t-u32) 999999 no-span) constants))
+  (define prog (cca-program all-constants vtx (list action-decl-node) app no-span))
+  (resolve-pass prog))
+
+(define typecheck-tests
+  (test-suite
+   "typecheck"
+
+   (test-case "BFS example passes typecheck"
+     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define prog (parse-pass forms))
+     (define resolved (resolve-pass prog))
+     (check-not-exn (λ () (typecheck-pass resolved))))
+
+   (test-case "propagate in work phase is rejected"
+     (define bad-action
+       (action-decl 'bad-action
+                    (param-decl 'v (t-pointer 'TestVertex) no-span)
+                    (list (param-decl 'incoming-level (t-u32) no-span))
+                    ;; predicate: trivially true
+                    (literal-expr no-span #t (t-bool))
+                    ;; work: contains propagate (illegal!)
+                    (list (propagate-stmt no-span 'bad-action
+                                          (literal-expr no-span 0 (t-u32))
+                                          (list (literal-expr no-span 1 (t-u32)))))
+                    ;; diffuse-predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; diffuse
+                    '()
+                    no-span))
+     (define resolved (make-test-resolved-program bad-action))
+     (check-exn #rx"propagate is not allowed in work phase"
+                (λ () (typecheck-pass resolved))))
+
+   (test-case "mutation in diffuse phase is rejected"
+     (define bad-action
+       (action-decl 'bad-action
+                    (param-decl 'v (t-pointer 'TestVertex) no-span)
+                    (list (param-decl 'incoming-level (t-u32) no-span))
+                    ;; predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; work: empty
+                    '()
+                    ;; diffuse-predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; diffuse: contains set-field (illegal!)
+                    (list (set-field-stmt no-span 'level
+                                          (var-expr no-span 'v)
+                                          (literal-expr no-span 42 (t-u32))))
+                    no-span))
+     (define resolved (make-test-resolved-program bad-action))
+     (check-exn #rx"mutation.*is not allowed in diffuse phase"
+                (λ () (typecheck-pass resolved))))
+
+   (test-case "non-Boolean predicate is rejected"
+     (define bad-action
+       (action-decl 'bad-action
+                    (param-decl 'v (t-pointer 'TestVertex) no-span)
+                    (list (param-decl 'incoming-level (t-u32) no-span))
+                    ;; predicate: returns UInt32 instead of Boolean
+                    (literal-expr no-span 42 (t-u32))
+                    ;; work
+                    '()
+                    ;; diffuse-predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; diffuse
+                    '()
+                    no-span))
+     (define resolved (make-test-resolved-program bad-action))
+     (check-exn #rx"predicate must be Boolean"
+                (λ () (typecheck-pass resolved))))
+
+   (test-case "type mismatch in set-field is rejected"
+     (define bad-action
+       (action-decl 'bad-action
+                    (param-decl 'v (t-pointer 'TestVertex) no-span)
+                    (list (param-decl 'incoming-level (t-u32) no-span))
+                    ;; predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; work: set-field with Boolean value into UInt32 field
+                    (list (set-field-stmt no-span 'level
+                                          (var-expr no-span 'v)
+                                          (literal-expr no-span #t (t-bool))))
+                    ;; diffuse-predicate
+                    (literal-expr no-span #t (t-bool))
+                    ;; diffuse
+                    '()
+                    no-span))
+     (define resolved (make-test-resolved-program bad-action))
+     (check-exn #rx"type mismatch in set-field"
+                (λ () (typecheck-pass resolved))))
+   ))
+
 ;; ─── Run ──────────────────────────────────────────────────────────────────────
 (module+ main
   (define result
     (run-tests
      (test-suite "CCA Compiler Tests"
                  reader-tests
-                 parser-tests)))
+                 parser-tests
+                 typecheck-tests)))
   (exit (if (zero? result) 0 1)))
