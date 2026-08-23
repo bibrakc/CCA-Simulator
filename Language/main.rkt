@@ -38,10 +38,12 @@
 (define current-command (make-parameter #f))
 (define current-output-dir (make-parameter #f))
 (define current-dump-after (make-parameter #f))
+(define current-cost-model-path (make-parameter #f))
 
 (define (run-check source-path)
   (printf "Checking ~a...\n" source-path)
-  (define result (run-pipeline source-path #:through 'check-effects))
+  (define result (run-pipeline source-path #:through 'typecheck
+                               #:cost-model-path (current-cost-model-path)))
   (if (pipeline-success? result)
       (printf "~a: OK\n" source-path)
       (begin
@@ -50,7 +52,8 @@
 
 (define (run-compile source-path output-dir)
   (printf "Compiling ~a → ~a\n" source-path output-dir)
-  (define result (run-pipeline source-path #:output output-dir))
+  (define result (run-pipeline source-path #:output output-dir
+                               #:cost-model-path (current-cost-model-path)))
   (if (pipeline-success? result)
       (printf "Generated: ~a\n" output-dir)
       (begin
@@ -59,7 +62,8 @@
 
 (define (run-dump-ir source-path after-pass)
   (printf "Dumping IR after ~a for ~a\n" after-pass source-path)
-  (define result (run-pipeline source-path #:through after-pass))
+  (define result (run-pipeline source-path #:through after-pass
+                               #:cost-model-path (current-cost-model-path)))
   (if (pipeline-success? result)
       (pretty-print-ir (pipeline-ir result))
       (begin
@@ -81,6 +85,8 @@
      #:once-each
      ["--output" dir "Output directory for generated files"
       (current-output-dir dir)]
+     ["--cost-model" path "Path to a custom cost model file"
+      (current-cost-model-path path)]
      #:args (source-file)
      source-file))
 
