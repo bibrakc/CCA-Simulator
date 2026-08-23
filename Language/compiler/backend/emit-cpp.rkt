@@ -552,11 +552,14 @@
 
 (define (emit-verification-block vtx-name field-name field-init app)
   (define verification (application-decl-verification app))
+  ;; verification is now a direct file extension string like ".bfs" or ".sssp"
+  (define verify-ext (if (string? verification) verification ".bfs"))
+  (define app-name (symbol->string (application-decl-name app)))
   (if verification
       (string-append
        "    if (verify) {\n"
-       "        std::cout << \"\\\\nBFS Verification:\\\\n\";\n"
-       (format "        std::string verification_file = input_graph_path + \".bfs\";\n")
+       (format "        std::cout << \"\\\\n~a Verification:\\\\n\";\n" app-name)
+       (format "        std::string verification_file = input_graph_path + \"~a\";\n" verify-ext)
        "        std::ifstream file(verification_file);\n"
        "        if (!file.is_open()) {\n"
        "            std::cout << \"Failed to open: \" << verification_file << \"\\\\n\";\n"

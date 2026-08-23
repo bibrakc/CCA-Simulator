@@ -92,4 +92,4 @@
   #:root-action bfs-action                    ; action to germinate at the root
   #:root-arguments (0)                        ; root gets level 0
   #:result-field level                        ; which field to verify against .bfs file
-  #:verification bfs-level-file)              ; verification file format
+  #:verification ".bfs")                      ; verification file extension

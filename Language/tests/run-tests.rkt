@@ -173,7 +173,7 @@
      (check-equal? (application-decl-vertex-type app) 'BFSVertex)
      (check-equal? (application-decl-root-action app) 'bfs-action)
      (check-equal? (application-decl-result-field app) 'level)
-     (check-equal? (application-decl-verification app) 'bfs-level-file))
+     (check-equal? (application-decl-verification app) ".bfs"))
 
    (test-case "rejects missing vertex"
      (check-exn exn:fail?
