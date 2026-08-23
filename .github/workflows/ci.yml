@@ -163,7 +163,7 @@ jobs:
       run: |
         racket -e '
           (require "Language/compiler/pipeline.rkt")
-          (define r (run-pipeline "Language/examples/bfs/bfs.cca"
+          (define r (run-pipeline "Language/examples/bfs/bfs-driver.cca"
                                   #:output "generated-bfs"))
           (unless (pipeline-success? r)
             (error "Compilation failed"))

@@ -12,7 +12,7 @@ Build a compiler that turns a CCA language program into the same category of C++
 
 This compiler does **not** target x86, LLVM IR, pthreads, or a standalone CCA runtime. A normal C++ compiler remains responsible for machine-code generation. The CCA compiler's value is domain-specific lowering: typed diffusive actions become the exact C++ event and RPVO plumbing expected by the simulator.
 
-`language-specification.md` is the normative Draft 0.1 definition of BFS syntax, types, phase effects, and semantics. This document explains how to implement it.
+`language-specification.md` is the normative Draft 0.2 definition of BFS syntax, types, phase effects, and semantics. This document explains how to implement it.
 
 ## 2. Evidence and constraints
 
@@ -29,7 +29,7 @@ The source material establishes these concepts:
 - future/continuation-based remote allocation for dynamic graphs; and
 - rhizomes and collapse operations for later highly skewed graph support.
 
-Only the first five plus RPVO traversal are in BFS Draft 0.1. Futures, continuations, dynamic insertion, and rhizomes remain later milestones.
+Only the first five plus RPVO traversal are in BFS Draft 0.2. Futures, continuations, dynamic insertion, and rhizomes remain later milestones.
 
 ### 2.2 Current simulator ABI
 
@@ -291,7 +291,7 @@ Do not represent this as duplicated source syntax. Use backend nodes such as `gh
 - optional `.bfs` verification; and
 - result writing.
 
-Draft 0.1 may use a versioned BFS host profile rather than trying to express arbitrary host logic in the source language.
+Draft 0.2 may use a versioned BFS host profile rather than trying to express arbitrary host logic in the source language.
 
 ### 6.7 C0: C++ document IR
 
@@ -340,7 +340,7 @@ The actual pipeline should thread a compilation context containing diagnostics, 
 ### Pass 3 — `desugar-paper-forms`
 
 - Convert nested paper predicates/begin/diffuse into explicit phases.
-- Convert `eq?` on Draft 0.1 scalars to `=`.
+- Convert `eq?` on Draft 0.2 scalars to `=`.
 - Normalize `Integer` to `UInt32` while retaining the source spelling for diagnostics.
 - Optionally inline the narrowly defined paper `inform-neighbors` helper when compatibility support is enabled.
 
@@ -356,7 +356,7 @@ Unlike LPL's `gensym`-heavy `uniquify`, use deterministic IDs based on declarati
 ### Pass 5 — `typecheck-program`
 
 - Type constants, initializers, expressions, field writes, edge access, and propagation.
-- Enforce fixed-width Draft 0.1 numeric rules.
+- Enforce fixed-width Draft 0.2 numeric rules.
 - Check action target and payload parameter restrictions.
 - Check application root arguments and BFS result metadata.
 - Attach inferred type information to each expression.
@@ -446,7 +446,7 @@ Map typed operations to C++:
 
 For non-ghost BFS diffusion, the successful diffuse predicate proves that the stored vertex level equals the payload's incoming level. Code generation may use either value to compute the outgoing level, but the ghost path must use the payload because a ghost allocation has no application level field.
 
-Draft 0.1 should emit the same phase cost calls as the hand-written BFS (`cc.apply_CPI(1)` in predicate, work, and diffuse predicate) through the simulator runtime profile. A formal source-level cost model can be designed later. Correctness tests must not assert exact total cycles.
+Draft 0.2 should emit the same phase cost calls as the hand-written BFS (`cc.apply_CPI(1)` in predicate, work, and diffuse predicate) through the simulator runtime profile. A formal source-level cost model can be designed later. Correctness tests must not assert exact total cycles.
 
 ### Pass 12 — `emit-artifacts`
 
@@ -589,7 +589,7 @@ Use tiny deterministic graph fixtures to validate behavior through the real targ
 3. run it with the fixture's graph, root, and verification file; and
 4. require the simulator's application verification to pass.
 
-Include path, cycle, disconnected, duplicate-edge, and competing-path graphs so action ordering and predicate pruning are exercised by the simulator itself. Draft 0.1 deliberately has no Racket interpreter or reference evaluator; generated C++ plus CCA-Simulator is the executable semantics used for behavioral validation.
+Include path, cycle, disconnected, duplicate-edge, and competing-path graphs so action ordering and predicate pruning are exercised by the simulator itself. Draft 0.2 deliberately has no Racket interpreter or reference evaluator; generated C++ plus CCA-Simulator is the executable semantics used for behavioral validation.
 
 ### 10.5 C++ golden tests
 
@@ -654,7 +654,7 @@ Acceptance: fixtures are checked in and a test fails clearly if the runtime prof
 Tasks:
 
 - implement source spans and diagnostics;
-- parse all Draft 0.1 declarations;
+- parse all Draft 0.2 declarations;
 - desugar paper-compatible BFS into canonical phases;
 - dump deterministic S1 IR; and
 - add parser and malformed-input tests.
@@ -666,7 +666,7 @@ Acceptance: `check` can parse `bfs.cca` through S1 and reports precise syntax er
 Tasks:
 
 - implement deterministic symbols and C++ mangling;
-- implement Draft 0.1 types;
+- implement Draft 0.2 types;
 - type all BFS expressions and statements;
 - check phase effects and ghost safety; and
 - add positive/negative suites.
@@ -751,7 +751,7 @@ Do not implement x86 lowering, register allocation, or a pthread runtime at any 
 3. **The target parameter is contextual.** It maps to `Action::obj_addr`; only remaining parameters are payload fields.
 4. **Phases are explicit in core IR.** Paper syntax is sugar; generated events are first-class compiler artifacts.
 5. **RPVO is abstract in source and explicit in lowered IR.** Ghost behavior is generated, not written by users.
-6. **Fixed-width types are intentional.** Draft 0.1 `Integer` means `UInt32` for predictable payload and C++ semantics.
+6. **Fixed-width types are intentional.** Draft 0.2 `Integer` means `UInt32` for predictable payload and C++ semantics.
 7. **Generated output is isolated.** Never overwrite hand-written BFS without an explicit, reviewed install operation.
 8. **Correctness is semantic.** Final BFS levels and build/API compatibility matter; generated text and cycle counts need not be identical.
 9. **Compiler passes are deterministic.** Stable names and output are required for debugging and golden tests.
@@ -769,7 +769,7 @@ Do not implement x86 lowering, register allocation, or a pthread runtime at any 
 | Golden files become brittle | Compare formatted structural units; use simulator differential tests for behavior |
 | Source names produce invalid/colliding C++ | Deterministic mangling and collision diagnostics |
 | Compiler accidentally evaluates untrusted source | Read syntax as data; no `eval` or dynamic module loading |
-| Scope expands before BFS works | Milestone gates and Draft 0.1 feature restrictions |
+| Scope expands before BFS works | Milestone gates and Draft 0.2 feature restrictions |
 | Research routing changes alter cycle counts | Exclude cycle counts from correctness regression criteria |
 
 ## 15. Definition of done for the BFS-first compiler

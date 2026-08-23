@@ -502,119 +502,14 @@
    "\n"))
 
 (define (emit-main-function vtx actions app constants symbols vtx-name field-name field-init)
-  ;; Check if we have new-style host forms (list in verification field)
-  ;; or old-style metadata (string/symbol in verification field)
   (define host-forms (application-decl-verification app))
-  (if (and (list? host-forms) (not (null? host-forms))
-           (or (host-create-simulator? (car host-forms))
-               (host-let? (car host-forms))))
-      ;; New style: generate from host-level forms
-      (emit-main-from-host-forms vtx actions app host-forms vtx-name field-name field-init)
-      ;; Old style: use the fixed template
-      (string-append
-       "\nauto\nmain(int argc, char** argv) -> int\n{\n"
-       (emit-cli-block)
-       (emit-simulator-block)
-       (emit-graph-block vtx-name)
-       (emit-registration-block actions)
-       (emit-germination-block vtx-name actions field-name app)
-       (emit-run-block)
-       (emit-verification-block vtx-name field-name field-init app)
-       "    return 0;\n}\n")))
+  (unless (and (list? host-forms) (not (null? host-forms)))
+    (error 'emit-main "define-program with host-level forms is required"))
+  (emit-main-from-host-forms vtx actions app host-forms vtx-name field-name field-init))
 
-(define (emit-cli-block)
-  "    cli::Parser parser(argc, argv);\n    parser.set_required<std::string>(\"f\", \"graphfile\", \"Path to the input data graph file\");\n    parser.set_required<std::string>(\"g\", \"graphname\", \"Name of the input graph\");\n    parser.set_required<std::string>(\"s\", \"shape\", \"Shape of the compute cell\");\n    parser.set_required<u_int32_t>(\"root\", \"bfsroot\", \"Root vertex for BFS\");\n    parser.set_optional<bool>(\"verify\", \"verification\", 0, \"Enable verification\");\n    parser.set_optional<u_int32_t>(\"m\", \"memory_per_cc\", 512 * 1024, \"Memory per CC in bytes\");\n    parser.set_optional<std::string>(\"od\", \"outputdirectory\", \"./\", \"Output directory\");\n    parser.set_optional<u_int32_t>(\"hx\", \"htree_x\", 3, \"Htree X\");\n    parser.set_optional<u_int32_t>(\"hy\", \"htree_y\", 5, \"Htree Y\");\n    parser.set_optional<u_int32_t>(\"hdepth\", \"htree_depth\", 0, \"Htree depth\");\n    parser.set_optional<u_int32_t>(\"hb\", \"hbandwidth_max\", 64, \"Htree max bandwidth\");\n    parser.set_optional<u_int32_t>(\"mesh\", \"mesh_type\", 0, \"Mesh type: 0=Regular, 1=Torus\");\n    parser.set_optional<u_int32_t>(\"route\", \"routing_policy\", 0, \"Routing algorithm\");\n    parser.set_optional<bool>(\"shuffle\", \"shuffle_vertices\", 0, \"Shuffle vertex list\");\n    parser.set_optional<u_int32_t>(\"trail\", \"trail_number\", 0, \"Trail number\");\n    parser.run_and_exit_if_error();\n\n    auto input_graph_path = parser.get<std::string>(\"f\");\n    auto graph_name = parser.get<std::string>(\"g\");\n    auto shape_arg = parser.get<std::string>(\"s\");\n    auto root_vertex = parser.get<u_int32_t>(\"root\");\n    auto verify = parser.get<bool>(\"verify\");\n    auto memory_per_cc = parser.get<u_int32_t>(\"m\");\n    auto output_dir = parser.get<std::string>(\"od\");\n    auto hdepth = parser.get<u_int32_t>(\"hdepth\");\n    auto hx = parser.get<u_int32_t>(\"hx\");\n    auto hy = parser.get<u_int32_t>(\"hy\");\n    auto hbandwidth_max = parser.get<u_int32_t>(\"hb\");\n    auto mesh_type = parser.get<u_int32_t>(\"mesh\");\n    auto routing_policy = parser.get<u_int32_t>(\"route\");\n    auto shuffle = parser.get<bool>(\"shuffle\");\n\n    if (hdepth == 0) { hbandwidth_max = 0; }\n\n")
-
-(define (emit-simulator-block)
-  "    computeCellShape shape_of_compute_cells = computeCellShape::computeCellShape_invalid;\n    if (shape_arg == \"square\") {\n        shape_of_compute_cells = computeCellShape::square;\n    } else {\n        std::cerr << \"Error: shape \" << shape_arg << \" not supported.\\n\";\n        return EXIT_FAILURE;\n    }\n\n    CCASimulator cca_simulator(shape_of_compute_cells,\n                               hx, hy, hdepth, hbandwidth_max,\n                               memory_per_cc, mesh_type, routing_policy);\n\n    cca_simulator.print_discription(std::cout);\n\n")
-
-(define (emit-graph-block vtx-name)
-  (format "    Graph<~a<SimpleVertex<host_edge_type, edges_min>>> input_graph(input_graph_path, false);\n\n    u_int32_t center_of_chip =\n        (cca_simulator.dim_x * (cca_simulator.dim_y / 2)) + (cca_simulator.dim_y / 2);\n    CyclicMemoryAllocator allocator(center_of_chip, cca_simulator.total_compute_cells);\n\n    input_graph.transfer_graph_host_to_cca<~a<ghost_type_level_1>>(\n        cca_simulator, allocator, std::optional<u_int32_t>(root_vertex), shuffle);\n\n    auto vertex_addr = input_graph.get_vertex_address_in_cca(root_vertex);\n\n"
-          vtx-name vtx-name))
-
-(define (emit-registration-block actions)
-  (string-join
-   (for/list ([act (in-list actions)])
-     (define act-name (mangle-cpp (action-decl-name act)))
-     (format "    ~a_predicate = cca_simulator.register_function_event(~a_predicate_func);\n    ~a_work = cca_simulator.register_function_event(~a_work_func);\n    ~a_diffuse_predicate = cca_simulator.register_function_event(~a_diffuse_predicate_func);\n    ~a_diffuse = cca_simulator.register_function_event(~a_diffuse_func);\n"
-             act-name act-name act-name act-name act-name act-name act-name act-name))
-   "\n"))
-
-(define (emit-germination-block vtx-name actions field-name app)
-  (define act (car actions))  ; germinate root action
-  (define act-name (mangle-cpp (action-decl-name act)))
-  (define payload-params (action-decl-params act))
-  (define payload-field (mangle-cpp (param-decl-name (car payload-params))))
-  (define root-args (application-decl-root-arguments app))
-
-  (string-append
-   (format "\n    ~aArguments root_args;\n" vtx-name)
-   ;; Set payload fields from root-arguments
-   (string-join
-    (for/list ([p (in-list payload-params)]
-               [val (in-list root-args)])
-      (format "    root_args.~a = ~a;\n" (mangle-cpp (param-decl-name p)) val))
-    "")
-   (format "\n    ActionArgumentType const args_x = cca_create_action_argument<~aArguments>(root_args);\n\n" vtx-name)
-   "    std::optional<Address> terminator = cca_simulator.create_terminator();\n    if (!terminator) {\n        std::cerr << \"Error! Memory not allocated for terminator\\n\";\n        return EXIT_FAILURE;\n    }\n\n"
-   (format "    cca_simulator.germinate_action(Action(vertex_addr,\n                                          terminator.value(),\n                                          actionType::germinate_action,\n                                          true,\n                                          args_x,\n                                          ~a_predicate,\n                                          ~a_work,\n                                          ~a_diffuse_predicate,\n                                          ~a_diffuse));\n\n"
-           act-name act-name act-name act-name)))
-
-(define (emit-run-block)
-  "    std::cout << \"\\nStarting Execution:\\n\\n\";\n    auto start = std::chrono::steady_clock::now();\n    cca_simulator.run_simulation(terminator.value());\n    auto end = std::chrono::steady_clock::now();\n\n    std::cout << \"Total Cycles: \" << cca_simulator.total_cycles << \"\\n\";\n    std::cout << \"Elapsed: \"\n              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count()\n              << \" s\\n\";\n\n")
-
-(define (emit-verification-block vtx-name field-name field-init app)
-  (define verification (application-decl-verification app))
-  ;; verification is now a direct file extension string like ".bfs" or ".sssp"
-  (define verify-ext (if (string? verification) verification ".bfs"))
-  (define app-name (symbol->string (application-decl-name app)))
-  (if verification
-      (string-append
-       "    if (verify) {\n"
-       (format "        std::cout << \"\\n~a Verification:\\n\";\n" app-name)
-       (format "        std::string verification_file = input_graph_path + \"~a\";\n" verify-ext)
-       "        std::ifstream file(verification_file);\n"
-       "        if (!file.is_open()) {\n"
-       "            std::cout << \"Failed to open: \" << verification_file << \"\\n\";\n"
-       "        } else {\n"
-       "            std::string line;\n"
-       "            std::getline(file, line); // header\n"
-       "            u_int32_t root_in_file = 0;\n"
-       "            std::getline(file, line);\n"
-       "            std::istringstream(line) >> root_in_file;\n"
-       "            if (root_in_file != root_vertex) {\n"
-       "                std::cerr << \"Root mismatch in verification file!\\n\";\n"
-       "                return EXIT_FAILURE;\n"
-       "            }\n\n"
-       "            std::vector<u_int32_t> control;\n"
-       "            u_int32_t nid, bval;\n"
-       "            while (std::getline(file, line)) {\n"
-       "                std::istringstream iss(line);\n"
-       "                if (iss >> nid >> bval) {\n"
-       (format "                    while (nid != control.size()) { control.emplace_back(~a); }\n" field-init)
-       "                    control.emplace_back(bval);\n"
-       "                }\n"
-       "            }\n"
-       "            file.close();\n\n"
-       "            u_int32_t errors = 0;\n"
-       "            for (u_int32_t i = 0; i < control.size(); i++) {\n"
-       "                Address addr_i = input_graph.get_vertex_address_in_cca(i);\n"
-       (format "                auto* vi = static_cast<~a<ghost_type_level_1>*>(cca_simulator.get_object(addr_i));\n" vtx-name)
-       (format "                if (control[i] != vi->~a) {\n" field-name)
-       (format "                    std::cout << \"Vertex \" << i << \": computed=\" << vi->~a\n" field-name)
-       "                              << \" expected=\" << control[i] << \"\\n\";\n"
-       "                    errors++;\n"
-       "                }\n"
-       "            }\n"
-       "            if (errors > 0) {\n"
-       "                std::cout << \"FAILED: \" << errors << \" errors\\n\";\n"
-       "                return EXIT_FAILURE;\n"
-       "            } else {\n"
-       "                std::cout << \"PASSED\\n\";\n"
-       "            }\n"
-       "        }\n"
-       "    }\n\n")
-      ""))
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Host-form generation: generates main() from define-program host-level forms
+;; ═══════════════════════════════════════════════════════════════════════════════
 
 ;; ─── Generate CMakeLists.txt ──────────────────────────────────────────────────
 (define (generate-cmake binary-name cpp-filename)

@@ -39,38 +39,71 @@
 ;; Host-level program
 (define-program "SSSP_Generated_CCASimulator"
 
-  ;; Create the CCA simulator chip
-  (create-simulator
-    #:shape square
-    #:dim-x (cli-arg "hx" #:type UInt32 #:default 3)
-    #:dim-y (cli-arg "hy" #:type UInt32 #:default 5)
-    #:memory-per-cc (cli-arg "m" #:type UInt32 #:default 524288)
-    #:mesh-type (cli-arg "mesh" #:type UInt32 #:default 0)
-    #:routing (cli-arg "route" #:type UInt32 #:default 0)
-    #:htree-depth (cli-arg "hdepth" #:type UInt32 #:default 0)
-    #:htree-bandwidth (cli-arg "hb" #:type UInt32 #:default 64))
+  ;; ─── CLI arguments for simulator creation ───────────────────────────────────
+  (let ([shape (cli-arg "s" #:long-name "shape" #:type String #:required #t
+                        #:description "Shape of the compute cell")]
+        [hx (cli-arg "hx" #:long-name "htree_x" #:type UInt32 #:default 3
+                     #:description "Rows of Cells that are served by a single end Htree node. hx must be an odd value")]
+        [hy (cli-arg "hy" #:long-name "htree_y" #:type UInt32 #:default 5
+                     #:description "Columns of Cells that are served by a single end Htree node. hy must be an odd value")]
+        [memory (cli-arg "m" #:long-name "memory_per_cc" #:type UInt32 #:default 524288
+                         #:description "Memory per compute cell in bytes. Default is 0.5 MB")]
+        [mesh (cli-arg "mesh" #:long-name "mesh_type" #:type UInt32 #:default 0
+                       #:description "Type of the mesh: 0=Regular, 1=Torus")]
+        [routing (cli-arg "route" #:long-name "routing_policy" #:type UInt32 #:default 0
+                          #:description "Routing algorithm to use")]
+        [hdepth (cli-arg "hdepth" #:long-name "htree_depth" #:type UInt32 #:default 0
+                         #:description "Depth of the Htree. 0=No Htree, 1=1 Htree, 2=5 Htrees")]
+        [hbandwidth (cli-arg "hb" #:long-name "hbandwidth_max" #:type UInt32 #:default 64
+                             #:description "Max possible lanes in the htree joints")])
+    (create-simulator
+      #:shape shape
+      #:dim-x hx #:dim-y hy
+      #:memory-per-cc memory
+      #:mesh-type mesh #:routing routing
+      #:htree-depth hdepth #:htree-bandwidth hbandwidth))
 
-  ;; Load weighted graph from file
-  (load-graph
-    #:file (cli-arg "f" #:type String #:required #t)
-    #:name (cli-arg "g" #:type String #:required #t)
-    #:vertex-type SSSPVertex
-    #:weighted #t)
+  ;; ─── CLI arguments for graph loading ────────────────────────────────────────
+  (let ([graph-file (cli-arg "f" #:long-name "graphfile" #:type String #:required #t
+                             #:description "Path to the input data graph file")]
+        [graph-name (cli-arg "g" #:long-name "graphname" #:type String #:required #t
+                             #:description "Name of the input graph used to set the name of the output file")])
+    (load-graph
+      #:file graph-file #:name graph-name
+      #:vertex-type SSSPVertex
+      #:weighted #t))
 
   ;; Register all actions with the simulator
   (register-actions sssp-action)
 
-  ;; Germinate the root action to start relaxation
-  (germinate sssp-action
-    #:root (cli-arg "root" #:type UInt32 #:required #t)
-    #:arguments (0)
-    #:shuffle (cli-flag "shuffle"))
+  ;; ─── CLI arguments for germination ──────────────────────────────────────────
+  (let ([root (cli-arg "root" #:long-name "sssproot" #:type UInt32 #:required #t
+                       #:description "Root vertex for Single-Source Shortest Path (SSSP)")]
+        [shuffle? (cli-flag "shuffle"
+                            #:long-name "shuffle_vertices"
+                            #:description "Randomly shuffle the vertex list so as to avoid any pattern in the graph based on vertex IDs")])
+    (germinate sssp-action
+      #:root root
+      #:arguments (0)
+      #:shuffle shuffle?))
 
   ;; Run the simulation
   (run)
 
-  ;; Verify results if requested
-  (when (cli-flag "verify")
-    (verify
-      #:field distance
-      #:extension ".sssp")))
+  ;; ─── CLI flag for verification ──────────────────────────────────────────────
+  (let ([verify? (cli-flag "verify"
+                           #:long-name "verification"
+                           #:description "Enable verification of the calculated distances with the distances provided in the accompanying .sssp file")])
+    (when verify?
+      (verify
+        #:field distance
+        #:extension ".sssp")))
+
+  ;; ─── Write results to output file ──────────────────────────────────────────
+  (let ([output-dir (cli-arg "od" #:long-name "outputdirectory" #:type String #:default "./"
+                             #:description "Path to the output file directory. Default: ./")]
+        [trail (cli-arg "trail" #:long-name "trail_number" #:type UInt32 #:default 0
+                        #:description "Trail number for this experiment")])
+    (write-results
+      #:output-dir output-dir
+      #:trail trail)))

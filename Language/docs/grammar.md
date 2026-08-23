@@ -1,23 +1,51 @@
 # CCA Language Grammar
 
-Formal grammar for Draft 0.1 of the CCA language. The source syntax is
+Formal grammar for Draft 0.2 of the CCA language. The source syntax is
 S-expression based (Racket datum syntax). `...` means zero or more repetitions,
 `...+` means one or more.
 
 ## Program structure
 
-```
-program ::= #lang cca
-            declaration ...
+A CCA program consists of two files:
 
-declaration ::= constant-definition
-              | vertex-definition
-              | action-definition
-              | application-definition
+- **Kernel** — algorithm definitions (vertex, constants, actions)
+- **Driver** — host program (requires the kernel, orchestrates simulation)
+
+The compiler entry point is the driver file.
+
+### Kernel file
+
+```
+kernel ::= #lang cca
+           kernel-declaration ...
+
+kernel-declaration ::= constant-definition
+                     | vertex-definition
+                     | action-definition
 ```
 
-A Draft 0.1 program must contain exactly one `define-vertex`, at least one
-`define-action`, and exactly one `define-application`.
+A kernel must contain exactly one `define-vertex` and at least one `define-action`.
+
+### Driver file
+
+```
+driver ::= #lang cca
+           (require relative-path)
+           (define-program binary-name
+             host-form ...)
+```
+
+The `require` imports the kernel's declarations. The `define-program` defines
+the host program that compiles to a C++ `main()`.
+
+## Module system
+
+```
+require-form ::= (require string)    ; relative path to a .cca file
+```
+
+The required file's forms are inlined at the point of the `require`. Nested
+`require` is supported.
 
 ## Constants
 
@@ -78,18 +106,90 @@ action-body ::= (predicate expression
 
 Both forms desugar to the canonical four-phase shape during parsing.
 
-## Application definition
+## Host program (define-program)
 
 ```
-application-definition ::= (define-application name
-                              #:binary-name string
-                              #:vertex-type vertex-name
-                              #:root-action action-name
-                              #:root-arguments (literal ...)
-                              #:result-field field-name
-                              #:verification verification-kind)
+program-definition ::= (define-program binary-name-string
+                          host-form ...)
 
-verification-kind ::= bfs-level-file
+host-form ::= (let (host-binding ...+) host-form ...+)
+            | (create-simulator host-option ...)
+            | (load-graph host-option ...)
+            | (register-actions action-name ...+)
+            | (germinate action-name host-option ...)
+            | (run)
+            | (when condition (verify host-option ...))
+            | (write-results host-option ...)
+
+host-binding ::= [name cli-arg-form]
+               | [name cli-flag-form]
+
+host-option ::= #:keyword value
+
+value ::= literal | name | cli-arg-form | cli-flag-form | (literal ...)
+
+condition ::= name    ; a let-bound boolean variable
+```
+
+### CLI argument forms
+
+```
+cli-arg-form ::= (cli-arg short-name
+                    #:long-name string
+                    #:type cli-type
+                    #:default literal         ; for optional args
+                    #:required boolean         ; for required args
+                    #:description string)
+
+cli-flag-form ::= (cli-flag short-name
+                    #:long-name string
+                    #:description string)
+
+cli-type ::= UInt32 | String | Boolean
+```
+
+### create-simulator options
+
+```
+#:shape      name-or-variable    ; e.g. shape (from CLI) or 'square (literal)
+#:dim-x      uint32-value
+#:dim-y      uint32-value
+#:memory-per-cc  uint32-value
+#:mesh-type  uint32-value
+#:routing    uint32-value
+#:htree-depth    uint32-value
+#:htree-bandwidth uint32-value
+```
+
+### load-graph options
+
+```
+#:file         string-value      ; path to graph file
+#:name         string-value      ; graph name for output naming
+#:vertex-type  vertex-name       ; which vertex struct to instantiate
+#:weighted     boolean           ; whether graph has edge weights
+```
+
+### germinate options
+
+```
+#:root       uint32-value        ; root vertex ID
+#:arguments  (literal ...)       ; initial payload values
+#:shuffle    boolean-value       ; whether to shuffle vertex placement
+```
+
+### verify options
+
+```
+#:field      field-name          ; which vertex field to check
+#:extension  string              ; verification file extension (e.g. ".bfs")
+```
+
+### write-results options
+
+```
+#:output-dir string-value        ; directory for output files
+#:trail      uint32-value        ; experiment trail number
 ```
 
 ## Types
@@ -98,7 +198,7 @@ verification-kind ::= bfs-level-file
 type ::= Unit
        | Boolean
        | UInt32
-       | Integer            ; alias for UInt32 in Draft 0.1
+       | Integer            ; alias for UInt32
        | Address
        | Edge
        | (Pointer name)
@@ -180,6 +280,15 @@ Diffuse propagation arguments must be **ghost-safe**: they may depend on action
 payload parameters, constants, literals, and edge data, but must NOT read vertex
 fields (ghost RPVO objects do not contain application fields).
 
+## Name mangling
+
+Source identifiers are mangled to valid C++ identifiers:
+- `-` → `_` (e.g. `bfs-action` → `bfs_action`)
+- `!` → removed (e.g. `set-vertex-level!` → `set_vertex_level`)
+- `?` → `_p_0x3f` (e.g. `verify?` → `verify_p_0x3f`)
+
+C++ keywords are prefixed with `cca_` to avoid conflicts.
+
 ## Comments
 
 Line comments begin with `;`:
@@ -196,3 +305,4 @@ Line comments begin with `;`:
 - `#:rhizome-shared` annotation
 - `rhizome-collapse` and `bcast`
 - Multiple vertex types per program
+- Actions without all four phases (optional work, optional diffuse)
