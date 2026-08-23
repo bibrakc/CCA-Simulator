@@ -1,3 +1,14 @@
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Memory-heavy cost model for CCA Compiler.
+;;
+;; This model represents an architecture where memory operations (field reads,
+;; field writes, edge reads) are significantly more expensive than ALU operations.
+;; Useful for modeling systems with high memory latency relative to compute.
+;;
+;; Used via: racket Language/main.rkt --cost-model Language/cost-models/memory-heavy-cost-model.rkt
+;; Format: S-expression association list of (operation-name cycles) pairs.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; Example custom cost model for CCA Compiler
 ;; Each entry: (operation-name cost-in-cycles)
 ;;

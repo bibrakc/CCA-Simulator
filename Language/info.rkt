@@ -31,6 +31,17 @@
 
 
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Package metadata for the CCA language collection.
+;;
+;; This file tells the Racket package system how to install and resolve
+;; `#lang cca` modules. The collection name "cca" maps to the reader at
+;; Language/cca/lang/reader.rkt, enabling files that start with `#lang cca`.
+;;
+;; Inputs:  None (declarative metadata).
+;; Outputs: Exposes the "cca" collection to `raco pkg` and `racket -S`.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 (define collection "cca")
 (define version "0.1.0")
 (define pkg-desc "CCA Language Compiler — generates C++ for CCA-Simulator")

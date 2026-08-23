@@ -40,6 +40,21 @@
          "../compiler/frontend/typecheck.rkt"
          "../compiler/ast.rkt")
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; CCA Compiler Test Suite
+;;
+;; Integration and unit tests for the compiler pipeline. Tests exercise:
+;;   - read-source: file reading, #lang stripping, error cases
+;;   - parse: S-expression → AST conversion for all declaration types
+;;   - typecheck: type consistency, phase discipline enforcement, ghost-safety
+;;
+;; All tests use the BFS example (Language/examples/bfs/bfs.cca) as the primary
+;; fixture for positive cases, and hand-constructed AST nodes for negative cases.
+;;
+;; Run with: racket Language/tests/run-tests.rkt
+;; Exit code 0 = all pass, 1 = failures.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Reader tests ─────────────────────────────────────────────────────────────
 (define reader-tests
   (test-suite
@@ -170,7 +185,8 @@
    ))
 
 ;; ─── Typecheck tests ──────────────────────────────────────────────────────────
-;; Helper: build a resolved-program from raw AST for typecheck testing
+;; Helper: build a minimal resolved-program from a single action-decl for
+;; typecheck testing. Includes a TestVertex with one mutable UInt32 field.
 (define (make-test-resolved-program action-decl-node
                                      #:constants [constants '()]
                                      #:root-args [root-args '(0)])

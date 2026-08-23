@@ -44,6 +44,39 @@
          current-cost-model)
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
+;; C++ Code Emission Backend — final stage of the CCA compiler pipeline.
+;;
+;; This module transforms a resolved-program AST into C++ source files compatible
+;; with the CCA-Simulator framework. It generates three files:
+;;
+;;   1. cca_<app>_generated.hpp — Header with:
+;;      - Constants as inline constexpr
+;;      - Vertex struct template (inherits from RecursiveParallelVertex)
+;;      - Per-action: extern event declarations, payload struct, four handler
+;;        functions (predicate, work, diffuse_predicate, diffuse)
+;;
+;;   2. cca_<app>_generated.cpp — Source with:
+;;      - Global event variable definitions
+;;      - main() function: CLI parsing, simulator setup, graph loading,
+;;        event registration, germination, execution, and verification
+;;
+;;   3. CMakeLists.txt — Build configuration using cca_add_application()
+;;
+;; AST-to-C++ mapping:
+;;   - cca-program constants       → inline constexpr variables
+;;   - vertex-decl                  → template<typename> struct : Vertex_T
+;;   - action-decl phases          → templated handler functions
+;;   - expr nodes                  → C++ expressions (ternary, operators, etc.)
+;;   - set-field-stmt              → v->field = expr
+;;   - for-edges-stmt              → for loop over v->edges[i]
+;;   - propagate-stmt              → cc.diffuse(Action(...))
+;;   - cost-model CPI              → cc.apply_CPI(N) at handler entry
+;;
+;; Inputs:  (list resolved-program output-dir-string)
+;; Outputs: List of generated filenames.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
+;; ═══════════════════════════════════════════════════════════════════════════════
 ;; Cost model parameter — defaults to the built-in model, can be overridden
 ;; ═══════════════════════════════════════════════════════════════════════════════
 
@@ -51,6 +84,7 @@
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
 ;; Main entry: emit all generated files
+;; Takes (list resolved-program output-dir), generates .hpp, .cpp, CMakeLists.txt
 ;; ═══════════════════════════════════════════════════════════════════════════════
 
 (define (emit-cpp-pass resolved+output)
@@ -93,9 +127,14 @@
 ;; C++ Expression Generation (FULLY RECURSIVE with context)
 ;; ═══════════════════════════════════════════════════════════════════════════════
 
-;; context: hash mapping CCA variable names (symbols) -> cpp expression strings
-;; target-var: the name of the target (vertex) parameter
-;; The context maps payload param names to their C++ access expressions.
+;; Translates a CCA AST expression node into a C++ expression string.
+;;
+;; The `ctx` hash maps CCA variable names (symbols) to their C++ expression
+;; strings. This handles the difference between how variables are accessed in
+;; different handler contexts:
+;;   - In predicate/work handlers: payload params are local variables
+;;   - In diffuse handlers: payload params map to current_<field> (ghost-aware)
+;;   - The target param always maps to "v" (the vertex pointer)
 
 (define (cpp-expr-from-ast e ctx)
   (match e
@@ -103,6 +142,7 @@
      (format "~a" val)]
 
     [(var-expr _ name)
+     ;; Look up in context first (handles param remapping), fall back to mangled name
      (define mangled (mangle-cpp name))
      (if (hash-has-key? ctx name)
          (hash-ref ctx name)
@@ -110,15 +150,17 @@
 
     [(prim-expr _ op args)
      (cond
+       ;; Unary operators (e.g., not)
        [(= (length args) 1)
         (format "(~a~a)" (cpp-op op) (cpp-expr-from-ast (car args) ctx))]
+       ;; Binary operators — most common case
        [(= (length args) 2)
         (format "(~a ~a ~a)"
                 (cpp-expr-from-ast (car args) ctx)
                 (cpp-op op)
                 (cpp-expr-from-ast (cadr args) ctx))]
        [else
-        ;; n-ary: fold left
+        ;; n-ary: fold left (for future variadic operators)
         (define exprs (map (λ (a) (cpp-expr-from-ast a ctx)) args))
         (let fold ([remaining (cdr exprs)] [acc (car exprs)])
           (if (null? remaining)
@@ -126,21 +168,22 @@
               (fold (cdr remaining)
                     (format "(~a ~a ~a)" acc (cpp-op op) (car remaining)))))])]
 
+    ;; Vertex field read → v->field_name
     [(vertex-read-expr _ field target)
      (format "v->~a" (mangle-cpp field))]
 
+    ;; Edge accessors → array-indexed access (loop variable i is implicit)
     [(edge-read-expr _ 'address _) "v->edges[i].edge"]
     [(edge-read-expr _ 'weight _) "v->edges[i].weight"]
 
+    ;; Let expressions are inlined: bindings added to context, then body emitted
     [(let-expr _ bindings body)
-     ;; In C++ expression context, let is tricky. For now support single binding.
-     ;; This would need statement-level let in real use; for expression context
-     ;; we inline the binding.
      (define new-ctx
        (for/fold ([c ctx]) ([b (in-list bindings)])
          (hash-set c (car b) (cpp-expr-from-ast (cdr b) ctx))))
      (cpp-expr-from-ast body new-ctx)]
 
+    ;; If expression → C++ ternary operator
     [(if-expr _ test then else-branch)
      (format "(~a ? ~a : ~a)"
              (cpp-expr-from-ast test ctx)
@@ -172,7 +215,9 @@
     [_ "u_int32_t"]))
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
-;; HPP IR Generation
+;; HPP IR Generation — produces the header file structure
+;; Contains: include guard, simulator headers, constants, vertex struct template,
+;; and all per-action declarations (events, payload struct, handler functions).
 ;; ═══════════════════════════════════════════════════════════════════════════════
 
 (define (generate-hpp-ir vtx actions app constants symbols)
@@ -257,14 +302,17 @@
         "0"))
 
   ;; Build standard context: payload params are accessed as local vars
+  ;; In predicate/work handlers, params are extracted from the action arguments struct
   (define base-ctx
     (for/fold ([ctx (make-immutable-hash)])
               ([p (in-list payload-params)])
       (hash-set ctx (param-decl-name p) (mangle-cpp (param-decl-name p)))))
-  ;; Target var maps to "v" in handlers that use it via vertex-read
+  ;; Target var maps to "v" — the vertex pointer in all handlers
   (define handler-ctx (hash-set base-ctx target-param-name "v"))
 
-  ;; Diffuse context: payload params map to current_<field>
+  ;; Diffuse context differs: in ghost-aware diffuse handlers, field values come
+  ;; from either the vertex itself or from the incoming action arguments (for ghosts).
+  ;; Payload params map to current_<field> which is computed at runtime.
   (define diffuse-ctx
     (for/fold ([ctx (hash-set (make-immutable-hash) target-param-name "v")])
               ([p (in-list payload-params)])
@@ -333,6 +381,12 @@
                                                   prop-arg-cpp prop-action-name)))))))
 
 ;; ─── Handler generation functions ─────────────────────────────────────────────
+;; Each CCA action phase maps to a pair of C++ functions:
+;;   - A templated implementation (_T suffix) parameterized by ghost_type
+;;   - An inline dispatch wrapper (_func suffix) using INVOKE_HANDLER_3 macro
+;;
+;; The templated pattern allows the same action to work on both real vertices
+;; and ghost proxies in the recursive parallel vertex hierarchy.
 
 (define (emit-predicate-handler act-name vtx-name field-type payload-field payload-params pred-expr cpi)
   (string-append
@@ -406,6 +460,9 @@
 
 ;; ═══════════════════════════════════════════════════════════════════════════════
 ;; CPP IR Generation (host .cpp file)
+;; Produces: includes, global event definitions, and the main() function which
+;; handles CLI parsing, simulator setup, graph loading, action registration,
+;; germination of the root action, simulation execution, and result verification.
 ;; ═══════════════════════════════════════════════════════════════════════════════
 
 (define (generate-cpp-ir vtx actions app constants symbols hpp-filename)

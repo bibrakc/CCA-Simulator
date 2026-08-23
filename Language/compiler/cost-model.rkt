@@ -38,6 +38,26 @@
          load-cost-model
          compute-phase-cpi)
 
+;; ═══════════════════════════════════════════════════════════════════════════════
+;; Cost model for estimating cycles-per-invocation (CPI) of action phases.
+;;
+;; The CCA simulator's compute cells call `apply_CPI(n)` before executing each
+;; phase (predicate, work, diffuse-predicate). This module computes `n` by
+;; statically walking the AST and summing operation costs.
+;;
+;; Counting strategy:
+;;   - Each AST node maps to an operation kind (field-read, arithmetic, etc.).
+;;   - The cost-model struct assigns a cycle cost to each kind.
+;;   - For branches (if-expr/if-stmt), we take the worst-case (max of branches).
+;;   - For loops (for-edges), we report per-iteration cost since apply_CPI runs
+;;     once before the loop, not per iteration.
+;;   - Diffuse phase returns 0 because it does NOT call apply_CPI — the cost
+;;     is in network transmission, not ALU time.
+;;
+;; Inputs:  An AST subtree (expression or statement list) + a cost-model.
+;; Outputs: Integer cycle count for the phase.
+;; ═══════════════════════════════════════════════════════════════════════════════
+
 ;; ─── Cost model structure ─────────────────────────────────────────────────────
 ;; Each entry maps an operation kind to a cycle cost (non-negative integer).
 
@@ -122,6 +142,8 @@
      0]))
 
 ;; ─── Expression cost counter ──────────────────────────────────────────────────
+;; Recursively sums costs: each leaf node contributes its kind's cost,
+;; compound nodes contribute their own cost plus children's costs.
 (define (count-expr-cost e model)
   (match e
     [(literal-expr _ _ _)
@@ -129,6 +151,7 @@
     [(var-expr _ _)
      (cost-model-variable-access model)]
     [(prim-expr _ op args)
+     ;; Classify the operator to pick the right cost bucket
      (define op-cost
        (cond
          [(member op '(> >= < <= =)) (cost-model-comparison model)]
@@ -146,27 +169,30 @@
      (+ (apply + (map (λ (b) (count-expr-cost (cdr b) model)) bindings))
         (count-expr-cost body model))]
     [(if-expr _ test then else-branch)
-     ;; Worst case: test + max(then, else)
+     ;; Worst case: test cost + max(then branch, else branch)
      (+ (count-expr-cost test model)
         (max (count-expr-cost then model)
              (count-expr-cost else-branch model)))]
     [_ 0]))
 
 ;; ─── Statement cost counter ──────────────────────────────────────────────────
+;; Sums costs across a list of statements.
 (define (count-stmts-cost stmts model)
   (apply + (map (λ (s) (count-stmt-cost s model)) stmts)))
 
+;; Counts the cost of a single statement by matching its structure.
 (define (count-stmt-cost s model)
   (match s
     [(set-field-stmt _ _ target value)
+     ;; One write + cost of computing the value expression
      (+ (cost-model-field-write model)
         (count-expr-cost value model))]
     [(for-edges-stmt _ _ target body)
-     ;; Per-iteration cost; the actual iteration count is runtime-dependent.
-     ;; We report the per-edge body cost as the CPI since apply_CPI is called
-     ;; once before the loop, not per iteration.
+     ;; Per-iteration cost only; actual iteration count is runtime-dependent.
+     ;; apply_CPI is called once before the loop, not per iteration.
      (count-stmts-cost body model)]
     [(propagate-stmt _ _ dest args)
+     ;; Network send cost + cost of computing destination and arguments
      (+ (cost-model-propagate model)
         (count-expr-cost dest model)
         (apply + (map (λ (a) (count-expr-cost a model)) args)))]
@@ -174,6 +200,7 @@
      (+ (apply + (map (λ (b) (count-expr-cost (cdr b) model)) bindings))
         (count-stmts-cost body model))]
     [(if-stmt _ test then-stmts else-stmts)
+     ;; Worst case: condition cost + max of both branches
      (+ (count-expr-cost test model)
         (max (count-stmts-cost then-stmts model)
              (count-stmts-cost else-stmts model)))]
