@@ -90,12 +90,8 @@
              (cons (action-decl name target payload-params pred work dpred diffuse no-span)
                    actions))]
 
-      [`(define-application ,name ,options ...)
-       (set! applications
-             (cons (parse-application name options) applications))]
-
       [`(define-program ,binary-name ,host-forms ...)
-       ;; New-style driver program with host-level forms
+       ;; Driver program with host-level forms
        (set! applications
              (cons (parse-program-decl binary-name host-forms) applications))]
 
@@ -110,9 +106,9 @@
   (when (null? actions)
     (error 'parse "program must contain at least one define-action"))
   (when (null? applications)
-    (error 'parse "program must contain exactly one define-application"))
+    (error 'parse "program must contain exactly one define-program"))
   (when (> (length applications) 1)
-    (error 'parse "Draft 0.1 allows exactly one define-application"))
+    (error 'parse "Draft 0.1 allows exactly one define-program"))
 
   (cca-program (reverse constants)
                (car (reverse vertices))
@@ -317,44 +313,7 @@
     [other (error 'parse-binding "invalid binding: ~s" other)]))
 
 ;; ─── Application parsing ──────────────────────────────────────────────────────
-(define (parse-application name options)
-  (define (get-option key opts [default #f])
-    (cond
-      [(null? opts) default]
-      [(and (keyword? (car opts)) (equal? (car opts) key))
-       (if (null? (cdr opts))
-           (error 'parse-application "missing value for ~a" key)
-           (cadr opts))]
-      [else (get-option key (cdr opts) default)]))
-
-  ;; Parse keyword options manually
-  (define opts-hash (parse-keyword-options options))
-
-  (application-decl
-   name
-   (hash-ref opts-hash '#:binary-name
-             (λ () (error 'parse-application "missing #:binary-name")))
-   (hash-ref opts-hash '#:vertex-type
-             (λ () (error 'parse-application "missing #:vertex-type")))
-   (hash-ref opts-hash '#:root-action
-             (λ () (error 'parse-application "missing #:root-action")))
-   (hash-ref opts-hash '#:root-arguments '())
-   (hash-ref opts-hash '#:result-field #f)
-   (hash-ref opts-hash '#:verification #f)
-   no-span))
-
-(define (parse-keyword-options opts)
-  (let loop ([remaining opts] [h (hash)])
-    (cond
-      [(null? remaining) h]
-      [(keyword? (car remaining))
-       (when (null? (cdr remaining))
-         (error 'parse-application "keyword ~a has no value" (car remaining)))
-       (loop (cddr remaining) (hash-set h (car remaining) (cadr remaining)))]
-      [else
-       (error 'parse-application "expected keyword, got: ~s" (car remaining))])))
-
-;; ─── define-program parsing (new-style driver with host-level forms) ──────────
+;; ─── define-program parsing ────────────────────────────────────────────────────
 ;; Parses host-level forms and synthesizes an application-decl that the emitter
 ;; can use. The host forms are stored in the application-decl's 'verification'
 ;; field (repurposed) as a list of host-form structs when the new style is used.

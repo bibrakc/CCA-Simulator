@@ -1,24 +1,22 @@
-# CCA Language Specification — BFS-First Core
+# CCA Language Specification
 
-**Status:** Draft 0.1  
-**Date:** 2026-08-22  
+**Status:** Draft 0.2  
+**Date:** 2026-08-23  
 **Implementation language:** Racket  
 **Compilation target:** C++ application code accepted directly by `CCA-Simulator`
 
 ## 1. Purpose and scope
 
-CCA is a statically typed, Scheme/Racket-style language for diffusive graph programs on the Continuum Computer Architecture simulator. A CCA source program does not compile to x86 or to a new runtime. It compiles to the same application-level C++ interface used by the hand-written simulator applications, beginning with `Applications/Breadth_First_Search/cca_bfs.hpp` and `cca_bfs.cpp`.
+CCA is a statically typed, Scheme/Racket-style language for diffusive graph programs on the Continuum Computer Architecture simulator. A CCA source program does not compile to x86 or to a new runtime. It compiles to the same application-level C++ interface used by the hand-written simulator applications.
 
-Draft 0.1 deliberately specifies only what is needed to express, compile, build, and verify static breadth-first search (BFS). It reserves extension points for weighted edges, PageRank, streaming graph mutation, futures, continuations, and rhizomes without pretending those features are already defined.
+Draft 0.2 supports BFS and SSSP, with a kernel/driver program structure, host-level forms that map 1:1 to simulator C++ API calls, a configurable cost model, and a module system via `require`. See `grammar.md` for the complete formal syntax.
 
 The design is grounded in:
 
-- the BFS and data-structure pseudocode in `psuedo-code/`;
-- the predicate, deferred diffusion, RPVO, future, and rhizome descriptions in the two papers in `papers/`;
-- the current simulator ABI and hand-written BFS implementation; and
+- the BFS and data-structure pseudocode in the research papers;
+- the predicate, deferred diffusion, RPVO, future, and rhizome descriptions in the publications;
+- the current simulator ABI and hand-written application implementations; and
 - the pass-oriented Racket implementation style of `Little-Parallel-Language`.
-
-Normative words **must**, **must not**, **should**, and **may** state language requirements.
 
 ## 2. Execution model
 
@@ -72,32 +70,35 @@ CCA uses parentheses and brackets interchangeably where Racket does. Line commen
 
 The backend mangles `-` to `_`, appends stable role suffixes such as `_predicate`, and escapes C++ keywords. Mangling must be deterministic so golden output and diagnostics are reproducible.
 
-Integer literals in Draft 0.1 are decimal, unsigned, and must lie in `0..4294967295`. Boolean literals are `#t` and `#f`.
+Integer literals in Draft 0.2 are decimal, unsigned, and must lie in `0..4294967295`. Boolean literals are `#t` and `#f`.
 
-## 4. Program grammar
+## 4. Program structure
 
-The following grammar is descriptive. `...` means zero or more repetitions and `...+` means one or more.
+See `grammar.md` for the complete formal grammar.
+
+A CCA program consists of two files:
+
+- **Kernel file** (`*-kernel.cca`) — declares the algorithm: constants, vertex type, and actions
+- **Driver file** (`*-driver.cca`) — the entry point: requires the kernel, defines the host program using `define-program` with host-level forms
 
 ```text
 program ::= #lang cca
-            declaration ...
+            (require "kernel-file.cca")
+            (define-program binary-name
+              host-form ...)
+```
 
-declaration ::= constant-definition
-              | vertex-definition
-              | action-definition
-              | application-definition
+Host-level forms map directly to simulator C++ API calls:
+- `(create-simulator ...)` → `CCASimulator` constructor
+- `(load-graph ...)` → `Graph` constructor + `CyclicMemoryAllocator`
+- `(register-actions ...)` → `register_function_event` calls
+- `(germinate ...)` → `germinate_action` with `Action` object
+- `(run)` → `run_simulation`
+- `(when verify? (verify ...))` → verification block
+- `(write-results ...)` → statistics and animation output
 
-constant-definition ::= (define-constant name : scalar-type literal)
-
-vertex-definition ::= (define-vertex name field-definition ...)
-field-definition  ::= [name : storable-type
-                        #:initial expression
-                        #:mutable]
-
-action-definition ::= (define-action name
-                         ([target : (Pointer vertex-name)]
-                          [argument : payload-type] ...)
-                         action-body)
+CLI arguments are declared via `(let ([name (cli-arg ...)] ...) host-form)` bindings
+which generate `parser.set_required`/`set_optional` and `parser.get<>` calls.
 
 action-body ::= (predicate expression
                   (work statement ...)
@@ -105,7 +106,7 @@ action-body ::= (predicate expression
                     (predicate expression)
                     diffuse-statement ...))
 
-application-definition ::= (define-application name
+application-definition ::= (define-program name
                               #:binary-name string
                               #:vertex-type vertex-name
                               #:root-action action-name
@@ -114,7 +115,7 @@ application-definition ::= (define-application name
                               #:verification bfs-level-file)
 ```
 
-A Draft 0.1 program must contain exactly one vertex definition, at least one action definition, and exactly one application definition. The application root action must target the declared vertex type.
+A Draft 0.2 program must contain exactly one vertex definition, at least one action definition, and exactly one program definition. The application root action must target the declared vertex type.
 
 ### 4.1 Paper-compatible action sugar
 
@@ -131,7 +132,7 @@ The paper pseudocode nests work and diffusion under the outer predicate:
 
 The reader/desugaring pass should accept this form and convert it to the canonical phased form above. The canonical form is used by all later compiler passes because it makes effects and simulator event boundaries explicit.
 
-The paper's `(define name (lambda (...) body))` spelling may be added as compatibility sugar, but `define-action` is the normative Draft 0.1 declaration.
+The paper's `(define name (lambda (...) body))` spelling may be added as compatibility sugar, but `define-action` is the normative Draft 0.2 declaration.
 
 ## 5. Types
 
@@ -148,7 +149,7 @@ type ::= Unit
        | (Vector element-type)
 ```
 
-`Integer` is a paper-compatibility alias for `UInt32` in Draft 0.1. It is not an arbitrary-precision Racket integer.
+`Integer` is a paper-compatibility alias for `UInt32` in Draft 0.2. It is not an arbitrary-precision Racket integer.
 
 | CCA type | Meaning | C++ representation | Payload-serializable? |
 |---|---|---|---|
@@ -157,10 +158,10 @@ type ::= Unit
 | `UInt32` / `Integer` | unsigned 32-bit integer | `u_int32_t` | yes |
 | `Address` | simulator object address | `Address` | yes, subject to C++ trivial-copy check |
 | `Edge` | current adjacency entry | simulator edge element | no |
-| `(Pointer V)` | typed reference to target vertex `V` | contextual `Address`, cast in handler | no in Draft 0.1 |
+| `(Pointer V)` | typed reference to target vertex `V` | contextual `Address`, cast in handler | no in Draft 0.2 |
 | `(Vector Edge)` | runtime-owned logical adjacency | RPVO traversal | no |
 
-A **scalar type** is `Boolean`, `UInt32`, `Integer`, or `Address`. A **payload type** is a scalar type whose generated C++ representation is trivially copyable. A **storable type** in Draft 0.1 is `Boolean`, `UInt32`, or `Integer`.
+A **scalar type** is `Boolean`, `UInt32`, `Integer`, or `Address`. A **payload type** is a scalar type whose generated C++ representation is trivially copyable. A **storable type** in Draft 0.2 is `Boolean`, `UInt32`, or `Integer`.
 
 The generated payload struct must satisfy `std::is_trivially_copyable_v<T>` because `cca_create_action_argument<T>` and `cca_get_action_argument<T>` serialize it with `memcpy`.
 
@@ -175,13 +176,13 @@ Every declared vertex implicitly inherits runtime-managed members. They are not 
 | `(edge-address e)` | `Address` | `e.edge` |
 | `(edge-weight e)` | `UInt32` | `e.weight` |
 
-`edge-weight` is typed now so the type vocabulary remains stable, but BFS Draft 0.1 does not require weighted graph semantics.
+`edge-weight` is typed now so the type vocabulary remains stable, but BFS Draft 0.2 does not require weighted graph semantics.
 
 Each field declared by `(define-vertex V [level ...])` receives a generated accessor `(vertex-level v)`. A mutable field also receives `(set-vertex-level! v value)`. Accessor names are derived from the field name, not the vertex type name.
 
 ### 5.3 Arithmetic and comparison
 
-Draft 0.1 provides:
+Draft 0.2 provides:
 
 ```text
 (+ UInt32 UInt32 ...+) -> UInt32
@@ -226,7 +227,7 @@ statement ::= (set-vertex-field! target expression)
             | (if expression (begin statement ...) (begin statement ...))
 ```
 
-A work phase may mutate only mutable fields of its own target parameter. It must not mutate an edge, another vertex, runtime-owned RPVO state, or an action parameter. `propagate` is forbidden in work in Draft 0.1 so communication remains deferred and visible to the runtime.
+A work phase may mutate only mutable fields of its own target parameter. It must not mutate an edge, another vertex, runtime-owned RPVO state, or an action parameter. `propagate` is forbidden in work in Draft 0.2 so communication remains deferred and visible to the runtime.
 
 ### 6.3 Diffuse statements
 
@@ -248,7 +249,7 @@ diffuse-statement ::= (for-each ([name : Edge] (vertex-edges target))
 
 The destination must have type `Address`. The argument count and types must match all parameters of `A` after its first target parameter.
 
-For a logical edge traversal lowered across RPVO ghosts, propagated argument expressions must be **ghost-safe**: they may depend on action payload parameters, constants, local `let` bindings derived from them, and the current `Edge`. They must not read application fields from the target vertex because ghost objects intentionally do not contain those fields. Draft 0.1 reports a compile-time error for a non-ghost-safe expression. A later compiler may capture required field values into a generated diffusion closure payload.
+For a logical edge traversal lowered across RPVO ghosts, propagated argument expressions must be **ghost-safe**: they may depend on action payload parameters, constants, local `let` bindings derived from them, and the current `Edge`. They must not read application fields from the target vertex because ghost objects intentionally do not contain those fields. Draft 0.2 reports a compile-time error for a non-ghost-safe expression. A later compiler may capture required field values into a generated diffusion closure payload.
 
 ## 7. Static semantics and effects
 
@@ -258,7 +259,7 @@ The checker maintains separate environments for constants, vertex fields, action
 Γ ; phase ⊢ expression : type ! effects
 ```
 
-Draft 0.1 effects are `read-target`, `write-target`, and `propagate`.
+Draft 0.2 effects are `read-target`, `write-target`, and `propagate`.
 
 Required rules include:
 
@@ -272,7 +273,7 @@ Required rules include:
 8. Every source `propagate` must resolve to a declared action with matching arity and types.
 9. Root arguments must match the root action payload parameters.
 10. The result field must exist and have type `UInt32`/`Integer` for `bfs-level-file` verification.
-11. Draft 0.1 forbids recursion, first-class functions, mutation through arbitrary addresses, user allocation, futures, `call/cc`, and rhizome forms.
+11. Draft 0.2 forbids recursion, first-class functions, mutation through arbitrary addresses, user allocation, futures, `call/cc`, and rhizome forms.
 
 ## 8. Dynamic semantics of an action
 
@@ -313,7 +314,7 @@ A predicate may be evaluated later than the source program's textual order. Ther
                    (edge-address e)
                    (+ incoming-level 1))))))
 
-(define-application BFS
+(define-program BFS
   #:binary-name "BFS_Generated_CCASimulator"
   #:vertex-type BFSVertex
   #:root-action bfs-action
@@ -330,7 +331,7 @@ This is the source-level equivalent of the hand-written BFS behavior. The genera
 
 ## 10. Required C++ backend contract
 
-A conforming Draft 0.1 compiler emits C++ that builds as a CCA-Simulator application. For BFS it must generate:
+A conforming Draft 0.2 compiler emits C++ that builds as a CCA-Simulator application. For BFS it must generate:
 
 1. a `BFSVertex<Vertex_T>` template deriving from the supplied runtime vertex type, with initialized application fields and `configure_derived_class_LCOs()`;
 2. a trivially-copyable action payload struct containing `incoming_level`;
@@ -366,7 +367,7 @@ The parser should preserve Racket syntax locations through desugaring and IR nod
 
 ## 12. Reserved extensions
 
-The following are intentionally outside Draft 0.1:
+The following are intentionally outside Draft 0.2:
 
 - `Float64`, weighted-distance rules, and SSSP;
 - fixed-iteration actions and reductions for PageRank;
@@ -378,6 +379,6 @@ The following are intentionally outside Draft 0.1:
 
 They should be introduced in later language versions only after BFS source semantics, C++ generation, simulator build integration, and end-to-end verification are stable.
 
-## 13. Conformance criterion for Draft 0.1
+## 13. Conformance criterion for Draft 0.2
 
-Draft 0.1 is implemented when the compiler can compile the BFS program in Section 9 into an isolated generated application, the generated files build through the repository's top-level CMake configuration, and the resulting executable passes BFS verification on the same graph/root inputs as `BFS_CCASimulator`. Textual identity with the hand-written C++ is not required; observable BFS levels and simulator API compatibility are required.
+Draft 0.2 is implemented when the compiler can compile the BFS program in Section 9 into an isolated generated application, the generated files build through the repository's top-level CMake configuration, and the resulting executable passes BFS verification on the same graph/root inputs as `BFS_CCASimulator`. Textual identity with the hand-written C++ is not required; observable BFS levels and simulator API compatibility are required.

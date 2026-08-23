@@ -48,7 +48,7 @@
 ;;   - parse: S-expression → AST conversion for all declaration types
 ;;   - typecheck: type consistency, phase discipline enforcement, ghost-safety
 ;;
-;; All tests use the BFS example (Language/examples/bfs/bfs.cca) as the primary
+;; All tests use the BFS example (Language/examples/bfs/bfs-driver.cca) as the primary
 ;; fixture for positive cases, and hand-constructed AST nodes for negative cases.
 ;;
 ;; Run with: racket Language/tests/run-tests.rkt
@@ -61,15 +61,15 @@
    "read-source"
 
    (test-case "reads BFS example with 4 top-level forms"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (check-equal? (length forms) 4)
      (check-equal? (car (first forms)) 'define-constant)
      (check-equal? (car (second forms)) 'define-vertex)
      (check-equal? (car (third forms)) 'define-action)
-     (check-equal? (car (fourth forms)) 'define-application))
+     (check-equal? (car (fourth forms)) 'define-program))
 
    (test-case "strips #lang cca line"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      ;; If #lang was not stripped, it would fail to read
      (check-pred list? forms))
 
@@ -83,12 +83,12 @@
    "parse"
 
    (test-case "parses BFS into cca-program"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (check-pred cca-program? prog))
 
    (test-case "parses constant"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define constants (cca-program-constants prog))
      (check-equal? (length constants) 1)
@@ -98,7 +98,7 @@
      (check-equal? (constant-decl-value c) 999999))
 
    (test-case "parses vertex with mutable field"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define v (cca-program-vertex prog))
      (check-equal? (vertex-decl-name v) 'BFSVertex)
@@ -111,7 +111,7 @@
      (check-true (field-decl-mutable? f)))
 
    (test-case "parses action target and payload"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define act (car (cca-program-actions prog)))
      (check-equal? (action-decl-name act) 'bfs-action)
@@ -127,7 +127,7 @@
      (check-pred t-u32? (param-decl-type (car params))))
 
    (test-case "parses predicate as comparison"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define act (car (cca-program-actions prog)))
      (define pred (action-decl-predicate act))
@@ -136,7 +136,7 @@
      (check-equal? (length (prim-expr-args pred)) 2))
 
    (test-case "parses work as set-field"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define act (car (cca-program-actions prog)))
      (define work (action-decl-work act))
@@ -145,7 +145,7 @@
      (check-equal? (set-field-stmt-field (car work)) 'level))
 
    (test-case "parses diffuse predicate as equality"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define act (car (cca-program-actions prog)))
      (define dpred (action-decl-diffuse-predicate act))
@@ -153,7 +153,7 @@
      (check-equal? (prim-expr-op dpred) '=))
 
    (test-case "parses diffuse as for-each with propagate"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define act (car (cca-program-actions prog)))
      (define diffuse (action-decl-diffuse act))
@@ -165,15 +165,15 @@
      (check-equal? (propagate-stmt-action-name (car body)) 'bfs-action))
 
    (test-case "parses application metadata"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define app (cca-program-application prog))
-     (check-equal? (application-decl-name app) 'BFS)
+     (check-equal? (application-decl-name app) 'BFS_Generated_CCASimulator)
      (check-equal? (application-decl-binary-name app) "BFS_Generated_CCASimulator")
      (check-equal? (application-decl-vertex-type app) 'BFSVertex)
      (check-equal? (application-decl-root-action app) 'bfs-action)
      (check-equal? (application-decl-result-field app) 'level)
-     (check-equal? (application-decl-verification app) ".bfs"))
+     (check-pred list? (application-decl-verification app)))
 
    (test-case "rejects missing vertex"
      (check-exn exn:fail?
@@ -205,7 +205,7 @@
    "typecheck"
 
    (test-case "BFS example passes typecheck"
-     (define forms (read-source-pass "Language/examples/bfs/bfs.cca"))
+     (define forms (read-source-pass "Language/examples/bfs/bfs-driver.cca"))
      (define prog (parse-pass forms))
      (define resolved (resolve-pass prog))
      (check-not-exn (λ () (typecheck-pass resolved))))
