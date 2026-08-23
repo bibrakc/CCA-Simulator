@@ -56,6 +56,21 @@ cd Tests/Run_All_Apps && zsh run_all_apps.zsh
 
 Builds all applications and runs verification against reference solutions. Reports pass/fail status and elapsed time.
 
+## CCA Language and Compiler
+
+The repository includes a Scheme/Racket-style language for expressing graph algorithms that compiles directly to C++ application code for the simulator. See [`Language/README.md`](Language/README.md) for details.
+
+```bash
+# Compile a CCA program to C++
+racket Language/main.rkt --compile --output /tmp/generated Language/examples/bfs/bfs.cca
+
+# Build the generated application
+cmake -S . -B build -DCCA_GENERATED_APPLICATIONS_DIR=/tmp/generated
+cmake --build build --target BFS_Generated_CCASimulator -j$(nproc)
+```
+
+Requires Racket 9.3+ (`brew install minimal-racket`).
+
 ## Publications
 
 - B. Qamar Chandio, M. Brodowicz, T. Sterling, "A message-driven system for processing highly skewed graphs," *Future Generation Computer Systems*, vol. 180, 2026. [DOI](https://doi.org/10.1016/j.future.2026.108394)
