@@ -16,7 +16,7 @@ The design is grounded in:
 - the BFS and data-structure pseudocode in the research papers;
 - the predicate, deferred diffusion, RPVO, future, and rhizome descriptions in the publications;
 - the current simulator ABI and hand-written application implementations; and
-- the pass-oriented Racket implementation style of `Little-Parallel-Language`.
+- nanopass compiler architecture principles with isolated, testable passes.
 
 ## 2. Execution model
 
