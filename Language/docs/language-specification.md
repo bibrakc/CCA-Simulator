@@ -100,23 +100,6 @@ Host-level forms map directly to simulator C++ API calls:
 CLI arguments are declared via `(let ([name (cli-arg ...)] ...) host-form)` bindings
 which generate `parser.set_required`/`set_optional` and `parser.get<>` calls.
 
-action-body ::= (predicate expression
-                  (work statement ...)
-                  (diffuse
-                    (predicate expression)
-                    diffuse-statement ...))
-
-application-definition ::= (define-program name
-                              #:binary-name string
-                              #:vertex-type vertex-name
-                              #:root-action action-name
-                              #:root-arguments (expression ...)
-                              #:result-field field-name
-                              #:verification bfs-level-file)
-```
-
-A Draft 0.2 program must contain exactly one vertex definition, at least one action definition, and exactly one program definition. The application root action must target the declared vertex type.
-
 ### 4.1 Paper-compatible action sugar
 
 The paper pseudocode nests work and diffusion under the outer predicate:
@@ -272,7 +255,7 @@ Required rules include:
 7. Every action must have exactly one outer predicate, one work phase, one diffuse predicate, and one diffuse phase after desugaring.
 8. Every source `propagate` must resolve to a declared action with matching arity and types.
 9. Root arguments must match the root action payload parameters.
-10. The result field must exist and have type `UInt32`/`Integer` for `bfs-level-file` verification.
+10. The result field must exist and have type `UInt32`/`Integer` for verification.
 11. Draft 0.2 forbids recursion, first-class functions, mutation through arbitrary addresses, user allocation, futures, `call/cc`, and rhizome forms.
 
 ## 8. Dynamic semantics of an action
@@ -292,6 +275,8 @@ On a ghost RPVO object, steps 2–3 are replaced with “predicate true, work no
 A predicate may be evaluated later than the source program's textual order. Therefore a diffuse predicate must remain valid when re-evaluated against newer vertex state.
 
 ## 9. Complete BFS program
+
+### Kernel (`bfs-kernel.cca`):
 
 ```racket
 #lang cca
@@ -313,21 +298,59 @@ A predicate may be evaluated later than the source program's textual order. Ther
         (propagate bfs-action
                    (edge-address e)
                    (+ incoming-level 1))))))
+```
 
-(define-program BFS
-  #:binary-name "BFS_Generated_CCASimulator"
-  #:vertex-type BFSVertex
-  #:root-action bfs-action
-  #:root-arguments (0)
-  #:result-field level
-  #:verification bfs-level-file)
+### Driver (`bfs-driver.cca`):
+
+```racket
+#lang cca
+
+(require "bfs-kernel.cca")
+
+(define-program "BFS_Generated_CCASimulator"
+
+  (let ([shape (cli-arg "s" #:long-name "shape" #:type String #:required #t
+                        #:description "Shape of the compute cell")]
+        [hx (cli-arg "hx" #:long-name "htree_x" #:type UInt32 #:default 3
+                     #:description "Rows of Cells served by a single end Htree node")]
+        ...)
+    (create-simulator
+      #:shape shape #:dim-x hx #:dim-y hy ...))
+
+  (let ([graph-file (cli-arg "f" #:long-name "graphfile" #:type String #:required #t
+                             #:description "Path to the input data graph file")]
+        [graph-name (cli-arg "g" #:long-name "graphname" #:type String #:required #t
+                             #:description "Name of the input graph")])
+    (load-graph #:file graph-file #:name graph-name
+                #:vertex-type BFSVertex #:weighted #f))
+
+  (register-actions bfs-action)
+
+  (let ([root (cli-arg "root" #:long-name "bfsroot" #:type UInt32 #:required #t
+                       #:description "Root vertex for BFS")]
+        [shuffle? (cli-flag "shuffle" #:long-name "shuffle_vertices"
+                            #:description "Randomize vertex placement")])
+    (germinate bfs-action #:root root #:arguments (0) #:shuffle shuffle?))
+
+  (run)
+
+  (let ([verify? (cli-flag "verify" #:long-name "verification"
+                           #:description "Enable verification")])
+    (when verify?
+      (verify #:field level #:extension ".bfs")))
+
+  (let ([output-dir (cli-arg "od" #:long-name "outputdirectory" #:type String #:default "./"
+                             #:description "Output directory")]
+        [trail (cli-arg "trail" #:long-name "trail_number" #:type UInt32 #:default 0
+                        #:description "Trail number")])
+    (write-results #:output-dir output-dir #:trail trail)))
 ```
 
 ### 9.1 BFS meaning
 
 All vertices begin at `max-level`. The host germinates `bfs-action(root, 0)`. An action performs work only if its incoming level is lower than the current level. Work stores that level. The deferred diffusion remains valid only while the vertex level equals the action's incoming level; an action made stale by a better level is pruned. Each outgoing neighbor receives `incoming-level + 1`.
 
-This is the source-level equivalent of the hand-written BFS behavior. The generated backend may omit non-semantic debugging payload members such as the existing `src_vertex_id`; simulator termination already uses `Action::origin_addr`.
+This is the source-level equivalent of the hand-written BFS behavior. The generated backend omits non-semantic debugging payload members; simulator termination uses `Action::origin_addr`.
 
 ## 10. Required C++ backend contract
 
