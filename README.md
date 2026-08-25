@@ -58,16 +58,29 @@ Builds all applications and runs verification against reference solutions. Repor
 
 ## CCA Language and Compiler
 
-The repository includes a Scheme/Racket-style language for expressing graph algorithms that compiles directly to C++ application code for the simulator. See [`Language/README.md`](Language/README.md) for details.
+The repository includes a Scheme/Racket-style language for expressing graph algorithms
+that compiles directly to C++ application code for the simulator. Programs are split
+into a kernel (algorithm) and a driver (host orchestration). See [`Language/README.md`](Language/README.md) for full details.
 
 ```bash
 # Compile a CCA program to C++
-racket Language/main.rkt --compile --output /tmp/generated Language/examples/bfs/bfs.cca
+racket -e '(require "Language/compiler/pipeline.rkt") \
+  (run-pipeline "Language/examples/bfs/bfs-driver.cca" \
+                #:output "Language/generated-output")'
 
 # Build the generated application
-cmake -S . -B build -DCCA_GENERATED_APPLICATIONS_DIR=/tmp/generated
+CC=gcc-13 CXX=g++-13 cmake -S . -B build \
+  -DCCA_GENERATED_APPLICATIONS_DIR="$PWD/Language/generated-output"
 cmake --build build --target BFS_Generated_CCASimulator -j$(nproc)
+
+# Run with verification
+./build/BFS_Generated_CCASimulator \
+  -f Input_Graphs/Erdos-Renyi_ef_5_v_6.edgelist \
+  -g Erdos -s square -root 0 -verify
 ```
+
+Currently supports BFS and SSSP with full CLI parity, configurable cost models,
+and automatic RPVO ghost-vertex handling.
 
 Requires Racket 9.3+ (`brew install minimal-racket`).
 
